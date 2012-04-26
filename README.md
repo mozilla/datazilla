@@ -11,19 +11,47 @@ This is a work in progress and will likely see a number of structural changes.  
 ##Architecture
 At a top level datazilla can be described with three different parts: model, webservice, and UI.
 
-All environment information is stored in datazilla/webapp/conf/etc/sysconfig/datazilla.  Appropriate system information for the system should be added to this file and then it copy to /etc/sysconfig/datazilla.  It needs to be source'd before running any component of the system.  Most of the environment variables are self explanatory. 
+All environment information is stored in datazilla/webapp/conf/etc/sysconfig/[datazilla] [3].  Appropriate system information should be added to the environment variables in this file, then copy it to /etc/sysconfig/datazilla or whatever location is appropriate for your environment.  It needs to be source'd before running any component of the system including command line scripts.
 
-The environment variable called DATAZILLA_DEBUG, when set to true, causes all scripts and webservice methods to write out the full SQL, execution time, and host name that are being executed at runtime.  This is handy for debugging any component in the system.
+The environment variable called DATAZILLA_DEBUG, when set to true, causes all scripts and webservice methods to write out the full SQL, execution time, and host name for any database statement executed.  This is handy for debugging any component in the system.
+
+The web application is a django application found in datazilla/webapp/[apps] [4].  
+
+[3]: https://github.com/jeads/datazilla/blob/master/webapp/conf/etc/sysconfig/datazilla "datazilla"
+[4]: https://github.com/jeads/datazilla/tree/master/webapp/apps/ "apps"
 
 ###Model
-The datazilla model classes rely on a module called [datasource] [3].  This module encapsulates SQL manipulation.  All of the SQL used by the system is stored in a JSON file format in found in /datazilla/model/sql.  There can be any number of SQL files stored in this format.  The JSON structure allows a host type to be associated with each SQL statement.
+The datazilla model classes rely on a module called [datasource] [5].  This module encapsulates SQL manipulation.  All of the SQL used by the system is stored in a JSON file format found in /datazilla/model/[sql] [6].  There can be any number of SQL files stored in this format.  The JSON structure allows a host type to be associated with each SQL statement.
 
-[3]: https://github.com/jeads/datasource "datasource"
+[5]: https://github.com/jeads/datasource "datasource"
+[6]: https://github.com/jeads/datazilla/blob/master/model/sql/graphs.json "sql"
 
 ###UI
 
 ####Building the Navigation Menu And Defining Data Views
-New data views and collections of dataviews can be defined in The navigation menu 
+New data views and collections of dataviews can be defined in the navigation menu  by running the command:
+> python datazilla/webapp/manage.py build_nav
+This will read the json file datazilla/webapp/templates/data/[views.json] [7].  This structure is translated into the View Navigation menu available on each data view.  It also contains the definitions for the data views.  The following is a definition of a data view in JSON.
+>{ "name":"test_runs",
+>  "default_load":1,
+>  "read_name":"Runs",
+>  "signals":{ "test_run_id":"1", "test_run_data":"1" },
+>  "control_panel":"test_selector.html",
+>  "data_adapter":"test_selector",
+>  "charts":[ { "name":"average_thumbnails", "read_name":"Averages", "default":"1" }, 
+>             { "name":"table", "read_name":"Table" } ]
+>}
+
+name: Name of the data view.
+default_load: If this attribute is present, the data view will try to load data when it initializes.
+read_name: Readable name displayed in the UI.
+signals: List of signal names that the dataview can send and receive.
+control_panel: The html file name to use as the control panel.  Control panel files are located in datazilla/tree/master/webapp/media/html/[control_panels] [8].
+data_adapter: The data adapter in 
+charts: An array of associative arrays that define what type of visualizations the data view can render.
+
+[7]: https://github.com/jeads/datazilla/blob/master/webapp/templates/data/views.json "views.json"
+[8]: https://github.com/jeads/datazilla/tree/master/webapp/media/html/control_panels "control_panels"
 
 ####Building the Cached Summaries
 
