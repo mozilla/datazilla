@@ -50,7 +50,13 @@ graphs.selects.get_product_test_os_map found in datazilla/model/sql/graphs.json 
       },
 
 ```
-The string graphs in graphs.selects.get_product_test_os_map refers to the file name.
+The string, 'graphs', in 'graphs.selects.get_product_test_os_map' refers to the file name.  The SQL in graphs.json can be written with placeholders and a string replacement system, see [datasource] [5] for all of the features available.
+
+If you're thinking why not just use an ORM?  I direct you to [seldo.com] [8] where you will find an excellent answer to your question that I completely agree with.  It has been my experience that ORMs don't scale well with data models that need to scale horizontally.  When a data model requires storage across multiple RDBS's and requires complex cross database instance joins with nested selects etc...  the ORM just does not cut it.
+
+The approach used here keeps SQL out of your application and provides re-usability by allowing you to store SQL statements with an assigned name and statement grouping.  If the data structure retrieved from datasource requires further munging it can be managed in the model class, again keeping the application code free of low level database data munging while giving you fine grained control over the SQL execution and optimization. 
+
+[9] http://seldo.com/weblog/2011/08/11/orm_is_an_antipattern [seldo.com]
 
 ###Webservice
 The webservice is a django application and is contained in datazilla/webapp/apps/datazilla.  The interface needs to be formalized further. A global datastructure found in datazilla/webapp/apps/datazilla/views.py called, DATAVIEW_ADAPTERS, maps all data views to a data adapter method and set of fields that correspond to signals the data views can send and receive.  This list of signals is passed to the UI to 
