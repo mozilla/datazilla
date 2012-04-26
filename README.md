@@ -54,7 +54,7 @@ If you're thinking why not just use an ORM?  I direct you to [seldo.com] [9] whe
 The approach used here keeps SQL out of your application and provides re-usability by allowing you to store SQL statements with an assigned name and statement grouping.  If the data structure retrieved from datasource requires further munging, it can be managed in the model without removing fine grained control over the SQL execution and optimization. 
 
 ###Webservice
-The webservice is a django application that is contained in datazilla/webapp/apps/datazilla.  The interface needs to be formalized further. A global datastructure found in datazilla/webapp/apps/datazilla/views.py called, ```DATAVIEW_ADAPTERS```python, maps all data views to a data adapter method and set of fields that correspond to signals the data views can send and receive.  This list of signals is passed to the UI as JSON embedded in a hidden input element.  There is a single dataview method that manages traversal of ```DATAVIEW_ADAPTERS```python, and provides default behavior for the dataview service. 
+The webservice is a django application that is contained in datazilla/webapp/apps/datazilla.  The interface needs to be formalized further. A global datastructure found in datazilla/webapp/apps/datazilla/views.py called, ```DATAVIEW_ADAPTERS```, maps all data views to a data adapter method and set of fields that correspond to signals the data views can send and receive.  This list of signals is passed to the UI as JSON embedded in a hidden input element.  There is a single dataview method that manages traversal of ```DATAVIEW_ADAPTERS```, and provides default behavior for the dataview service. 
 
 ```python
 DATAVIEW_ADAPTERS = { ##Flat tables SQL##
