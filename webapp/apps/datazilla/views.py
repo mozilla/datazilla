@@ -88,6 +88,21 @@ def getDateRange(request):
 
    return HttpResponse(jsonData, mimetype=APP_JS)
 
+def setTestData(procPath, procName, fullProcPath, request, gm):
+
+   jsonData = '{"error":"No POST data found"}'
+
+   if 'data' in request.POST:
+
+      jsonData = request.POST['data']
+      unquotedJsonData = urllib.unquote(jsonData)
+      data = json.loads( unquotedJsonData )
+      gm = DatazillaModel('graphs.json')
+      gm.loadTestData( data, unquotedJsonData )
+      jsonData = json.dumps( { 'loaded_test_pages':len(data['results']) } )
+
+   return jsonData
+
 def dataview(request, **kwargs):
 
    procName = os.path.basename(request.path)
@@ -151,20 +166,6 @@ def _getTestReferenceData(procPath, procName, fullProcPath, request, gm):
 
    return jsonData
 
-def _load_test(procPath, procName, fullProcPath, request, gm):
-
-   jsonData = '{"error":"No POST data found"}'
-
-   if 'data' in request.POST:
-
-      jsonData = request.POST['data']
-      unquotedJsonData = urllib.unquote(jsonData)
-      data = json.loads( unquotedJsonData )
-      gm = DatazillaModel('graphs.json')
-      gm.loadTestData( data, unquotedJsonData )
-      jsonData = json.dumps( { 'loaded_test_pages':len(data['results']) } )
-
-   return jsonData
 
 def _getTestRunSummary(procPath, procName, fullProcPath, request, gm):
 
@@ -289,18 +290,6 @@ DATAVIEW_ADAPTERS = { ##Flat tables SQL##
                       'page_values':{ 'adapter':_getPageValues, 'fields':['test_run_id', 'page_id'] }, 
 
                       'test_value_summary':{ 'adapter':_getTestValueSummary, 'fields':['test_run_id'] } }
-
-def _getIdList(idString):
-
-   idList = []
-
-   try:
-      idList = map( lambda s: int(s), idString.split(',') )
-   except ValueError:
-      ##Cast to int failed, must not be a number##
-      pass
-
-   return idList
 
 SIGNALS = set()
 for dv in DATAVIEW_ADAPTERS:

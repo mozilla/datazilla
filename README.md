@@ -1,5 +1,5 @@
 #Datazilla
-Datazilla is a generic system for managing and visualizing data.  The fundamental unit of data display in the user interface is called a data view.  Data views can display data in any number of ways: tabular or graphical.  Data views can also send signals to one another enabling the user to maintain visual context across multiple graphical displays of different data types.  Each data view shares a toolbar that abstracts navigation, data presentation controls, and visual presentation.  A prototype of datazilla was first developed in an application called [bughunter] [1].
+Datazilla is a system for managing and visualizing data.  The fundamental unit of data display in the user interface is called a data view.  Data views can display data in any number of ways: tabular or graphical.  Data views can also send signals to one another enabling the user to maintain visual context across multiple graphical displays of different data types.  Each data view shares a toolbar that abstracts navigation, data presentation controls, and visual presentation.  A prototype of datazilla was first developed in an application called [bughunter] [1].
 
 This project includes a model, webservice, and web based user interface, and eventually it will support a local development environment. 
 
@@ -11,6 +11,12 @@ This is a work in progress and will likely see a number of structural changes.  
 ##Architecture
 At a top level datazilla can be described with three different parts: model, webservice, and UI.
 
+The model layer is found in datazilla/model and provides an interface for getting/setting data in a database.  The datazilla model classes rely on a module called [datasource] [5].  This module encapsulates SQL manipulation.  All of the SQL used by the system is stored in a JSON file found in /datazilla/model/[sql] [6].  There can be any number of SQL files stored in this format.  The JSON structure allows SQL to be stored in named associative arrays that also contain the host type to be associated with each statement.
+
+The webservice is a django application and is contained in datazilla/webapp/apps/datazilla.  The interface needs to be formalized further. A global datastructure found in datazilla/webapp/apps/datazilla/views.py called, DATAVIEW_ADAPTERS, maps all data views to a data adapter method and set of fields that correspond to signals the data views can send and receive. 
+
+The primary component of the UI is the javascript responsible for the data view behavior, located in datazilla/webapp/media/js/data_views.  The HTML associated with a a single data view is described in datazilla/webapp/templates/graphs.views.html, this HTML data view container is cloned for every new data view inserted into the page and added to a single container div with the id dv_view_container.  This provides a single container that components can use to trigger events on, that all dataviews within the page will subscribe to.
+
 All environment information is stored in datazilla/webapp/conf/etc/sysconfig/[datazilla] [3].  Appropriate system information should be added to the environment variables in this file, then copy it to /etc/sysconfig/datazilla or whatever location is appropriate for your environment.  It needs to be source'd before running any component of the system including command line scripts.
 
 The environment variable called DATAZILLA_DEBUG, when set to true, causes all scripts and webservice methods to write out the full SQL, execution time, and host name for any database statement executed.  This is handy for debugging any component in the system.
@@ -21,7 +27,6 @@ The web application is a django application found in datazilla/webapp/[apps] [4]
 [4]: https://github.com/jeads/datazilla/tree/master/webapp/apps/ "apps"
 
 ###Model
-The datazilla model classes rely on a module called [datasource] [5].  This module encapsulates SQL manipulation.  All of the SQL used by the system is stored in a JSON file format found in /datazilla/model/[sql] [6].  There can be any number of SQL files stored in this format.  The JSON structure allows a host type to be associated with each SQL statement.
 
 [5]: https://github.com/jeads/datasource "datasource"
 [6]: https://github.com/jeads/datazilla/blob/master/model/sql/graphs.json "sql"
