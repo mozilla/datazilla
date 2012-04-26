@@ -78,7 +78,7 @@ DATAVIEW_ADAPTERS = { ##Flat tables SQL##
                       'test_value_summary':{ 'adapter':_getTestValueSummary, 'fields':['test_run_id'] } }
 ```
 
-The following is an example of a data adapter in the webservice.  Adapters registered in DATAVIEW_ADAPTERS are automatically called with the SQL procedure path, name, and fullpath found in graphs.json if they need to execute a statement.  The keys in DATAVIEW_ADAPTERS correspond to the url location /datazilla/views/api/test_values.
+The following is an example of a data adapter in the webservice.  Adapters registered in DATAVIEW_ADAPTERS are automatically called with the SQL procedure path, name, and fullpath found in graphs.json assuming the name of the statement matches the key name in DATAVIEW_ADAPTERS.  The keys in DATAVIEW_ADAPTERS correspond to url locations, the example adapter below can be reached at /datazilla/views/api/test_values.
 
 ```python
 def _getTestValues(procPath, procName, fullProcPath, request, gm):
@@ -93,6 +93,7 @@ def _getTestValues(procPath, procName, fullProcPath, request, gm):
    return jsonData
 ```
 
+###UI
 The primary component of the UI is the javascript responsible for the data view behavior, located in datazilla/webapp/media/js/data_views.  The HTML associated with a a single data view is described in datazilla/webapp/templates/graphs.views.html, this HTML data view container is cloned for every new data view inserted into the page and added to a single container div with the id dv_view_container.  This provides a single container that components can use to trigger events on, that all dataviews within the page will subscribe to.
 
 All environment information is stored in datazilla/webapp/conf/etc/sysconfig/[datazilla] [3].  Appropriate system information should be added to the environment variables in this file, then copy it to /etc/sysconfig/datazilla or whatever location is appropriate for your environment.  It needs to be source'd before running any component of the system including command line scripts.
@@ -100,12 +101,6 @@ All environment information is stored in datazilla/webapp/conf/etc/sysconfig/[da
 The environment variable called DATAZILLA_DEBUG, when set to true, causes all scripts and webservice methods to write out the full SQL, execution time, and host name for any database statement executed.  This is handy for debugging any component in the system.
 
 The web application is a django application found in datazilla/webapp/[apps] [4].  
-
-
-###Model
-
-
-###UI
 
 ####Building the Navigation Menu And Defining Data Views
 New data views and collections of dataviews can be defined in the navigation menu  by running the command:
