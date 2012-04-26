@@ -30,17 +30,24 @@ The datazilla model classes rely on a module called [datasource] [5].  This modu
 
 ####Building the Navigation Menu And Defining Data Views
 New data views and collections of dataviews can be defined in the navigation menu  by running the command:
-> python datazilla/webapp/manage.py build_nav
+
+<code>
+   python datazilla/webapp/manage.py build_nav
+</code>
+
 This will read the json file datazilla/webapp/templates/data/[views.json] [7].  This structure is translated into the View Navigation menu available on each data view.  It also contains the definitions for the data views.  The following is a definition of a data view in JSON.
->{ "name":"test_runs",
->  "default_load":1,
->  "read_name":"Runs",
->  "signals":{ "test_run_id":"1", "test_run_data":"1" },
->  "control_panel":"test_selector.html",
->  "data_adapter":"test_selector",
->  "charts":[ { "name":"average_thumbnails", "read_name":"Averages", "default":"1" }, 
->             { "name":"table", "read_name":"Table" } ]
->}
+
+<code>
+   { "name":"test_runs",
+     "default_load":1,
+     "read_name":"Runs",
+     "signals":{ "test_run_id":"1", "test_run_data":"1" },
+     "control_panel":"test_selector.html",
+     "data_adapter":"test_selector",
+     "charts":[ { "name":"average_thumbnails", "read_name":"Averages", "default":"1" }, 
+                { "name":"table", "read_name":"Table" } ]
+   }
+</code>
 
 name: Name of the data view.
 default_load: If this attribute is present, the data view will try to load data when it initializes.
