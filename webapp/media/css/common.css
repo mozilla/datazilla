@@ -1,0 +1,216 @@
+html {
+	font-family: helvetica, arial, sans-serif;
+	font-size: 12px;
+	margin: 20px;
+	margin-left: 220px;
+	overflow: hidden;
+}
+
+a {
+	color: #4292ce;
+	text-decoration: none;
+}
+a:hover {
+	text-decoration: underline;
+}
+
+
+.tickLabel {
+	font-size: 11px;
+	color: #444;
+}
+
+#overview, #plot {
+	cursor: crosshair;
+}
+
+#header, #toolbar, #options, #charts {
+	position: absolute;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	border: 0 solid #000;
+}
+
+#header {
+	background: -moz-linear-gradient(-90deg, #306298, #234375);
+	background: -webkit-gradient(linear, left top, left bottom, from(#306298), to(#234375));
+}
+
+#header h1 a {
+	position: absolute;
+	left: 15px;
+	top: 0;
+	width: 400px;
+	height: 100%;
+	background: url(title.png) no-repeat 0 center;
+}
+
+#header h1 a {
+	background: url("title.png") no-repeat scroll 0 center transparent;
+	height: 100%;
+	left: 15px;
+	position: absolute;
+	top: 0;
+	width: 400px;
+}
+
+#header h1 span {
+    height: 0;
+    overflow: hidden;
+    position: absolute;
+    width: 0;
+}
+
+#header nav {
+	position: absolute;
+	right: 15px;
+	height: 100%;
+}
+#header nav a {
+	display: inline-block;
+	padding: 0 1em;
+	font-size: 14px;
+	line-height: 49px;
+	color: #b3cdff;
+	text-shadow: 0 1px 0 rgba(0,0,0, 1);
+	text-decoration: none;
+}
+#header nav a:hover,
+#header nav a.selected {
+	color: #fff;
+}
+#header nav a.selected {
+	background: url(hd.png) no-repeat center bottom;
+}
+
+#header { left: 0; right: 0; }
+
+#options { left: 0; width: 231px; border-right-width: 1px; }
+
+#header { top: 0; height: 49px; border-bottom-width: 1px; }
+#options { top: 49px; bottom: 0; }
+#toolbar { top: 49px; height: 37px; border-bottom-width: 1px; }
+#charts { top: 86px; bottom: 0; overflow: auto;}
+
+#toolbar {
+	background: -moz-linear-gradient(-90deg, #f8f8f8, #e7e7e7);
+	background: -webkit-gradient(linear, left top, left bottom, from(#f8f8f8), to(#e7e7e7));
+	border-bottom-color: #d0d0d0;
+	padding: 0 10px;
+	line-height: 36px;
+}
+
+#toolbar .group {
+	display: inline-block;
+	line-height: 1;
+	margin-left: 8px;
+}
+
+#toolbar .group:first-child {
+	margin-left: 0;
+}
+
+#toolbar .button, #toolbar .select, .button {
+	display: inline-block;
+	color: #333;
+	border: 1px solid #ccc;
+	border-left-width: 0;
+	background: -moz-linear-gradient(-90deg, #fff, #eee);
+	background: -webkit-gradient(linear, left top, left bottom, from(#fff), to(#eee));
+	padding: 4px 8px;
+	-moz-box-shadow: 0 1px 0 rgba(255,255,255,.5);
+	-webkit-box-shadow: 0 1px 0 rgba(255,255,255,.5);
+	text-shadow: 0 1px 0 rgba(255,255,255,.5);
+	text-decoration: none;
+}
+#toolbar .button.disabled, .button.disabled {
+	color: #c0c0c0;
+	pointer-events: none;
+}
+#toolbar .button:first-child, .button:first-child {
+	border-left-width: 1px;
+	-moz-border-radius-topleft: 4px;
+	-moz-border-radius-bottomleft: 4px;
+	-webkit-border-radius-topleft: 4px;
+	-webkit-border-radius-bottomleft: 4px;
+}
+#toolbar .button:last-child, .button:last-child {
+	-moz-border-radius-topright: 4px;
+	-moz-border-radius-bottomright: 4px;
+	-webkit-border-radius-topright: 4px;
+	-webkit-border-radius-bottomright: 4px;
+}
+.button:hover,
+.button.sbFocus {
+	background: -moz-linear-gradient(-90deg, #fff, #d1dff0);
+	background: -webkit-gradient(linear, left top, left bottom, from(#fff), to(#d1dff0));
+}
+.button:active {
+	background: -moz-linear-gradient(-90deg, #c4d0e0, #d1dff0);
+	background: -webkit-gradient(linear, left top, left bottom, from(#c4d0e0), to(#d1dff0));
+}
+
+#toolbar .button .key {
+	position: relative;
+	top: -2px;
+	padding: 1px 4px;
+	margin-left: 4px;
+	background: rgba(0,0,0,.125);
+	font-size: 9px;
+	-moz-border-radius: 2px;
+	-webkit-border-radius: 2px;
+}
+
+#errors {
+	display: none;
+	position: absolute;
+	width: 260px;
+	right: 10px;
+	top: 10px;
+}
+#errors .error {
+	position: relative;
+	min-height: 32px;
+	padding: 10px;
+	padding-left: 52px;
+	padding-right: 36px;
+	background: rgba(85,0,0, .75) url(error.png) no-repeat 10px 10px;
+	color: #fff;
+	-moz-border-radius: 5px;
+	margin-bottom: 5px;
+}
+#errors .error h3 {
+	font-size: 14px;
+	font-weight: bold;
+	margin-bottom: 2px;
+}
+#errors .error .close {
+	position: absolute;
+	right: 10px;
+	top: 10px;
+	width: 16px;
+	height: 16px;
+	background: url(error-close.png) no-repeat 0 0;
+}
+#errors .error .close:hover {
+	background-position: -16px 0;
+}
+
+.selectBox {
+	position: relative;
+	cursor: pointer;
+}
+.selectBox span:after {
+	content: '\25be';
+	margin-left: .5em;
+}
+.selectBox select {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	opacity: 0;
+	z-index: 1;
+	cursor: pointer;
+}

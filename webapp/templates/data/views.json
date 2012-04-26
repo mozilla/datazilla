@@ -1,0 +1,128 @@
+[
+   "Collections",
+   [ 
+      { "name":"sheriff_duty",
+          "read_name":"Sheriff Duty",
+          "default":1,
+          "collection":[ { "dview":"test_runs", "parent":"" },
+                         { "dview":"test_chart", "parent":"test_runs" },
+                         { "dview":"test_value_summary", "parent":"test_chart" },
+                         { "dview":"page_values", "parent":"test_value_summary" } ]
+      },
+      { "name":"investigator_indiscretions",
+          "read_name":"Investigator Indiscretions",
+          "collection":[ { "dview":"test_runs", "parent":"" },
+                         { "dview":"test_chart", "parent":"test_runs" },
+                         { "dview":"test_value_summary", "parent":"test_chart" },
+                         { "dview":"test_values", "parent":"test_chart" },
+                         { "dview":"page_values", "parent":"test_value_summary" } ]
+      },
+      { "name":"developer_delight",
+          "read_name":"Developer's Delight",
+          "collection":[ { "dview":"test_chart", "parent":"" },
+                         { "dview":"test_value_summary", "parent":"test_chart" },
+                         { "dview":"page_values", "parent":"test_value_summary" } ]
+      },
+      { "name":"test_explorer",
+        "read_name":"Test Table Explorer",
+        "collection":[ { "dview":"test_run", "parent":"" },
+                       { "dview":"test_value", "parent":"test_run" },
+                       { "dview":"test_aux_data", "parent":"test_run" }, 
+                       { "dview":"test_option_values", "parent":"test_run" } ]
+      }                                                                                       
+   ],
+
+   "Talos Test Run Data", 
+   [
+      { "name":"test_runs",
+        "default_load":1,
+        "read_name":"Runs",
+        "signals":{ "test_run_id":"1", "test_run_data":"1" },
+        "control_panel":"test_selector.html",
+        "data_adapter":"test_selector",
+        "charts":[ { "name":"average_thumbnails", "read_name":"Averages", "default":"1" },
+                   { "name":"table", "read_name":"Table" } ] 
+      },
+      { "name":"test_chart",
+        "read_name":"Run Detail",
+
+        "signals":{ "test_run_id":"1", "test_run_data":"1" },
+
+        "control_panel":"test_selector.html",
+        "data_adapter":"test_selector",
+        "charts":[ { "name":"test_chart", "read_name":"Mean Plot", "default":"1" },
+                   { "name":"table", "read_name":"Table" } ] 
+      },
+      { "name":"test_values",
+        "read_name":"All Values",
+        "signals":{ "test_run_id":"1" },
+
+        "control_panel":"test_selector.html",
+        "data_adapter":"test_selector",
+        "charts":[ { "name":"box_plot", "read_name":"Box Plot", "default":"1" },
+                   { "name":"table", "read_name":"Table" } ]
+      },
+      { "name":"test_value_summary",
+        "read_name":"Avg. Values",
+        "signals":{ "test_run_id":"1" },
+        "control_panel":"test_selector.html",
+        "data_adapter":"test_selector",
+        "charts":[ { "name":"scatter_label_plot", "read_name":"Mean Plot", "default":"1" },
+                   { "name":"table", "read_name":"Table" } ]
+      },
+      { "name":"page_values",
+        "read_name":"Page Values",
+        "signals":{ "test_run_id":"1", "page_id":"1" },
+
+        "control_panel":"test_selector.html",
+        "data_adapter":"test_selector",
+        "charts":[ { "name":"side_bars", "read_name":"Bar Chart", "default":"1" },
+                   { "name":"table", "read_name":"Table" } ]
+      }
+
+   ],
+
+   "Test Data Tables", 
+   [  
+      { "name":"test_run",
+        "default_load":1,
+        "read_name":"Test Runs",
+        "signals":{ "test_run_id":"1" },
+        "control_panel":"named_fields.html",
+        "data_adapter":"crashes",
+        "charts":[ { "name":"table", "read_name":"Table", "default":"1" } ] 
+      },
+
+      { "name":"test_value",
+        "read_name":"Test Values",
+        "signals":{ "test_run_id":"1" },
+        "control_panel":"named_fields.html",
+        "data_adapter":"crashes",
+        "charts":[ { "name":"table", "read_name":"Table", "default":"1" } ]
+      },
+   
+      { "name":"test_value",
+        "read_name":"Test Values",
+        "signals":{ "test_run_id":"1" },
+        "control_panel":"named_fields.html",
+        "data_adapter":"crashes",
+        "charts":[ { "name":"table", "read_name":"Table", "default":"1" } ]
+      },
+
+      { "name":"test_option_values",
+        "read_name":"Test Options",
+        "signals":{ "test_run_id":"1" },
+        "control_panel":"named_fields.html",
+        "data_adapter":"crashes",
+        "charts":[ { "name":"table", "read_name":"Table", "default":"1" } ]
+      },
+
+      { "name":"test_aux_data",
+        "read_name":"Auxillary Data",
+        "signals":{ "test_run_id":"1" },
+        "control_panel":"named_fields.html",
+        "data_adapter":"crashes",
+        "charts":[ { "name":"table", "read_name":"Table", "default":"1" } ]
+      }
+   ] 
+]
