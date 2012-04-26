@@ -11,9 +11,49 @@ This is a work in progress and will likely see a number of structural changes.  
 ##Architecture
 At a top level datazilla can be described with three different parts: model, webservice, and UI.
 
-The model layer is found in datazilla/model and provides an interface for getting/setting data in a database.  The datazilla model classes rely on a module called [datasource] [5].  This module encapsulates SQL manipulation.  All of the SQL used by the system is stored in a JSON file found in /datazilla/model/[sql] [6].  There can be any number of SQL files stored in this format.  The JSON structure allows SQL to be stored in named associative arrays that also contain the host type to be associated with each statement.
+###Model
+The model layer is found in datazilla/model and provides an interface for getting/setting data in a database.  The datazilla model classes rely on a module called [datasource] [5].  This module encapsulates SQL manipulation.  All of the SQL used by the system is stored in a JSON file found in /datazilla/model/[sql] [6].  There can be any number of SQL files stored in this format.  The JSON structure allows SQL to be stored in named associative arrays that also contain the host type to be associated with each statement.  Any command line script or webservice method that requires data should use a derived model class to obtain it.
 
-The webservice is a django application and is contained in datazilla/webapp/apps/datazilla.  The interface needs to be formalized further. A global datastructure found in datazilla/webapp/apps/datazilla/views.py called, DATAVIEW_ADAPTERS, maps all data views to a data adapter method and set of fields that correspond to signals the data views can send and receive. 
+```python
+gm = DatazillaModel('graphs.json')
+products = gm.getProductTestOsMap()
+```
+
+The gm.getProductTestOsMap() method looks like
+```python
+   def getProductTestOsMap(self):
+
+      productTuple = self.dhub.execute(proc='graphs.selects.get_product_test_os_map',
+                                       debug_show=self.DEBUG,
+                                       return_type='tuple') 
+
+      return productTuple
+```
+
+graphs.selects.get_product_test_os_map found in datazilla/model/sql/graphs.json looks like
+```json
+   "selects":{
+
+      ...other SQL statements...
+
+      "get_product_test_os_map":{
+
+         "sql":"SELECT b.product_id, tr.test_id, b.operating_system_id 
+                FROM test_run AS tr
+                LEFT JOIN build AS b ON tr.build_id = b.id 
+                WHERE b.product_id IN (
+                  SELECT product_id
+                  FROM product )
+               GROUP BY b.product_id, tr.test_id, b.operating_system_id",
+
+          "host":"master_host"
+      },
+
+```
+The string graphs in graphs.selects.get_product_test_os_map refers to the file name.
+
+###Webservice
+The webservice is a django application and is contained in datazilla/webapp/apps/datazilla.  The interface needs to be formalized further. A global datastructure found in datazilla/webapp/apps/datazilla/views.py called, DATAVIEW_ADAPTERS, maps all data views to a data adapter method and set of fields that correspond to signals the data views can send and receive.  This list of signals is passed to the UI to 
 
 The primary component of the UI is the javascript responsible for the data view behavior, located in datazilla/webapp/media/js/data_views.  The HTML associated with a a single data view is described in datazilla/webapp/templates/graphs.views.html, this HTML data view container is cloned for every new data view inserted into the page and added to a single container div with the id dv_view_container.  This provides a single container that components can use to trigger events on, that all dataviews within the page will subscribe to.
 
