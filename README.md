@@ -52,7 +52,7 @@ graphs.selects.get_product_test_os_map found in datazilla/model/sql/graphs.json 
 ```
 The string, 'graphs', in 'graphs.selects.get_product_test_os_map' refers to the file name.  The SQL in graphs.json can be written with placeholders and a string replacement system, see [datasource] [5] for all of the features available.
 
-If you're thinking why not just use an ORM?  I direct you to [seldo.com] [8] where you will find an excellent answer to your question that I completely agree with.  It has been my experience that ORMs don't scale well with data models that need to scale horizontally.  They also fail to represent relational data accurately in OOP like objects.  If you can represent your data model with objects, then use an object store not an RDBS.
+If you're thinking why not just use an ORM?  I direct you to [seldo.com] [9] where you will find an excellent answer to your question that I completely agree with.  It has been my experience that ORMs don't scale well with data models that need to scale horizontally.  They also fail to represent relational data accurately in OOP like objects.  If you can represent your data model with objects, then use an object store not an RDBS.
 
 The approach used here keeps SQL out of your application and provides re-usability by allowing you to store SQL statements with an assigned name and statement grouping.  If the data structure retrieved from datasource requires further munging it can be managed in the model class, again keeping the application code free of low level database data munging while giving you fine grained control over the SQL execution and optimization. 
 
