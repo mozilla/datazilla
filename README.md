@@ -5,9 +5,6 @@ This project includes a model, webservice, and web based user interface, and eve
 
 This is a work in progress and will likely see a number of structural changes.  It is currently being developed to manage [Talos] [2] test data, a performance testing framework developed by mozilla for testing software products.
 
-[1]: https://wiki.mozilla.org/Auto-tools/Projects/BugHunter  "bughunter"
-[2]: https://wiki.mozilla.org/Buildbot/Talos "Talos"
-
 ##Architecture
 At a top level datazilla can be described with three different parts: model, webservice, and UI.
 
@@ -56,8 +53,6 @@ If you're thinking why not just use an ORM?  I direct you to [seldo.com] [9] whe
 
 The approach used here keeps SQL out of your application and provides re-usability by allowing you to store SQL statements with an assigned name and statement grouping.  If the data structure retrieved from datasource requires further munging it can be managed in the model class, again keeping the application code free of low level database data munging while giving you fine grained control over the SQL execution and optimization. 
 
-[9] http://seldo.com/weblog/2011/08/11/orm_is_an_antipattern [seldo.com]
-
 ###Webservice
 The webservice is a django application and is contained in datazilla/webapp/apps/datazilla.  The interface needs to be formalized further. A global datastructure found in datazilla/webapp/apps/datazilla/views.py called, DATAVIEW_ADAPTERS, maps all data views to a data adapter method and set of fields that correspond to signals the data views can send and receive.  This list of signals is passed to the UI to 
 
@@ -69,13 +64,9 @@ The environment variable called DATAZILLA_DEBUG, when set to true, causes all sc
 
 The web application is a django application found in datazilla/webapp/[apps] [4].  
 
-[3]: https://github.com/jeads/datazilla/blob/master/webapp/conf/etc/sysconfig/datazilla "datazilla"
-[4]: https://github.com/jeads/datazilla/tree/master/webapp/apps/ "apps"
 
 ###Model
 
-[5]: https://github.com/jeads/datasource "datasource"
-[6]: https://github.com/jeads/datazilla/blob/master/model/sql/graphs.json "sql"
 
 ###UI
 
@@ -113,8 +104,6 @@ Attribute Definitions
    }
 ```
 
-[7]: https://github.com/jeads/datazilla/blob/master/webapp/templates/data/views.json "views.json"
-[8]: https://github.com/jeads/datazilla/tree/master/webapp/media/html/control_panels "control_panels"
 
 ####Building the Cached Summaries
 
@@ -202,3 +191,12 @@ This configuration was done on a RHEL6 VM.
    your system and then copy the files to their corresponding locations under /etc.
 
 
+[1]: https://wiki.mozilla.org/Auto-tools/Projects/BugHunter  "bughunter"
+[2]: https://wiki.mozilla.org/Buildbot/Talos "Talos"
+[3]: https://github.com/jeads/datazilla/blob/master/webapp/conf/etc/sysconfig/datazilla "datazilla"
+[4]: https://github.com/jeads/datazilla/tree/master/webapp/apps/ "apps"
+[5]: https://github.com/jeads/datasource "datasource"
+[6]: https://github.com/jeads/datazilla/blob/master/model/sql/graphs.json "sql"
+[7]: https://github.com/jeads/datazilla/blob/master/webapp/templates/data/views.json "views.json"
+[8]: https://github.com/jeads/datazilla/tree/master/webapp/media/html/control_panels "control_panels"
+[9]: http://seldo.com/weblog/2011/08/11/orm_is_an_antipattern "seldo.com"
