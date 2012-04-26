@@ -51,14 +51,15 @@ This will read the json file datazilla/webapp/templates/data/[views.json] [7].  
 
 Attribute Definitions
 
-```
-   name: Name of the data view.
-   default_load: If this attribute is present, the data view will try to load data when it initializes.
-   read_name: Readable name displayed in the UI.
-   signals: List of signal names that the dataview can send and receive.
-   control_panel: The html file name to use as the control panel.  Control panel files are located in datazilla/tree/master/webapp/media/html/[control_panels] [8].
-   data_adapter: The data adapter in 
-   charts: An array of associative arrays that define what type of visualizations the data view can render.
+```json
+   { "name": "Name of the data view",
+     "default_load": "If this attribute is present, the data view will try to load data when it initializes",
+     "read_name": "Readable name displayed in the UI",
+     "signals": "List of signal names that the dataview can send and receive",
+     "control_panel": "The html file name to use as the control panel.  Control panel files are located in datazilla/tree/master/webapp/media/html/control_panels",
+     "data_adapter": "The data adapter in datazilla/webapp/media/js/data_views/DataAdapterCollection.js",
+     "charts": "An array of associative arrays that define what type of visualizations the data view can render"
+   }
 ```
 
 [7]: https://github.com/jeads/datazilla/blob/master/webapp/templates/data/views.json "views.json"
