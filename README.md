@@ -49,12 +49,49 @@ graphs.selects.get_product_test_os_map found in datazilla/model/sql/graphs.json 
 ```
 The string, 'graphs', in 'graphs.selects.get_product_test_os_map' refers to the file name.  The SQL in graphs.json can be written with placeholders and a string replacement system, see [datasource] [5] for all of the features available.
 
-If you're thinking why not just use an ORM?  I direct you to [seldo.com] [9] where you will find an excellent answer to your question that I completely agree with.  It has been my experience that ORMs don't scale well with data models that need to scale horizontally.  They also fail to represent relational data accurately in OOP like objects.  If you can represent your data model with objects, then use an object store not an RDBS.
+If you're thinking why not just use an ORM?  I direct you to [seldo.com] [9] where you will find an excellent answer to your question that I completely agree with.  It has been my experience that ORMs don't scale well with data models that need to scale horizontally.  They also fail to represent relational data accurately in OOP like objects.  If you can represent your data model with objects, then use an object store not an RDBS.  SQL answers questions.  It provides a context-sensitive representation that does not map well to OOP but works great with an API.
 
-The approach used here keeps SQL out of your application and provides re-usability by allowing you to store SQL statements with an assigned name and statement grouping.  If the data structure retrieved from datasource requires further munging it can be managed in the model class, again keeping the application code free of low level database data munging while giving you fine grained control over the SQL execution and optimization. 
+The approach used here keeps SQL out of your application and provides re-usability by allowing you to store SQL statements with an assigned name and statement grouping.  If the data structure retrieved from datasource requires further munging, it can be managed in the model without removing fine grained control over the SQL execution and optimization. 
 
 ###Webservice
-The webservice is a django application and is contained in datazilla/webapp/apps/datazilla.  The interface needs to be formalized further. A global datastructure found in datazilla/webapp/apps/datazilla/views.py called, DATAVIEW_ADAPTERS, maps all data views to a data adapter method and set of fields that correspond to signals the data views can send and receive.  This list of signals is passed to the UI to 
+The webservice is a django application that is contained in datazilla/webapp/apps/datazilla.  The interface needs to be formalized further. A global datastructure found in datazilla/webapp/apps/datazilla/views.py called, DATAVIEW_ADAPTERS, maps all data views to a data adapter method and set of fields that correspond to signals the data views can send and receive.  This list of signals is passed to the UI as JSON embedded in a hidden input element.  There is a single dataview method that manages traversal of DATAVIEW_ADAPTERS, and provides default behavior for the dataview service. 
+
+```python
+DATAVIEW_ADAPTERS = { ##Flat tables SQL##
+                      'test_run':{},
+                      'test_value':{ 'fields':[ 'test_run_id', ] },
+                      'test_option_values':{ 'fields':[ 'test_run_id', ] },
+                      'test_aux_data':{ 'fields':[ 'test_run_id', ] },
+
+                      ##API only##
+                      'get_test_ref_data':{ 'adapter':_getTestReferenceData},
+
+                      ##Visualization Tools##
+                      'test_runs':{ 'adapter':_getTestRunSummary, 'fields':['test_run_id', 'test_run_data'] },
+
+                      'test_chart':{ 'adapter':_getTestRunSummary, 'fields':['test_run_id', 'test_run_data'] },
+                      
+                      'test_values':{ 'adapter':_getTestValues, 'fields':['test_run_id'] }, 
+
+                      'page_values':{ 'adapter':_getPageValues, 'fields':['test_run_id', 'page_id'] }, 
+
+                      'test_value_summary':{ 'adapter':_getTestValueSummary, 'fields':['test_run_id'] } }
+```
+
+The following is an example of a data adapter in the webservice.  Adapters registered in DATAVIEW_ADAPTERS are automatically called with the SQL procedure path, name, and fullpath found in graphs.json if they need to execute a statement.  The keys in DATAVIEW_ADAPTERS correspond to the url location /datazilla/views/api/test_values.
+
+```python
+def _getTestValues(procPath, procName, fullProcPath, request, gm):
+
+   data = {};
+
+   if 'test_run_id' in request.GET:
+      data = gm.getTestRunValues( request.GET['test_run_id'] )
+
+   jsonData = json.dumps( data )
+
+   return jsonData
+```
 
 The primary component of the UI is the javascript responsible for the data view behavior, located in datazilla/webapp/media/js/data_views.  The HTML associated with a a single data view is described in datazilla/webapp/templates/graphs.views.html, this HTML data view container is cloned for every new data view inserted into the page and added to a single container div with the id dv_view_container.  This provides a single container that components can use to trigger events on, that all dataviews within the page will subscribe to.
 
