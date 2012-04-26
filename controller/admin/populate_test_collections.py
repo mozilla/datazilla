@@ -27,7 +27,7 @@ def loadTestCollection():
 
 if __name__ == '__main__':
 
-   usage = """usage: %prog [options] --load --verbose"""
+   usage = """usage: %prog [options] --load"""
    parser = OptionParser(usage=usage)
 
    parser.add_option('-l', 
