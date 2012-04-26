@@ -37,7 +37,7 @@ New data views and collections of dataviews can be defined in the navigation men
 
 This will read the json file datazilla/webapp/templates/data/[views.json] [7].  This structure is translated into the View Navigation menu available on each data view.  It also contains the definitions for the data views.  The following is a definition of a data view in JSON.
 
-```
+```json
    { "name":"test_runs",
      "default_load":1,
      "read_name":"Runs",
