@@ -31,9 +31,9 @@ The datazilla model classes rely on a module called [datasource] [5].  This modu
 ####Building the Navigation Menu And Defining Data Views
 New data views and collections of dataviews can be defined in the navigation menu  by running the command:
 
-<code>
+```
    python datazilla/webapp/manage.py build_nav
-</code>
+```
 
 This will read the json file datazilla/webapp/templates/data/[views.json] [7].  This structure is translated into the View Navigation menu available on each data view.  It also contains the definitions for the data views.  The following is a definition of a data view in JSON.
 
@@ -49,13 +49,17 @@ This will read the json file datazilla/webapp/templates/data/[views.json] [7].  
    }
 ```
 
-name: Name of the data view.
-default_load: If this attribute is present, the data view will try to load data when it initializes.
-read_name: Readable name displayed in the UI.
-signals: List of signal names that the dataview can send and receive.
-control_panel: The html file name to use as the control panel.  Control panel files are located in datazilla/tree/master/webapp/media/html/[control_panels] [8].
-data_adapter: The data adapter in 
-charts: An array of associative arrays that define what type of visualizations the data view can render.
+Attribute Definitions
+
+```
+   name: Name of the data view.
+   default_load: If this attribute is present, the data view will try to load data when it initializes.
+   read_name: Readable name displayed in the UI.
+   signals: List of signal names that the dataview can send and receive.
+   control_panel: The html file name to use as the control panel.  Control panel files are located in datazilla/tree/master/webapp/media/html/[control_panels] [8].
+   data_adapter: The data adapter in 
+   charts: An array of associative arrays that define what type of visualizations the data view can render.
+```
 
 [7]: https://github.com/jeads/datazilla/blob/master/webapp/templates/data/views.json "views.json"
 [8]: https://github.com/jeads/datazilla/tree/master/webapp/media/html/control_panels "control_panels"
