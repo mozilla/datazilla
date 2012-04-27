@@ -30,9 +30,7 @@ The ```gm.getProductTestOsMap()``` method looks like
 ```graphs.selects.get_product_test_os_map``` found in [datazilla/model/sql/graphs.json](https://github.com/jeads/datazilla/blob/master/model/sql/graphs.json) looks like
 ```json
 {
-   "selects":{
-
-      "...other SQL statements..."
+   "selects":{  
 
       "get_product_test_os_map":{
 
@@ -46,6 +44,8 @@ The ```gm.getProductTestOsMap()``` method looks like
 
           "host":"master_host"
       },
+      
+      "...more SQL statements..."
 }
 ```
 The string, ```graphs```, in ```graphs.selects.get_product_test_os_map``` refers to the SQL file name to load in [/datazilla/model/sql](https://github.com/jeads/datazilla/tree/master/model/sql).  The SQL in graphs.json can also be written with placeholders and a string replacement system, see [datasource] [5] for all of the features available.
@@ -112,7 +112,7 @@ New data views and collections of dataviews can be defined in the navigation men
 
 This will read the json file [/datazilla/webapp/templates/data/views.json](https://github.com/jeads/datazilla/blob/master/webapp/templates/data/views.json) and generate two files from it: [nav_menu.html](https://github.com/jeads/datazilla/blob/master/webapp/media/html/nav_menu.html) and [graphs.navlookup.html](https://github.com/jeads/datazilla/blob/master/webapp/templates/graphs.navlookup.html). 
 
-A sample dataview from [/datazilla/webapp/templates/data/views.json](https://github.com/jeads/datazilla/blob/master/webapp/templates/data/views.json) is shown below:
+A sample dataview from [views.json](https://github.com/jeads/datazilla/blob/master/webapp/templates/data/views.json) is shown below:
 
 ```json
    { "name":"test_runs",
@@ -211,15 +211,17 @@ The javascript responsible for the data view behavior is located in [/datazilla/
 
 This HTML data view container is cloned for every new data view inserted into the page.  It's added to a single container ```div``` with the id ```dv_view_container```.  This provides a single container that components can use to trigger events on, that all data views within the page will subscribe to.
 
-
 ####Javascript
 
 #####Class Structures
 The javascript that implements the user interface is constructed using a page/component/collection pattern thingy... whatever that means.  Seriously though, the pattern was found to be very useful in separating out the required functionality.  A description of how it all works is provided below.  The goal was to isolate the parts of a data view that are unique and provide a straight forward way for a developer to modify the content displayed for a data view and also provide any unique controls for it without having to deal with any of the core data view code in [DataViewComponent.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataViewComponent.js) or [DataViewCollection.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataViewCollection.js).
-The two modules that are relevant for extending the javascript with a new visualization or control for a data view are:
+The two modules that are relevant for extending the javascript with a new visualization or control for a data view are: [DataAdapterCollection.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataAdapterCollection.js) and [VisualizationCollection.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/VisualizationCollection.js).
 
+[DataAdapterCollection.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataAdapterCollection.js) provides an interface to write a custom adapter for data coming into a data view and also provide custom processing for the control panel associated with a data view.
 
+[VisualizationCollection.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/VisualizationCollection.js) provides a collection of visualization adapters that can be associated with any data view.
 
+The interface for accomplishing these tasks needs to be solidified and then a straightforward way of adding a new class that extends both collections added.  The collections provided in the existing classes will provide a set of stock control panels and visualizations to use.  If a developer wants to add new content to a data view that requires a new control panel or visualization they should be able to do this by adding a new javascript file with appropriate collection extensions.  This is interface needs to be developed a bit further to get to this point.
 ######Page
 Manages the DOM ready event, implements any top level initialization that's required for the page.  An instance of the page class is the only global variable that other components can access, if they're playing nice.  The page class instance is responsible for instantiating components and storing them in attributes.  The page class also holds any data structures that need to be globally accessible to component classes. 
 
