@@ -27,7 +27,7 @@ The '''gm.getProductTestOsMap()''' method looks like
       return productTuple
 ```
 
-'''graphs.selects.get_product_test_os_map''' found in datazilla/model/sql/graphs.json looks like
+```graphs.selects.get_product_test_os_map``` found in [datazilla/model/sql/graphs.json](https://github.com/jeads/datazilla/blob/master/model/sql/graphs.json) looks like
 ```json
    "selects":{
 
@@ -47,7 +47,7 @@ The '''gm.getProductTestOsMap()''' method looks like
       },
 
 ```
-The string, '''graphs''', in '''graphs.selects.get_product_test_os_map''' refers to the SQL file name to load in [/datazilla/model/sql](https://github.com/jeads/datazilla/tree/master/model/sql).  The SQL in graphs.json can be written with placeholders and a string replacement system, see [datasource] [5] for all of the features available.
+The string, ```graphs```, in ```graphs.selects.get_product_test_os_map``` refers to the SQL file name to load in [/datazilla/model/sql](https://github.com/jeads/datazilla/tree/master/model/sql).  The SQL in graphs.json can be written with placeholders and a string replacement system, see [datasource] [5] for all of the features available.
 
 If you're thinking why not just use an ORM?  I direct you to [seldo.com] [9] where you will find an excellent answer to your question that I completely agree with.  It has been my experience that ORMs don't scale well with data models that need to scale horizontally.  They also fail to represent relational data accurately in OOP like objects.  If you can represent your data model with objects, then use an object store not an RDBS.  SQL answers questions.  It provides a context-sensitive representation that does not map well to OOP but works great with an API.
 
