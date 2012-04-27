@@ -211,9 +211,7 @@ The javascript responsible for the data view behavior is located in [/datazilla/
 
 This HTML data view container is cloned for every new data view inserted into the page.  It's added to a single container ```div``` with the id ```dv_view_container```.  This provides a single container that components can use to trigger events on, that all data views within the page will subscribe to.
 
-####Javascript
-
-#####Class Structures
+####Javascript Design Patterns And Class Structures
 The javascript that implements the user interface is constructed using a page/component/collection pattern thingy... whatever that means.  Seriously though, the pattern was found to be very useful in separating out the required functionality.  A description of how it all works is provided below.  The goal was to isolate the parts of a data view that are unique and provide a straight forward way for a developer to modify the content displayed for a data view without having to deal with any of the core data view code in [DataViewComponent.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataViewComponent.js) or [DataViewCollection.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataViewCollection.js).
 The two modules that are relevant for extending the javascript with a new visualization or control for a data view are: [DataAdapterCollection.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataAdapterCollection.js) and [VisualizationCollection.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/VisualizationCollection.js).
 
@@ -222,6 +220,7 @@ The two modules that are relevant for extending the javascript with a new visual
 [VisualizationCollection.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/VisualizationCollection.js) provides a collection of visualization adapters that can be associated with any data view.
 
 The interface for accomplishing these tasks needs to be solidified and then a straightforward way of adding a new class that extends both collections added.  The collections provided in the existing classes will provide a set of stock control panels and visualizations to use.  If a developer wants to add new content to a data view that requires a new control panel or visualization they should be able to do this by adding a new javascript file with appropriate collection extensions.  This is interface needs to be developed a bit further to get to this point.
+
 #####Page
 Manages the DOM ready event, implements any top level initialization that's required for the page.  An instance of the page class is the only global variable that other components can access, if they're playing nice.  The page class instance is responsible for instantiating components and storing them in attributes.  The page class also holds any data structures that need to be globally accessible to component classes. 
 
@@ -243,33 +242,33 @@ This is not a complete file or class listing but is intended to give a top level
 ######[DataViewPage.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataViewPage.js) 
 DataViewPage Class - Manages the DOM ready event, component initialization, and retrieval of the views.json structure that is used by different components.
 
-######Bases.js
+######[Bases.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/Bases.js)
 Design Pattern Base Classes - Contains the base classes for Page, Component, Model, View etc...
                                                                   
-######DataViewComponent.js 
-DataViewComponent Class - Encapsulates the behavior of a single data view using a model/view and provides a public interface for data view functionality.  Manages event binding and registration.
+######[DataViewComponent.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataViewComponent.js)
+```DataViewComponent``` Class that encapsulates the behavior of a single data view using a model/view and provides a public interface for data view functionality.  Manages event binding and registration.
 
-DVViewView Class - Encapsulates all DOM interaction required by a data view.
+```DataViewView``` Class that encapsulates all DOM interaction required by a data view.
 
-BHViewModel Class - Encapsulates asynchronous server communication and data structure manipulation/retrieval.
+```DataViewModel``` Class that encapsulates asynchronous server communication and data structure manipulation/retrieval.
 
-#######DataViewCollection.js 
+######[DataViewCollection.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataViewCollection.js)
 
-DataViewCollection Class - Manages operations on a collection of data views using a model/view including instantiating view collections.  
+```DataViewCollection``` Class that manages operations on a collection of data views using a model/view including instantiating view collections.  
 
-DataViewCollectionView Class - Encapsulates all DOM interaction required by the collection.
+```DataViewCollectionView``` Class that encapsulates all DOM interaction required by the collection.
 
-DataViewCollectionModel Class - Provides an interface to the datastructures holding all data views and their associated parent/child relationships.
+```DataViewCollectionModel``` Class that provides an interface to the datastructures holding all data views and their associated parent/child relationships.
 
-#######DataAdapterCollection.js
+######[DataAdapterCollection.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataAdapterCollection.js)
 
-DataAdapterCollection Class - Collection of DataViewAdapter class instances. 
+```DataAdapterCollection``` Class provides a collection of DataViewAdapter class instances. 
 
-DataViewAdapter Class - Base class for all DataViewAdapters.  Manages shared view idiosyncratic behavior like what fields go in the control panel and how to populate/retrieve them for signaling behavior.
+```DataViewAdapter``` A Base class for all DataViewAdapters.  Manages shared view idiosyncratic behavior like what fields go in the control panel and how to populate/retrieve them for signaling behavior.
 
-CrashesAdapter Class - Derived class of DataViewAdapter.  Encapsulates unique behavior for crash data views.
+```CrashesAdapter``` A derived class of DataViewAdapter.  Encapsulates unique behavior for crash data views.
 
-UrlAdapter Class - Derived class of DataViewAdapter. Encapsulates unique behavior for views containing URL summaries.
+```UrlAdapter``` A derived class of DataViewAdapter. Encapsulates unique behavior for views containing URL summaries.
 
 ##Installation
 1. Add system info to appropriate files in datazilla/webapp/conf/etc.  Copy the files to there appropriate location under /etc.
