@@ -16,7 +16,7 @@ gm = DatazillaModel('graphs.json')
 products = gm.getProductTestOsMap()
 ```
 
-The '''gm.getProductTestOsMap()''' method looks like
+The ```gm.getProductTestOsMap()``` method looks like
 ```python
    def getProductTestOsMap(self):
 
