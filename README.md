@@ -153,7 +153,7 @@ The test run data is cached in JSON structures for every platform and test combi
 }
 ```
 
-This data structure is currently stored in a table in the database, this will probably get moved to a key/value object store like HBase as this project progresses.  It needs to persist if memcached is rebooted.  It currently takes several minutes to generate all of the combinatorial possiblities, this generation time will begin to take longer as the data grows.
+This data structure is currently stored in a table in the database, this will probably get moved to a key/value object store like HBase as this project progresses.  It needs to persist if memcached is rebooted.  It currently takes several minutes to generate all of the combinatorial possiblities, this generation time will begin to take longer as the data grows.  To build and cache this data use [/datazilla/controller/admin/populate_summary_cache.py](https://github.com/jeads/datazilla/blob/master/controller/admin/populate_summary_cache.py).
 
 To build the json structures and store them in the database, run:
 ```
