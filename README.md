@@ -240,10 +240,10 @@ A class for managing a collection of Components or classes of any type.  A colle
 This is not a complete file or class listing but is intended to give a top level description of the design pattern thingy of the data view javascript and what the basic functional responsibility of the pages/components/collections are.
 
 ######[DataViewPage.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataViewPage.js) 
-DataViewPage Class - Manages the DOM ready event, component initialization, and retrieval of the views.json structure that is used by different components.
+```DataViewPage``` A class that manages the DOM ready event, component initialization, and retrieval of the views.json structure that is used by different components.
 
 ######[Bases.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/Bases.js)
-Design Pattern Base Classes - Contains the base classes for Page, Component, Model, View etc...
+Contains the base classes for Page, Component, Model, View etc...
                                                                   
 ######[DataViewComponent.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataViewComponent.js)
 ```DataViewComponent``` Class that encapsulates the behavior of a single data view using a model/view and provides a public interface for data view functionality.  Manages event binding and registration.
