@@ -93,7 +93,7 @@ def _getTestValues(procPath, procName, fullProcPath, request, gm):
    return jsonData
 ```
 
-All environment variables required by datazilla are stored in a single file located in [/datazilla/webapp/conf/etc/sysconfig)](https://github.com/jeads/datazilla/blob/master/webapp/conf/etc/sysconfig/). There is a single environment variable, ```DATAZILLA_DEBUG```, that can be used to turn on debugging options across all command line scripts and the django webservice.  When set, the following message will be written to stdout in the server log or from a command line script with any SQL executed.
+All environment variables required by datazilla are stored in a single file located in [/datazilla/webapp/conf/etc/sysconfig](https://github.com/jeads/datazilla/blob/master/webapp/conf/etc/sysconfig/). There is a single environment variable, ```DATAZILLA_DEBUG```, that can be used to turn on debugging options across all command line scripts and the django webservice.  When set, the following message will be written to the server log or to stdout, if executing a command line script whenever SQL is executed in the application.
 
 ```
 datasource.hubs.MySQL.MySQL debug message:
