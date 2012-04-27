@@ -228,11 +228,11 @@ var AverageThumbnails = new Class({
                      }else{
                         var data = aggregateData['data'][productId][testId][osId];
 
-                        //REMOVE BEFORE RELEASE: This is for the demo data
+                        //If there are less than 5 data points pad the data so we can
+                        //draw a full tile to maintain grid alignment and insure there is
+                        //enough clickable space for the user to access
                         if(data.average.length <= 5){
                            for(var j=0; j<10; j++){
-                              //data.average.push( parseFloat(data.average[0] || 0)+20*Math.random() );
-                              //data.standard_deviation.push( parseFloat(data.standard_deviation[0] || 0) + Math.random() );
                               data.average.push( parseFloat(data.average[0] || 0) );
                               data.standard_deviation.push( parseFloat(data.standard_deviation[0] || 0) );
                            }
@@ -616,12 +616,6 @@ var ScatterPlot = new Class({
             this.datasets[ key ] = { data:this._getAdaptedDataStruct(),
                                      label:label, 
                                      xvalue:0,
-
-/*
-                                     cb_values:{ mean:{ value:true, index:[0] },
-                                                 std:{ value:true, index:[1,2] },
-                                                 minmax:{ value:false, index:[3,4] } },
- */
 
                                      key_data:{ product_id:productId,
                                                 test_id:testId,
@@ -1650,7 +1644,6 @@ var SideBarPlot = new Class({
       this.plot.unhighlight();
    },
    _formatXTick: function(tickNumber, tickObject){
-console.log( ['tickNumber', tickNumber] );
       return this.xLabelTextTag + parseInt( tickNumber );
    }
 
