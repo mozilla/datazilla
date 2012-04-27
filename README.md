@@ -104,6 +104,7 @@ datasource.hubs.MySQL.MySQL debug message:
 
 ###User Interface
 The javascript responsible for the data view behavior is located in [/datazilla/webapp/media/js/data_views](https://github.com/jeads/datazilla/tree/master/webapp/media/js/data_views).  The HTML associated with a single data view is described in [/datazilla/webapp/templates/graphs.views.html](https://github.com/jeads/datazilla/blob/master/webapp/templates/graphs.views.html).  
+
 This HTML data view container is cloned for every new data view inserted into the page.  It's added to a single container ```div``` with the id ```dv_view_container```.  This provides a single container that components can use to trigger events on, that all data views within the page will subscribe to.
 
 ####Building the Navigation Menu And Defining Data Views
@@ -113,7 +114,7 @@ New data views and collections of dataviews can be defined in the navigation men
    python datazilla/webapp/manage.py build_nav
 ```
 
-This will read the json file [datazilla/webapp/templates/data/views.json](https://github.com/jeads/datazilla/blob/master/webapp/templates/data/views.json).  This structure is translated into the View Navigation menu available on each data view.  It also contains the definitions for the data views.  The example below illustrates a definition of a data view in JSON.
+This will read the json file [/datazilla/webapp/templates/data/views.json](https://github.com/jeads/datazilla/blob/master/webapp/templates/data/views.json) and generate two files from it: [nav_menu.html](https://github.com/jeads/datazilla/blob/master/webapp/media/html/nav_menu.html) and [graphs.navlookup.html](https://github.com/jeads/datazilla/blob/master/webapp/templates/graphs.navlookup.html). 
 
 ```json
    { "name":"test_runs",
@@ -139,9 +140,11 @@ The attribute in this JSON structure are defined below:
      "charts": "An array of associative arrays that define what type of visualizations the data view can render"
    }
 ```
+[nav_menu.html](https://github.com/jeads/datazilla/blob/master/webapp/media/html/nav_menu.html) contains a ```<ul>lots of stuff</ul>``` that all data views use for a navigation menu.
 
-The build_nav command to manage.py parses the ```views.json``` file and creates an HTML ```<ul>lots of stuff</ul>``` element that is written to [nav_menu.html](https://github.com/jeads/datazilla/blob/master/webapp/media/html/nav_menu.html).  All data views present this navigation menu to the user.
-In addition to the navigation menu, build_nav, writes out an HTML element ```<input type="hidden">JSON Associative Array</input>``` that 
+[graphs.navlookup.html](https://github.com/jeads/datazilla/blob/master/webapp/templates/graphs.navlookup.html) contains an HTML element ```<input type="hidden">JSON Associative Array</input>``` that is deserialized into an object that looks like this:
+
+
 ####Building the Cached Summaries
 
 
