@@ -9,7 +9,7 @@ This is a work in progress and will likely see a number of structural changes.  
 At a top level datazilla can be described with three different parts: model, webservice, and UI.
 
 ###Model
-The model layer found in [datazilla/model](datazilla/model) and provides an interface for getting/setting data in a database.  The datazilla model classes rely on a module called [datasource] [5].  This module encapsulates SQL manipulation.  All of the SQL used by the system is stored in a JSON file found in /datazilla/model/[sql] [6].  There can be any number of SQL files stored in this format.  The JSON structure allows SQL to be stored in named associative arrays that also contain the host type to be associated with each statement.  Any command line script or webservice method that requires data should use a derived model class to obtain it.
+The model layer found in [datazilla/model](https://github.com/jeads/datazilla/tree/master/model) and provides an interface for getting/setting data in a database.  The datazilla model classes rely on a module called [datasource] [5].  This module encapsulates SQL manipulation.  All of the SQL used by the system is stored in a JSON file found in /datazilla/model/[sql] [6].  There can be any number of SQL files stored in this format.  The JSON structure allows SQL to be stored in named associative arrays that also contain the host type to be associated with each statement.  Any command line script or webservice method that requires data should use a derived model class to obtain it.
 
 ```python
 gm = DatazillaModel('graphs.json')
