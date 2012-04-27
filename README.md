@@ -97,7 +97,7 @@ All environment variables required by datazilla are stored in a single file loca
 
 ```
 datasource.hubs.MySQL.MySQL debug message:
-   host:s4n4.qa.phx1.mozilla.com db:graphs_exp host_type:master_host proc:graphs.selects.get_test_run_summary
+   host:hostname.somewhere.com db:db_name host_type:master_host proc:graphs.selects.get_test_run_summary
       Executing SQL:SELECT tr.id AS 'test_run_id', tr.revision, tr.date_run, b.product_id, tr.test_id, b.operating_system_id, ROUND( AVG(tv.value), 2 ) AS average, ROUND( MIN(tv.value), 2 ) AS min, ROUND( MAX(tv.value), 2 ) AS max, ROUND( STDDEV(tv.value), 2 ) AS 'standard_deviation', ROUND( VARIANCE(tv.value), 2 ) AS variance FROM test_run AS tr LEFT JOIN test_value AS tv ON tr.id = tv.test_run_id LEFT JOIN build AS b ON tr.build_id = b.id WHERE (tr.date_run >= '1334855411' AND tr.date_run <= '1335460211') AND b.product_id IN (46) GROUP BY tr.id, tr.revision, b.product_id, tr.test_id, b.operating_system_id ORDER BY tr.date_run, tr.test_id ASC
    Execution Time:4.1700e-01 sec
 ```
