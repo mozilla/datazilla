@@ -236,7 +236,9 @@ A component's model manages any asynchronous data retrieval and large data struc
 #####Collection
 A class for managing a collection of Components or classes of any type.  A collection can also have a model/view if appropriate.
 
-#####Client Application [datazilla/webapp/media/js/data_views](https://github.com/jeads/datazilla/tree/master/webapp/media/js/data_views)
+#####Client Application 
+
+All of the client application javascript for data views is contained in [datazilla/webapp/media/js/data_views](https://github.com/jeads/datazilla/tree/master/webapp/media/js/data_views).
 This is not a complete file or class listing but is intended to give a top level description of the design pattern thingy of the data view javascript and what the basic functional responsibility of the pages/components/collections are.
 
 ######[DataViewPage.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataViewPage.js) 
