@@ -6,10 +6,10 @@ This project includes a model, webservice, and web based user interface, and eve
 This is a work in progress and will likely see a number of structural changes.  It is currently being developed to manage [Talos] [2] test data, a performance testing framework developed by mozilla for testing software products.
 
 ##Architecture
-At a top level datazilla can be described with three different parts: model, webservice, and UI.
+At a top level datazilla consists of three different parts: model, webservice, and UI.
 
 ###Model
-The model layer found in [datazilla/model](https://github.com/jeads/datazilla/tree/master/model) provides an interface for getting/setting data in a database.  The datazilla model classes rely on a module called [datasource] [5].  This module encapsulates SQL manipulation.  All of the SQL used by the system is stored in a JSON file found in [/datazilla/model/sql](https://github.com/jeads/datazilla/blob/master/model/sql/graphs.json).  There can be any number of SQL files stored in this format.  The JSON structure allows SQL to be stored in named associative arrays that also contain the host type to be associated with each statement.  Any command line script or webservice method that requires data should use a derived model class to obtain it.
+The model layer found in [/datazilla/model](https://github.com/jeads/datazilla/tree/master/model) provides an interface for getting/setting data in a database.  The datazilla model classes rely on a module called [datasource] [5].  This module encapsulates SQL manipulation.  All of the SQL used by the system is stored in a JSON file found in [/datazilla/model/sql](https://github.com/jeads/datazilla/blob/master/model/sql/graphs.json).  There can be any number of SQL files stored in this format.  The JSON structure allows SQL to be stored in named associative arrays that also contain the host type to be associated with each statement.  Any command line script or webservice method that requires data should use a derived model class to obtain it.
 
 ```python
 gm = DatazillaModel('graphs.json')
@@ -47,14 +47,14 @@ The ```gm.getProductTestOsMap()``` method looks like
       },
 
 ```
-The string, ```graphs```, in ```graphs.selects.get_product_test_os_map``` refers to the SQL file name to load in [/datazilla/model/sql](https://github.com/jeads/datazilla/tree/master/model/sql).  The SQL in graphs.json can be written with placeholders and a string replacement system, see [datasource] [5] for all of the features available.
+The string, ```graphs```, in ```graphs.selects.get_product_test_os_map``` refers to the SQL file name to load in [/datazilla/model/sql](https://github.com/jeads/datazilla/tree/master/model/sql).  The SQL in graphs.json can also be written with placeholders and a string replacement system, see [datasource] [5] for all of the features available.
 
 If you're thinking why not just use an ORM?  I direct you to [seldo.com] [9] where you will find an excellent answer to your question that I completely agree with.  It has been my experience that ORMs don't scale well with data models that need to scale horizontally.  They also fail to represent relational data accurately in OOP like objects.  If you can represent your data model with objects, then use an object store not an RDBS.  SQL answers questions.  It provides a context-sensitive representation that does not map well to OOP but works great with an API.
 
 The approach used here keeps SQL out of your application and provides re-usability by allowing you to store SQL statements with an assigned name and statement grouping.  If the data structure retrieved from datasource requires further munging, it can be managed in the model without removing fine grained control over the SQL execution and optimization. 
 
 ###Webservice
-The webservice is a django application that is contained in [datazilla/webapp/apps/datazilla](https://github.com/jeads/datazilla/tree/master/webapp/apps).  The interface needs to be formalized further. A global datastructure found in [datazilla/webapp/apps/datazilla/views.py](https://github.com/jeads/datazilla/blob/master/webapp/apps/datazilla/views.py) called, ```DATAVIEW_ADAPTERS```, maps all data views to a data adapter method and set of fields that correspond to signals the data views can send and receive.  This list of signals is passed to the UI as JSON embedded in a hidden input element.  There is a single dataview method that manages traversal of ```DATAVIEW_ADAPTERS```, and provides default behavior for the dataview service. 
+The webservice is a django application that is contained in [/datazilla/webapp/apps/datazilla](https://github.com/jeads/datazilla/tree/master/webapp/apps).  The interface needs to be formalized further. A global datastructure found in [/datazilla/webapp/apps/datazilla/views.py](https://github.com/jeads/datazilla/blob/master/webapp/apps/datazilla/views.py) called, ```DATAVIEW_ADAPTERS```, maps all data views to a data adapter method and set of fields that correspond to signals the data views can send and receive.  This list of signals is passed to the UI as JSON embedded in a hidden input element.  There is a single dataview method that manages traversal of ```DATAVIEW_ADAPTERS```, and provides default behavior for the dataview service. 
 
 ```python
 DATAVIEW_ADAPTERS = { ##Flat tables SQL##
@@ -78,7 +78,7 @@ DATAVIEW_ADAPTERS = { ##Flat tables SQL##
                       'test_value_summary':{ 'adapter':_getTestValueSummary, 'fields':['test_run_id'] } }
 ```
 
-The following is an example of a data adapter in the webservice.  Adapters registered in DATAVIEW_ADAPTERS are automatically called with the SQL procedure path, name, and fullpath found in graphs.json assuming the name of the statement matches the key name in DATAVIEW_ADAPTERS.  The keys in DATAVIEW_ADAPTERS correspond to url locations, the example adapter below can be reached at /datazilla/views/api/test_values.
+The following is an example of a data adapter in the webservice.  Adapters registered in ```DATAVIEW_ADAPTERS``` are automatically called with the SQL procedure path, name, and fullpath found in graphs.json assuming the name of the statement matches the key name in ```DATAVIEW_ADAPTERS```.  The keys in ```DATAVIEW_ADAPTERS``` correspond to url locations, the example adapter below can be reached at /datazilla/views/api/test_values.
 
 ```python
 def _getTestValues(procPath, procName, fullProcPath, request, gm):
@@ -93,14 +93,17 @@ def _getTestValues(procPath, procName, fullProcPath, request, gm):
    return jsonData
 ```
 
+All environment variables required by datazilla are stored in a single file located in [/datazilla/webapp/conf/etc/sysconfig)](https://github.com/jeads/datazilla/blob/master/webapp/conf/etc/sysconfig/). There is a single environment variable, ```DATAZILLA_DEBUG```, that can be used to turn on debugging options across all command line scripts and the django webservice.  When set, the following message will be written to stdout in the server log or from a command line script with any SQL executed.
+
+```
+datasource.hubs.MySQL.MySQL debug message:
+   host:s4n4.qa.phx1.mozilla.com db:graphs_exp host_type:master_host proc:graphs.selects.get_test_run_summary
+      Executing SQL:SELECT tr.id AS 'test_run_id', tr.revision, tr.date_run, b.product_id, tr.test_id, b.operating_system_id, ROUND( AVG(tv.value), 2 ) AS average, ROUND( MIN(tv.value), 2 ) AS min, ROUND( MAX(tv.value), 2 ) AS max, ROUND( STDDEV(tv.value), 2 ) AS 'standard_deviation', ROUND( VARIANCE(tv.value), 2 ) AS variance FROM test_run AS tr LEFT JOIN test_value AS tv ON tr.id = tv.test_run_id LEFT JOIN build AS b ON tr.build_id = b.id WHERE (tr.date_run >= '1334855411' AND tr.date_run <= '1335460211') AND b.product_id IN (46) GROUP BY tr.id, tr.revision, b.product_id, tr.test_id, b.operating_system_id ORDER BY tr.date_run, tr.test_id ASC
+   Execution Time:4.1700e-01 sec
+```
+
 ###UI
-The primary component of the UI is the javascript responsible for the data view behavior, located in datazilla/webapp/media/js/data_views.  The HTML associated with a a single data view is described in datazilla/webapp/templates/graphs.views.html, this HTML data view container is cloned for every new data view inserted into the page and added to a single container div with the id dv_view_container.  This provides a single container that components can use to trigger events on, that all dataviews within the page will subscribe to.
-
-All environment information is stored in datazilla/webapp/conf/etc/sysconfig/[datazilla] [3].  Appropriate system information should be added to the environment variables in this file, then copy it to /etc/sysconfig/datazilla or whatever location is appropriate for your environment.  It needs to be source'd before running any component of the system including command line scripts.
-
-The environment variable called DATAZILLA_DEBUG, when set to true, causes all scripts and webservice methods to write out the full SQL, execution time, and host name for any database statement executed.  This is handy for debugging any component in the system.
-
-The web application is a django application found in datazilla/webapp/[apps] [4].  
+The primary component of the UI is the javascript responsible for the data view behavior, located in [/datazilla/webapp/media/js/data_views](https://github.com/jeads/datazilla/tree/master/webapp/media/js/data_views).  The HTML associated with a a single data view is described in [/datazilla/webapp/templates/graphs.views.html](https://github.com/jeads/datazilla/blob/master/webapp/templates/graphs.views.html), this HTML data view container is cloned for every new data view inserted into the page and added to a single container div with the id dv_view_container.  This provides a single container that components can use to trigger events on, that all dataviews within the page will subscribe to.
 
 ####Building the Navigation Menu And Defining Data Views
 New data views and collections of dataviews can be defined in the navigation menu  by running the command:
