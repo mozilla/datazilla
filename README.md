@@ -29,9 +29,8 @@ The ```gm.getProductTestOsMap()``` method looks like
 
 ```graphs.selects.get_product_test_os_map``` found in [datazilla/model/sql/graphs.json](https://github.com/jeads/datazilla/blob/master/model/sql/graphs.json) looks like
 ```json
-   "selects":{
-
-      ##...other SQL statements...##
+{
+   "selects":{  
 
       "get_product_test_os_map":{
 
@@ -45,7 +44,9 @@ The ```gm.getProductTestOsMap()``` method looks like
 
           "host":"master_host"
       },
-
+      
+      "...more SQL statements..."
+}
 ```
 The string, ```graphs```, in ```graphs.selects.get_product_test_os_map``` refers to the SQL file name to load in [/datazilla/model/sql](https://github.com/jeads/datazilla/tree/master/model/sql).  The SQL in graphs.json can also be written with placeholders and a string replacement system, see [datasource] [5] for all of the features available.
 
@@ -54,7 +55,7 @@ If you're thinking why not just use an ORM?  I direct you to [seldo.com] [9] whe
 The approach used here keeps SQL out of your application and provides re-usability by allowing you to store SQL statements with an assigned name and statement grouping.  If the data structure retrieved from datasource requires further munging, it can be managed in the model without removing fine grained control over the SQL execution and optimization. 
 
 ###Web Service
-The web service is a django application, found in [/datazilla/webapp/apps/datazilla](https://github.com/jeads/datazilla/tree/master/webapp/apps).  The interface needs to be formalized further. A global datastructure found in [/datazilla/webapp/apps/datazilla/views.py](https://github.com/jeads/datazilla/blob/master/webapp/apps/datazilla/views.py) called, ```DATAVIEW_ADAPTERS```, maps all data views to a data adapter method and set of fields that correspond to signals the data views can send and receive.  This list of signals is passed to the UI as JSON embedded in a hidden input element.  There is a single dataview method that manages traversal of ```DATAVIEW_ADAPTERS```, and provides default behavior for the dataview service. 
+The web service is a django application, found in [/datazilla/webapp/apps/datazilla](https://github.com/jeads/datazilla/tree/master/webapp/apps).  The interface needs to be formalized further. A global datastructure, found in [/datazilla/webapp/apps/datazilla/views.py](https://github.com/jeads/datazilla/blob/master/webapp/apps/datazilla/views.py) called, ```DATAVIEW_ADAPTERS```, maps all data views to a data adapter method and set of fields that correspond to signals the data views can send and receive.  This list of signals is passed to the UI as JSON embedded in a hidden input element.  There is a single data view method that manages traversal of ```DATAVIEW_ADAPTERS```, and provides default behavior for the data view service. 
 
 ```python
 DATAVIEW_ADAPTERS = { ##Flat tables SQL##
@@ -102,10 +103,6 @@ datasource.hubs.MySQL.MySQL debug message:
    Execution Time:4.1700e-01 sec
 ```
 
-###User Interface
-The primary component of the UI is the javascript responsible for the data view behavior, located in [/datazilla/webapp/media/js/data_views](https://github.com/jeads/datazilla/tree/master/webapp/media/js/data_views).  The HTML associated with a a single data view is described in [/datazilla/webapp/templates/graphs.views.html](https://github.com/jeads/datazilla/blob/master/webapp/templates/graphs.views.html).  
-This HTML data view container is cloned for every new data view inserted into the page.  It's added to a single container div with the id dv_view_container.  This provides a single container that components can use to trigger events on, that all dataviews within the page will subscribe to.
-
 ####Building the Navigation Menu And Defining Data Views
 New data views and collections of dataviews can be defined in the navigation menu  by running the command:
 
@@ -113,11 +110,13 @@ New data views and collections of dataviews can be defined in the navigation men
    python datazilla/webapp/manage.py build_nav
 ```
 
-This will read the json file datazilla/webapp/templates/data/[views.json] [7].  This structure is translated into the View Navigation menu available on each data view.  It also contains the definitions for the data views.  The following is a definition of a data view in JSON.
+This will read the json file [/datazilla/webapp/templates/data/views.json](https://github.com/jeads/datazilla/blob/master/webapp/templates/data/views.json) and generate two files from it: [nav_menu.html](https://github.com/jeads/datazilla/blob/master/webapp/media/html/nav_menu.html) and [graphs.navlookup.html](https://github.com/jeads/datazilla/blob/master/webapp/templates/graphs.navlookup.html). 
+
+A sample dataview from [views.json](https://github.com/jeads/datazilla/blob/master/webapp/templates/data/views.json) is shown below:
 
 ```json
    { "name":"test_runs",
-     "default_load":1,
+     "default_load":"1",
      "read_name":"Runs",
      "signals":{ "test_run_id":"1", "test_run_data":"1" },
      "control_panel":"test_selector.html",
@@ -127,7 +126,7 @@ This will read the json file datazilla/webapp/templates/data/[views.json] [7].  
    }
 ```
 
-Attribute Definitions
+The attributes in this JSON structure are defined below:
 
 ```json
    { "name": "Name of the data view",
@@ -139,41 +138,115 @@ Attribute Definitions
      "charts": "An array of associative arrays that define what type of visualizations the data view can render"
    }
 ```
+[nav_menu.html](https://github.com/jeads/datazilla/blob/master/webapp/media/html/nav_menu.html) contains a ```<ul>lots of stuff</ul>``` that all data views use for a navigation menu.
 
+[graphs.navlookup.html](https://github.com/jeads/datazilla/blob/master/webapp/templates/graphs.navlookup.html) contains an HTML element ```<input type="hidden">JSON Associative Array</input>``` that is deserialized into an associative array where the keys are all of the unique data view names and the values are the data view objects found in [/datazilla/webapp/templates/data/views.json](https://github.com/jeads/datazilla/blob/master/webapp/templates/data/views.json).  This gives access to the data view configurations in the javascript environment.  It is used to configure the user interface, to reduce server calls it's embedded in the page when it loads.
 
 ####Building the Cached Summaries
+The test run data is cached in JSON structures for every platform and test combination for 7 day and 30 day time periods.  An example datastructure is depicted below:
 
+```json
+{
+    "data": [
+        {
+            "date_run": "1334863012",
+            "product_id": "18",
+            "operating_system_id": "27",
+            "min": "2084.49",
+            "max": "8478.53",
+            "average": "3830.88",
+            "test_run_id": "56455",
+            "standard_deviation": "2122.99",
+            "variance": "4507101.82",
+            "test_id": "12",
+            "revision": "ac3ea3b31fe0"
+        },
+        {
+            "date_run": "1334863012",
+            "product_id": "18",
+            "operating_system_id": "27",
+            "min": "86.83",
+            "max": "205.52",
+            "average": "132.76",
+            "test_run_id": "56450",
+            "standard_deviation": "42.91",
+            "variance": "1841.13",
+            "test_id": "20",
+            "revision": "ac3ea3b31fe0"
+        },
+        
+        "...lots more data objects..."
+        
+   ],
+    "columns": [
+        "test_run_id",
+        "revision",
+        "date_run",
+        "product_id",
+        "test_id",
+        "operating_system_id",
+        "average",
+        "min",
+        "max",
+        "standard_deviation",
+        "variance"
+    ]
+}
+```
 
-####JS
+This data structure is currently stored in a table in the database, this will probably get moved to a key/value object store like HBase as this project progresses.  It needs to persist if memcached is rebooted.  It currently takes several minutes to generate all of the combinatorial possiblities, this generation time will begin to take longer as the data grows.  To build and cache this data use [/datazilla/controller/admin/populate_summary_cache.py](https://github.com/jeads/datazilla/blob/master/controller/admin/populate_summary_cache.py).
+
+To build the json structures and store them in the database, run:
+```
+python /datazilla/controller/admin/populate_summary_cache.py --build
+```
+
+To cache the structures in memcached, run:
+```
+python /datazilla/controller/admin/populate_summary_cache.py --cache
+```
+
+###User Interface
+The javascript responsible for the data view behavior is located in [/datazilla/webapp/media/js/data_views](https://github.com/jeads/datazilla/tree/master/webapp/media/js/data_views).  The HTML associated with a single data view is described in [/datazilla/webapp/templates/graphs.views.html](https://github.com/jeads/datazilla/blob/master/webapp/templates/graphs.views.html).  
+
+This HTML data view container is cloned for every new data view inserted into the page.  It's added to a single container ```div``` with the id ```dv_view_container```.  This provides a single container that components can use to trigger events on, that all data views within the page will subscribe to.
+
+####Javascript
 
 #####Class Structures
-The javascript that implements the user interface is constructed using a page/component/collection pattern thingy... whatever that means.  This pattern was found to be very useful in separating out the required functionality, below is a brief definition of what that means in the data view UI architecture.
+The javascript that implements the user interface is constructed using a page/component/collection pattern thingy... whatever that means.  Seriously though, the pattern was found to be very useful in separating out the required functionality.  A description of how it all works is provided below.  The goal was to isolate the parts of a data view that are unique and provide a straight forward way for a developer to modify the content displayed for a data view without having to deal with any of the core data view code in [DataViewComponent.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataViewComponent.js) or [DataViewCollection.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataViewCollection.js).
+The two modules that are relevant for extending the javascript with a new visualization or control for a data view are: [DataAdapterCollection.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataAdapterCollection.js) and [VisualizationCollection.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/VisualizationCollection.js).
 
-######Page
+[DataAdapterCollection.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataAdapterCollection.js) provides an interface to write a custom adapter for data coming into a data view and also provide custom processing for the control panel associated with a data view.
+
+[VisualizationCollection.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/VisualizationCollection.js) provides a collection of visualization adapters that can be associated with any data view.
+
+The interface for accomplishing these tasks needs to be solidified and then a straightforward way of adding a new class that extends both collections added.  The collections provided in the existing classes will provide a set of stock control panels and visualizations to use.  If a developer wants to add new content to a data view that requires a new control panel or visualization they should be able to do this by adding a new javascript file with appropriate collection extensions.  This is interface needs to be developed a bit further to get to this point.
+#####Page
 Manages the DOM ready event, implements any top level initialization that's required for the page.  An instance of the page class is the only global variable that other components can access, if they're playing nice.  The page class instance is responsible for instantiating components and storing them in attributes.  The page class also holds any data structures that need to be globally accessible to component classes. 
 
-######Component
+#####Component
 Contains the public interface of the component.  A component can encapsulate any functional subset/unit provided in a page.  The component will typically have an instance of a View and Model class.  The component class is also responsible for any required event binding.
 
-######View
+#####View
 A component's view class manages interfacing with the DOM. Any CSS class names or HTML id's are defined as attributes of the view.  Any HTML element modification is controlled with this class.
 
-######Model
+#####Model
 A component's model manages any asynchronous data retrieval and large data structure manipulation.
 
-######Collection
+#####Collection
 A class for managing a collection of Components or classes of any type.  A collection can also have a model/view if appropriate.
 
-######Client Application (datazilla/webapp/media/js/data_views)
+#####Client Application [datazilla/webapp/media/js/data_views](https://github.com/jeads/datazilla/tree/master/webapp/media/js/data_views)
 This is not a complete file or class listing but is intended to give a top level description of the design pattern thingy of the data view javascript and what the basic functional responsibility of the pages/components/collections are.
 
-#######DataViewPage.js 
+######[DataViewPage.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataViewPage.js) 
 DataViewPage Class - Manages the DOM ready event, component initialization, and retrieval of the views.json structure that is used by different components.
 
-#######Bases.js
+######Bases.js
 Design Pattern Base Classes - Contains the base classes for Page, Component, Model, View etc...
                                                                   
-#######DataViewComponent.js 
+######DataViewComponent.js 
 DataViewComponent Class - Encapsulates the behavior of a single data view using a model/view and provides a public interface for data view functionality.  Manages event binding and registration.
 
 DVViewView Class - Encapsulates all DOM interaction required by a data view.
@@ -192,11 +265,11 @@ DataViewCollectionModel Class - Provides an interface to the datastructures hold
 
 DataAdapterCollection Class - Collection of DataViewAdapter class instances. 
 
-BHViewAdapter Class - Base class for all BHViewAdapters.  Manages shared view idiosyncratic behavior like what fields go in the control panel and how to populate/retrieve them for signaling behavior.
+DataViewAdapter Class - Base class for all DataViewAdapters.  Manages shared view idiosyncratic behavior like what fields go in the control panel and how to populate/retrieve them for signaling behavior.
 
-CrashesAdapter Class - Derived class of BHViewAdapter.  Encapsulates unique behavior for crash data views.
+CrashesAdapter Class - Derived class of DataViewAdapter.  Encapsulates unique behavior for crash data views.
 
-UrlAdapter Class - Derived class of BHViewAdapter. Encapsulates unique behavior for views containing URL summaries.
+UrlAdapter Class - Derived class of DataViewAdapter. Encapsulates unique behavior for views containing URL summaries.
 
 ##Installation
 1. Add system info to appropriate files in datazilla/webapp/conf/etc.  Copy the files to there appropriate location under /etc.
