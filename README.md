@@ -102,6 +102,46 @@ datasource.hubs.MySQL.MySQL debug message:
    Executing SQL:SELECT tr.id AS 'test_run_id', tr.revision, tr.date_run, b.product_id, tr.test_id, b.operating_system_id, ROUND( AVG(tv.value), 2 ) AS average, ROUND( MIN(tv.value), 2 ) AS min, ROUND( MAX(tv.value), 2 ) AS max, ROUND( STDDEV(tv.value), 2 ) AS 'standard_deviation', ROUND( VARIANCE(tv.value), 2 ) AS variance FROM test_run AS tr LEFT JOIN test_value AS tv ON tr.id = tv.test_run_id LEFT JOIN build AS b ON tr.build_id = b.id WHERE (tr.date_run >= '1334855411' AND tr.date_run <= '1335460211') AND b.product_id IN (46) GROUP BY tr.id, tr.revision, b.product_id, tr.test_id, b.operating_system_id ORDER BY tr.date_run, tr.test_id ASC
    Execution Time:4.1700e-01 sec
 ```
+
+####Building the Navigation Menu And Defining Data Views
+New data views and collections of dataviews can be defined in the navigation menu  by running the command:
+
+```
+   python datazilla/webapp/manage.py build_nav
+```
+
+This will read the json file [/datazilla/webapp/templates/data/views.json](https://github.com/jeads/datazilla/blob/master/webapp/templates/data/views.json) and generate two files from it: [nav_menu.html](https://github.com/jeads/datazilla/blob/master/webapp/media/html/nav_menu.html) and [graphs.navlookup.html](https://github.com/jeads/datazilla/blob/master/webapp/templates/graphs.navlookup.html). 
+
+A sample dataview from [/datazilla/webapp/templates/data/views.json](https://github.com/jeads/datazilla/blob/master/webapp/templates/data/views.json) is shown below:
+
+```json
+   { "name":"test_runs",
+     "default_load":"1",
+     "read_name":"Runs",
+     "signals":{ "test_run_id":"1", "test_run_data":"1" },
+     "control_panel":"test_selector.html",
+     "data_adapter":"test_selector",
+     "charts":[ { "name":"average_thumbnails", "read_name":"Averages", "default":"1" }, 
+                { "name":"table", "read_name":"Table" } ]
+   }
+```
+
+The attributes in this JSON structure are defined below:
+
+```json
+   { "name": "Name of the data view",
+     "default_load": "If this attribute is present, the data view will try to load data when it initializes",
+     "read_name": "Readable name displayed in the UI",
+     "signals": "List of signal names that the dataview can send and receive",
+     "control_panel": "The html file name to use as the control panel.  Control panel files are located in datazilla/tree/master/webapp/media/html/control_panels",
+     "data_adapter": "The data adapter in datazilla/webapp/media/js/data_views/DataAdapterCollection.js",
+     "charts": "An array of associative arrays that define what type of visualizations the data view can render"
+   }
+```
+[nav_menu.html](https://github.com/jeads/datazilla/blob/master/webapp/media/html/nav_menu.html) contains a ```<ul>lots of stuff</ul>``` that all data views use for a navigation menu.
+
+[graphs.navlookup.html](https://github.com/jeads/datazilla/blob/master/webapp/templates/graphs.navlookup.html) contains an HTML element ```<input type="hidden">JSON Associative Array</input>``` that is deserialized into an associative array where the keys are all of the unique data view names and the values are the data view objects found in [/datazilla/webapp/templates/data/views.json](https://github.com/jeads/datazilla/blob/master/webapp/templates/data/views.json).  This gives access to the data view configurations in the javascript environment.  It is used to configure the user interface, to reduce server calls it's embedded in the page when it loads.
+
 ####Building the Cached Summaries
 The test run data is cached in JSON structures for every platform and test combination for 7 day and 30 day time periods.  An example datastructure is depicted below:
 
@@ -165,45 +205,6 @@ To cache the structures in memcached, run:
 ```
 python /datazilla/controller/admin/populate_summary_cache.py --cache
 ```
-####Building the Navigation Menu And Defining Data Views
-New data views and collections of dataviews can be defined in the navigation menu  by running the command:
-
-```
-   python datazilla/webapp/manage.py build_nav
-```
-
-This will read the json file [/datazilla/webapp/templates/data/views.json](https://github.com/jeads/datazilla/blob/master/webapp/templates/data/views.json) and generate two files from it: [nav_menu.html](https://github.com/jeads/datazilla/blob/master/webapp/media/html/nav_menu.html) and [graphs.navlookup.html](https://github.com/jeads/datazilla/blob/master/webapp/templates/graphs.navlookup.html). 
-
-A sample dataview from [/datazilla/webapp/templates/data/views.json](https://github.com/jeads/datazilla/blob/master/webapp/templates/data/views.json) is shown below:
-
-```json
-   { "name":"test_runs",
-     "default_load":"1",
-     "read_name":"Runs",
-     "signals":{ "test_run_id":"1", "test_run_data":"1" },
-     "control_panel":"test_selector.html",
-     "data_adapter":"test_selector",
-     "charts":[ { "name":"average_thumbnails", "read_name":"Averages", "default":"1" }, 
-                { "name":"table", "read_name":"Table" } ]
-   }
-```
-
-The attributes in this JSON structure are defined below:
-
-```json
-   { "name": "Name of the data view",
-     "default_load": "If this attribute is present, the data view will try to load data when it initializes",
-     "read_name": "Readable name displayed in the UI",
-     "signals": "List of signal names that the dataview can send and receive",
-     "control_panel": "The html file name to use as the control panel.  Control panel files are located in datazilla/tree/master/webapp/media/html/control_panels",
-     "data_adapter": "The data adapter in datazilla/webapp/media/js/data_views/DataAdapterCollection.js",
-     "charts": "An array of associative arrays that define what type of visualizations the data view can render"
-   }
-```
-[nav_menu.html](https://github.com/jeads/datazilla/blob/master/webapp/media/html/nav_menu.html) contains a ```<ul>lots of stuff</ul>``` that all data views use for a navigation menu.
-
-[graphs.navlookup.html](https://github.com/jeads/datazilla/blob/master/webapp/templates/graphs.navlookup.html) contains an HTML element ```<input type="hidden">JSON Associative Array</input>``` that is deserialized into an associative array where the keys are all of the unique data view names and the values are the data view objects found in [/datazilla/webapp/templates/data/views.json](https://github.com/jeads/datazilla/blob/master/webapp/templates/data/views.json).  This gives access to the data view configurations in the javascript environment.  It is used to configure the user interface, to reduce server calls it's embedded in the page when it loads.
-
 
 ###User Interface
 The javascript responsible for the data view behavior is located in [/datazilla/webapp/media/js/data_views](https://github.com/jeads/datazilla/tree/master/webapp/media/js/data_views).  The HTML associated with a single data view is described in [/datazilla/webapp/templates/graphs.views.html](https://github.com/jeads/datazilla/blob/master/webapp/templates/graphs.views.html).  
