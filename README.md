@@ -31,7 +31,7 @@ The ```gm.getProductTestOsMap()``` method looks like
 ```json
    "selects":{
 
-      ##...other SQL statements...##
+      ...other SQL statements...
 
       "get_product_test_os_map":{
 
@@ -104,7 +104,7 @@ datasource.hubs.MySQL.MySQL debug message:
 ####Building the Cached Summaries
 The test run data is cached in JSON structures for every platform and test combination for 7 day and 30 day time periods.  An example datastructure is depicted below:
 
-```
+```json
 {
     "data": [
         {
@@ -213,7 +213,10 @@ This HTML data view container is cloned for every new data view inserted into th
 ####Javascript
 
 #####Class Structures
-The javascript that implements the user interface is constructed using a page/component/collection pattern thingy... whatever that means.  This pattern was found to be very useful in separating out the required functionality, below is a brief definition of what that means in the data view UI architecture.
+The javascript that implements the user interface is constructed using a page/component/collection pattern thingy... whatever that means.  Seriously though, the pattern was found to be very useful in separating out the required functionality.  A description of how it all works is provided below.  The goal was to isolate the parts of a data view that are unique and provide a straight forward way for a developer to modify the content displayed for a data view and also provide any unique controls for it without having to deal with any of the core data view code in [DataViewComponent.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataViewComponent.js) or [DataViewCollection.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataViewCollection.js).
+The two modules that are relevant for extending the javascript with a new visualization or control for a data view are:
+
+
 
 ######Page
 Manages the DOM ready event, implements any top level initialization that's required for the page.  An instance of the page class is the only global variable that other components can access, if they're playing nice.  The page class instance is responsible for instantiating components and storing them in attributes.  The page class also holds any data structures that need to be globally accessible to component classes. 
@@ -258,11 +261,11 @@ DataViewCollectionModel Class - Provides an interface to the datastructures hold
 
 DataAdapterCollection Class - Collection of DataViewAdapter class instances. 
 
-BHViewAdapter Class - Base class for all BHViewAdapters.  Manages shared view idiosyncratic behavior like what fields go in the control panel and how to populate/retrieve them for signaling behavior.
+DataViewAdapter Class - Base class for all DataViewAdapters.  Manages shared view idiosyncratic behavior like what fields go in the control panel and how to populate/retrieve them for signaling behavior.
 
-CrashesAdapter Class - Derived class of BHViewAdapter.  Encapsulates unique behavior for crash data views.
+CrashesAdapter Class - Derived class of DataViewAdapter.  Encapsulates unique behavior for crash data views.
 
-UrlAdapter Class - Derived class of BHViewAdapter. Encapsulates unique behavior for views containing URL summaries.
+UrlAdapter Class - Derived class of DataViewAdapter. Encapsulates unique behavior for views containing URL summaries.
 
 ##Installation
 1. Add system info to appropriate files in datazilla/webapp/conf/etc.  Copy the files to there appropriate location under /etc.
