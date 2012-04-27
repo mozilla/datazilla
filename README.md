@@ -29,9 +29,10 @@ The ```gm.getProductTestOsMap()``` method looks like
 
 ```graphs.selects.get_product_test_os_map``` found in [datazilla/model/sql/graphs.json](https://github.com/jeads/datazilla/blob/master/model/sql/graphs.json) looks like
 ```json
+{
    "selects":{
 
-      ...other SQL statements...
+      "...other SQL statements..."
 
       "get_product_test_os_map":{
 
@@ -45,7 +46,7 @@ The ```gm.getProductTestOsMap()``` method looks like
 
           "host":"master_host"
       },
-
+}
 ```
 The string, ```graphs```, in ```graphs.selects.get_product_test_os_map``` refers to the SQL file name to load in [/datazilla/model/sql](https://github.com/jeads/datazilla/tree/master/model/sql).  The SQL in graphs.json can also be written with placeholders and a string replacement system, see [datasource] [5] for all of the features available.
 
@@ -108,33 +109,33 @@ The test run data is cached in JSON structures for every platform and test combi
 {
     "data": [
         {
-            "date_run": 1334863012,
-            "product_id": 18,
-            "operating_system_id": 27,
-            "min": 2084.49,
-            "max": 8478.53,
-            "average": 3830.88,
-            "test_run_id": 56455,
-            "standard_deviation": 2122.99,
-            "variance": 4507101.82,
-            "test_id": 12,
+            "date_run": "1334863012",
+            "product_id": "18",
+            "operating_system_id": "27",
+            "min": "2084.49",
+            "max": "8478.53",
+            "average": "3830.88",
+            "test_run_id": "56455",
+            "standard_deviation": "2122.99",
+            "variance": "4507101.82",
+            "test_id": "12",
             "revision": "ac3ea3b31fe0"
         },
         {
-            "date_run": 1334863012,
-            "product_id": 18,
-            "operating_system_id": 27,
-            "min": 86.83,
-            "max": 205.52,
-            "average": 132.76,
-            "test_run_id": 56450,
-            "standard_deviation": 42.91,
-            "variance": 1841.13,
-            "test_id": 20,
+            "date_run": "1334863012",
+            "product_id": "18",
+            "operating_system_id": "27",
+            "min": "86.83",
+            "max": "205.52",
+            "average": "132.76",
+            "test_run_id": "56450",
+            "standard_deviation": "42.91",
+            "variance": "1841.13",
+            "test_id": "20",
             "revision": "ac3ea3b31fe0"
         },
         
-        ...lots more data objects...
+        "...lots more data objects..."
         
    ],
     "columns": [
@@ -177,7 +178,7 @@ A sample dataview from [/datazilla/webapp/templates/data/views.json](https://git
 
 ```json
    { "name":"test_runs",
-     "default_load":1,
+     "default_load":"1",
      "read_name":"Runs",
      "signals":{ "test_run_id":"1", "test_run_data":"1" },
      "control_panel":"test_selector.html",
