@@ -5,10 +5,6 @@ This project includes a model, web service, and web based user interface, and ev
 
 This is a work in progress and will likely see a number of structural changes.  It is currently being developed to manage [Talos] [2] test data, a performance testing framework developed by mozilla for testing software products.
 
-A data view looks something like this:
-
-![Data View](/jeads/datazilla/blob/master/webapp/media/images/dataview1.png)
-
 ##Architecture
 At a top level datazilla consists of three components: [Model](https://github.com/jeads/datazilla#model), [Web Service](https://github.com/jeads/datazilla#web-service), and [User Interface](https://github.com/jeads/datazilla#user-interface).
 
