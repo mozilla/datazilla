@@ -164,12 +164,6 @@ To cache the structures in memcached, run:
 ```
 python /datazilla/controller/admin/populate_summary_cache.py --cache
 ```
-
-###User Interface
-The javascript responsible for the data view behavior is located in [/datazilla/webapp/media/js/data_views](https://github.com/jeads/datazilla/tree/master/webapp/media/js/data_views).  The HTML associated with a single data view is described in [/datazilla/webapp/templates/graphs.views.html](https://github.com/jeads/datazilla/blob/master/webapp/templates/graphs.views.html).  
-
-This HTML data view container is cloned for every new data view inserted into the page.  It's added to a single container ```div``` with the id ```dv_view_container```.  This provides a single container that components can use to trigger events on, that all data views within the page will subscribe to.
-
 ####Building the Navigation Menu And Defining Data Views
 New data views and collections of dataviews can be defined in the navigation menu  by running the command:
 
@@ -210,7 +204,13 @@ The attributes in this JSON structure are defined below:
 [graphs.navlookup.html](https://github.com/jeads/datazilla/blob/master/webapp/templates/graphs.navlookup.html) contains an HTML element ```<input type="hidden">JSON Associative Array</input>``` that is deserialized into an associative array where the keys are all of the unique data view names and the values are the data view objects found in [/datazilla/webapp/templates/data/views.json](https://github.com/jeads/datazilla/blob/master/webapp/templates/data/views.json).  This gives access to the data view configurations in the javascript environment.  It is used to configure the user interface, to reduce server calls it's embedded in the page when it loads.
 
 
-####JS
+###User Interface
+The javascript responsible for the data view behavior is located in [/datazilla/webapp/media/js/data_views](https://github.com/jeads/datazilla/tree/master/webapp/media/js/data_views).  The HTML associated with a single data view is described in [/datazilla/webapp/templates/graphs.views.html](https://github.com/jeads/datazilla/blob/master/webapp/templates/graphs.views.html).  
+
+This HTML data view container is cloned for every new data view inserted into the page.  It's added to a single container ```div``` with the id ```dv_view_container```.  This provides a single container that components can use to trigger events on, that all data views within the page will subscribe to.
+
+
+####Javascript
 
 #####Class Structures
 The javascript that implements the user interface is constructed using a page/component/collection pattern thingy... whatever that means.  This pattern was found to be very useful in separating out the required functionality, below is a brief definition of what that means in the data view UI architecture.
