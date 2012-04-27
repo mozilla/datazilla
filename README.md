@@ -54,7 +54,7 @@ If you're thinking why not just use an ORM?  I direct you to [seldo.com] [9] whe
 The approach used here keeps SQL out of your application and provides re-usability by allowing you to store SQL statements with an assigned name and statement grouping.  If the data structure retrieved from datasource requires further munging, it can be managed in the model without removing fine grained control over the SQL execution and optimization. 
 
 ###Web Service
-The web service is a django application, found in [/datazilla/webapp/apps/datazilla](https://github.com/jeads/datazilla/tree/master/webapp/apps).  The interface needs to be formalized further. A global datastructure found in [/datazilla/webapp/apps/datazilla/views.py](https://github.com/jeads/datazilla/blob/master/webapp/apps/datazilla/views.py) called, ```DATAVIEW_ADAPTERS```, maps all data views to a data adapter method and set of fields that correspond to signals the data views can send and receive.  This list of signals is passed to the UI as JSON embedded in a hidden input element.  There is a single dataview method that manages traversal of ```DATAVIEW_ADAPTERS```, and provides default behavior for the dataview service. 
+The web service is a django application, found in [/datazilla/webapp/apps/datazilla](https://github.com/jeads/datazilla/tree/master/webapp/apps).  The interface needs to be formalized further. A global datastructure, found in [/datazilla/webapp/apps/datazilla/views.py](https://github.com/jeads/datazilla/blob/master/webapp/apps/datazilla/views.py) called, ```DATAVIEW_ADAPTERS```, maps all data views to a data adapter method and set of fields that correspond to signals the data views can send and receive.  This list of signals is passed to the UI as JSON embedded in a hidden input element.  There is a single data view method that manages traversal of ```DATAVIEW_ADAPTERS```, and provides default behavior for the data view service. 
 
 ```python
 DATAVIEW_ADAPTERS = { ##Flat tables SQL##
@@ -130,7 +130,7 @@ A sample dataview from [/datazilla/webapp/templates/data/views.json](https://git
    }
 ```
 
-The attribute in this JSON structure are defined below:
+The attributes in this JSON structure are defined below:
 
 ```json
    { "name": "Name of the data view",
@@ -144,12 +144,62 @@ The attribute in this JSON structure are defined below:
 ```
 [nav_menu.html](https://github.com/jeads/datazilla/blob/master/webapp/media/html/nav_menu.html) contains a ```<ul>lots of stuff</ul>``` that all data views use for a navigation menu.
 
-[graphs.navlookup.html](https://github.com/jeads/datazilla/blob/master/webapp/templates/graphs.navlookup.html) contains an HTML element ```<input type="hidden">JSON Associative Array</input>``` that is deserialized into an associative array where the keys are all of the unique data view names and the values are the data view objects found in [/datazilla/webapp/templates/data/views.json](https://github.com/jeads/datazilla/blob/master/webapp/templates/data/views.json).  This gives access to the data view configurations in the javascript environment.
+[graphs.navlookup.html](https://github.com/jeads/datazilla/blob/master/webapp/templates/graphs.navlookup.html) contains an HTML element ```<input type="hidden">JSON Associative Array</input>``` that is deserialized into an associative array where the keys are all of the unique data view names and the values are the data view objects found in [/datazilla/webapp/templates/data/views.json](https://github.com/jeads/datazilla/blob/master/webapp/templates/data/views.json).  This gives access to the data view configurations in the javascript environment.  It is used to configure the user interface, to reduce server calls it's embedded in the page when it loads.
 
 
 ####Building the Cached Summaries
+The test run data is cached in JSON structures for every platform and test combination for 7 day and 30 day time periods.  An example datastructure is depicted below:
 
+```
+{
+    "data": [
+        {
+            "date_run": 1334863012,
+            "product_id": 18,
+            "operating_system_id": 27,
+            "min": 2084.49,
+            "max": 8478.53,
+            "average": 3830.88,
+            "test_run_id": 56455,
+            "standard_deviation": 2122.99,
+            "variance": 4507101.82,
+            "test_id": 12,
+            "revision": "ac3ea3b31fe0"
+        },
+        {
+            "date_run": 1334863012,
+            "product_id": 18,
+            "operating_system_id": 27,
+            "min": 86.83,
+            "max": 205.52,
+            "average": 132.76,
+            "test_run_id": 56450,
+            "standard_deviation": 42.91,
+            "variance": 1841.13,
+            "test_id": 20,
+            "revision": "ac3ea3b31fe0"
+        },
+        
+        ...lots more data objects...
+        
+   ],
+    "columns": [
+        "test_run_id",
+        "revision",
+        "date_run",
+        "product_id",
+        "test_id",
+        "operating_system_id",
+        "average",
+        "min",
+        "max",
+        "standard_deviation",
+        "variance"
+    ]
+}
+```
 
+This data structure is currently stored in a table in the database, this will probably get moved to a key/value object store like HBase as this project progresses.  It needs to persist if memcached is rebooted.  It currently takes several minutes to generate all of the combinatorial possiblities, this generation time will begin to take longer as the data grows.
 ####JS
 
 #####Class Structures
