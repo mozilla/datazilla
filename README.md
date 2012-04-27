@@ -241,12 +241,12 @@ A class for managing a collection of Components or classes of any type.  A colle
 All of the client application javascript for data views is contained in [datazilla/webapp/media/js/data_views](https://github.com/jeads/datazilla/tree/master/webapp/media/js/data_views).
 This is not a complete file or class listing but is intended to give a top level description of the design pattern thingy of the data view javascript and what the basic functional responsibility of the pages/components/collections are.
 
+######[Bases.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/Bases.js)
+Contains the base classes for Page, Component, Model, View etc...
+
 ######[DataViewPage.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataViewPage.js) 
 ```DataViewPage``` A class that manages the DOM ready event, component initialization, and retrieval of the views.json structure that is used by different components.
 
-######[Bases.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/Bases.js)
-Contains the base classes for Page, Component, Model, View etc...
-                                                                  
 ######[DataViewComponent.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataViewComponent.js)
 ```DataViewComponent``` Class that encapsulates the behavior of a single data view using a model/view and provides a public interface for data view functionality.  Manages event binding and registration.
 
@@ -268,9 +268,11 @@ Contains the base classes for Page, Component, Model, View etc...
 
 ```DataViewAdapter``` A Base class for all DataViewAdapters.  Manages shared view idiosyncratic behavior like what fields go in the control panel and how to populate/retrieve them for signaling behavior.
 
-```CrashesAdapter``` A derived class of DataViewAdapter.  Encapsulates unique behavior for crash data views.
+######[VisualizationCollection.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/VisualizationCollection.js)
 
-```UrlAdapter``` A derived class of DataViewAdapter. Encapsulates unique behavior for views containing URL summaries.
+```VisualizationCollection``` Class provides a collection of Visualization class instances.
+
+```Visualization``` Base class for derived visualization classes.
 
 ##Installation
 1. Add system info to appropriate files in datazilla/webapp/conf/etc.  Copy the files to there appropriate location under /etc.
