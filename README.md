@@ -6,7 +6,7 @@ This project includes a model, webservice, and web based user interface, and eve
 This is a work in progress and will likely see a number of structural changes.  It is currently being developed to manage [Talos] [2] test data, a performance testing framework developed by mozilla for testing software products.
 
 ##Architecture
-At a top level datazilla consists of three components: Model, Webservice, and User Interface.
+At a top level datazilla consists of three components: [Model](https://github.com/jeads/datazilla#model), [Webservice](https://github.com/jeads/datazilla#webservice), and [User Interface](https://github.com/jeads/datazilla#user-interface).
 
 ###Model
 The model layer found in [/datazilla/model](https://github.com/jeads/datazilla/tree/master/model) provides an interface for getting/setting data in a database.  The datazilla model classes rely on a module called [datasource] [5].  This module encapsulates SQL manipulation.  All of the SQL used by the system is stored in a JSON file found in [/datazilla/model/sql](https://github.com/jeads/datazilla/blob/master/model/sql/graphs.json).  There can be any number of SQL files stored in this format.  The JSON structure allows SQL to be stored in named associative arrays that also contain the host type to be associated with each statement.  Any command line script or webservice method that requires data should use a derived model class to obtain it.
@@ -49,7 +49,7 @@ The ```gm.getProductTestOsMap()``` method looks like
 ```
 The string, ```graphs```, in ```graphs.selects.get_product_test_os_map``` refers to the SQL file name to load in [/datazilla/model/sql](https://github.com/jeads/datazilla/tree/master/model/sql).  The SQL in graphs.json can also be written with placeholders and a string replacement system, see [datasource] [5] for all of the features available.
 
-If you're thinking why not just use an ORM?  I direct you to [seldo.com] [9] where you will find an excellent answer to your question that I completely agree with.  It has been my experience that ORMs don't scale well with data models that need to scale horizontally.  They also fail to represent relational data accurately in OOP like objects.  If you can represent your data model with objects, then use an object store not an RDBS.  SQL answers questions.  It provides a context-sensitive representation that does not map well to OOP but works great with an API.
+If you're thinking why not just use an ORM?  I direct you to [seldo.com] [9] where you will find a most excellent answer to your question that I completely agree with.  It has been my experience that ORMs don't scale well with data models that need to scale horizontally.  They also fail to represent relational data accurately in OOP like objects.  If you can represent your data model with objects, then use an object store not an RDBS.  SQL answers questions.  It provides a context-sensitive representation that does not map well to OOP but works great with an API.
 
 The approach used here keeps SQL out of your application and provides re-usability by allowing you to store SQL statements with an assigned name and statement grouping.  If the data structure retrieved from datasource requires further munging, it can be managed in the model without removing fine grained control over the SQL execution and optimization. 
 
@@ -211,7 +211,7 @@ This configuration was done on a RHEL6 VM.
 
 2. rpm -Uvh http://download.fedora.redhat.com/pub/epel/6/i386/epel-release-6-5.noarch.rpm
 
-3. yum install nginx fcgi Django-doc python-docutils MySQL-python python-flup
+3. yum install nginx fcgi python-docutils MySQL-python python-flup
 
 4. yum install python-setuptools spawn-fcgi
 
@@ -225,7 +225,7 @@ This configuration was done on a RHEL6 VM.
 
 9. git clone https://github.com/jeads/datasource, python setup.py install
 
-9. Modify the contents of files in the datazilla/webapp/conf/etc directory to meet the needs of
+10. Modify the contents of files in the datazilla/webapp/conf/etc directory to meet the needs of
    your system and then copy the files to their corresponding locations under /etc.
 
 
