@@ -6,7 +6,7 @@ This project includes a model, webservice, and web based user interface, and eve
 This is a work in progress and will likely see a number of structural changes.  It is currently being developed to manage [Talos] [2] test data, a performance testing framework developed by mozilla for testing software products.
 
 ##Architecture
-At a top level datazilla consists of three different parts: model, webservice, and UI.
+At a top level datazilla consists of three components: Model, Webservice, and User Interface.
 
 ###Model
 The model layer found in [/datazilla/model](https://github.com/jeads/datazilla/tree/master/model) provides an interface for getting/setting data in a database.  The datazilla model classes rely on a module called [datasource] [5].  This module encapsulates SQL manipulation.  All of the SQL used by the system is stored in a JSON file found in [/datazilla/model/sql](https://github.com/jeads/datazilla/blob/master/model/sql/graphs.json).  There can be any number of SQL files stored in this format.  The JSON structure allows SQL to be stored in named associative arrays that also contain the host type to be associated with each statement.  Any command line script or webservice method that requires data should use a derived model class to obtain it.
@@ -54,7 +54,7 @@ If you're thinking why not just use an ORM?  I direct you to [seldo.com] [9] whe
 The approach used here keeps SQL out of your application and provides re-usability by allowing you to store SQL statements with an assigned name and statement grouping.  If the data structure retrieved from datasource requires further munging, it can be managed in the model without removing fine grained control over the SQL execution and optimization. 
 
 ###Webservice
-The webservice is a django application that is contained in [/datazilla/webapp/apps/datazilla](https://github.com/jeads/datazilla/tree/master/webapp/apps).  The interface needs to be formalized further. A global datastructure found in [/datazilla/webapp/apps/datazilla/views.py](https://github.com/jeads/datazilla/blob/master/webapp/apps/datazilla/views.py) called, ```DATAVIEW_ADAPTERS```, maps all data views to a data adapter method and set of fields that correspond to signals the data views can send and receive.  This list of signals is passed to the UI as JSON embedded in a hidden input element.  There is a single dataview method that manages traversal of ```DATAVIEW_ADAPTERS```, and provides default behavior for the dataview service. 
+The webservice is a django application, found in [/datazilla/webapp/apps/datazilla](https://github.com/jeads/datazilla/tree/master/webapp/apps).  The interface needs to be formalized further. A global datastructure found in [/datazilla/webapp/apps/datazilla/views.py](https://github.com/jeads/datazilla/blob/master/webapp/apps/datazilla/views.py) called, ```DATAVIEW_ADAPTERS```, maps all data views to a data adapter method and set of fields that correspond to signals the data views can send and receive.  This list of signals is passed to the UI as JSON embedded in a hidden input element.  There is a single dataview method that manages traversal of ```DATAVIEW_ADAPTERS```, and provides default behavior for the dataview service. 
 
 ```python
 DATAVIEW_ADAPTERS = { ##Flat tables SQL##
@@ -102,8 +102,9 @@ datasource.hubs.MySQL.MySQL debug message:
    Execution Time:4.1700e-01 sec
 ```
 
-###UI
-The primary component of the UI is the javascript responsible for the data view behavior, located in [/datazilla/webapp/media/js/data_views](https://github.com/jeads/datazilla/tree/master/webapp/media/js/data_views).  The HTML associated with a a single data view is described in [/datazilla/webapp/templates/graphs.views.html](https://github.com/jeads/datazilla/blob/master/webapp/templates/graphs.views.html), this HTML data view container is cloned for every new data view inserted into the page and added to a single container div with the id dv_view_container.  This provides a single container that components can use to trigger events on, that all dataviews within the page will subscribe to.
+###User Interface
+The primary component of the UI is the javascript responsible for the data view behavior, located in [/datazilla/webapp/media/js/data_views](https://github.com/jeads/datazilla/tree/master/webapp/media/js/data_views).  The HTML associated with a a single data view is described in [/datazilla/webapp/templates/graphs.views.html](https://github.com/jeads/datazilla/blob/master/webapp/templates/graphs.views.html).  
+This HTML data view container is cloned for every new data view inserted into the page.  It's added to a single container div with the id dv_view_container.  This provides a single container that components can use to trigger events on, that all dataviews within the page will subscribe to.
 
 ####Building the Navigation Menu And Defining Data Views
 New data views and collections of dataviews can be defined in the navigation menu  by running the command:
@@ -220,7 +221,7 @@ This configuration was done on a RHEL6 VM.
 
 7. yum install memcached.x86_64 python-memcached.noarch
 
-8. Download the most recent version of [django] [10] and install it.
+8. Download the most recent version of [django] [10] and install it.  If there is already a version of django installed on your system, make sure it's 1.3.1 or later.  If not make sure to completely delete the pre-existing django version from your system before installing the new one.
 
 9. git clone https://github.com/jeads/datasource, python setup.py install
 
