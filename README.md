@@ -222,31 +222,31 @@ The two modules that are relevant for extending the javascript with a new visual
 [VisualizationCollection.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/VisualizationCollection.js) provides a collection of visualization adapters that can be associated with any data view.
 
 The interface for accomplishing these tasks needs to be solidified and then a straightforward way of adding a new class that extends both collections added.  The collections provided in the existing classes will provide a set of stock control panels and visualizations to use.  If a developer wants to add new content to a data view that requires a new control panel or visualization they should be able to do this by adding a new javascript file with appropriate collection extensions.  This is interface needs to be developed a bit further to get to this point.
-######Page
+#####Page
 Manages the DOM ready event, implements any top level initialization that's required for the page.  An instance of the page class is the only global variable that other components can access, if they're playing nice.  The page class instance is responsible for instantiating components and storing them in attributes.  The page class also holds any data structures that need to be globally accessible to component classes. 
 
-######Component
+#####Component
 Contains the public interface of the component.  A component can encapsulate any functional subset/unit provided in a page.  The component will typically have an instance of a View and Model class.  The component class is also responsible for any required event binding.
 
-######View
+#####View
 A component's view class manages interfacing with the DOM. Any CSS class names or HTML id's are defined as attributes of the view.  Any HTML element modification is controlled with this class.
 
-######Model
+#####Model
 A component's model manages any asynchronous data retrieval and large data structure manipulation.
 
-######Collection
+#####Collection
 A class for managing a collection of Components or classes of any type.  A collection can also have a model/view if appropriate.
 
-######Client Application (datazilla/webapp/media/js/data_views)
+#####Client Application [datazilla/webapp/media/js/data_views](https://github.com/jeads/datazilla/tree/master/webapp/media/js/data_views)
 This is not a complete file or class listing but is intended to give a top level description of the design pattern thingy of the data view javascript and what the basic functional responsibility of the pages/components/collections are.
 
-#######DataViewPage.js 
+######[DataViewPage.js](https://github.com/jeads/datazilla/blob/master/webapp/media/js/data_views/DataViewPage.js) 
 DataViewPage Class - Manages the DOM ready event, component initialization, and retrieval of the views.json structure that is used by different components.
 
-#######Bases.js
+######Bases.js
 Design Pattern Base Classes - Contains the base classes for Page, Component, Model, View etc...
                                                                   
-#######DataViewComponent.js 
+######DataViewComponent.js 
 DataViewComponent Class - Encapsulates the behavior of a single data view using a model/view and provides a public interface for data view functionality.  Manages event binding and registration.
 
 DVViewView Class - Encapsulates all DOM interaction required by a data view.
