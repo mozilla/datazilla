@@ -7,7 +7,7 @@ This is a work in progress and will likely see a number of structural changes.  
 
 A data view looks something like this:
 
-![Data View](https://github.com/jeads/datazilla/blob/master/webapp/media/images/dataview1.png)
+![Data View](/jeads/datazilla/blob/master/webapp/media/images/dataview1.png)
 
 ##Architecture
 At a top level datazilla consists of three components: [Model](https://github.com/jeads/datazilla#model), [Web Service](https://github.com/jeads/datazilla#web-service), and [User Interface](https://github.com/jeads/datazilla#user-interface).
