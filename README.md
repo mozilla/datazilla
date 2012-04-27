@@ -9,14 +9,14 @@ This is a work in progress and will likely see a number of structural changes.  
 At a top level datazilla can be described with three different parts: model, webservice, and UI.
 
 ###Model
-The model layer is found in datazilla/model and provides an interface for getting/setting data in a database.  The datazilla model classes rely on a module called [datasource] [5].  This module encapsulates SQL manipulation.  All of the SQL used by the system is stored in a JSON file found in /datazilla/model/[sql] [6].  There can be any number of SQL files stored in this format.  The JSON structure allows SQL to be stored in named associative arrays that also contain the host type to be associated with each statement.  Any command line script or webservice method that requires data should use a derived model class to obtain it.
+The model layer found in [datazilla/model](datazilla/model) and provides an interface for getting/setting data in a database.  The datazilla model classes rely on a module called [datasource] [5].  This module encapsulates SQL manipulation.  All of the SQL used by the system is stored in a JSON file found in /datazilla/model/[sql] [6].  There can be any number of SQL files stored in this format.  The JSON structure allows SQL to be stored in named associative arrays that also contain the host type to be associated with each statement.  Any command line script or webservice method that requires data should use a derived model class to obtain it.
 
 ```python
 gm = DatazillaModel('graphs.json')
 products = gm.getProductTestOsMap()
 ```
 
-The gm.getProductTestOsMap() method looks like
+The '''gm.getProductTestOsMap()''' method looks like
 ```python
    def getProductTestOsMap(self):
 
@@ -27,7 +27,7 @@ The gm.getProductTestOsMap() method looks like
       return productTuple
 ```
 
-graphs.selects.get_product_test_os_map found in datazilla/model/sql/graphs.json looks like
+'''graphs.selects.get_product_test_os_map''' found in datazilla/model/sql/graphs.json looks like
 ```json
    "selects":{
 
@@ -47,7 +47,7 @@ graphs.selects.get_product_test_os_map found in datazilla/model/sql/graphs.json 
       },
 
 ```
-The string, 'graphs', in 'graphs.selects.get_product_test_os_map' refers to the file name.  The SQL in graphs.json can be written with placeholders and a string replacement system, see [datasource] [5] for all of the features available.
+The string, '''graphs''', in '''graphs.selects.get_product_test_os_map''' refers to the file name.  The SQL in graphs.json can be written with placeholders and a string replacement system, see [datasource] [5] for all of the features available.
 
 If you're thinking why not just use an ORM?  I direct you to [seldo.com] [9] where you will find an excellent answer to your question that I completely agree with.  It has been my experience that ORMs don't scale well with data models that need to scale horizontally.  They also fail to represent relational data accurately in OOP like objects.  If you can represent your data model with objects, then use an object store not an RDBS.  SQL answers questions.  It provides a context-sensitive representation that does not map well to OOP but works great with an API.
 
@@ -207,7 +207,7 @@ This configuration was done on a RHEL6 VM.
 
 2. rpm -Uvh http://download.fedora.redhat.com/pub/epel/6/i386/epel-release-6-5.noarch.rpm
 
-3. yum install nginx fcgi Django Django-doc python-docutils MySQL-python python-flup
+3. yum install nginx fcgi Django-doc python-docutils MySQL-python python-flup
 
 4. yum install python-setuptools spawn-fcgi
 
@@ -215,9 +215,11 @@ This configuration was done on a RHEL6 VM.
 
 6. yum install git
 
-7. git clone https://github.com/jeads/datasource, python setup.py install
+7. yum install memcached.x86_64 python-memcached.noarch
 
-8. yum install memcached.x86_64 python-memcached.noarch
+8. Download the most recent version of [django] [10] and install it.
+
+9. git clone https://github.com/jeads/datasource, python setup.py install
 
 9. Modify the contents of files in the datazilla/webapp/conf/etc directory to meet the needs of
    your system and then copy the files to their corresponding locations under /etc.
@@ -232,3 +234,4 @@ This configuration was done on a RHEL6 VM.
 [7]: https://github.com/jeads/datazilla/blob/master/webapp/templates/data/views.json "views.json"
 [8]: https://github.com/jeads/datazilla/tree/master/webapp/media/html/control_panels "control_panels"
 [9]: http://seldo.com/weblog/2011/08/11/orm_is_an_antipattern "seldo.com"
+[10]: https://www.djangoproject.com/ "django"
