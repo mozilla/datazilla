@@ -9,7 +9,7 @@ This is a work in progress and will likely see a number of structural changes.  
 At a top level datazilla can be described with three different parts: model, webservice, and UI.
 
 ###Model
-The model layer found in [datazilla/model](https://github.com/jeads/datazilla/tree/master/model) and provides an interface for getting/setting data in a database.  The datazilla model classes rely on a module called [datasource] [5].  This module encapsulates SQL manipulation.  All of the SQL used by the system is stored in a JSON file found in /datazilla/model/[sql] [6].  There can be any number of SQL files stored in this format.  The JSON structure allows SQL to be stored in named associative arrays that also contain the host type to be associated with each statement.  Any command line script or webservice method that requires data should use a derived model class to obtain it.
+The model layer found in [datazilla/model](https://github.com/jeads/datazilla/tree/master/model) provides an interface for getting/setting data in a database.  The datazilla model classes rely on a module called [datasource] [5].  This module encapsulates SQL manipulation.  All of the SQL used by the system is stored in a JSON file found in [/datazilla/model/sql](https://github.com/jeads/datazilla/blob/master/model/sql/graphs.json).  There can be any number of SQL files stored in this format.  The JSON structure allows SQL to be stored in named associative arrays that also contain the host type to be associated with each statement.  Any command line script or webservice method that requires data should use a derived model class to obtain it.
 
 ```python
 gm = DatazillaModel('graphs.json')
@@ -47,14 +47,14 @@ The '''gm.getProductTestOsMap()''' method looks like
       },
 
 ```
-The string, '''graphs''', in '''graphs.selects.get_product_test_os_map''' refers to the file name.  The SQL in graphs.json can be written with placeholders and a string replacement system, see [datasource] [5] for all of the features available.
+The string, '''graphs''', in '''graphs.selects.get_product_test_os_map''' refers to the SQL file name to load in [/datazilla/model/sql](https://github.com/jeads/datazilla/tree/master/model/sql).  The SQL in graphs.json can be written with placeholders and a string replacement system, see [datasource] [5] for all of the features available.
 
 If you're thinking why not just use an ORM?  I direct you to [seldo.com] [9] where you will find an excellent answer to your question that I completely agree with.  It has been my experience that ORMs don't scale well with data models that need to scale horizontally.  They also fail to represent relational data accurately in OOP like objects.  If you can represent your data model with objects, then use an object store not an RDBS.  SQL answers questions.  It provides a context-sensitive representation that does not map well to OOP but works great with an API.
 
 The approach used here keeps SQL out of your application and provides re-usability by allowing you to store SQL statements with an assigned name and statement grouping.  If the data structure retrieved from datasource requires further munging, it can be managed in the model without removing fine grained control over the SQL execution and optimization. 
 
 ###Webservice
-The webservice is a django application that is contained in datazilla/webapp/apps/datazilla.  The interface needs to be formalized further. A global datastructure found in datazilla/webapp/apps/datazilla/views.py called, ```DATAVIEW_ADAPTERS```, maps all data views to a data adapter method and set of fields that correspond to signals the data views can send and receive.  This list of signals is passed to the UI as JSON embedded in a hidden input element.  There is a single dataview method that manages traversal of ```DATAVIEW_ADAPTERS```, and provides default behavior for the dataview service. 
+The webservice is a django application that is contained in [datazilla/webapp/apps/datazilla](https://github.com/jeads/datazilla/tree/master/webapp/apps).  The interface needs to be formalized further. A global datastructure found in [datazilla/webapp/apps/datazilla/views.py](https://github.com/jeads/datazilla/blob/master/webapp/apps/datazilla/views.py) called, ```DATAVIEW_ADAPTERS```, maps all data views to a data adapter method and set of fields that correspond to signals the data views can send and receive.  This list of signals is passed to the UI as JSON embedded in a hidden input element.  There is a single dataview method that manages traversal of ```DATAVIEW_ADAPTERS```, and provides default behavior for the dataview service. 
 
 ```python
 DATAVIEW_ADAPTERS = { ##Flat tables SQL##
