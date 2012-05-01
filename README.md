@@ -6,7 +6,7 @@ This project includes a model, web service, and web based user interface, and ev
 This is a work in progress and will likely see a number of structural changes.  It is currently being developed to manage [Talos] [2] test data, a performance testing framework developed by mozilla for testing software products.
 
 ##Architecture
-At a top level datazilla consists of three components: [Model](https://github.com/jeads/datazilla#model), [Web Service](https://github.com/jeads/datazilla#web-service), and [User Interface](https://github.com/jeads/datazilla#user-interface).
+At a top level datazilla consists of three components: [Model](https://github.com/jeads/datazilla#model), [Web Service](https://github.com/jeads/datazilla#web-service), [User Interface](https://github.com/jeads/datazilla#user-interface), and [Data Model](https://github.com/jeads/datazilla#data-model).
 
 ###Model
 The model layer found in [/datazilla/model](https://github.com/jeads/datazilla/tree/master/model) provides an interface for getting/setting data in a database.  The datazilla model classes rely on a module called [datasource] [5].  This module encapsulates SQL manipulation.  All of the SQL used by the system is stored in a JSON file found in [/datazilla/model/sql](https://github.com/jeads/datazilla/blob/master/model/sql/graphs.json).  There can be any number of SQL files stored in this format.  The JSON structure allows SQL to be stored in named associative arrays that also contain the host type to be associated with each statement.  Any command line script or web service method that requires data should use a derived model class to obtain it.
@@ -273,6 +273,47 @@ Contains the base classes for Page, Component, Model, View etc...
 ```VisualizationCollection``` Class provides a collection of Visualization class instances.
 
 ```Visualization``` Base class for derived visualization classes.
+
+###Data Model
+
+The data model for performance data consists of a RDBS [schema](https://github.com/jeads/datazilla/blob/master/model/sql/template_schema/schema_1_perftest.sql), an image of the schema is available in [schema_1_perftest.png](https://github.com/jeads/datazilla/blob/master/model/sql/template_schema/schema_1_perftest.png) that is useful for understanding the relationships in the data model.  
+
+Data is deposited using a JSON structure, an example input structure can be found [here](https://github.com/jeads/datazilla/blob/master/model/sql/template_schema/schema_1_perftest.json).
+
+The follow excerpt shows sections of the JSON structure and where the JSON attributes end up in the schema.  Reference data such as option names, product names, os names etc... Are dynamically loaded into the reference data section of the schema when a new data type is detected, if the reference data has already been seen before the appropriate id column value is associated with the data.
+
+```
+                                                   "table.column"
+    "test_build": {                                "------------"
+        "branch": "",                              "product.branch"
+        "id": "20120228122102",                    "build.test_build_id"
+        "name": "Firefox",                         "product.name"
+        "revision": "785345035a3b",                "test_run.revision & build.revision"
+        "version": "13.0a1"                        "product.version"
+    }, 
+    "test_machine": {   
+        "name": "qm-pxp01",                        "machine.name"
+        "os": "linux",                             "operating_system.name"
+        "osversion": "Ubuntu 11.10",               "operating_system.version"
+        "platform": "x86_64"                       "build.processor"
+    }, 
+    "testrun": {
+        "date": "1330454755",                      "test_run.date_run"
+        "options": {                         
+            "responsiveness": "false",             "option.name test_option_values.value"
+            "rss": "true",                         "option.name test_option_values.value"
+            "shutdown": "true",                    "option.name test_option_values.value"
+            "tpchrome": "true",                    "option.name test_option_values.value"
+            "tpcycles": "3",                       "option.name test_option_values.value"
+            "tpdelay": "",                         "option.name test_option_values.value"
+            "tpmozafterpaint": "false",            "option.name test_option_values.value"
+            "tppagecycles": "1",                   "option.name test_option_values.value"
+            "tprender": "false"                    "option.name test_option_values.value"
+        }, 
+        "suite": "Talos tp5r"                      "test.name"
+    }
+
+```
 
 ##Installation
 1. Add system info to appropriate files in datazilla/webapp/conf/etc.  Copy the files to there appropriate location under /etc.

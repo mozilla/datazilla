@@ -827,15 +827,15 @@
     "testrun": {
         "date": "1330454755", 
         "options": {
-            "responsiveness": false, 
-            "rss": true, 
-            "shutdown": true, 
-            "tpchrome": true, 
+            "responsiveness": "false", 
+            "rss": "true", 
+            "shutdown": "true", 
+            "tpchrome": "true", 
             "tpcycles": "3", 
             "tpdelay": "", 
-            "tpmozafterpaint": false, 
-            "tppagecycles": 1, 
-            "tprender": false
+            "tpmozafterpaint": "false", 
+            "tppagecycles": "1", 
+            "tprender": "false"
         }, 
         "suite": "Talos tp5r"
     }
