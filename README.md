@@ -282,7 +282,7 @@ Data is deposited using a JSON structure, an example input structure can be foun
 
 The follow excerpt shows sections of the JSON structure and where the JSON attributes end up in the schema.  Reference data such as option names, product names, os names etc... Are dynamically loaded into the reference data section of the schema when a new data type is detected, if the reference data has already been seen before the appropriate id column value is associated with the data.
 
-```
+```json
                                                    "table.column"
     "test_build": {                                "------------"
         "branch": "",                              "product.branch"
