@@ -6,7 +6,7 @@ This project includes a model, web service, and web based user interface, and ev
 This is a work in progress and will likely see a number of structural changes.  It is currently being developed to manage [Talos] [2] test data, a performance testing framework developed by mozilla for testing software products.
 
 ##Architecture
-At a top level datazilla consists of three components: [Model](https://github.com/jeads/datazilla#model), [Web Service](https://github.com/jeads/datazilla#web-service), [User Interface](https://github.com/jeads/datazilla#user-interface), and [Data Model](https://github.com/jeads/datazilla#data-model).
+At a top level datazilla consists of four components: [Model](https://github.com/jeads/datazilla#model), [Web Service](https://github.com/jeads/datazilla#web-service), [User Interface](https://github.com/jeads/datazilla#user-interface), and [Data Model](https://github.com/jeads/datazilla#data-model).
 
 ###Model
 The model layer found in [/datazilla/model](https://github.com/jeads/datazilla/tree/master/model) provides an interface for getting/setting data in a database.  The datazilla model classes rely on a module called [datasource] [5].  This module encapsulates SQL manipulation.  All of the SQL used by the system is stored in a JSON file found in [/datazilla/model/sql](https://github.com/jeads/datazilla/blob/master/model/sql/graphs.json).  There can be any number of SQL files stored in this format.  The JSON structure allows SQL to be stored in named associative arrays that also contain the host type to be associated with each statement.  Any command line script or web service method that requires data should use a derived model class to obtain it.
@@ -293,7 +293,7 @@ The User Interface Support Data stores data required by the UI to improve UI per
 ####JSON to Schema Mapping
 Data is deposited using a JSON structure, an example input structure can be found [here](https://github.com/jeads/datazilla/blob/master/model/sql/template_schema/schema_1_perftest.json).
 
-The follow excerpt shows sections of the JSON structure and where the JSON attributes end up in the schema.  Reference data such as option names, product names, os names etc... Are dynamically loaded into the reference data section of the schema when a new data type is detected, if the reference data has already been seen before the appropriate id column value is associated with the data.
+The following excerpt shows sections of the JSON structure and where the JSON attributes end up in the schema.  Reference data such as option names, product names, os names etc... Are dynamically loaded into the reference data section of the schema when a new data type is detected, if the reference data has already been seen before the appropriate id column value is associated with the data.
 
 ```
                                                    schema_1_perftest.table.column
