@@ -812,11 +812,11 @@
         ]
     }, 
     "test_build": {
-        "branch": "", 
+        "branch": "Mozilla-Aurora", 
         "id": "20120228122102", 
         "name": "Firefox", 
         "revision": "785345035a3b", 
-        "version": "13.0a1"
+        "version": "14.0a2"
     }, 
     "test_machine": {
         "name": "qm-pxp01", 

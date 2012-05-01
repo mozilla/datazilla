@@ -298,11 +298,11 @@ The following excerpt shows sections of the JSON structure and where the JSON at
 ```
                                                    schema_1_perftest.table.column
     "test_build": {                                ------------------------------
-        "branch": "",                              product.branch
+        "branch": "Mozilla-Aurora",                              product.branch
         "id": "20120228122102",                    build.test_build_id
         "name": "Firefox",                         product.name
         "revision": "785345035a3b",                test_run.revision & build.revision
-        "version": "13.0a1"                        product.version
+        "version": "14.0a2"                        product.version
     }, 
     "test_machine": {   
         "name": "qm-pxp01",                        machine.name
