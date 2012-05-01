@@ -298,7 +298,7 @@ The following excerpt shows sections of the JSON structure and where the JSON at
 ```
                                                    schema_1_perftest.table.column
     "test_build": {                                ------------------------------
-        "branch": "Mozilla-Aurora",                              product.branch
+        "branch": "Mozilla-Aurora",                product.branch
         "id": "20120228122102",                    build.test_build_id
         "name": "Firefox",                         product.name
         "revision": "785345035a3b",                test_run.revision & build.revision
