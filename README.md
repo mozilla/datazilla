@@ -279,7 +279,7 @@ Contains the base classes for Page, Component, Model, View etc...
 The data model for performance data consists of an RDBS [schema](https://github.com/jeads/datazilla/blob/master/model/sql/template_schema/schema_1_perftest.sql), an image of the schema is available in [schema_1_perftest.png](https://github.com/jeads/datazilla/blob/master/model/sql/template_schema/schema_1_perftest.png) that is useful for understanding the relationships in the data model.  At a top level the schema has four broad categories: Reference Data, Test Data, Metrics Data, and UI Support Data.  These four categories are defined as follows:
 
 ####Reference Data
-The reference data consists of unique lists of products, tests, operating systems, test options, test pages etc...  Most of the tables in this section just hold a id, name, and description.  The id values are shared in Test Data tables by prefixing the id with the table name.  So product.id would be build.product_id in the build table.  All of the reference data is populated dynamically from the JSON input data structure.
+The reference data consists of unique lists of products, tests, operating systems, test options, test pages etc...  Most of the tables in this section just hold an id, name, and description.  The id values are shared in Test Data tables by prefixing the id with the table name.  So product.id would be build.product_id in the build table.  All of the reference data is populated dynamically from the JSON input data structure.
 
 ####Test Data
 The test data holds all of the raw test values, auxiliary data, test data to revision mapping, build data associated with test runs etc...  Basically any data that is generated with a specific instance of a test run.
@@ -288,7 +288,7 @@ The test data holds all of the raw test values, auxiliary data, test data to rev
 The metrics data is not currently being populated.  The intention of this set of tables is to provide facilities for storing multiple metrics, like standard deviation, t-tests, p-values etc... associated with a particular test run.  The tables provide a way to associated multiple calculation methods with a single metric type.  Another intention is to store a threshold associated with each test type.  These thresholds would be used to determine test failure in an automated fashion.
 
 ####UI Support Data
-The User Interface Support Data stores data required by the UI to improve performace or provide the user with preset controls.  This area of the schema will likely be expanded as the UI is extended to provide more functionality.
+The User Interface Support Data stores data required by the UI to improve UI performace, reduce database load, or provide the user with preset controls.  This area of the schema will likely be expanded as the UI is extended to provide more functionality.
 
 ####JSON to Schema Mapping
 Data is deposited using a JSON structure, an example input structure can be found [here](https://github.com/jeads/datazilla/blob/master/model/sql/template_schema/schema_1_perftest.json).
