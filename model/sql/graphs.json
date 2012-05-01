@@ -131,7 +131,7 @@
       },
       "set_option_data":{
 
-         "sql":"INSERT INTO `options` (`name`) VALUES (?)",
+         "sql":"INSERT INTO `option` (`name`) VALUES (?)",
 
          "host":"master_host"
       },

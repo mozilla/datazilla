@@ -88,7 +88,7 @@ def getDateRange(request):
 
    return HttpResponse(jsonData, mimetype=APP_JS)
 
-def setTestData(procPath, procName, fullProcPath, request, gm):
+def setTestData(request):
 
    jsonData = '{"error":"No POST data found"}'
 
@@ -97,11 +97,14 @@ def setTestData(procPath, procName, fullProcPath, request, gm):
       jsonData = request.POST['data']
       unquotedJsonData = urllib.unquote(jsonData)
       data = json.loads( unquotedJsonData )
+
       gm = DatazillaModel('graphs.json')
       gm.loadTestData( data, unquotedJsonData )
+      gm.disconnect()
+
       jsonData = json.dumps( { 'loaded_test_pages':len(data['results']) } )
 
-   return jsonData
+   return HttpResponse(jsonData, mimetype=APP_JS)
 
 def dataview(request, **kwargs):
 
@@ -151,10 +154,10 @@ def dataview(request, **kwargs):
                                    debug_show=settings.DEBUG,
                                    return_type='table_json')
 
+      gm.disconnect();
+
    else:
       json = '{ "error":"Data view name %s not recognized" }' % procName
-
-   gm.disconnect();
 
    return HttpResponse(json, mimetype=APP_JS)
 

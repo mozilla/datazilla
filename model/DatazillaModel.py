@@ -400,7 +400,7 @@ class DatazillaModel(Model):
                                                   ##Need to get the build_type into the json##
                                                   'debug',
                                                   ##Need to get the build_date into the json##
-                                                  int(time()) ] )
+                                                  int(time.time()) ] )
       
       return buildId
       
@@ -421,7 +421,7 @@ class DatazillaModel(Model):
          if name in refData['machines']:
             machineId = refData['machines'][ name ]['id']
          else:
-            machineId = self.setData('set_machine_data', [ name, int(time()) ])
+            machineId = self.setData('set_machine_data', [ name, int(time.time()) ])
 
       except KeyError:
          raise
@@ -470,7 +470,7 @@ class DatazillaModel(Model):
             if option in refData['options']:
                optionIds[ option ] = refData['options'][option]
             else:
-               testId = self.setData('set_option', [ option ])
+               testId = self.setData('set_option_data', [ option ])
                optionIds[ option ] = testId 
       except KeyError:
          raise
