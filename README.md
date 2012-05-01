@@ -290,6 +290,7 @@ The metrics data is not currently being populated.  The intention of this set of
 ####UI Support Data
 The User Interface Support Data stores data required by the UI to improve performace or provide the user with preset controls.  This area of the schema will likely be expanded as the UI is extended to provide more functionality.
 
+####JSON to Schema Mapping
 Data is deposited using a JSON structure, an example input structure can be found [here](https://github.com/jeads/datazilla/blob/master/model/sql/template_schema/schema_1_perftest.json).
 
 The follow excerpt shows sections of the JSON structure and where the JSON attributes end up in the schema.  Reference data such as option names, product names, os names etc... Are dynamically loaded into the reference data section of the schema when a new data type is detected, if the reference data has already been seen before the appropriate id column value is associated with the data.
