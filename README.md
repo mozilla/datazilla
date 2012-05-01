@@ -283,36 +283,71 @@ Data is deposited using a JSON structure, an example input structure can be foun
 The follow excerpt shows sections of the JSON structure and where the JSON attributes end up in the schema.  Reference data such as option names, product names, os names etc... Are dynamically loaded into the reference data section of the schema when a new data type is detected, if the reference data has already been seen before the appropriate id column value is associated with the data.
 
 ```
-                                                   "table.column"
-    "test_build": {                                "------------"
-        "branch": "",                              "product.branch"
-        "id": "20120228122102",                    "build.test_build_id"
-        "name": "Firefox",                         "product.name"
-        "revision": "785345035a3b",                "test_run.revision & build.revision"
-        "version": "13.0a1"                        "product.version"
+                                                   schema_1_perftest.table.column
+    "test_build": {                                ------------------------------
+        "branch": "",                              product.branch
+        "id": "20120228122102",                    build.test_build_id
+        "name": "Firefox",                         product.name
+        "revision": "785345035a3b",                test_run.revision & build.revision
+        "version": "13.0a1"                        product.version
     }, 
     "test_machine": {   
-        "name": "qm-pxp01",                        "machine.name"
-        "os": "linux",                             "operating_system.name"
-        "osversion": "Ubuntu 11.10",               "operating_system.version"
-        "platform": "x86_64"                       "build.processor"
+        "name": "qm-pxp01",                        machine.name
+        "os": "linux",                             operating_system.name
+        "osversion": "Ubuntu 11.10",               operating_system.version
+        "platform": "x86_64"                       build.processor
     }, 
     "testrun": {
-        "date": "1330454755",                      "test_run.date_run"
+        "date": "1330454755",                      test_run.date_run
         "options": {                         
-            "responsiveness": "false",             "option.name test_option_values.value"
-            "rss": "true",                         "option.name test_option_values.value"
-            "shutdown": "true",                    "option.name test_option_values.value"
-            "tpchrome": "true",                    "option.name test_option_values.value"
-            "tpcycles": "3",                       "option.name test_option_values.value"
-            "tpdelay": "",                         "option.name test_option_values.value"
-            "tpmozafterpaint": "false",            "option.name test_option_values.value"
-            "tppagecycles": "1",                   "option.name test_option_values.value"
-            "tprender": "false"                    "option.name test_option_values.value"
+            "responsiveness": "false",             option.name=responsiveness    test_option_values.value="false"
+            "rss": "true",                         option.name=rss               test_option_values.value="true"
+            "shutdown": "true",                    option.name=shutdown          test_option_values.value="true"
+            "tpchrome": "true",                    option.name=tpchrome          test_option_values.value="true"
+            "tpcycles": "3",                       option.name=tpcycles          test_option_values.value="3"
+            "tpdelay": "",                         option.name=tpdelay           test_option_values.value=""
+            "tpmozafterpaint": "false",            option.name=tpmozafterpaint   test_option_values.value="false"
+            "tppagecycles": "1",                   option.name=tppagecycles      test_option_values.value="1"
+            "tprender": "false"                    option.name=tprender          test_option_values.value="false"
         }, 
-        "suite": "Talos tp5r"                      "test.name"
+        "suite": "Talos tp5r"                      test.name
     }
 
+```
+The following JSON to schema mapping shows where the raw data ends up.
+
+```
+                                                   schema_1_perftest.table.column
+    "results": {                                   ------------------------------
+        "163.com": [                               page.name
+            "666.0",                               test_value.value=666.0  test_value.run_id=0
+            "587.0",                               test_value.value=587.0  test_value.run_id=1
+            "626.0"                                test_value.value=626.0  test_value.run_id=2
+        ], 
+        "56.com": [                                page.name
+            "789.0",                               test_value.value=789.0  test_value.run_id=0
+            "705.0",                               test_value.value=705.0  test_value.run_id=1
+            "739.0"                                test_value.value=739.0  test_value.run_id=2
+        ], 
+        "alibaba.com": [                           page.name
+            "103.0",                               test_value.value=103.0  test_value.run_id=0
+            "95.0",                                test_value.value=95.0   test_value.run_id=1
+            "105.0"                                test_value.value=105.0  test_value.run_id=2
+        ], 
+
+    ...lots more data...
+
+    "results_aux": {
+        "main_rss": [                              aux_data.name=main_rss
+            "72122368",                            test_aux_data.numeric_data                         
+            "89206784",                            test_aux_data.numeric_data
+            "90710016",                            test_aux_data.numeric_data
+            "93384704",                            test_aux_data.numeric_data
+            "98676736",                            test_aux_data.numeric_data
+            "102776832",                           test_aux_data.numeric_data
+            "104378368",                           test_aux_data.numeric_data
+
+    ...lots more data...
 ```
 
 ##Installation
