@@ -404,7 +404,7 @@ CREATE TABLE `datasource` (
 
 The data stored would look like this:
 
-<table width=600 border=1>
+<table style="overflow-x:scroll;" width="600" border="1">
 <tr>
 <td bgcolor=silver>id</td>
 <td bgcolor=silver>project</td>
