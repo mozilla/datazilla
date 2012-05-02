@@ -404,7 +404,8 @@ CREATE TABLE `datasource` (
 
 The data stored would look like this:
 
-<table width="600px" border=1>
+<div style="overflow:scroll;">
+<table border=1>
 <tr>
 <td bgcolor=silver>id</td>
 <td bgcolor=silver>project</td>
@@ -501,6 +502,7 @@ The data stored would look like this:
 <td>2012-05-01 00:00:00</td>
 </tr>
 </table>
+</div>
 
 ####
 ##Installation
