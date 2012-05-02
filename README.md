@@ -390,6 +390,8 @@ One of the goals of datazilla is to consolidate all systems generating performan
 
 ```Example 2: eideticker_1_perftest``` The database instance name holding the performance data for eideticker data.
 
+#####Reference all databases in a master table that maps the three classifiers to the physical resource
+
 This information will be stored in a database instance called datazilla. It will be stored in a table called datasource, that looks like this:
 ```sql
 CREATE TABLE `datasource` (
@@ -405,7 +407,6 @@ CREATE TABLE `datasource` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
 ```
 
-#####Reference all databases in a master table that maps the three classifiers to the physical resource
 The following example shows the type of data that would populate the datasource table. 
 
 <table border="1">
@@ -522,10 +523,10 @@ We could have scalability strategies associated with any combination of the thre
 We would also have some semantic control using the classifiers to look across data with any project/contenttype combination.
 
 ####Automation
-We could completely automate the initialization of a new project.  A script could be written to take a project, dataset, and contenttype classifier.  It could dump the schema for the contenttype and initialize a new database from it.  This script could also write out config files that the webservice could use so the database would be automatically available through the web service API without zero manual intervention.
+We could completely automate the initialization of a new project.  A script could be written to take a project, dataset, and contenttype classifier.  It could dump the schema for the contenttype and initialize a new database from it.  This script could also write out config files that the webservice could use so the database would be automatically available through the web service API without any manual intervention.
 
 #####Integration In Model.py
-Integrating the database table datazilla.datasource into the Model.py constructor will allow this system to scale to hundreds of databases.  The overall change will look like this, the database connection environment variables in /etc/sysconfig/datazilla will point to datazilla.datasource.  When Model.py is instantiated it will load the contents of datazilla.datasource as dataSource associative arrays using BaseHub.addDataSource(dataSource).  The interface to the constructor in Model.py will probably need to be extended to take the project name and a list of sql files.  Every call to the Model.py constructor will need to be changed to reflect this.  This can then be integrated into the webservice url structure.  So, /datazilla/talos and /datazilla/test would point to the separate databases talos_1_perftest and test_1_perftest.
+Integrating the database table datazilla.datasource into the Model.py constructor will allow this system to scale to many projects and databases.  The overall change will look like this, the database connection environment variables in /etc/sysconfig/datazilla will point to datazilla.datasource.  When Model.py is instantiated it will load the contents of datazilla.datasource as dataSource associative arrays using BaseHub.addDataSource(dataSource).  The interface to the constructor in Model.py will probably need to be extended to take the project name and a list of sql files.  Every call to the Model.py constructor will need to be changed to reflect this.  This can then be integrated into the webservice url structure.  So, /datazilla/talos and /datazilla/test would point to the separate databases talos_1_perftest and test_1_perftest.
 
 ##Installation
 1. Add system info to appropriate files in datazilla/webapp/conf/etc.  Copy the files to there appropriate location under /etc.
