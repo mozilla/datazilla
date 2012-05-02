@@ -509,7 +509,7 @@ The following example shows the type of data that would populate the datasource 
 
 The host column value would provide the physical resource associated with the database.  
 
-The name column value would typically be the combination of project, dataset, and contentype but that would not be a requirement of the system.  By making the name independent of the three classifiers we could import legacy databases into datazilla without having to physically move or rename them.  
+The name column value would typically be the combination of project, dataset, and contentype but that would not be a requirement of the system.  By making the name independent of the three classifiers legacy databases could be imported into datazilla without having to physically move or rename them.  
 
 The type column value could be the data hub type in [datasource] [5].  This would allow us to use the Model layer with more types of databases beyond an RDBS.  In this system, the summary_cache, test_data tables, and possible test_aux_data would be better suited for a key/value based object store.  It would be very handy to be able to access multiple types of databases through this system. 
 
@@ -518,12 +518,12 @@ The active_status column would allow for inactivating a database instance for wr
 
 Each contenttype would have a project named schema associated with it.  The schema project would just hold the template schema that new projects would use when a database is created for them.  Each contenttype could also have a test project designator that could be used for test purposes.
 
-We could have scalability strategies associated with any combination of the three classifiers.  So lets say all of the databases with a particular contenttype seem to be large, we could host those differently than the others.  Or if a single project starts to generate lots of data we could use the porject classifier to guide appropriate storage/hosting decisions.  There would be no requirement for co-localization.
+Scalability strategies could be developed useing any combination of the three classifiers.  So lets say all of the databases with a particular contenttype seem to be large, the contenttype could be used to host those databases differently than the others.  Or if a single project starts to generate lots of data the project classifier could be used to guide appropriate storage/hosting decisions.  There would be no requirement for co-localization.
 
-We would also have some semantic control using the classifiers to look across data with any project/contenttype combination.
+In general, the classifiers would provide semantic control enabling the examination/management of data across any combination of project, dataset, or contenttype.
 
 ####Automation
-We could completely automate the initialization of a new project.  A script could be written to take a project, dataset, and contenttype classifier.  It could dump the schema for the contenttype and initialize a new database from it.  This script could also write out config files that the webservice could use so the database would be automatically available through the web service API without any manual intervention.
+The initialization of a new project could be completely automated.  A script could be written to take a project, dataset, and contenttype classifier.  It could dump the schema for the contenttype and initialize a new database from it.  This script could also write out config files that the webservice could use so the database would be automatically available through the web service API without any manual intervention.
 
 #####Integration In Model.py
 Integrating the database table datazilla.datasource into the Model.py constructor will allow this system to scale to many projects and databases.  The overall change will look like this, the database connection environment variables in /etc/sysconfig/datazilla will point to datazilla.datasource.  When Model.py is instantiated it will load the contents of datazilla.datasource as dataSource associative arrays using BaseHub.addDataSource(dataSource).  The interface to the constructor in Model.py will probably need to be extended to take the project name and a list of sql files.  Every call to the Model.py constructor will need to be changed to reflect this.  This can then be integrated into the webservice url structure.  So, /datazilla/talos and /datazilla/test would point to the separate databases talos_1_perftest and test_1_perftest.
