@@ -378,17 +378,17 @@ One of the goals of datazilla is to consolidate all systems generating performan
 
 ```Database Instance = project_dataset_contenttype```
 
-```Example 1: talos_1_perftest``` The database instance name holding the talos performance data.
-
-```Example 2: b2g_1_perftest``` The database instance name holding the performance data for b2g.
-
-```Example 2: eideticker_1_perftest``` The database instance name holding the performance data for eideticker data.
-
 ```project``` A string representing a project, organization, or broad category.
 
 ```dataset``` Should be enumerable, a single number would be fine, but we could also use a string ending in a number to further classify if needed. This will allow for scalability, if a single database reaches a size threshold (1-2TB or whatever is appropriate), we can increment the dataset number and create a new database that has the same project/contenttype designations.
 
 ```contenttype``` The content type would describe the content that the database can manage.  Each content type would have a template schema associated with it.  To add a new project with a given contenttype you would copy the corresponding schema from the schema_1_contenttype that the project requires.
+
+```Example 1: talos_1_perftest``` The database instance name holding the talos performance data.
+
+```Example 2: b2g_1_perftest``` The database instance name holding the performance data for b2g.
+
+```Example 2: eideticker_1_perftest``` The database instance name holding the performance data for eideticker data.
 
 This information will be stored in a database instance called datazilla. It will be stored in a table called datasource, that looks like this:
 ```sql
@@ -406,7 +406,7 @@ CREATE TABLE `datasource` (
 ```
 
 #####Reference all databases in a master table that maps the three classifiers to the physical resource
-The data stored would look like this so:
+The following example shows the type of data that would populate the datasource table. 
 
 <table border="1">
 <tr>
@@ -520,6 +520,9 @@ Each contenttype would have a project named schema associated with it.  The sche
 We could have scalability strategies associated with any combination of the three classifiers.  So lets say all of the databases with a particular contenttype seem to be large, we could host those differently than the others.  Or if a single project starts to generate lots of data we could use the porject classifier to guide appropriate storage/hosting decisions.  There would be no requirement for co-localization.
 
 We would also have some semantic control using the classifiers to look across data with any project/contenttype combination.
+
+####Automation
+We could completely automate the initialization of a new project.  A script could be written to take a project, dataset, and contenttype classifier.  It could dump the schema for the contenttype and initialize a new database from it.  This script could also write out config files that the webservice could use so the database would be automatically available through the web service API without zero manual intervention.
 
 #####Integration In Model.py
 Integrating the database table datazilla.datasource into the Model.py constructor will allow this system to scale to hundreds of databases.  The overall change will look like this, the database connection environment variables in /etc/sysconfig/datazilla will point to datazilla.datasource.  When Model.py is instantiated it will load the contents of datazilla.datasource as dataSource associative arrays using BaseHub.addDataSource(dataSource).  The interface to the constructor in Model.py will probably need to be extended to take the project name and a list of sql files.  Every call to the Model.py constructor will need to be changed to reflect this.  This can then be integrated into the webservice url structure.  So, /datazilla/talos and /datazilla/test would point to the separate databases talos_1_perftest and test_1_perftest.
