@@ -392,7 +392,7 @@ One of the goals of datazilla is to consolidate all systems generating performan
 
 #####Reference all databases in a master table that maps the three classifiers to the physical resource
 
-This information will be stored in a database instance called datazilla. It will be stored in a table called datasource, that looks like this:
+This information will be stored in a database instance called datazilla and table called datasource, that looks like this:
 ```sql
 CREATE TABLE `datasource` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
