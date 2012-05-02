@@ -378,8 +378,11 @@ One of the goals of datazilla is to consolidate all systems generating performan
 
 ```Database Instance = project_dataset_contenttype```
 
-```project``` - A string representing a project, organization, or broad category.
-```dataset``` - Should be enumerable, a single number would be fine, but we could also use a string ending in a number to further classify if needed. This will allow for scalability, if a single database reaches a size threshold (1-2TB or whatever is appropriate), we can increment the dataset number and create a new database that has the same project/contenttype designations.
+```project``` A string representing a project, organization, or broad category.
+
+```dataset``` Should be enumerable, a single number would be fine, but we could also use a string ending in a number to further classify if needed. This will allow for scalability, if a single database reaches a size threshold (1-2TB or whatever is appropriate), we can increment the dataset number and create a new database that has the same project/contenttype designations.
+
+```contenttype``` The content type would describe the content that the database can manage.  Each content type would have a template schema associated with it.  To add a new project with a given contenttype you would copy the corresponding schema from the schema_1_contenttype that the project requires.
 
 This information will be stored in a database instance called datazilla. It will be stored in a table called datasource, that looks like this:
 ```sql
@@ -393,18 +396,12 @@ CREATE TABLE `datasource` (
   `type` varchar(25) NOT NULL,
   `active_status` tinyint(4) NOT NULL DEFAULT '1',
   `creation_date` datetime NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `project_key` (`project`),
-  KEY `dataset_key` (`dataset`),
-  KEY `contenttype_key` (`contenttype`),
-  KEY `name_key` (`name`),
-  KEY `active_status_key` (`active_status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
 ```
 
 The data stored would look like this:
 
-<table style="overflow-x:scroll;" width="600" border="1">
+<table border="1">
 <tr>
 <td bgcolor=silver>id</td>
 <td bgcolor=silver>project</td>
@@ -502,6 +499,13 @@ The data stored would look like this:
 </tr>
 </table>
 
+The host column value would provide the physical resource associated with the database.  
+
+The name column value would typically be the combination of project, dataset, and contentype but that would not be a requirement of the system.  By making the name independent of the three classifiers we could import legacy databases into datazilla without having to physically move or rename them.  
+
+The type column value could be the data hub type in [datasource] [5].  This would allow us to use the Model layer with more types of databases beyond an RDBS.  In this system, the summary_cache, test_data tables, and possible test_aux_data would be better suited for a key/value based object store.  It would be very handy to be able to access multiple types of databases through this system. 
+
+The active_status column would allow for inactivating a database instance for writing once a size threshold is reached.  When this happens, the active_status would be set to 0.  
 ####
 ##Installation
 1. Add system info to appropriate files in datazilla/webapp/conf/etc.  Copy the files to there appropriate location under /etc.
