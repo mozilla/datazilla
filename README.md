@@ -405,99 +405,99 @@ CREATE TABLE `datasource` (
 The data stored would look like this:
 <table border=1>
 <tr>
-<td bgcolor=silver class='medium'>id</td>
-<td bgcolor=silver class='medium'>project</td>
-<td bgcolor=silver class='medium'>dataset</td>
-<td bgcolor=silver class='medium'>contenttype</td>
-<td bgcolor=silver class='medium'>host</td>
-<td bgcolor=silver class='medium'>name</td>
-<td bgcolor=silver class='medium'>type</td>
-<td bgcolor=silver class='medium'>active_status</td>
-<td bgcolor=silver class='medium'>creation_date</td>
+<td bgcolor=silver>id</td>
+<td bgcolor=silver>project</td>
+<td bgcolor=silver>dataset</td>
+<td bgcolor=silver>contenttype</td>
+<td bgcolor=silver>host</td>
+<td bgcolor=silver>name</td>
+<td bgcolor=silver>type</td>
+<td bgcolor=silver>active_status</td>
+<td bgcolor=silver>creation_date</td>
 </tr>
 
 <tr>
-<td class='normal' valign='top'>1</td>
-<td class='normal' valign='top'>talos</td>
-<td class='normal' valign='top'>1</td>
-<td class='normal' valign='top'>perftest</td>
-<td class='normal' valign='top'>s4n4.qa.phx1.mozilla.com</td>
-<td class='normal' valign='top'>graphs_exp</td>
-<td class='normal' valign='top'>MySQL</td>
-<td class='normal' valign='top'>1</td>
-<td class='normal' valign='top'>2012-05-01 00:00:00</td>
+<td>1</td>
+<td>talos</td>
+<td>1</td>
+<td>perftest</td>
+<td>s4n4.qa.phx1.mozilla.com</td>
+<td>graphs_exp</td>
+<td>MySQL</td>
+<td>1</td>
+<td>2012-05-01 00:00:00</td>
 </tr>
 
 <tr>
-<td class='normal' valign='top'>2</td>
-<td class='normal' valign='top'>test</td>
-<td class='normal' valign='top'>1</td>
-<td class='normal' valign='top'>perftest</td>
-<td class='normal' valign='top'>s4n4.qa.phx1.mozilla.com</td>
-<td class='normal' valign='top'>test_1_perftest</td>
-<td class='normal' valign='top'>MySQL</td>
-<td class='normal' valign='top'>1</td>
-<td class='normal' valign='top'>2012-05-01 00:00:00</td>
+<td>2</td>
+<td>test</td>
+<td>1</td>
+<td>perftest</td>
+<td>s4n4.qa.phx1.mozilla.com</td>
+<td>test_1_perftest</td>
+<td>MySQL</td>
+<td>1</td>
+<td>2012-05-01 00:00:00</td>
 </tr>
 
 <tr>
-<td class='normal' valign='top'>3</td>
-<td class='normal' valign='top'>schema</td>
-<td class='normal' valign='top'>1</td>
-<td class='normal' valign='top'>perftest</td>
-<td class='normal' valign='top'>s4n4.qa.phx1.mozilla.com</td>
-<td class='normal' valign='top'>schema_1_perftest</td>
-<td class='normal' valign='top'>MySQL</td>
-<td class='normal' valign='top'>1</td>
-<td class='normal' valign='top'>2012-05-01 00:00:00</td>
+<td>3</td>
+<td>schema</td>
+<td>1</td>
+<td>perftest</td>
+<td>s4n4.qa.phx1.mozilla.com</td>
+<td>schema_1_perftest</td>
+<td>MySQL</td>
+<td>1</td>
+<td>2012-05-01 00:00:00</td>
 </tr>
 
 <tr>
-<td class='normal' valign='top'>4</td>
-<td class='normal' valign='top'>stoneridge</td>
-<td class='normal' valign='top'>1</td>
-<td class='normal' valign='top'>perftest</td>
-<td class='normal' valign='top'>s4n4.qa.phx1.mozilla.com</td>
-<td class='normal' valign='top'>stoneridge_1_perftest</td>
-<td class='normal' valign='top'>MySQL</td>
-<td class='normal' valign='top'>1</td>
-<td class='normal' valign='top'>2012-05-01 00:00:00</td>
+<td>4</td>
+<td>stoneridge</td>
+<td>1</td>
+<td>perftest</td>
+<td>s4n4.qa.phx1.mozilla.com</td>
+<td>stoneridge_1_perftest</td>
+<td>MySQL</td>
+<td>1</td>
+<td>2012-05-01 00:00:00</td>
 </tr>
 
 <tr>
-<td class='normal' valign='top'>5</td>
-<td class='normal' valign='top'>b2g</td>
-<td class='normal' valign='top'>1</td>
-<td class='normal' valign='top'>perftest</td>
-<td class='normal' valign='top'>s4n4.qa.phx1.mozilla.com</td>
-<td class='normal' valign='top'>b2g_1_perftest</td>
-<td class='normal' valign='top'>MySQL</td>
-<td class='normal' valign='top'>1</td>
-<td class='normal' valign='top'>2012-05-01 00:00:00</td>
+<td>5</td>
+<td>b2g</td>
+<td>1</td>
+<td>perftest</td>
+<td>s4n4.qa.phx1.mozilla.com</td>
+<td>b2g_1_perftest</td>
+<td>MySQL</td>
+<td>1</td>
+<td>2012-05-01 00:00:00</td>
 </tr>
 
 <tr>
-<td class='normal' valign='top'>6</td>
-<td class='normal' valign='top'>peptest</td>
-<td class='normal' valign='top'>1</td>
-<td class='normal' valign='top'>perftest</td>
-<td class='normal' valign='top'>s4n4.qa.phx1.mozilla.com</td>
-<td class='normal' valign='top'>peptest_1_perftest</td>
-<td class='normal' valign='top'>MySQL</td>
-<td class='normal' valign='top'>1</td>
-<td class='normal' valign='top'>2012-05-01 00:00:00</td>
+<td>6</td>
+<td>peptest</td>
+<td>1</td>
+<td>perftest</td>
+<td>s4n4.qa.phx1.mozilla.com</td>
+<td>peptest_1_perftest</td>
+<td>MySQL</td>
+<td>1</td>
+<td>2012-05-01 00:00:00</td>
 </tr>
 
 <tr>
-<td class='normal' valign='top'>7</td>
-<td class='normal' valign='top'>eideticker</td>
-<td class='normal' valign='top'>1</td>
-<td class='normal' valign='top'>perftest</td>
-<td class='normal' valign='top'>s4n4.qa.phx1.mozilla.com</td>
-<td class='normal' valign='top'>eideticker_1_perftest</td>
-<td class='normal' valign='top'>MySQL</td>
-<td class='normal' valign='top'>1</td>
-<td class='normal' valign='top'>2012-05-01 00:00:00</td>
+<td>7</td>
+<td>eideticker</td>
+<td>1</td>
+<td>perftest</td>
+<td>s4n4.qa.phx1.mozilla.com</td>
+<td>eideticker_1_perftest</td>
+<td>MySQL</td>
+<td>1</td>
+<td>2012-05-01 00:00:00</td>
 </tr>
 </table>
 ####
