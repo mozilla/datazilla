@@ -192,7 +192,7 @@ def _getTestRunSummary(procPath, procName, fullProcPath, request, gm):
       productIds = [12]
 
    jsonData = '{}'
-   timeKey = 'days_7'
+   timeKey = 'days_30'
    timeRanges = DatazillaModel.getTimeRanges()
 
    mc = memcache.Client([settings.DATAZILLA_MEMCACHED], debug=0)
@@ -204,6 +204,7 @@ def _getTestRunSummary(procPath, procName, fullProcPath, request, gm):
          for id in productIds:
             key = DatazillaModel.getCacheKey(str(id), timeKey)
             compressedJsonData = mc.get(key)
+
             if compressedJsonData:
                jsonData = zlib.decompress( compressedJsonData )
                data = json.loads( jsonData )
@@ -218,6 +219,9 @@ def _getTestRunSummary(procPath, procName, fullProcPath, request, gm):
 
          if compressedJsonData:
             jsonData = zlib.decompress( compressedJsonData )
+
+         print key
+         print jsonData
 
    else:
       table = gm.getTestRunSummary(timeRanges[timeKey]['start'], 
