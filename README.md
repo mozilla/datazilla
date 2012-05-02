@@ -374,9 +374,13 @@ One of the goals of datazilla is to consolidate all systems generating performan
 3. This system should enable a shared Model layer that facilitates an awesome web service based API.
 
 ####Architecture Proposal
-1. Use three classifiers to describe all databases managed in this system.
+#####Use three classifiers to describe all databases managed in this system.
 
 ```Database Instance = project_dataset_contenttype```
+
+```Example 1: talos_1_perftest``` The database instance name holding the talos performance data.
+```Example 2: b2g_1_perftest``` The database instance name holding the performance data for b2g.
+```Example 2: eideticker_1_perftest``` The database instance name holding the performance data for eideticker data.
 
 ```project``` A string representing a project, organization, or broad category.
 
@@ -399,7 +403,8 @@ CREATE TABLE `datasource` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
 ```
 
-The data stored would look like this:
+#####Reference all databases in a master table that maps the three classifiers to the physical resource
+The data stored would look like this so:
 
 <table border="1">
 <tr>
@@ -505,8 +510,18 @@ The name column value would typically be the combination of project, dataset, an
 
 The type column value could be the data hub type in [datasource] [5].  This would allow us to use the Model layer with more types of databases beyond an RDBS.  In this system, the summary_cache, test_data tables, and possible test_aux_data would be better suited for a key/value based object store.  It would be very handy to be able to access multiple types of databases through this system. 
 
-The active_status column would allow for inactivating a database instance for writing once a size threshold is reached.  When this happens, the active_status would be set to 0.  
-####
+#####Use the active status and dataset classifier to scale
+The active_status column would allow for inactivating a database instance for writing once a size threshold is reached.  When this happens, the active_status would be set to 0 and a new database would be created with the same project name and contenttype, project_2_contenttype, that would have an active_status of 1.  
+
+Each contenttype would have a project named schema associated with it.  The schema project would just hold the template schema that new projects would use when a database is created for them.  Each contenttype could also have a test project designator that could be used for test purposes.
+
+We could have scalability strategies associated with any combination of the three classifiers.  So lets say all of the databases with a particular contenttype seem to be large, we could host those differently than the others.  Or if a single project starts to generate lots of data we could use the porject classifier to guide appropriate storage/hosting decisions.  There would be no requirement for co-localization.
+
+We would also have some semantic control using the classifiers to look across data with any project/contenttype combination.
+
+#####Integration In Model.py
+Integrating the database table datazilla.datasource into the Model.py constructor will allow this system to scale to hundreds of databases.  The overall change will look like this, the database connection environment variables in /etc/sysconfig/datazilla will point to datazilla.datasource.  When Model.py is instantiated it will load the contents of datazilla.datasource as dataSource associative arrays using BaseHub.addDataSource(dataSource).  The interface to the constructor in Model.py will probably need to be extended to take the project name and a list of sql files.  Every call to the Model.py constructor will need to be changed to reflect this.  This can then be integrated into the webservice url structure.  So, /datazilla/talos and /datazilla/test would point to the separate databases talos_1_perftest and test_1_perftest.
+
 ##Installation
 1. Add system info to appropriate files in datazilla/webapp/conf/etc.  Copy the files to there appropriate location under /etc.
 
