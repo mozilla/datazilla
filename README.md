@@ -403,6 +403,7 @@ CREATE TABLE `datasource` (
 ```
 
 The data stored would look like this:
+
 <table width="600px" border=1>
 <tr>
 <td bgcolor=silver>id</td>
@@ -500,6 +501,7 @@ The data stored would look like this:
 <td>2012-05-01 00:00:00</td>
 </tr>
 </table>
+
 ####
 ##Installation
 1. Add system info to appropriate files in datazilla/webapp/conf/etc.  Copy the files to there appropriate location under /etc.
