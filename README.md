@@ -403,7 +403,7 @@ CREATE TABLE `datasource` (
 ```
 
 The data stored would look like this:
-<table width="830" border=1>
+<table width="600px" border=1>
 <tr>
 <td bgcolor=silver>id</td>
 <td bgcolor=silver>project</td>
