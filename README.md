@@ -363,6 +363,144 @@ The following JSON to schema mapping shows where the raw data ends up.
     ...lots more data...
 ```
 
+###Data Model TODO
+One of the goals of datazilla is to consolidate all systems generating performance data into one webservice that can have one or more re-usable user interfaces.  The need for this has arisen from multiple projects generating very similar product performance data but storing it in different databases, managed by different webservices, all having separate user interfaces, and all of these systems have been developed with different types of technology.  This part of the data model is going to be focused on consolidating these databases and services into one system that can scale appropriately. 
+
+####Requirements
+1. Data from different projects must be able to scale independently.  There should be no requirement that project data be stored in the same database instance or co-localized.
+
+2. The schema associated with a particular project must be able to be extended to match an individual project's needs but should be able to use the schema described above as a starting point. 
+
+3. This system should enable a shared Model layer that facilitates an awesome web service based API.
+
+####Architecture Proposal
+1. Use three classifiers to describe all databases managed in this system.
+
+```Database Instance = project_dataset_contenttype```
+
+```project``` - A string representing a project, organization, or broad category.
+```dataset``` - Should be enumerable, a single number would be fine, but we could also use a string ending in a number to further classify if needed. This will allow for scalability, if a single database reaches a size threshold (1-2TB or whatever is appropriate), we can increment the dataset number and create a new database that has the same project/contenttype designations.
+
+This information will be stored in a database instance called datazilla. It will be stored in a table called datasource, that looks like this:
+```sql
+CREATE TABLE `datasource` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `project` varchar(25) NOT NULL,
+  `dataset` varchar(25) NOT NULL,
+  `contenttype` varchar(25) NOT NULL,
+  `host` varchar(128) NOT NULL,
+  `name` varchar(128) NOT NULL,
+  `type` varchar(25) NOT NULL,
+  `active_status` tinyint(4) NOT NULL DEFAULT '1',
+  `creation_date` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `project_key` (`project`),
+  KEY `dataset_key` (`dataset`),
+  KEY `contenttype_key` (`contenttype`),
+  KEY `name_key` (`name`),
+  KEY `active_status_key` (`active_status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
+```
+
+The data stored would look like this:
+<table border=1>
+<tr>
+<td bgcolor=silver class='medium'>id</td>
+<td bgcolor=silver class='medium'>project</td>
+<td bgcolor=silver class='medium'>dataset</td>
+<td bgcolor=silver class='medium'>contenttype</td>
+<td bgcolor=silver class='medium'>host</td>
+<td bgcolor=silver class='medium'>name</td>
+<td bgcolor=silver class='medium'>type</td>
+<td bgcolor=silver class='medium'>active_status</td>
+<td bgcolor=silver class='medium'>creation_date</td>
+</tr>
+
+<tr>
+<td class='normal' valign='top'>1</td>
+<td class='normal' valign='top'>talos</td>
+<td class='normal' valign='top'>1</td>
+<td class='normal' valign='top'>perftest</td>
+<td class='normal' valign='top'>s4n4.qa.phx1.mozilla.com</td>
+<td class='normal' valign='top'>graphs_exp</td>
+<td class='normal' valign='top'>MySQL</td>
+<td class='normal' valign='top'>1</td>
+<td class='normal' valign='top'>2012-05-01 00:00:00</td>
+</tr>
+
+<tr>
+<td class='normal' valign='top'>2</td>
+<td class='normal' valign='top'>test</td>
+<td class='normal' valign='top'>1</td>
+<td class='normal' valign='top'>perftest</td>
+<td class='normal' valign='top'>s4n4.qa.phx1.mozilla.com</td>
+<td class='normal' valign='top'>test_1_perftest</td>
+<td class='normal' valign='top'>MySQL</td>
+<td class='normal' valign='top'>1</td>
+<td class='normal' valign='top'>2012-05-01 00:00:00</td>
+</tr>
+
+<tr>
+<td class='normal' valign='top'>3</td>
+<td class='normal' valign='top'>schema</td>
+<td class='normal' valign='top'>1</td>
+<td class='normal' valign='top'>perftest</td>
+<td class='normal' valign='top'>s4n4.qa.phx1.mozilla.com</td>
+<td class='normal' valign='top'>schema_1_perftest</td>
+<td class='normal' valign='top'>MySQL</td>
+<td class='normal' valign='top'>1</td>
+<td class='normal' valign='top'>2012-05-01 00:00:00</td>
+</tr>
+
+<tr>
+<td class='normal' valign='top'>4</td>
+<td class='normal' valign='top'>stoneridge</td>
+<td class='normal' valign='top'>1</td>
+<td class='normal' valign='top'>perftest</td>
+<td class='normal' valign='top'>s4n4.qa.phx1.mozilla.com</td>
+<td class='normal' valign='top'>stoneridge_1_perftest</td>
+<td class='normal' valign='top'>MySQL</td>
+<td class='normal' valign='top'>1</td>
+<td class='normal' valign='top'>2012-05-01 00:00:00</td>
+</tr>
+
+<tr>
+<td class='normal' valign='top'>5</td>
+<td class='normal' valign='top'>b2g</td>
+<td class='normal' valign='top'>1</td>
+<td class='normal' valign='top'>perftest</td>
+<td class='normal' valign='top'>s4n4.qa.phx1.mozilla.com</td>
+<td class='normal' valign='top'>b2g_1_perftest</td>
+<td class='normal' valign='top'>MySQL</td>
+<td class='normal' valign='top'>1</td>
+<td class='normal' valign='top'>2012-05-01 00:00:00</td>
+</tr>
+
+<tr>
+<td class='normal' valign='top'>6</td>
+<td class='normal' valign='top'>peptest</td>
+<td class='normal' valign='top'>1</td>
+<td class='normal' valign='top'>perftest</td>
+<td class='normal' valign='top'>s4n4.qa.phx1.mozilla.com</td>
+<td class='normal' valign='top'>peptest_1_perftest</td>
+<td class='normal' valign='top'>MySQL</td>
+<td class='normal' valign='top'>1</td>
+<td class='normal' valign='top'>2012-05-01 00:00:00</td>
+</tr>
+
+<tr>
+<td class='normal' valign='top'>7</td>
+<td class='normal' valign='top'>eideticker</td>
+<td class='normal' valign='top'>1</td>
+<td class='normal' valign='top'>perftest</td>
+<td class='normal' valign='top'>s4n4.qa.phx1.mozilla.com</td>
+<td class='normal' valign='top'>eideticker_1_perftest</td>
+<td class='normal' valign='top'>MySQL</td>
+<td class='normal' valign='top'>1</td>
+<td class='normal' valign='top'>2012-05-01 00:00:00</td>
+</tr>
+</table>
+####
 ##Installation
 1. Add system info to appropriate files in datazilla/webapp/conf/etc.  Copy the files to there appropriate location under /etc.
 
