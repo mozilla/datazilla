@@ -379,7 +379,9 @@ One of the goals of datazilla is to consolidate all systems generating performan
 ```Database Instance = project_dataset_contenttype```
 
 ```Example 1: talos_1_perftest``` The database instance name holding the talos performance data.
+
 ```Example 2: b2g_1_perftest``` The database instance name holding the performance data for b2g.
+
 ```Example 2: eideticker_1_perftest``` The database instance name holding the performance data for eideticker data.
 
 ```project``` A string representing a project, organization, or broad category.
