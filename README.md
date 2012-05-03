@@ -56,6 +56,7 @@ The approach used here keeps SQL out of your application and provides re-usabili
 
 ###Web Service
 The web service is a django application, found in [/datazilla/webapp/apps/datazilla](https://github.com/jeads/datazilla/tree/master/webapp/apps).  The interface needs to be formalized further. A possible way of doing this would be to convert the methods and global data structures described below into OOP attributes and methods using a django plugin like [piston](https://bitbucket.org/jespern/django-piston/wiki/Home).
+
 A global datastructure, found in [/datazilla/webapp/apps/datazilla/views.py](https://github.com/jeads/datazilla/blob/master/webapp/apps/datazilla/views.py) called, ```DATAVIEW_ADAPTERS```, maps all data views to a data adapter method and set of fields that correspond to signals the data views can send and receive.  This list of signals is passed to the UI as JSON embedded in a hidden input element.  There is a single data view method that manages traversal of ```DATAVIEW_ADAPTERS```, and provides default behavior for the data view service. 
 
 ```python
