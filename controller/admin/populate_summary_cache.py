@@ -22,7 +22,7 @@ significantly longer.
 def cacheTestSummaries():
 
    gm = DatazillaModel('graphs.json')
-   dataIter = gm.getAllSummaryCacheData()
+   dataIter = gm.getAllSummaryCache()
 
    mc = memcache.Client([os.environ["DATAZILLA_MEMCACHED"]], debug=0)
 
