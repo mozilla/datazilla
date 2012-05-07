@@ -5,12 +5,12 @@ import urllib
 import datetime
 import time
 import zlib
+import memcache
 
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render_to_response
 from django.conf import settings
-from django.http import HttpResponse, HttpResponseNotAllowed, HttpResponseRedirect, HttpResponseServerError, HttpResponseBadRequest, HttpResponseForbidden
-import memcache
+from django.http import HttpResponse
 
 from datazilla.model.DatazillaModel import DatazillaModel
 
@@ -22,17 +22,12 @@ def graphs(request):
    #Load any signals provided in the page
    ####
    signals = []
-   startDate, endDate = _getDateRange()
+   timeRanges = DatazillaModel.getTimeRanges()
 
    for s in SIGNALS:
-     if s in request.POST:
-        if s == 'start_date':
-           startDate = datetime.date( *time.strptime(request.POST[s], '%Y-%m-%d')[0:3] )
-        elif s == 'end_date':
-           endDate = datetime.date( *time.strptime(request.POST[s], '%Y-%m-%d')[0:3] )
-        else:
-           signals.append( { 'value':urllib.unquote( request.POST[s] ), 'name':s } )
-
+      if s in request.POST:
+         signals.append( { 'value':urllib.unquote( request.POST[s] ),
+                           'name':s } )
    ###
    #Get reference data
    ###
@@ -41,24 +36,26 @@ def graphs(request):
    mc = memcache.Client([settings.DATAZILLA_MEMCACHED], debug=0)
    compressedJsonData = mc.get(cacheKey)
 
+   timeKey = 'days_30'
+
    ##reference data found in the cache: decompress##
    if compressedJsonData:
       jsonData = zlib.decompress( compressedJsonData )
    else:
       ##reference data has not been cached: serialize, compress, and cache##
-      gm = DatazillaModel('graphs.json')
-      refData = gm.getTestReferenceData()
-      gm.disconnect()
+      dm = DatazillaModel('graphs.json')
+      refData = dm.getTestReferenceData()
+      dm.disconnect()
+
+      refData['time_ranges'] = timeRanges
 
       jsonData = json.dumps(refData)
 
       mc.set('reference_data', zlib.compress( jsonData ) )
 
    data = { 'username':request.user.username,
-            'start_date':startDate,
-            'end_date':endDate,
+            'time_key':timeKey,
             'reference_json':jsonData,
-            'current_date':datetime.date.today(),
             'signals':signals }
 
    ####
@@ -98,9 +95,9 @@ def setTestData(request):
       unquotedJsonData = urllib.unquote(jsonData)
       data = json.loads( unquotedJsonData )
 
-      gm = DatazillaModel('graphs.json')
-      gm.loadTestData( data, unquotedJsonData )
-      gm.disconnect()
+      dm = DatazillaModel('graphs.json')
+      dm.loadTestData( data, unquotedJsonData )
+      dm.disconnect()
 
       jsonData = json.dumps( { 'loaded_test_pages':len(data['results']) } )
 
@@ -122,24 +119,24 @@ def dataview(request, **kwargs):
 
    json = ""
    if procName in DATAVIEW_ADAPTERS:
-      gm = DatazillaModel('graphs.json')
+      dm = DatazillaModel('graphs.json')
       if 'adapter' in DATAVIEW_ADAPTERS[procName]:
          json = DATAVIEW_ADAPTERS[procName]['adapter'](procPath, 
                                                        procName, 
                                                        fullProcPath, 
                                                        request,
-                                                       gm)
+                                                       dm)
       else:
          if 'fields' in DATAVIEW_ADAPTERS[procName]:
             fields = []
             for f in DATAVIEW_ADAPTERS[procName]['fields']:
                if f in request.POST:
-                  fields.append( gm.dhub.escapeString( request.POST[f] ) )
+                  fields.append( dm.dhub.escapeString( request.POST[f] ) )
                elif f in request.GET:
-                  fields.append( gm.dhub.escapeString( request.GET[f] ) )
+                  fields.append( dm.dhub.escapeString( request.GET[f] ) )
 
             if len(fields) == len(DATAVIEW_ADAPTERS[procName]['fields']):
-               json = gm.dhub.execute(proc=fullProcPath,
+               json = dm.dhub.execute(proc=fullProcPath,
                                       debug_show=settings.DEBUG,
                                       placeholders=fields,
                                       return_type='table_json')
@@ -150,27 +147,27 @@ def dataview(request, **kwargs):
 
          else:
 
-            json = gm.dhub.execute(proc=fullProcPath,
+            json = dm.dhub.execute(proc=fullProcPath,
                                    debug_show=settings.DEBUG,
                                    return_type='table_json')
 
-      gm.disconnect();
+      dm.disconnect();
 
    else:
       json = '{ "error":"Data view name %s not recognized" }' % procName
 
    return HttpResponse(json, mimetype=APP_JS)
 
-def _getTestReferenceData(procPath, procName, fullProcPath, request, gm):
+def _getTestReferenceData(procPath, procName, fullProcPath, request, dm):
 
-   refData = gm.getTestReferenceData()
+   refData = dm.getTestReferenceData()
 
    jsonData = json.dumps( refData )
 
    return jsonData
 
 
-def _getTestRunSummary(procPath, procName, fullProcPath, request, gm):
+def _getTestRunSummary(procPath, procName, fullProcPath, request, dm):
 
    productIds = [] 
    testIds = [] 
@@ -193,6 +190,7 @@ def _getTestRunSummary(procPath, procName, fullProcPath, request, gm):
 
    jsonData = '{}'
    timeKey = 'days_30'
+   #timeKey = 'days_7'
    timeRanges = DatazillaModel.getTimeRanges()
 
    mc = memcache.Client([settings.DATAZILLA_MEMCACHED], debug=0)
@@ -220,11 +218,8 @@ def _getTestRunSummary(procPath, procName, fullProcPath, request, gm):
          if compressedJsonData:
             jsonData = zlib.decompress( compressedJsonData )
 
-         print key
-         print jsonData
-
    else:
-      table = gm.getTestRunSummary(timeRanges[timeKey]['start'], 
+      table = dm.getTestRunSummary(timeRanges[timeKey]['start'], 
                                    timeRanges[timeKey]['stop'], 
                                    productIds, 
                                    platformIds, 
@@ -234,35 +229,35 @@ def _getTestRunSummary(procPath, procName, fullProcPath, request, gm):
 
    return jsonData
 
-def _getTestValues(procPath, procName, fullProcPath, request, gm):
+def _getTestValues(procPath, procName, fullProcPath, request, dm):
 
    data = {};
 
    if 'test_run_id' in request.GET:
-      data = gm.getTestRunValues( request.GET['test_run_id'] )
+      data = dm.getTestRunValues( request.GET['test_run_id'] )
 
    jsonData = json.dumps( data )
 
    return jsonData
 
-def _getPageValues(procPath, procName, fullProcPath, request, gm):
+def _getPageValues(procPath, procName, fullProcPath, request, dm):
 
    data = {};
 
    if ('test_run_id' in request.GET) and ('page_id' in request.GET):
-      data = gm.getPageValues( request.GET['test_run_id'], request.GET['page_id'] )
+      data = dm.getPageValues( request.GET['test_run_id'], request.GET['page_id'] )
 
    jsonData = json.dumps( data )
 
    return jsonData
 
 
-def _getTestValueSummary(procPath, procName, fullProcPath, request, gm):
+def _getTestValueSummary(procPath, procName, fullProcPath, request, dm):
 
    data = {};
 
    if 'test_run_id' in request.GET:
-      data = gm.getTestRunValueSummary( request.GET['test_run_id'] )
+      data = dm.getTestRunValueSummary( request.GET['test_run_id'] )
 
    jsonData = json.dumps( data )
 
@@ -271,13 +266,6 @@ def _getTestValueSummary(procPath, procName, fullProcPath, request, gm):
 #####
 #UTILITY METHODS
 #####
-def _getDateRange():
-
-   start_date = datetime.date.today() - datetime.timedelta(hours=24)
-   end_date = datetime.date.today() + datetime.timedelta(hours=24)
-
-   return start_date, end_date
-
 DATAVIEW_ADAPTERS = { ##Flat tables SQL##
                       'test_run':{},
                       'test_value':{ 'fields':[ 'test_run_id', ] },
@@ -291,7 +279,7 @@ DATAVIEW_ADAPTERS = { ##Flat tables SQL##
                       'test_runs':{ 'adapter':_getTestRunSummary, 'fields':['test_run_id', 'test_run_data'] },
 
                       'test_chart':{ 'adapter':_getTestRunSummary, 'fields':['test_run_id', 'test_run_data'] },
-                      
+
                       'test_values':{ 'adapter':_getTestValues, 'fields':['test_run_id'] }, 
 
                       'page_values':{ 'adapter':_getPageValues, 'fields':['test_run_id', 'page_id'] }, 
