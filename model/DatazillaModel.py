@@ -347,16 +347,12 @@ class DatazillaModel(Model):
 
       nowDatetime = str( datetime.datetime.now() )
 
-      proc = 'graphs.inserts.set_summary_cache'
-
-      self.dhub.execute(proc=proc,
-                        debug_show=self.DEBUG,
-                        placeholders=[ itemId,
-                                       itemData,
-                                       value,
-                                       nowDatetime,
-                                       value,
-                                       nowDatetime ])
+      self.setData('set_summary_cache', [ itemId,
+                                          itemData,
+                                          value,
+                                          nowDatetime,
+                                          value,
+                                          nowDatetime ])
 
    def loadTestData(self, data, jsonData):
 
@@ -400,10 +396,10 @@ class DatazillaModel(Model):
                   stringData = auxValues[index]
 
                self.setData('set_aux_values', [refData['test_run_id'],
-                                                index + 1,
-                                                auxDataId,
-                                                numericData,
-                                                stringData])
+                                               index + 1,
+                                               auxDataId,
+                                               numericData,
+                                               stringData])
 
    def _setTestValues(self, data, refData):
 
@@ -433,8 +429,8 @@ class DatazillaModel(Model):
          if auxData in refData['aux_data']:
             auxId = refData['aux_data'][auxData]['id']
          else:
-            auxId = self.setData('set_aux_data',
-                                 [refData['test_id'], auxData])
+            auxId = self.setDataAndGetId('set_aux_data',
+                                         [refData['test_id'], auxData])
 
       except KeyError:
          raise
@@ -448,9 +444,8 @@ class DatazillaModel(Model):
          if page in refData['pages']:
             pageId = refData['pages'][page]['id']
          else:
-            pageId = self.setData('set_pages_data',
-                                  [refData['test_id'], 
-                                  page])
+            pageId = self.setDataAndGetId('set_pages_data',
+                                          [refData['test_id'], page])
 
       except KeyError:
          raise
@@ -468,30 +463,30 @@ class DatazillaModel(Model):
 
    def _setBuildData(self, data, refData):
 
-      buildId = self.setData('set_build_data',
-                             [ refData['operating_system_id'],
-                               refData['product_id'],
-                               refData['machine_id'],
-                               data['test_build']['id'],
-                               data['test_machine']['platform'],
-                               data['test_build']['revision'],
-                               #####
-                               #TODO: Need to get the
-                               # build_type into the json
-                               #####
-                               'debug',
-                               ##Need to get the build_date into the json##
-                               int(time.time()) ] )
+      buildId = self.setDataAndGetId('set_build_data',
+                                     [ refData['operating_system_id'],
+                                       refData['product_id'],
+                                       refData['machine_id'],
+                                       data['test_build']['id'],
+                                       data['test_machine']['platform'],
+                                       data['test_build']['revision'],
+                                       #####
+                                       #TODO: Need to get the
+                                       # build_type into the json
+                                       #####
+                                       'debug',
+                                       ##Need to get the build_date into the json##
+                                       int(time.time()) ] )
 
       return buildId
 
    def _setTestRunData(self, data, refData):
 
-      testRunId = self.setData('set_test_run_data',
-                              [ refData['test_id'],
-                                refData['build_id'],
-                                data['test_build']['revision'],
-                                data['testrun']['date'] ])
+      testRunId = self.setDataAndGetId('set_test_run_data',
+                                       [ refData['test_id'],
+                                       refData['build_id'],
+                                       data['test_build']['revision'],
+                                       data['testrun']['date'] ])
 
       return testRunId
 
@@ -503,8 +498,8 @@ class DatazillaModel(Model):
          if name in refData['machines']:
             machineId = refData['machines'][ name ]['id']
          else:
-            machineId = self.setData('set_machine_data',
-                                     [ name, int(time.time()) ])
+            machineId = self.setDataAndGetId('set_machine_data',
+                                             [ name, int(time.time()) ])
 
       except KeyError:
          raise
@@ -539,8 +534,8 @@ class DatazillaModel(Model):
          if osKey in refData['operating_systems']:
             osId = refData['operating_systems'][osKey]
          else:
-            osId = self.setData('set_operating_system',
-                                [ osName, osVersion ])
+            osId = self.setDataAndGetId('set_operating_system',
+                                        [ osName, osVersion ])
 
       except KeyError:
          raise
@@ -555,7 +550,7 @@ class DatazillaModel(Model):
             if option in refData['options']:
                optionIds[ option ] = refData['options'][option]
             else:
-               testId = self.setData('set_option_data', [ option ])
+               testId = self.setDataAndGetId('set_option_data', [ option ])
                optionIds[ option ] = testId
       except KeyError:
          raise
@@ -576,8 +571,8 @@ class DatazillaModel(Model):
          if productKey in refData['products']:
             productId = refData['products'][productKey]
          else:
-            productId = self.setData('set_product_data',
-                                     [ product, branch, version ])
+            productId = self.setDataAndGetId('set_product_data',
+                                             [ product, branch, version ])
 
       except KeyError:
          raise
