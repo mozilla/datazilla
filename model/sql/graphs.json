@@ -1,5 +1,5 @@
 {
- "views":{ 
+ "views":{
       "test_runs":{
 
          "sql":"SELECT tr.id AS 'test_run_id',
@@ -107,7 +107,7 @@
          "host":"master_host"
       },
       "set_operating_system":{
-      
+
          "sql":"INSERT INTO operating_system ( name, version ) VALUES (?, ?)",
 
          "host":"master_host"
@@ -257,15 +257,15 @@
 
       "get_all_test_runs":{
 
-         "sql":"SELECT tr.id AS 'test_run_id', 
+         "sql":"SELECT tr.id AS 'test_run_id',
                        tr.revision,
-                       tr.date_run, 
-                       b.product_id, 
-                       tr.test_id, 
+                       tr.date_run,
+                       b.product_id,
+                       tr.test_id,
                        b.operating_system_id,
-                       ROUND( AVG(tv.value), 2 ) AS average, 
-                       ROUND( MIN(tv.value), 2 ) AS min, 
-                       ROUND( MAX(tv.value), 2 ) AS max, 
+                       ROUND( AVG(tv.value), 2 ) AS average,
+                       ROUND( MIN(tv.value), 2 ) AS min,
+                       ROUND( MAX(tv.value), 2 ) AS max,
                        ROUND( STDDEV(tv.value), 2 ) AS 'standard_deviation',
                        ROUND( VARIANCE(tv.value), 2 ) AS variance
                 FROM test_run AS tr
@@ -313,9 +313,9 @@
                         tr.test_id,
                         b.operating_system_id,
                         p.url,
-                        ROUND( AVG(tv.value), 2 ) AS average, 
-                        ROUND( MIN(tv.value), 2 ) AS min, 
-                        ROUND( MAX(tv.value), 2 ) AS max, 
+                        ROUND( AVG(tv.value), 2 ) AS average,
+                        ROUND( MIN(tv.value), 2 ) AS min,
+                        ROUND( MAX(tv.value), 2 ) AS max,
                         ROUND( STDDEV(tv.value), 2 ) AS 'standard_deviation',
                         ROUND( VARIANCE(tv.value), 2 ) AS variance
                FROM test_value AS tv
@@ -357,9 +357,9 @@
       },
       "get_product_test_os_map":{
 
-         "sql":"SELECT b.product_id, tr.test_id, b.operating_system_id 
+         "sql":"SELECT b.product_id, tr.test_id, b.operating_system_id
                 FROM test_run AS tr
-                LEFT JOIN build AS b ON tr.build_id = b.id 
+                LEFT JOIN build AS b ON tr.build_id = b.id
                 WHERE b.product_id IN (
                   SELECT product_id
                   FROM product )
@@ -444,7 +444,6 @@
                        tc.name,
                        tc.description,
                        tcm.test_id,
-                       t.name,
                        tcm.product_id,
                        tcm.operating_system_id
                 FROM test_collection AS tc
