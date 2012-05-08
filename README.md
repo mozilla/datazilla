@@ -302,7 +302,7 @@ The following excerpt shows sections of the JSON structure and where the JSON at
     "test_build": {                                ------------------------------
         "branch": "Mozilla-Aurora",                product.branch
         "id": "20120228122102",                    build.test_build_id
-        "name": "Firefox",                         product.name
+        "name": "Firefox",                         product.product
         "revision": "785345035a3b",                test_run.revision & build.revision
         "version": "14.0a2"                        product.version
     }, 
