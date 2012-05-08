@@ -1,28 +1,25 @@
 # Django settings for webapp project.
 import os
-import simplejson
+
+USE_APP_ENGINE = "APPENGINE_RUNTIME" in os.environ
 
 # Set Database connectivity via environment
-DATAZILLA_DATABASE_NAME     = os.environ["DATAZILLA_DATABASE_NAME"]
-DATAZILLA_DATABASE_USER     = os.environ["DATAZILLA_DATABASE_USER"]
-DATAZILLA_DATABASE_PASSWORD = os.environ["DATAZILLA_DATABASE_PASSWORD"]
-DATAZILLA_DATABASE_HOST     = os.environ["DATAZILLA_DATABASE_HOST"]
-DATAZILLA_DATABASE_PORT     = os.environ["DATAZILLA_DATABASE_PORT"]
+DATAZILLA_DATABASE_NAME     = os.environ.get("DATAZILLA_DATABASE_NAME", "")
+DATAZILLA_DATABASE_USER     = os.environ.get("DATAZILLA_DATABASE_USER", "")
+DATAZILLA_DATABASE_PASSWORD = os.environ.get("DATAZILLA_DATABASE_PASSWORD", "")
+DATAZILLA_DATABASE_HOST     = os.environ.get("DATAZILLA_DATABASE_HOST", "")
+DATAZILLA_DATABASE_PORT     = os.environ.get("DATAZILLA_DATABASE_PORT", "")
 
-DATAZILLA_MEMCACHED         = os.environ["DATAZILLA_MEMCACHED"]
+DATAZILLA_MEMCACHED         = os.environ.get("DATAZILLA_MEMCACHED", "")
 
 # Set Sisyphus URL via the environment
-DATAZILLA_URL               = os.environ["DATAZILLA_URL"]
+DATAZILLA_URL               = os.environ.get("DATAZILLA_URL", "/")
 
 # from jgriffin's settings.py for templates
 ROOT = os.path.dirname(os.path.abspath(__file__))
 path = lambda *a: os.path.join(ROOT, *a)
 
-try:
-    DEBUG = os.environ["DATAZILLA_DEBUG"] is not None
-except KeyError:
-    DEBUG = False
-
+DEBUG = os.environ.get("DATAZILLA_DEBUG") is not None
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
@@ -31,16 +28,17 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-DATABASES = {
-    'default': {
-        'ENGINE'   : 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME'     : DATAZILLA_DATABASE_NAME,          # Or path to database file if using sqlite3.
-        'USER'     : DATAZILLA_DATABASE_USER,     # Not used with sqlite3.
-        'PASSWORD' : DATAZILLA_DATABASE_PASSWORD, # Not used with sqlite3.
-        'HOST'     : DATAZILLA_DATABASE_HOST,     # Set to empty string for localhost. Not used with sqlite3.
-        'PORT'     : DATAZILLA_DATABASE_PORT,     # Set to empty string for default. Not used with sqlite3.
+if not USE_APP_ENGINE:
+    DATABASES = {
+        'default': {
+            'ENGINE'   : 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+            'NAME'     : DATAZILLA_DATABASE_NAME,          # Or path to database file if using sqlite3.
+            'USER'     : DATAZILLA_DATABASE_USER,     # Not used with sqlite3.
+            'PASSWORD' : DATAZILLA_DATABASE_PASSWORD, # Not used with sqlite3.
+            'HOST'     : DATAZILLA_DATABASE_HOST,     # Set to empty string for localhost. Not used with sqlite3.
+            'PORT'     : DATAZILLA_DATABASE_PORT,     # Set to empty string for default. Not used with sqlite3.
+        }
     }
-}
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -104,18 +102,26 @@ STATICFILES_FINDERS = (
 SECRET_KEY = os.environ["DATAZILLA_DJANGO_SECRET_KEY"]
 
 # List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-#     'django.template.loaders.eggs.Loader',
-)
+if USE_APP_ENGINE:
+    TEMPLATE_LOADERS = (
+        'django.template.loaders.filesystem.load_template_source',
+    )
+else:
+    TEMPLATE_LOADERS = (
+        'django.template.loaders.filesystem.Loader',
+        'django.template.loaders.app_directories.Loader',
+#       'django.template.loaders.eggs.Loader',
+    )
 
-MIDDLEWARE_CLASSES = (
-    'django.middleware.common.CommonMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-)
+if USE_APP_ENGINE:
+    MIDDLEWARE_CLASSES = tuple()
+else:
+    MIDDLEWARE_CLASSES = (
+        'django.middleware.common.CommonMiddleware',
+        'django.contrib.sessions.middleware.SessionMiddleware',
+        'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'django.contrib.messages.middleware.MessageMiddleware',
+    )
 
 ROOT_URLCONF = 'datazilla.webapp.urls'
 
