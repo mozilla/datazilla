@@ -45,11 +45,15 @@ class Model:
       BaseHub.addDataSource(dataSource)
       self.dhub = MySQL(self.DATAZILLA_DATABASE_NAME)
 
-   def setData(self, statement, placeholders):
+  def setData(self, statement, placeholders):
 
-      self.dhub.execute(proc='graphs.inserts.' + statement,
-                        debug_show=self.DEBUG,
-                        placeholders=placeholders)
+     self.dhub.execute(proc='graphs.inserts.' + statement,
+                       debug_show=self.DEBUG,
+                       placeholders=placeholders)
+
+   def setDataAndGetId(self, statement, placeholders):
+
+      self.setData(statement, placeholders)
 
       idIter = self.dhub.execute(proc='graphs.selects.get_last_insert_id',
                                   debug_show=self.DEBUG,
