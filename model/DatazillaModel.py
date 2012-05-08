@@ -319,18 +319,18 @@ class DatazillaModel(Model):
 
       return pageValuesTable
 
-   def getSummaryCacheData(self, itemId, itemData):
+   def getSummaryCache(self, itemId, itemData):
 
       proc = 'graphs.selects.get_summary_cache'
 
       cachedData = self.dhub.execute(proc=proc,
                                      debug_show=self.DEBUG,
-                                     replace=[ itemId, itemData ],
+                                     placeholders=[ itemId, itemData ],
                                      return_type='tuple')
 
       return cachedData
 
-   def getAllSummaryCacheData(self):
+   def getAllSummaryCache(self):
 
       proc = 'graphs.selects.get_all_summary_cache_data'
 
