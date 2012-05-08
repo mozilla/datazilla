@@ -70,9 +70,9 @@ class Model:
 
       for key in colData:
          if len(colData[key]) > 0:
-            rep += key + ' IN (' + colData[key] + ') AND ' 
+            rep += key + ' IN (' + colData[key] + ') AND '
 
-      rep = re.sub('AND\s+$', '', rep)  
+      rep = re.sub('AND\s+$', '', rep)
 
       return rep
 
