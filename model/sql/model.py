@@ -40,7 +40,7 @@ class Model:
                                                                      "user":self.DATAZILLA_DATABASE_USER,
                                                                      "passwd":self.DATAZILLA_DATABASE_PASSWORD},
                                                                      "default_db":self.DATAZILLA_DATABASE_NAME,
-                                                      "procs": ["%s%s%s" % (self.rootPath,  "/sql/", sqlFileName)]
+                                                      "procs": ["%s/%s" % (self.rootPath, sqlFileName)]
                                                     } }
       BaseHub.addDataSource(dataSource)
       self.dhub = MySQL(self.DATAZILLA_DATABASE_NAME)
