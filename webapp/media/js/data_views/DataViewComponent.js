@@ -29,7 +29,7 @@ var DataViewComponent = new Class({
    initialize: function(selector, options){
 
       this.setOptions(options);
-      
+
       this.parent(options);
 
       //This index is dynamically appended
@@ -79,10 +79,6 @@ var DataViewComponent = new Class({
       this.subscriptionTargets[this.processControlPanelEvent] = this.processControlPanel;
       this.subscriptionTargets[this.signalEvent] = this.signalHandler;
 
-      //Boolean indicating if the server had to reset the
-      //date range supplied by the user
-      this.serverDateRangeUpdate = true;
-
       //Register subscribers
       DV_PAGE.registerSubscribers(this.subscriptionTargets,
                                  this.view.allViewsContainerSel,
@@ -100,11 +96,6 @@ var DataViewComponent = new Class({
          //Disable the close button so the user cannot
          //have a viewless page
          this.view.disableClose(this.dviewIndex);
-         //Set up the update of the date range in the page every 60 minutes
-         //and only run it if we are the first dview.  The first dview
-         //cannot be deleted.
-         this.updateDateRangeInterval = setInterval( _.bind(this.updateDateRange, this), 3600000 );
-
       }
 
       //We could be a child in a new window, register listener
@@ -209,18 +200,6 @@ var DataViewComponent = new Class({
       }
 
       return safeData;
-   },
-   updateDateRange: function(){
-
-      //Make ajax call to retrieve date range, update the values in the page
-      if( this.model != undefined ){
-         jQuery.ajax( this.model.dateRangeLocation, { accepts:'application/json',
-                                                      dataType:'json',
-                                                      cache:false,
-                                                      type:'GET',
-                                                      context:this.view,
-                                                      success:this.view.updateDateRange });
-      }
    },
    destroy: function(){
 
@@ -334,15 +313,15 @@ var DataViewComponent = new Class({
       var a = this.dataAdapters.getAdapter(adapterName);
       var params = "";
       if(this.signalData.signal != undefined){
-         params += 'start_date=' + this.signalData.date_range.start_date + 
+         params += 'start_date=' + this.signalData.date_range.start_date +
                    '&end_date=' + this.signalData.date_range.end_date + '&' +
                    this.signalData.signal + '=' + this.signalData.data;
       }else{
          params = a.getDefaultParams();
       }
-      this.model.getDataViewData(dviewName, 
-                               this, 
-                               this.initializeDataView, 
+      this.model.getDataViewData(dviewName,
+                               this,
+                               this.initializeDataView,
                                params,
                                this.fnError);
    },
@@ -640,18 +619,6 @@ var DataViewComponent = new Class({
 
          //Set up signal handling
          this.setDataTableSignals();
-
-         //Update signal data to whatever the server set it to
-         if((this.model.start_date != this.signalData.date_range.start_date) ||
-            (this.model.end_date != this.signalData.date_range.end_date) ){
-
-            this.serverDateRangeUpdate = true;
-
-            this.signalData.date_range = { start_date:this.model.start_date, 
-                                           end_date:this.model.end_date };
-         }else{
-            this.serverDateRangeUpdate = false;
-         }
 
          this.tableCreated = true;
 
@@ -966,24 +933,14 @@ var DataViewComponent = new Class({
       //any signal data
       var controlPanelDropdownSel = this.view.getIdSelector(this.view.controlPanelDropdownSel, 
                                                             this.dviewIndex);
-      var serverResetDateRangeSel = this.view.getIdSelector(this.view.serverResetDateRangeSel,
-                                                            this.dviewIndex);
-      var badDateFormatSel = this.view.getIdSelector(this.view.badDateFormatSel, this.dviewIndex);
 
       var adapterName = this.model.getDataViewAttribute('data_adapter');
 
       var a = this.dataAdapters.getAdapter(adapterName);
 
-      a.setControlPanelFields(controlPanelDropdownSel, 
-                              this.signalData, 
+      a.setControlPanelFields(controlPanelDropdownSel,
+                              this.signalData,
                               this.dviewIndex);
-
-      a.checkDates(controlPanelDropdownSel, 
-                   this.serverDateRangeUpdate,
-                   this.model.start_date, 
-                   this.model.end_date,
-                   serverResetDateRangeSel,
-                   badDateFormatSel);
 
       //Capture keydown and look for enter/return press
       $(document).keydown( _.bind( this._processControlPanelKeyPress, this ) );
@@ -1018,9 +975,6 @@ var DataViewComponent = new Class({
       var controlPanelClearBtId = this.view.getId(this.view.controlPanelClearBtSel, 
                                                   this.dviewIndex);
 
-      var controlPanelResetDatesBtId = this.view.getId(this.view.controlPanelResetDatesSel, 
-                                                       this.dviewIndex);
-
       var controlPanelDropdownSel = this.view.getIdSelector(this.view.controlPanelDropdownSel, 
                                                             this.dviewIndex);
 
@@ -1037,8 +991,6 @@ var DataViewComponent = new Class({
          //fire event
          $(this.view.allViewsContainerSel).trigger( this.processControlPanelEvent, 
                                                   { dview_index:this.dviewIndex }); 
-      }else if(elId === controlPanelResetDatesBtId){
-         a.resetDates(controlPanelDropdownSel);
       }else if(elId === controlPanelClearBtId){
          a.clearPanel(controlPanelDropdownSel);
       }
@@ -1134,7 +1086,6 @@ var DataViewView = new Class({
       this.controlPanelBtSel = '#dv_cp_load_view_c';
       this.controlPanelClearBtSel = '#dv_cp_clear_c';
       this.controlPanelDropdownSel = '#dv_cp_dropdown_c';
-      this.controlPanelResetDatesSel = '#dv_reset_dates_c';
 
       //Signal display ids
       this.signalDataSentDisplaySel = '#dv_signal_data_sent_c';
@@ -1142,13 +1093,6 @@ var DataViewView = new Class({
       this.signalDateRangeDisplaySel = '#dv_signal_date_range_c';
       this.signalHelpBtSel = '#dv_signal_help_bt_c';
       this.maxSignalDataLength = 50;
-
-      //Date range selectors
-      this.startDateSel = '#dv_start_date';
-      this.endDateSel = '#dv_end_date';
-      this.currentDateSel = '#dv_current_date';
-      this.serverResetDateRangeSel = '#dv_server_date_range_reset_c';
-      this.badDateFormatSel = '#dv_bad_date_format_c';
 
       //Parent/Child relationship display
       this.parentIndexDisplaySel = '#dv_parent_display_c';
@@ -1187,18 +1131,6 @@ var DataViewView = new Class({
       this.nodataMessage = 'No data available.';
       this.sendSignalMessage = 'Select a link in the parent view to send a signal.';
    },
-   updateDateRange: function(data, textStatus, jqXHR){
-
-      if(data.start_date != undefined){
-         $(this.startDateSel).attr('value', data.start_date);
-      }
-      if(data.end_date != undefined){
-         $(this.endDateSel).attr('value', data.end_date);
-      }
-      if(data.current_date != undefined){
-         $(this.currentDateSel).attr('value', data.current_date);
-      }
-   },
    getTablePaginationSel: function(dviewIndex){
       return this.tablePaginationSel.replace('DATAVIEW_INDEX', dviewIndex);
    },
@@ -1206,7 +1138,7 @@ var DataViewView = new Class({
     *DATAVIEW PREPARATION METHODS
     ****************************/
    cloneDataView: function(dviewIndex){
-      
+
       //Clone single view container and append to the main container
       var viewWrapperEl = $(this.viewWrapperSel).clone();
 

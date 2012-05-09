@@ -73,18 +73,6 @@ def getHelp(request):
    data = {}
    return render_to_response('help/dataview.generic.help.html', data)
 
-def getDateRange(request):
-
-   start_date, end_date = _getDateRange()
-
-   current_date = datetime.date.today()
-
-   jsonData = json.dumps( { 'start_date':str(start_date),
-                            'end_date':str(end_date),
-                            'current_date':str(current_date) } )
-
-   return HttpResponse(jsonData, mimetype=APP_JS)
-
 def setTestData(request):
 
    jsonData = '{"error":"No POST data found"}'
@@ -184,14 +172,16 @@ def _getTestRunSummary(procPath, procName, fullProcPath, request, dm):
    if 'platform_ids' in request.GET:
       platformIds = DatazillaModel.getIdList(request.GET['platform_ids'])
 
+   timeKey = 'days_30'
+   timeRanges = DatazillaModel.getTimeRanges()
+   if 'tkey' in request.GET:
+      timeKey = request.GET['tkey']
+
    if not productIds:
       ##Set default productId##
       productIds = [12]
 
    jsonData = '{}'
-   timeKey = 'days_30'
-   #timeKey = 'days_7'
-   timeRanges = DatazillaModel.getTimeRanges()
 
    mc = memcache.Client([settings.DATAZILLA_MEMCACHED], debug=0)
 

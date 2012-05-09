@@ -1,7 +1,7 @@
-/******* 
+/*******
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
  * *****/
 var DataAdapterCollection = new Class({
    /****************************
@@ -40,7 +40,7 @@ var DataAdapterCollection = new Class({
 });
 var DataViewAdapter = new Class({
    /**************************
-    * The DataViewAdapter provides functionality for managing 
+    * The DataViewAdapter provides functionality for managing
     * the generic dview.  The public interface includes all
     * dview functionality that might need to be specialized.
     * New types of dviews can inherit from DataViewAdapter and
@@ -67,19 +67,16 @@ var DataViewAdapter = new Class({
 
       this.mercurialUrlBase = "http://hg.mozilla.org/BRANCH/rev/";
 
+      this.timeKeySel = "#dv_time_key";
+      this.timeRangeSelectMenuSel = "#dv_date_ranges_c";
+
       //Name of the adapter, set by getAdapter()
       this.adapter = "";
       //Set's the default column to sort on
       this.sorting = { 'named_fields':[[0, 'desc']] };
 
-      this.formatColumnMap = { revision:_.bind(this._externalLinkFormatter, this) };
-
-      this.cpStartDateName = 'start_date';
-      this.cpEndDateName = 'end_date';
-
-      this.startDateSel = '#dv_start_date';
-      this.endDateSel = '#dv_end_date';
-      this.currentDateSel = '#dv_current_date';
+      this.formatColumnMap = { revision:_.bind(this._externalLinkFormatter,
+                               this) };
 
       this.ignoreKeyCodes = { 37:1,    //left arrow
                               39:1 };  //right arrow
@@ -87,15 +84,17 @@ var DataViewAdapter = new Class({
       //Use for determining clone id values
       this.view = new View();
    },
-   setControlPanelFields: function(controlPanelDropdownEl, data, dhviewIndex){
+   setControlPanelFields: function(controlPanelDropdownEl,
+                                   data,
+                                   dhviewIndex){
 
       /*********************
-       * Sets the values of the input fields in the control panel.  These 
-       * fields may need to be pre-loaded with default values or the data 
+       * Sets the values of the input fields in the control panel.  These
+       * fields may need to be pre-loaded with default values or the data
        * from a particular signal.
        *
        * Parameters:
-       *   
+       *
        *    controlPanelDropdownEl - The control panel DOM element
        *
        *    data - signal data object
@@ -103,27 +102,9 @@ var DataViewAdapter = new Class({
        *             data.data - signal data
        * *******************/
       if(!_.isEmpty(data)){
-
          var el = $(controlPanelDropdownEl).find('[name="' + data.signal + '"]');
          $(el).attr('value', DV_PAGE.unescapeForUrl(data.data));
 
-         if(!_.isEmpty(data.date_range)){
-            var startInput = $(controlPanelDropdownEl).find('[name="start_date"]');
-            startInput.attr('value',  data.date_range.start_date );
-            var endInput = $(controlPanelDropdownEl).find('[name="end_date"]');
-            endInput.attr('value', data.date_range.end_date );
-         }
-      }else {
-
-         var startInput = $(controlPanelDropdownEl).find('[name="start_date"]');
-         var endInput = $(controlPanelDropdownEl).find('[name="end_date"]');
-
-         //Only set the values to the default date range if both values
-         //are undefined
-         if( !startInput.val() && !endInput.val() ){ 
-            startInput.attr('value',  $(this.startDateSel).val() );
-            endInput.attr('value', $(this.endDateSel).val() );
-         }
       }
    },
    processControlPanel: function(controlPanelSel, data, dviewIndex){
@@ -186,35 +167,7 @@ var DataViewAdapter = new Class({
       return params;
    },
    getDateRangeParams: function(controlPanelDropdownEl, signalData){
-
-      var start = "";
-      var end = "";
-
-      if(($(controlPanelDropdownEl)[0] === undefined) && (signalData === undefined)){
-         //Menu has not been created take date range out of page
-         start = $(this.startDateSel).val();
-         end = $(this.endDateSel).val();
-      }else{
-         //Menu has been created already
-         var startInput = $(controlPanelDropdownEl).find('[name="start_date"]');
-         start = startInput.val();
-         if(start != undefined){
-            start = start.replace(/\s+$/, '');
-         }
-         var endInput = $(controlPanelDropdownEl).find('[name="end_date"]');
-         end = endInput.val();
-         if(end != undefined){
-            end = end.replace(/\s+$/, '');
-         }
-
-         //signal data exists but the menu has not been created, could occur on refresh
-         //or navigating to another view
-         if( ((start === undefined) && (end === undefined)) && (signalData['date_range'] != undefined)){
-            return signalData['date_range'];
-         }
-      }
-
-      return { start_date:start, end_date:end };
+      //CONFIRM:
    },
    clearPanel: function(controlPanelSel){
       /*******************
@@ -237,83 +190,14 @@ var DataViewAdapter = new Class({
        * Build the default URL parameter string.  In this case
        * use the date range embedded in the page.
        * ****************/
-      var params = 'start_date=' + $(this.startDateSel).val() +
-                   '&end_date=' + $(this.endDateSel).val();
+      DV_PAGE.refData['time_ranges']
+
+      var params = "";
+
       return params;
    },
-   resetDates: function(controlPanelDropdownEl){
-
-      //Reset the start and end date to the values embedded
-      //in the page.
-      var startInput = $(controlPanelDropdownEl).find('[name="start_date"]');
-      startInput.attr('value', $(this.startDateSel).val());
-
-      var endInput = $(controlPanelDropdownEl).find('[name="end_date"]');
-      endInput.attr('value', $(this.endDateSel).val());
-   },
-   checkDates: function(controlPanelDropdownEl, 
-                        showMessage, 
-                        serverStartDate, 
-                        serverEndDate, 
-                        serverResetSel,
-                        badDateSel){
-
-      this.serverResetSel = serverResetSel;
-      this.badDateSel = badDateSel;
-
-      var startInput = $(controlPanelDropdownEl).find('[name="start_date"]');
-      var endInput = $(controlPanelDropdownEl).find('[name="end_date"]');
-
-      //Check if the server reset the date range 
-      if( showMessage ){
-         //update panel values
-         startInput.attr('value', serverStartDate);
-         endInput.attr('value', serverEndDate);
-         //display message
-         $(this.serverResetSel).removeClass('hidden');
-      }else{
-         $(this.serverResetSel).addClass('hidden');
-         $(this.badDateSel).addClass('hidden');
-      }
-
-      //Set up date format listeners
-      startInput.keyup( _.bind(this.validateDate, this ) );
-      endInput.keyup( _.bind(this.validateDate, this) );
-   },
    unbindPanel: function(controlPanelDropdownEl){
-      var startInput = $(controlPanelDropdownEl).find('[name="start_date"]');
-      var endInput = $(controlPanelDropdownEl).find('[name="end_date"]');
-      startInput.unbind();
-      endInput.unbind();
-   },
-   validateDate: function(event){
-
-      var dt = $(event.target).val();
-
-      var carretPos = event.target.selectionStart -1;
-
-      //Let the user use the backspace anywhere
-      //in the string
-      if(this.ignoreKeyCodes[event.keyCode]){
-         return;
-      }
-      if( dt.match(/[^\d\-\:\s/]/) ){
-         //Don't allow bad chars
-         $(event.target).attr('value', dt.replace(/[^\d\-\:\s/]/, '') );
-         return;
-      }
-      //collapse multiple spaces to one
-      if( dt.match(/\s\s/g) ){
-         $(event.target).attr('value', dt.replace(/\s\s/, ' ') );
-         return;
-      }
-      //Let the user know when they have a bad date
-      if( dt.match(/^\d\d\d\d\-\d\d\-\d\d\s\d\d\:\d\d\:\d\d$|^\d\d\d\d\-\d\d\-\d\d\s{0,}$/) ){
-         $(this.badDateSel).addClass('hidden');
-      }else{
-         $(this.badDateSel).removeClass('hidden');
-         $(this.serverResetSel).addClass('hidden');
-      }
+      //Interface function
    },
    processData: function(dataObject, datatableObject, signals){
 
@@ -437,7 +321,9 @@ var TestSelectorAdapter = new Class({
       this.setOptions(options);
       this.parent(options);
 
-      this.sortedTestCollection = this._sortObject(DV_PAGE.refData.test_collections);
+      this.sortedTestCollection = this._sortObject(DV_PAGE.refData.test_collections, 'name');
+
+      this.defaultTimeKeySel = '#dv_time_key';
 
       this.testCollectionToggleSel = '#dv_toggle_test_collection_c';
       this.advancedOptionsToggleSel = '#dv_toggle_advanced_options_c';
@@ -504,31 +390,14 @@ var TestSelectorAdapter = new Class({
 
       this._loadTestCollectionSelect(dviewIndex);
       this._loadBranchesSelect(dviewIndex);
+      this._loadTimeRangeOptions(dviewIndex);
 
       if(!_.isEmpty(data)){
-         //this.clearPanel(controlPanelDropdownEl);
          var el = $(controlPanelDropdownEl).find('[name="' + data.signal + '"]');
          $(el).attr('value', DV_PAGE.unescapeForUrl(data.data));
-
-         if(!_.isEmpty(data.date_range)){
-            var startInput = $(controlPanelDropdownEl).find('[name="start_date"]');
-            startInput.attr('value',  data.date_range.start_date );
-            var endInput = $(controlPanelDropdownEl).find('[name="end_date"]');
-            endInput.attr('value', data.date_range.end_date );
-         }
-
-      }else {
-
-         var startInput = $(controlPanelDropdownEl).find('[name="start_date"]');
-         var endInput = $(controlPanelDropdownEl).find('[name="end_date"]');
-
-         //Only set the values to the default date range if both values
-         //are undefined
-         if( !startInput.val() && !endInput.val() ){ 
-            startInput.attr('value',  $(this.startDateSel).val() );
-            endInput.attr('value', $(this.endDateSel).val() );
-         }
       }
+
+
    },
    processControlPanel: function(controlPanelSel, data, dviewIndex, visData){
 
@@ -609,16 +478,19 @@ var TestSelectorAdapter = new Class({
          params = this._buildParams(params, 'page_id', pageIds);
       }
 
+      //Set the time key
+      var menuId = this.view.getIdSelector(this.timeRangeSelectMenuSel, dviewIndex);
+      var timeRange = this._getSelectedOptions(menuId, []);
+      var selectedTimeKey = $(this.defaultTimeKeySel).attr('value');
+      if( timeRange.length == 1 ){
+         selectedTimeKey = timeRange[0];
+      }
+      params += '&tkey=' + selectedTimeKey;
+
       return params;
 
    },
    unbindPanel: function(controlPanelDropdownEl){
-
-      var startInput = $(controlPanelDropdownEl).find('[name="start_date"]');
-      var endInput = $(controlPanelDropdownEl).find('[name="end_date"]');
-
-      startInput.unbind();
-      endInput.unbind();
 
       $(this.testCollectionToggleId).unbind();
       $(this.advancedOptionsToggleId).unbind();
@@ -629,17 +501,50 @@ var TestSelectorAdapter = new Class({
          $(selectMenus[i]).unbind();
       }
    },
-   _loadVisData: function(visData, 
-                          productIds, 
-                          testIds, 
-                          platformIds, 
+   _loadTimeRangeOptions: function(dviewIndex) {
+
+      var menuId = this.view.getIdSelector(this.timeRangeSelectMenuSel, dviewIndex);
+
+      $(menuId).empty();
+
+      var name, value = "";
+      var selectOptions = [];
+      for(var timeKey in DV_PAGE.refData['time_ranges']){
+         if (DV_PAGE.refData['time_ranges'].hasOwnProperty(timeKey)) {
+            var timeKeyFields = timeKey.split('_');
+            if(timeKeyFields.length == 2){
+               name = timeKeyFields[1] +
+                      ' Days, ' +
+                      DV_PAGE.refData['time_ranges'][timeKey]['rstart'] + 
+                      ' to ' +
+                      DV_PAGE.refData['time_ranges'][timeKey]['rstop'];
+
+               selectOptions.push( [ timeKeyFields[1], name, timeKey ] );
+            }
+         }
+      }
+      selectOptions.sort(function(a,b){
+         var aNum = parseInt(a);
+         var bNum = parseInt(b);
+         return aNum - bNum;
+      });
+
+      for(var i=0; i<selectOptions.length; i++){
+
+         this._loadSelectMenu(menuId, selectOptions[i][1], selectOptions[i][2] );
+      }
+   },
+   _loadVisData: function(visData,
+                          productIds,
+                          testIds,
+                          platformIds,
                           testRunIds,
                           pageIds){
 
-      //REMOVE ON RELEASE
       if(visData === undefined){
          return;
       }
+
       for(var i=0; i<visData.length; i++){
          if( visData[i].product_id ){
             productIds.push( visData[i].product_id );
@@ -696,14 +601,14 @@ var TestSelectorAdapter = new Class({
       }
 
    },
-   _sortObject: function(o){
+   _sortObject: function(o, sortKey){
 
       var values = [];
       var idLookup = {};
       for (var key in o) {
          if (o.hasOwnProperty(key)) {
-            values.push(o[key].name);
-            idLookup[ o[key].name ] = key;
+            values.push(o[key][sortKey]);
+            idLookup[ o[key][sortKey] ] = key;
          }
       }
       values.sort();
@@ -782,7 +687,7 @@ var TestSelectorAdapter = new Class({
             testIds[ mapObj.test_id ] = true;
          }
       }
-         
+
       for(var id in DV_PAGE.refData.tests){
          if(DV_PAGE.refData.tests.hasOwnProperty(id)){
             if(testIds[ id ]){

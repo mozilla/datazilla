@@ -11,8 +11,19 @@
 
          <div id="dv_add_test_collection_c">
             <div style="margin-top:10px;">Select A Collection:</div>
-            <select id="dv_add_test_collections_c" style="width:100%; height:400px;" multiple="multiple"></select>
+            <select id="dv_add_test_collections_c" style="width:100%; height:225px;" multiple="multiple"></select>
          </div>
+      </div>
+      <div class="ui-state-highlight ui-corner-all dv-vis-detail-panel">
+
+         <div class="fg-button ui-icon ui-icon-minusthick css-left" id="dv_toggle_date_range_c"></div>
+         <div style="margin-left:20px;"><strong>Set Date Range</strong></div>
+
+         <div id="dv_date_range_options_c" style="margin-top:10px;">
+            <div>Select A Date Range:</div>
+            <select id="dv_date_ranges_c" size="5" style="width:250px; height:80px;"></select>
+         </div>
+
       </div>
       <div class="ui-state-highlight ui-corner-all dv-vis-detail-panel">
          <div class="fg-button ui-icon ui-icon-plusthick css-left" id="dv_toggle_advanced_options_c"></div>
@@ -34,42 +45,11 @@
                <div>Select Platform:</div>
                <select id="dv_add_platforms_c" multiple="multiple" style="width:145px; height:250px;"></select>
             </div>
-
          </div>
       </div>
-      <div class="ui-state-highlight ui-corner-all dv-vis-detail-panel">
-
-         <div class="fg-button ui-icon ui-icon-plusthick css-left" id="dv_toggle_date_range_c"></div>
-         <div style="margin-left:20px;"><strong>Set Date Range</strong></div>
-
-         <div id="dv_date_range_options_c" style="display:none; margin-top:10px;">
-
-            <div style="margin-top:5px; margin-bottom:5px;"><strong>Format:</strong><span style="color:#225186;">&nbsp;YYYY-MM-DD</span> or <span style="color:#225186">YYYY-MM-DD HH:MM:SS</span></div>
-            <div><strong>Maximum Range:</strong><span style="color:#225186;">&nbsp;60 Days</span></div>
-
-            <div id="dv_server_date_range_reset_c" class="ui-state-error ui-corner-all hidden" style="margin-top:5px; margin-bottom:5px; padding:0.5em;"> 
-               <span class="ui-icon ui-icon-alert" style="float:left; margin-top:1px; margin-right:2px;"></span>
-               <strong>Date range reset by server</strong>
-            </div>
-            <div id="dv_bad_date_format_c" class="ui-state-error ui-corner-all hidden" style="margin-top:5px; margin-bottom:5px; padding:0.5em;"> 
-               <span class="ui-icon ui-icon-alert" style="float:left; margin-top:1px; margin-right:2px;"></span>
-               <strong>Date format's almost there... keep trying!</strong>
-            </div>
-            <div style="margin-top:10px; margin-bottom:5px;">
-               Start: &nbsp<input id="dv_cp_start_date_c" type="text" name="start_date" maxlength="19" value=""/> &nbsp PT
-            </div>
-            <div style="margin-top:20px; margin-bottom:5px;">
-               End: &nbsp <input id="dv_cp_end_date_c" type="text" name="end_date" maxlength="19" value=""/> &nbsp PT
-               <div id="dv_reset_dates_c" class="ui-widget fg-button ui-state-default ui-corner-all css-right" style="margin-right:15px;" href="#control_panel">
-                  Reset Date Range
-               </div>
-            </div>
-         </div>
-      </div>
-      </div>
-         <input id="dv_test_run_id_c" type="hidden" name="dv_test_run_id" value=""/>
-         <input id="dv_test_run_data_c" type="hidden" name="dv_test_run_data" value=""/>
-      </div>
+   </div>
+      <input id="dv_test_run_id_c" type="hidden" name="dv_test_run_id" value=""/>
+      <input id="dv_test_run_data_c" type="hidden" name="dv_test_run_data" value=""/>
       <hr class="dv-horz-line" style="margin-top:10px; margin-bottom:10px;" />
       <div id="dv_cp_load_view_c" class="ui-widget fg-button  ui-state-default ui-corner-all css-right" style="margin-left:15px;" href="#control_panel">
         Add Data 

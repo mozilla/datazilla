@@ -14,10 +14,7 @@
 <body>
 
 <input id="dv_reference_json" type="hidden" value="{{ reference_json }}" />
-
-<input id="dv_start_date" type="hidden" value="{{ start_date|date:"c" }}" />
-<input id="dv_end_date" type="hidden" value="{{ end_date|date:"c" }}" />
-<input id="dv_current_date" type="hidden" value="{{ current_date|date:"c" }}" />
+<input id="dv_time_key" type="hidden" value="{{ time_key }}" />
 
 {% for signal in signals %}
 <input id="dv_post_{{ signal.name }}" type="hidden" value="{{ signal.value }}" />
