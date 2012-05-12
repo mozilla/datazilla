@@ -17,4 +17,3 @@ urlpatterns = patterns('',
 
     (r'^views/', include('datazilla.webapp.apps.datazilla.urls')),
 )
-

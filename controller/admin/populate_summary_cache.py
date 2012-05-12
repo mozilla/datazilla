@@ -21,70 +21,69 @@ significantly longer.
 
 def cacheTestSummaries():
 
-   gm = DatazillaModel('graphs.json')
-   dataIter = gm.getAllSummaryCache()
+    gm = DatazillaModel('graphs.json')
+    dataIter = gm.getAllSummaryCache()
 
-   mc = memcache.Client([os.environ["DATAZILLA_MEMCACHED"]], debug=0)
+    mc = memcache.Client([os.environ["DATAZILLA_MEMCACHED"]], debug=0)
 
-   for d in dataIter:
-      for data in d:
-         key = DatazillaModel.getCacheKey( data['item_id'], data['item_data'] )
-         rv = mc.set(key, zlib.compress( data['value'] ))
-         if not rv:
-            sys.stderr.write("ERROR: Failed to store object in memcache: %s, %s\n" % ( str(data['item_id']), data['item_data'] ) ) 
+    for d in dataIter:
+        for data in d:
+            key = DatazillaModel.getCacheKey( data['item_id'], data['item_data'] )
+            rv = mc.set(key, zlib.compress( data['value'] ))
+            if not rv:
+                sys.stderr.write("ERROR: Failed to store object in memcache: %s, %s\n" % ( str(data['item_id']), data['item_data'] ) )
 
-   gm.disconnect()
+    gm.disconnect()
 
 def buildTestSummaries():
 
-   gm = DatazillaModel('graphs.json')
+    gm = DatazillaModel('graphs.json')
 
-   timeRanges = DatazillaModel.getTimeRanges()
+    timeRanges = DatazillaModel.getTimeRanges()
 
-   products = gm.getProducts()
+    products = gm.getProducts()
 
-   for productName in products:
+    for productName in products:
 
-      for tr in ['days_7', 'days_30']:
+        for tr in ['days_7', 'days_30']:
 
-         table = gm.getTestRunSummary(str( timeRanges[tr]['start']),
-                                      str( timeRanges[tr]['stop']),
-                                      [ products[ productName ] ],
-                                      [],
-                                      [])
+            table = gm.getTestRunSummary(str( timeRanges[tr]['start']),
+                                         str( timeRanges[tr]['stop']),
+                                         [ products[ productName ] ],
+                                         [],
+                                         [])
 
-         jsonData = json.dumps( table )
+            jsonData = json.dumps( table )
 
-         gm.setSummaryCache( products[ productName ], tr, jsonData )
+            gm.setSummaryCache( products[ productName ], tr, jsonData )
 
-   gm.disconnect()
+    gm.disconnect()
 
 if __name__ == '__main__':
 
-   usage = """usage: %prog [options] --build --cache --verbose"""
-   parser = OptionParser(usage=usage)
+    usage = """usage: %prog [options] --build --cache --verbose"""
+    parser = OptionParser(usage=usage)
 
-   parser.add_option('-b', 
-                     '--build', 
-                     action='store_true', 
-                     dest='build',
-                     default=False, 
-                     type=None,
-                     help="Build the test run summaries and store them in the database.")
+    parser.add_option('-b',
+                      '--build',
+                      action='store_true',
+                      dest='build',
+                      default=False,
+                      type=None,
+                      help="Build the test run summaries and store them in the database.")
 
-   parser.add_option('-c', 
-                     '--cache', 
-                     action='store_true', 
-                     dest='cache',
-                     default=False, 
-                     type=None,
-                     help="Update the test run summaries in memcached")
+    parser.add_option('-c',
+                      '--cache',
+                      action='store_true',
+                      dest='cache',
+                      default=False,
+                      type=None,
+                      help="Update the test run summaries in memcached")
 
-   (options, args) = parser.parse_args()
+    (options, args) = parser.parse_args()
 
-   if options.build:
-      buildTestSummaries()
+    if options.build:
+        buildTestSummaries()
 
-   if options.cache:
-      cacheTestSummaries()
-
+    if options.cache:
+        cacheTestSummaries()
