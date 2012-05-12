@@ -18,240 +18,240 @@ APP_JS = 'application/json'
 
 def graphs(request):
 
-   ####
-   #Load any signals provided in the page
-   ####
-   signals = []
-   timeRanges = DatazillaModel.getTimeRanges()
+    ####
+    #Load any signals provided in the page
+    ####
+    signals = []
+    timeRanges = DatazillaModel.getTimeRanges()
 
-   for s in SIGNALS:
-      if s in request.POST:
-         signals.append( { 'value':urllib.unquote( request.POST[s] ),
-                           'name':s } )
-   ###
-   #Get reference data
-   ###
-   cacheKey = 'reference_data'
-   jsonData = '{}'
-   mc = memcache.Client([settings.DATAZILLA_MEMCACHED], debug=0)
-   compressedJsonData = mc.get(cacheKey)
+    for s in SIGNALS:
+        if s in request.POST:
+            signals.append( { 'value':urllib.unquote( request.POST[s] ),
+                              'name':s } )
+    ###
+    #Get reference data
+    ###
+    cacheKey = 'reference_data'
+    jsonData = '{}'
+    mc = memcache.Client([settings.DATAZILLA_MEMCACHED], debug=0)
+    compressedJsonData = mc.get(cacheKey)
 
-   timeKey = 'days_30'
+    timeKey = 'days_30'
 
-   ##reference data found in the cache: decompress##
-   if compressedJsonData:
-      jsonData = zlib.decompress( compressedJsonData )
-   else:
-      ##reference data has not been cached: serialize, compress, and cache##
-      dm = DatazillaModel('graphs.json')
-      refData = dm.getTestReferenceData()
-      dm.disconnect()
+    ##reference data found in the cache: decompress##
+    if compressedJsonData:
+        jsonData = zlib.decompress( compressedJsonData )
+    else:
+        ##reference data has not been cached: serialize, compress, and cache##
+        dm = DatazillaModel('graphs.json')
+        refData = dm.getTestReferenceData()
+        dm.disconnect()
 
-      refData['time_ranges'] = timeRanges
+        refData['time_ranges'] = timeRanges
 
-      jsonData = json.dumps(refData)
+        jsonData = json.dumps(refData)
 
-      mc.set('reference_data', zlib.compress( jsonData ) )
+        mc.set('reference_data', zlib.compress( jsonData ) )
 
-   data = { 'username':request.user.username,
-            'time_key':timeKey,
-            'reference_json':jsonData,
-            'signals':signals }
+    data = { 'username':request.user.username,
+             'time_key':timeKey,
+             'reference_json':jsonData,
+             'signals':signals }
 
-   ####
-   #Caller has provided the view parent of the signals, load in page.
-   #This occurs when a data view is in its Pane form and is detached
-   #to exist on it's own page.
-   ####
-   parentIndexKey = 'dv_parent_dview_index'
-   if parentIndexKey in request.POST:
-     data[parentIndexKey] = request.POST[parentIndexKey]
+    ####
+    #Caller has provided the view parent of the signals, load in page.
+    #This occurs when a data view is in its Pane form and is detached
+    #to exist on it's own page.
+    ####
+    parentIndexKey = 'dv_parent_dview_index'
+    if parentIndexKey in request.POST:
+        data[parentIndexKey] = request.POST[parentIndexKey]
 
-   return render_to_response('graphs.views.html', data)
+    return render_to_response('graphs.views.html', data)
 
 def getHelp(request):
-   data = {}
-   return render_to_response('help/dataview.generic.help.html', data)
+    data = {}
+    return render_to_response('help/dataview.generic.help.html', data)
 
 def setTestData(request):
 
-   jsonData = '{"error":"No POST data found"}'
+    jsonData = '{"error":"No POST data found"}'
 
-   if 'data' in request.POST:
+    if 'data' in request.POST:
 
-      jsonData = request.POST['data']
-      unquotedJsonData = urllib.unquote(jsonData)
-      data = json.loads( unquotedJsonData )
+        jsonData = request.POST['data']
+        unquotedJsonData = urllib.unquote(jsonData)
+        data = json.loads( unquotedJsonData )
 
-      dm = DatazillaModel('graphs.json')
-      dm.loadTestData( data, unquotedJsonData )
-      dm.disconnect()
+        dm = DatazillaModel('graphs.json')
+        dm.loadTestData( data, unquotedJsonData )
+        dm.disconnect()
 
-      jsonData = json.dumps( { 'loaded_test_pages':len(data['results']) } )
+        jsonData = json.dumps( { 'loaded_test_pages':len(data['results']) } )
 
-   return HttpResponse(jsonData, mimetype=APP_JS)
+    return HttpResponse(jsonData, mimetype=APP_JS)
 
 def dataview(request, **kwargs):
 
-   procName = os.path.basename(request.path)
-   procPath = "graphs.views."
-   ##Full proc name including base path in json file##
-   fullProcPath = "%s%s" % (procPath, procName)
+    procName = os.path.basename(request.path)
+    procPath = "graphs.views."
+    ##Full proc name including base path in json file##
+    fullProcPath = "%s%s" % (procPath, procName)
 
-   if settings.DEBUG:
-      ###
-      #Write IP address and datetime to log
-      ###
-      print "Client IP:%s" % (request.META['REMOTE_ADDR'])
-      print "Request Datetime:%s" % (str(datetime.datetime.now()))
+    if settings.DEBUG:
+        ###
+        #Write IP address and datetime to log
+        ###
+        print "Client IP:%s" % (request.META['REMOTE_ADDR'])
+        print "Request Datetime:%s" % (str(datetime.datetime.now()))
 
-   json = ""
-   if procName in DATAVIEW_ADAPTERS:
-      dm = DatazillaModel('graphs.json')
-      if 'adapter' in DATAVIEW_ADAPTERS[procName]:
-         json = DATAVIEW_ADAPTERS[procName]['adapter'](procPath, 
-                                                       procName, 
-                                                       fullProcPath, 
-                                                       request,
-                                                       dm)
-      else:
-         if 'fields' in DATAVIEW_ADAPTERS[procName]:
-            fields = []
-            for f in DATAVIEW_ADAPTERS[procName]['fields']:
-               if f in request.POST:
-                  fields.append( dm.dhub.escapeString( request.POST[f] ) )
-               elif f in request.GET:
-                  fields.append( dm.dhub.escapeString( request.GET[f] ) )
+    json = ""
+    if procName in DATAVIEW_ADAPTERS:
+        dm = DatazillaModel('graphs.json')
+        if 'adapter' in DATAVIEW_ADAPTERS[procName]:
+            json = DATAVIEW_ADAPTERS[procName]['adapter'](procPath,
+                                                          procName,
+                                                          fullProcPath,
+                                                          request,
+                                                          dm)
+        else:
+            if 'fields' in DATAVIEW_ADAPTERS[procName]:
+                fields = []
+                for f in DATAVIEW_ADAPTERS[procName]['fields']:
+                    if f in request.POST:
+                        fields.append( dm.dhub.escapeString( request.POST[f] ) )
+                    elif f in request.GET:
+                        fields.append( dm.dhub.escapeString( request.GET[f] ) )
 
-            if len(fields) == len(DATAVIEW_ADAPTERS[procName]['fields']):
-               json = dm.dhub.execute(proc=fullProcPath,
-                                      debug_show=settings.DEBUG,
-                                      placeholders=fields,
-                                      return_type='table_json')
+                if len(fields) == len(DATAVIEW_ADAPTERS[procName]['fields']):
+                    json = dm.dhub.execute(proc=fullProcPath,
+                                           debug_show=settings.DEBUG,
+                                           placeholders=fields,
+                                           return_type='table_json')
+
+                else:
+                    json = '{ "error":"%s fields required, %s provided" }' % (str(len(DATAVIEW_ADAPTERS[procName]['fields'])),
+                                                                              str(len(fields)))
 
             else:
-               json = '{ "error":"%s fields required, %s provided" }' % (str(len(DATAVIEW_ADAPTERS[procName]['fields'])), 
-                                                                         str(len(fields)))
 
-         else:
+                json = dm.dhub.execute(proc=fullProcPath,
+                                       debug_show=settings.DEBUG,
+                                       return_type='table_json')
 
-            json = dm.dhub.execute(proc=fullProcPath,
-                                   debug_show=settings.DEBUG,
-                                   return_type='table_json')
+        dm.disconnect();
 
-      dm.disconnect();
+    else:
+        json = '{ "error":"Data view name %s not recognized" }' % procName
 
-   else:
-      json = '{ "error":"Data view name %s not recognized" }' % procName
-
-   return HttpResponse(json, mimetype=APP_JS)
+    return HttpResponse(json, mimetype=APP_JS)
 
 def _getTestReferenceData(procPath, procName, fullProcPath, request, dm):
 
-   refData = dm.getTestReferenceData()
+    refData = dm.getTestReferenceData()
 
-   jsonData = json.dumps( refData )
+    jsonData = json.dumps( refData )
 
-   return jsonData
+    return jsonData
 
 
 def _getTestRunSummary(procPath, procName, fullProcPath, request, dm):
 
-   productIds = [] 
-   testIds = [] 
-   platformIds = []
+    productIds = []
+    testIds = []
+    platformIds = []
 
-   #####
-   #Calling _getIdList() insures that we have only numbers in the 
-   #lists, this gaurds against SQL injection
-   #####
-   if 'product_ids' in request.GET:
-      productIds = DatazillaModel.getIdList(request.GET['product_ids'])
-   if 'test_ids' in request.GET:
-      testIds = DatazillaModel.getIdList(request.GET['test_ids'])
-   if 'platform_ids' in request.GET:
-      platformIds = DatazillaModel.getIdList(request.GET['platform_ids'])
+    #####
+    #Calling _getIdList() insures that we have only numbers in the
+    #lists, this gaurds against SQL injection
+    #####
+    if 'product_ids' in request.GET:
+        productIds = DatazillaModel.getIdList(request.GET['product_ids'])
+    if 'test_ids' in request.GET:
+        testIds = DatazillaModel.getIdList(request.GET['test_ids'])
+    if 'platform_ids' in request.GET:
+        platformIds = DatazillaModel.getIdList(request.GET['platform_ids'])
 
-   timeKey = 'days_30'
-   timeRanges = DatazillaModel.getTimeRanges()
-   if 'tkey' in request.GET:
-      timeKey = request.GET['tkey']
+    timeKey = 'days_30'
+    timeRanges = DatazillaModel.getTimeRanges()
+    if 'tkey' in request.GET:
+        timeKey = request.GET['tkey']
 
-   if not productIds:
-      ##Set default productId##
-      productIds = [12]
+    if not productIds:
+        ##Set default productId##
+        productIds = [12]
 
-   jsonData = '{}'
+    jsonData = '{}'
 
-   mc = memcache.Client([settings.DATAZILLA_MEMCACHED], debug=0)
+    mc = memcache.Client([settings.DATAZILLA_MEMCACHED], debug=0)
 
-   if productIds and (not testIds) and (not platformIds):
+    if productIds and (not testIds) and (not platformIds):
 
-      if len(productIds) > 1:
-         extendList = { 'data':[], 'columns':[] } 
-         for id in productIds:
-            key = DatazillaModel.getCacheKey(str(id), timeKey)
+        if len(productIds) > 1:
+            extendList = { 'data':[], 'columns':[] }
+            for id in productIds:
+                key = DatazillaModel.getCacheKey(str(id), timeKey)
+                compressedJsonData = mc.get(key)
+
+                if compressedJsonData:
+                    jsonData = zlib.decompress( compressedJsonData )
+                    data = json.loads( jsonData )
+                    extendList['data'].extend( data['data'] )
+                    extendList['columns'] = data['columns']
+
+            jsonData = json.dumps(extendList)
+
+        else:
+            key = DatazillaModel.getCacheKey(str(productIds[0]), timeKey)
             compressedJsonData = mc.get(key)
 
             if compressedJsonData:
-               jsonData = zlib.decompress( compressedJsonData )
-               data = json.loads( jsonData )
-               extendList['data'].extend( data['data'] )
-               extendList['columns'] = data['columns']
+                jsonData = zlib.decompress( compressedJsonData )
 
-         jsonData = json.dumps(extendList)
+    else:
+        table = dm.getTestRunSummary(timeRanges[timeKey]['start'],
+                                     timeRanges[timeKey]['stop'],
+                                     productIds,
+                                     platformIds,
+                                     testIds)
 
-      else:
-         key = DatazillaModel.getCacheKey(str(productIds[0]), timeKey)
-         compressedJsonData = mc.get(key)
+        jsonData = json.dumps( table )
 
-         if compressedJsonData:
-            jsonData = zlib.decompress( compressedJsonData )
-
-   else:
-      table = dm.getTestRunSummary(timeRanges[timeKey]['start'], 
-                                   timeRanges[timeKey]['stop'], 
-                                   productIds, 
-                                   platformIds, 
-                                   testIds)
-
-      jsonData = json.dumps( table )
-
-   return jsonData
+    return jsonData
 
 def _getTestValues(procPath, procName, fullProcPath, request, dm):
 
-   data = {};
+    data = {};
 
-   if 'test_run_id' in request.GET:
-      data = dm.getTestRunValues( request.GET['test_run_id'] )
+    if 'test_run_id' in request.GET:
+        data = dm.getTestRunValues( request.GET['test_run_id'] )
 
-   jsonData = json.dumps( data )
+    jsonData = json.dumps( data )
 
-   return jsonData
+    return jsonData
 
 def _getPageValues(procPath, procName, fullProcPath, request, dm):
 
-   data = {};
+    data = {};
 
-   if ('test_run_id' in request.GET) and ('page_id' in request.GET):
-      data = dm.getPageValues( request.GET['test_run_id'], request.GET['page_id'] )
+    if ('test_run_id' in request.GET) and ('page_id' in request.GET):
+        data = dm.getPageValues( request.GET['test_run_id'], request.GET['page_id'] )
 
-   jsonData = json.dumps( data )
+    jsonData = json.dumps( data )
 
-   return jsonData
+    return jsonData
 
 
 def _getTestValueSummary(procPath, procName, fullProcPath, request, dm):
 
-   data = {};
+    data = {};
 
-   if 'test_run_id' in request.GET:
-      data = dm.getTestRunValueSummary( request.GET['test_run_id'] )
+    if 'test_run_id' in request.GET:
+        data = dm.getTestRunValueSummary( request.GET['test_run_id'] )
 
-   jsonData = json.dumps( data )
+    jsonData = json.dumps( data )
 
-   return jsonData
+    return jsonData
 
 #####
 #UTILITY METHODS
@@ -270,15 +270,14 @@ DATAVIEW_ADAPTERS = { ##Flat tables SQL##
 
                       'test_chart':{ 'adapter':_getTestRunSummary, 'fields':['test_run_id', 'test_run_data'] },
 
-                      'test_values':{ 'adapter':_getTestValues, 'fields':['test_run_id'] }, 
+                      'test_values':{ 'adapter':_getTestValues, 'fields':['test_run_id'] },
 
-                      'page_values':{ 'adapter':_getPageValues, 'fields':['test_run_id', 'page_id'] }, 
+                      'page_values':{ 'adapter':_getPageValues, 'fields':['test_run_id', 'page_id'] },
 
                       'test_value_summary':{ 'adapter':_getTestValueSummary, 'fields':['test_run_id'] } }
 
 SIGNALS = set()
 for dv in DATAVIEW_ADAPTERS:
-   if 'fields' in DATAVIEW_ADAPTERS[dv]:
-      for field in DATAVIEW_ADAPTERS[dv]['fields']:
-         SIGNALS.add(field)
-
+    if 'fields' in DATAVIEW_ADAPTERS[dv]:
+        for field in DATAVIEW_ADAPTERS[dv]['fields']:
+            SIGNALS.add(field)
