@@ -6,39 +6,39 @@ from datazilla.model.DatazillaModel import DatazillaModel
 
 def loadTestCollection():
 
-   gm = DatazillaModel('graphs.json')
+    gm = DatazillaModel('graphs.json')
 
-   products = gm.getProducts('id')
+    products = gm.getProducts('id')
 
-   for productName in products:
+    for productName in products:
 
-      if products[ productName ]['product'] and \
-         products[ productName ]['version'] and \
-         products[ productName ]['branch']:
+        if products[ productName ]['product'] and \
+           products[ productName ]['version'] and \
+           products[ productName ]['branch']:
 
-         name = "%s %s %s" % (products[ productName ]['product'],
-                              products[ productName ]['version'],
-                              products[ productName ]['branch'])
+            name = "%s %s %s" % (products[ productName ]['product'],
+                                 products[ productName ]['version'],
+                                 products[ productName ]['branch'])
 
-         id = gm.setData('set_test_collection', [ name, "", name ])
-         gm.setData('set_test_collection_map', [ id, products[ productName ]['id'] ])
+            id = gm.setData('set_test_collection', [ name, "", name ])
+            gm.setData('set_test_collection_map', [ id, products[ productName ]['id'] ])
 
-   gm.disconnect()
+    gm.disconnect()
 
 if __name__ == '__main__':
 
-   usage = """usage: %prog [options] --load"""
-   parser = OptionParser(usage=usage)
+    usage = """usage: %prog [options] --load"""
+    parser = OptionParser(usage=usage)
 
-   parser.add_option('-l', 
-                     '--load', 
-                     action='store_true', 
-                     dest='load',
-                     default=False, 
-                     type=None,
-                     help="Identitfy new product branches and add them as test collections.")
+    parser.add_option('-l',
+                      '--load',
+                      action='store_true',
+                      dest='load',
+                      default=False,
+                      type=None,
+                      help="Identitfy new product branches and add them as test collections.")
 
-   (options, args) = parser.parse_args()
+    (options, args) = parser.parse_args()
 
-   if options.load:
-      loadTestCollection()
+    if options.load:
+        loadTestCollection()
