@@ -2,9 +2,8 @@
 if [[ ! -d /var/log/datazilla ]]; then
     mkdir -p /var/log/datazilla
 fi
-cd /usr/local/datazilla/webapp/
+cd /usr/local/datazilla/
 python ./manage.py runfcgi \
-    --pythonpath=/usr/local/ \
     daemonize=true \
     method=prefork \
     host=127.0.0.1 \

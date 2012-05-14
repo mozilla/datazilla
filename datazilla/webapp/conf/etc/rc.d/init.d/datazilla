@@ -15,7 +15,7 @@
 # Source function library.
 . /etc/rc.d/init.d/functions
 
-exec="/usr/local/datazilla/webapp/conf/bin/datazilla"
+exec="/usr/local/datazilla/datazilla/webapp/conf/bin/datazilla"
 prog=${exec##*/}
 
 #config="<path to major config file>"
