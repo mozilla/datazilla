@@ -1603,7 +1603,7 @@ var SideBarPlot = new Class({
 
     },
     _getLabelContainer: function(key){
-
+        
         //Add alpha channel to lighten the color
         var rgbAlpha = this._getAlphaChannelColor( this.datasets[key].color );
 
