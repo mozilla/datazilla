@@ -5,101 +5,101 @@
  * *****/
 var Page = new Class({
 
-   Implements:Options,
+    Implements:Options,
 
-   jQuery:'Page',
+    jQuery:'Page',
 
-   initialize: function(selector, options){
-      this.urlObj = jQuery.url(window.location);
+    initialize: function(selector, options){
+        this.urlObj = jQuery.url(window.location);
 
-      //Hardcoding here for speed, we need to encode/decode
-      //lots of anchor values
-      this.encodeHtmlEntities = [  [ new RegExp('&', 'g'), '&amp;' ],
-                                   [ new RegExp('<', 'g'), '&lt;' ],
-                                   [ new RegExp('>', 'g'), '&gt;' ],
-                                   [ new RegExp('"', 'g'), '&quot;' ] ];
+        //Hardcoding here for speed, we need to encode/decode
+        //lots of anchor values
+        this.encodeHtmlEntities = [  [ new RegExp('&', 'g'), '&amp;' ],
+                                              [ new RegExp('<', 'g'), '&lt;' ],
+                                              [ new RegExp('>', 'g'), '&gt;' ],
+                                              [ new RegExp('"', 'g'), '&quot;' ] ];
 
-      this.decodeHtmlEntities = [  [ new RegExp('&amp;', 'g'), '&' ],
-                                   [ new RegExp('&lt;', 'g'), '<' ],
-                                   [ new RegExp('&gt;', 'g'), '>' ],
-                                   [ new RegExp('&quot;', 'g'), '"' ] ];
+        this.decodeHtmlEntities = [  [ new RegExp('&amp;', 'g'), '&' ],
+                                              [ new RegExp('&lt;', 'g'), '<' ],
+                                              [ new RegExp('&gt;', 'g'), '>' ],
+                                              [ new RegExp('&quot;', 'g'), '"' ] ];
 
-   },
-   registerSubscribers: function(subscriptionTargets, el, context){
-      if(el === undefined){
-         console.log( 'registerSubscribers error: el is undefined' );
-      }
-      for(var ev in subscriptionTargets){
-         if(subscriptionTargets.hasOwnProperty(ev)){
-            $( el ).bind(ev, {}, _.bind(function(event, data){
-               if( _.isFunction( subscriptionTargets[ event.type ] ) ){
-                  data['event'] = event;
-                  _.bind( subscriptionTargets[ event.type ], context, data)();
-               }else {
-                  console.log( 'registerSubscribers error: No function for ' + event.type );
-               }
-            }, context));
-         }
-      }
-   },
-   unbindSubscribers: function(subscriptionTargets, el){
-      for(var ev in subscriptionTargets){
-         if(subscriptionTargets.hasOwnProperty(ev)){
-            $(el).unbind( ev, subscriptionTargets[ev] );
-         }
-      }
-   },
-   escapeHtmlEntities: function(str){
-      for (var i=0; i<this.encodeHtmlEntities.length; i++){
-         str = str.replace(this.encodeHtmlEntities[i][0], this.encodeHtmlEntities[i][1]);
-      }
-      return str;
-   },
-   unescapeHtmlEntities: function(str){
-      if(str != undefined){
-         for (var i=0; i<this.decodeHtmlEntities.length; i++){
-            str = str.replace(this.decodeHtmlEntities[i][0], this.decodeHtmlEntities[i][1]);
-         }
-      }
-      return str;
-   }
+    },
+    registerSubscribers: function(subscriptionTargets, el, context){
+        if(el === undefined){
+            console.log( 'registerSubscribers error: el is undefined' );
+        }
+        for(var ev in subscriptionTargets){
+            if(subscriptionTargets.hasOwnProperty(ev)){
+                $( el ).bind(ev, {}, _.bind(function(event, data){
+                    if( _.isFunction( subscriptionTargets[ event.type ] ) ){
+                        data['event'] = event;
+                        _.bind( subscriptionTargets[ event.type ], context, data)();
+                    }else {
+                        console.log( 'registerSubscribers error: No function for ' + event.type );
+                    }
+                }, context));
+            }
+        }
+    },
+    unbindSubscribers: function(subscriptionTargets, el){
+        for(var ev in subscriptionTargets){
+            if(subscriptionTargets.hasOwnProperty(ev)){
+                $(el).unbind( ev, subscriptionTargets[ev] );
+            }
+        }
+    },
+    escapeHtmlEntities: function(str){
+        for (var i=0; i<this.encodeHtmlEntities.length; i++){
+            str = str.replace(this.encodeHtmlEntities[i][0], this.encodeHtmlEntities[i][1]);
+        }
+        return str;
+    },
+    unescapeHtmlEntities: function(str){
+        if(str != undefined){
+            for (var i=0; i<this.decodeHtmlEntities.length; i++){
+                str = str.replace(this.decodeHtmlEntities[i][0], this.decodeHtmlEntities[i][1]);
+            }
+        }
+        return str;
+    }
 });
 var Component = new Class({
 
-   Implements:Options,
+    Implements:Options,
 
-   jQuery:'Component',
+    jQuery:'Component',
 
-   initialize: function(selector, options){
-   }
+    initialize: function(selector, options){
+    }
 });
 var Model = new Class({
 
-   Implements:Options,
+    Implements:Options,
 
-   jQuery:'Model',
+    jQuery:'Model',
 
-   initialize: function(selector, options){
-   }
+    initialize: function(selector, options){
+    }
 });
 var View = new Class({
 
-   Implements:Options,
+    Implements:Options,
 
-   jQuery:'View',
+    jQuery:'View',
 
-   initialize: function(selector, options){
-   },
-   getId: function(id, dviewIndex){
-      return id.replace(/\#/, '') + '_' + dviewIndex;
-   },
-   getIdSelector: function(id, dviewIndex){
-      var newId = "";
-      if(id.search(/^\#/) > -1){
-         newId = id + '_' + dviewIndex;
-      }else{
-         newId = '#' + id + '_' + dviewIndex;
-      }
-      return newId;
-   }
+    initialize: function(selector, options){
+    },
+    getId: function(id, dviewIndex){
+        return id.replace(/\#/, '') + '_' + dviewIndex;
+    },
+    getIdSelector: function(id, dviewIndex){
+        var newId = "";
+        if(id.search(/^\#/) > -1){
+            newId = id + '_' + dviewIndex;
+        }else{
+            newId = '#' + id + '_' + dviewIndex;
+        }
+        return newId;
+    }
 });

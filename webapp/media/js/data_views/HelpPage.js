@@ -7,22 +7,22 @@ var HPAGE;
 
 var HelpPage = new Class( {
 
-   jQuery:'HelpPage',
+    jQuery:'HelpPage',
 
-   initialize: function(selector, options){
+    initialize: function(selector, options){
 
-      this.waitMessageSel = '#dv_help_spinner';
-      this.helpContentSel = '#dv_help_content';
-   }
+        this.waitMessageSel = '#dv_help_spinner';
+        this.helpContentSel = '#dv_help_content';
+    }
 
 });
 
-$(document).ready(function() {   
+$(document).ready(function() {    
 
-   HPAGE = new HelpPage();
+    HPAGE = new HelpPage();
 
-   //Toggle off wait message and display help contents
-   $(HPAGE.waitMessageSel).addClass('hidden');
-   $(HPAGE.helpContentSel).removeClass('hidden');
-   
+    //Toggle off wait message and display help contents
+    $(HPAGE.waitMessageSel).addClass('hidden');
+    $(HPAGE.helpContentSel).removeClass('hidden');
+    
 });
