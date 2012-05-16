@@ -4,9 +4,9 @@ import sys
 from optparse import OptionParser
 from datazilla.model.DatazillaModel import DatazillaModel
 
-def loadTestCollection():
+def loadTestCollection(project):
 
-    gm = DatazillaModel('graphs.json')
+    gm = DatazillaModel(project, 'graphs.json')
 
     products = gm.getProducts('id')
 
@@ -30,6 +30,14 @@ if __name__ == '__main__':
     usage = """usage: %prog [options] --load"""
     parser = OptionParser(usage=usage)
 
+    parser.add_option('-p',
+                      '--project',
+                      action='store_true',
+                      dest='project',
+                      default=False,
+                      type=None,
+                      help="Set the project to run on: talos, b2g, schema, test etc....")
+
     parser.add_option('-l',
                       '--load',
                       action='store_true',
@@ -40,5 +48,10 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
 
+    if not options.project:
+        print "No project argument provided."
+        print parser.usage
+        sys.exit(0)
+
     if options.load:
-        loadTestCollection()
+        loadTestCollection(options.project)

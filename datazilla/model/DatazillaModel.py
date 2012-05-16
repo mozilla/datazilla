@@ -84,9 +84,14 @@ class DatazillaModel(Model):
 
         return timeRanges
 
-    def __init__(self, sqlFileName):
+    @staticmethod
+    def getDatabaseSources():
+        print 'getDatabaseSources'
+        return Model.databaseSources
 
-        Model.__init__(self, sqlFileName)
+    def __init__(self, project, sqlFileName):
+
+        Model.__init__(self, project, sqlFileName)
 
     def getProductTestOsMap(self):
 

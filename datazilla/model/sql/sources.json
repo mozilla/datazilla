@@ -1,0 +1,17 @@
+{
+    "get_datasources":{
+
+        "sql":"SELECT id,
+                      project,
+                      dataset,
+                      contenttype,
+                      host,
+                      name,
+                      type,
+                      active_status,
+                      creation_date
+               FROM datasource",
+
+            "host":"master_host"
+        }
+}

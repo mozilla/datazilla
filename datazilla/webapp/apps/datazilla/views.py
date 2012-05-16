@@ -43,7 +43,7 @@ def graphs(request):
         jsonData = zlib.decompress( compressedJsonData )
     else:
         ##reference data has not been cached: serialize, compress, and cache##
-        dm = DatazillaModel('graphs.json')
+        dm = DatazillaModel('talos', 'graphs.json')
         refData = dm.getTestReferenceData()
         dm.disconnect()
 
@@ -83,7 +83,7 @@ def setTestData(request):
         unquotedJsonData = urllib.unquote(jsonData)
         data = json.loads( unquotedJsonData )
 
-        dm = DatazillaModel('graphs.json')
+        dm = DatazillaModel('talos', 'graphs.json')
         dm.loadTestData( data, unquotedJsonData )
         dm.disconnect()
 
@@ -107,7 +107,7 @@ def dataview(request, **kwargs):
 
     json = ""
     if procName in DATAVIEW_ADAPTERS:
-        dm = DatazillaModel('graphs.json')
+        dm = DatazillaModel('talos', 'graphs.json')
         if 'adapter' in DATAVIEW_ADAPTERS[procName]:
             json = DATAVIEW_ADAPTERS[procName]['adapter'](procPath,
                                                           procName,

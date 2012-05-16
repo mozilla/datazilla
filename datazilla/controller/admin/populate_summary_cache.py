@@ -19,9 +19,9 @@ to generate.  As the quantity of data grows this will likely take
 significantly longer.
 """
 
-def cacheTestSummaries():
+def cacheTestSummaries(project):
 
-    gm = DatazillaModel('graphs.json')
+    gm = DatazillaModel(project, 'graphs.json')
     dataIter = gm.getAllSummaryCache()
 
     mc = memcache.Client([os.environ["DATAZILLA_MEMCACHED"]], debug=0)
@@ -35,9 +35,9 @@ def cacheTestSummaries():
 
     gm.disconnect()
 
-def buildTestSummaries():
+def buildTestSummaries(project):
 
-    gm = DatazillaModel('graphs.json')
+    gm = DatazillaModel(project, 'graphs.json')
 
     timeRanges = DatazillaModel.getTimeRanges()
 
@@ -61,8 +61,16 @@ def buildTestSummaries():
 
 if __name__ == '__main__':
 
-    usage = """usage: %prog [options] --build --cache --verbose"""
+    usage = """usage: %prog [options] --project --build --cache --verbose"""
     parser = OptionParser(usage=usage)
+
+    parser.add_option('-p',
+                      '--project',
+                      action='store_true',
+                      dest='project',
+                      default=False,
+                      type=None,
+                      help="Set the project to run on: talos, b2g, schema, test etc....")
 
     parser.add_option('-b',
                       '--build',
@@ -82,8 +90,13 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
 
+    if not options.project:
+        print "No project argument provided."
+        print parser.usage
+        sys.exit(0)
+
     if options.build:
-        buildTestSummaries()
+        buildTestSummaries(options.project)
 
     if options.cache:
-        cacheTestSummaries()
+        cacheTestSummaries(options.project)

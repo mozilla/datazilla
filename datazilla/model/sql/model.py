@@ -12,14 +12,84 @@ from datasource.hubs.MySQL import MySQL
 
 class Model:
 
-    def __init__(self, sqlFileName):
+    projectHub = {}
+    databaseSources = {}
 
-        self.DATAZILLA_DATABASE_NAME     = os.environ["DATAZILLA_DATABASE_NAME"]
-        self.DATAZILLA_DATABASE_USER     = os.environ["DATAZILLA_DATABASE_USER"]
-        self.DATAZILLA_DATABASE_PASSWORD = os.environ["DATAZILLA_DATABASE_PASSWORD"]
-        self.DATAZILLA_DATABASE_HOST     = os.environ["DATAZILLA_DATABASE_HOST"]
-        self.DATAZILLA_DATABASE_PORT     = os.environ["DATAZILLA_DATABASE_PORT"]
+    @staticmethod
+    def loadvars():
 
+        #####
+        #Only load the database sources once when the module
+        #is imported
+        #####
+        if not Model.projectHub:
+
+            Model.DATAZILLA_DATABASE_NAME     = \
+                os.environ["DATAZILLA_DATABASE_NAME"]
+            Model.DATAZILLA_DATABASE_USER     = \
+                os.environ["DATAZILLA_DATABASE_USER"]
+            Model.DATAZILLA_DATABASE_PASSWORD = \
+                os.environ["DATAZILLA_DATABASE_PASSWORD"]
+            Model.DATAZILLA_DATABASE_HOST     = \
+                os.environ["DATAZILLA_DATABASE_HOST"]
+            Model.DATAZILLA_DATABASE_PORT     = \
+                os.environ["DATAZILLA_DATABASE_PORT"]
+
+            ####
+            #Configuration of datasource hub:
+            # 1 Build the datasource struct
+            # 2 Add it to the BaseHub
+            # 3 Instantiate a MySQL hub for all derived classes
+            ####
+            Model.rootPath = os.path.dirname(os.path.abspath(__file__))
+
+            dataSource = { Model.DATAZILLA_DATABASE_NAME :
+
+                            { "hub":"MySQL",
+                              "master_host":
+
+                                { "host":Model.DATAZILLA_DATABASE_HOST,
+                                  "user":Model.DATAZILLA_DATABASE_USER,
+                                  "passwd":Model.DATAZILLA_DATABASE_PASSWORD
+                                },
+
+                              "default_db":Model.DATAZILLA_DATABASE_NAME,
+                              "procs": ["%s/%s" % (Model.rootPath,
+                                                   'sources.json')]
+                         } }
+
+            BaseHub.addDataSource(dataSource)
+            dzHub = MySQL(Model.DATAZILLA_DATABASE_NAME)
+
+            Model.databaseSources = dzHub.execute(proc='sources.get_datasources',
+                                                  key_column='project',
+                                                  return_type='dict')
+
+            Model.loadProjectHub(Model.databaseSources)
+
+    @staticmethod
+    def loadProjectHub(databaseSources):
+
+        for s in databaseSources:
+
+            project = databaseSources[s]['project']
+
+            dataSource = { project :
+                { "hub":"MySQL",
+                  "master_host":{"host":databaseSources[s]['host'],
+                  "user":Model.DATAZILLA_DATABASE_USER,
+                  "passwd":Model.DATAZILLA_DATABASE_PASSWORD},
+                  "default_db":databaseSources[s]['name'],
+                  "procs": ["%s/%s" % (Model.rootPath, 'graphs.json')]
+                } }
+
+            BaseHub.addDataSource(dataSource)
+            hub = MySQL( project )
+            Model.projectHub[ project ] = hub
+
+    def __init__(self, project, sqlFileName):
+
+        self.project = project
         self.sqlFileName = sqlFileName
 
         try:
@@ -27,23 +97,15 @@ class Model:
         except KeyError:
             self.DEBUG = False
 
-        self.rootPath = os.path.dirname(os.path.abspath(__file__))
-
-        ####
-        #Configuration of datasource hub:
-        # 1 Build the datasource struct
-        #         2 Add it to the BaseHub
-        # 3 Instantiate a MySQL hub for all derived classes
-        ####
-        dataSource = { self.DATAZILLA_DATABASE_NAME : { "hub":"MySQL",
-                                                        "master_host":{"host":self.DATAZILLA_DATABASE_HOST,
-                                                                       "user":self.DATAZILLA_DATABASE_USER,
-                                                                       "passwd":self.DATAZILLA_DATABASE_PASSWORD},
-                                                                       "default_db":self.DATAZILLA_DATABASE_NAME,
-                                                        "procs": ["%s/%s" % (self.rootPath, sqlFileName)]
-                                                      } }
-        BaseHub.addDataSource(dataSource)
-        self.dhub = MySQL(self.DATAZILLA_DATABASE_NAME)
+        #####
+        #Set the hub to the requested project
+        #####
+        try:
+            self.dhub = Model.projectHub[self.project]
+        except KeyError:
+            allProjects =  ','.join( Model.projectHub.keys() )
+            m = '%s project name is not recognized, available projects include: %s' % (self.project, allProjects)
+            raise KeyError(m)
 
     def setData(self, statement, placeholders):
 
@@ -82,3 +144,6 @@ class Model:
 
     def disconnect(self):
         self.dhub.disconnect()
+
+
+Model.loadvars()
