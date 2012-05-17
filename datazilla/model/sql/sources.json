@@ -10,7 +10,8 @@
                       type,
                       active_status,
                       creation_date
-               FROM datasource",
+               FROM datasource
+               WHERE active_status = 1",
 
             "host":"master_host"
         }
