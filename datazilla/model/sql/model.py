@@ -101,7 +101,7 @@ class Model:
         #Set the hub to the requested project
         #####
         try:
-            self.dhub = Model.projectHub[self.project]
+            self.dhub = MySQL( self.project )
         except KeyError:
             allProjects =  ','.join( Model.projectHub.keys() )
             m = '%s project name is not recognized, available projects include: %s' % (self.project, allProjects)
