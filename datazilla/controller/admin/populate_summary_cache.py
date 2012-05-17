@@ -61,16 +61,17 @@ def buildTestSummaries(project):
 
 if __name__ == '__main__':
 
-    usage = """usage: %prog [options] --project --build --cache --verbose"""
+    usage = """usage: %prog [options] --project project_name --build --cache --verbose"""
     parser = OptionParser(usage=usage)
 
     parser.add_option('-p',
                       '--project',
-                      action='store_true',
+                      action='store',
                       dest='project',
                       default=False,
-                      type=None,
-                      help="Set the project to run on: talos, b2g, schema, test etc....")
+                      type='string',
+                      help="Set the project to run on: talos, " +
+                           "b2g, schema, test etc....")
 
     parser.add_option('-b',
                       '--build',
@@ -78,7 +79,8 @@ if __name__ == '__main__':
                       dest='build',
                       default=False,
                       type=None,
-                      help="Build the test run summaries and store them in the database.")
+                      help="Build the test run summaries and " +
+                           "store them in the database.")
 
     parser.add_option('-c',
                       '--cache',

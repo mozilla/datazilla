@@ -32,10 +32,10 @@ if __name__ == '__main__':
 
     parser.add_option('-p',
                       '--project',
-                      action='store_true',
+                      action='store',
                       dest='project',
                       default=False,
-                      type=None,
+                      type='string',
                       help="Set the project to run on: talos, b2g, schema, test etc....")
 
     parser.add_option('-l',
