@@ -795,7 +795,7 @@ var DataViewComponent = new Class({
     help: function(){
 
         this.view.closeMenu();
-        var src = "/views/help";
+        var src = "/" + DV_PAGE.project + "/help";
         var dialogHtml = this.view.getHelpModal(src);
 
         $(dialogHtml).dialog('open');
@@ -805,7 +805,7 @@ var DataViewComponent = new Class({
 
         this.view.closeMenu();
         var name = this.model.getDataViewAttribute('name')
-        var src = "/views/help#" + name;
+        var src = "/" + DV_PAGE.project + "/help#" + name;
         var dialogHtml = this.view.getHelpModal(src);
         $(dialogHtml).dialog('open');
 
@@ -1633,8 +1633,8 @@ var DataViewModel = new Class({
         //Options for this view from views.json
         this.dviewHash = {};
         this.setDataViewHash(this.options.dviewName);
-        this.apiLocation = "/views/api/";
-        this.dateRangeLocation = "/views/api/get_date_range";
+        this.apiLocation = "/" + DV_PAGE.project + "/api/";
+        this.dateRangeLocation = "/" + DV_PAGE.project + "/api/get_date_range";
 
         //This is set from any incoming view data
         //to whatever the final range was.  If the

@@ -44,8 +44,8 @@ class DatazillaModel(Model):
         return idList
 
     @staticmethod
-    def getCacheKey(itemId, itemData):
-        return str(itemId) + '_' + str(itemData)
+    def getCacheKey(project, itemId, itemData):
+        return str(project) + '_' + str(itemId) + '_' + str(itemData)
 
     @staticmethod
     def getTimeRanges():

@@ -16,7 +16,7 @@ from datazilla.model.DatazillaModel import DatazillaModel
 
 APP_JS = 'application/json'
 
-def graphs(request):
+def graphs(request, project=""):
 
     ####
     #Load any signals provided in the page
@@ -31,7 +31,7 @@ def graphs(request):
     ###
     #Get reference data
     ###
-    cacheKey = 'reference_data'
+    cacheKey = str(project) + '_reference_data'
     jsonData = '{}'
     mc = memcache.Client([settings.DATAZILLA_MEMCACHED], debug=0)
     compressedJsonData = mc.get(cacheKey)
@@ -40,10 +40,15 @@ def graphs(request):
 
     ##reference data found in the cache: decompress##
     if compressedJsonData:
+
         jsonData = zlib.decompress( compressedJsonData )
+
     else:
-        ##reference data has not been cached: serialize, compress, and cache##
-        dm = DatazillaModel('talos', 'graphs.json')
+        ####
+        #reference data has not been cached:
+        #serialize, compress, and cache
+        ####
+        dm = DatazillaModel(project, 'graphs.json')
         refData = dm.getTestReferenceData()
         dm.disconnect()
 
@@ -51,7 +56,7 @@ def graphs(request):
 
         jsonData = json.dumps(refData)
 
-        mc.set('reference_data', zlib.compress( jsonData ) )
+        mc.set(str(project) + '_reference_data', zlib.compress( jsonData ) )
 
     data = { 'username':request.user.username,
              'time_key':timeKey,
@@ -83,7 +88,7 @@ def setTestData(request):
         unquotedJsonData = urllib.unquote(jsonData)
         data = json.loads( unquotedJsonData )
 
-        dm = DatazillaModel('talos', 'graphs.json')
+        dm = DatazillaModel(project, 'graphs.json')
         dm.loadTestData( data, unquotedJsonData )
         dm.disconnect()
 
@@ -91,12 +96,11 @@ def setTestData(request):
 
     return HttpResponse(jsonData, mimetype=APP_JS)
 
-def dataview(request, **kwargs):
+def dataview(request, project="", method=""):
 
-    procName = os.path.basename(request.path)
     procPath = "graphs.views."
     ##Full proc name including base path in json file##
-    fullProcPath = "%s%s" % (procPath, procName)
+    fullProcPath = "%s%s" % (procPath, method)
 
     if settings.DEBUG:
         ###
@@ -106,31 +110,30 @@ def dataview(request, **kwargs):
         print "Request Datetime:%s" % (str(datetime.datetime.now()))
 
     json = ""
-    if procName in DATAVIEW_ADAPTERS:
-        dm = DatazillaModel('talos', 'graphs.json')
-        if 'adapter' in DATAVIEW_ADAPTERS[procName]:
-            json = DATAVIEW_ADAPTERS[procName]['adapter'](procPath,
-                                                          procName,
-                                                          fullProcPath,
-                                                          request,
-                                                          dm)
+    if method in DATAVIEW_ADAPTERS:
+        dm = DatazillaModel(project, 'graphs.json')
+        if 'adapter' in DATAVIEW_ADAPTERS[method]:
+            json = DATAVIEW_ADAPTERS[method]['adapter'](project,
+                                                        method,
+                                                        request,
+                                                        dm)
         else:
-            if 'fields' in DATAVIEW_ADAPTERS[procName]:
+            if 'fields' in DATAVIEW_ADAPTERS[method]:
                 fields = []
-                for f in DATAVIEW_ADAPTERS[procName]['fields']:
+                for f in DATAVIEW_ADAPTERS[method]['fields']:
                     if f in request.POST:
                         fields.append( dm.dhub.escapeString( request.POST[f] ) )
                     elif f in request.GET:
                         fields.append( dm.dhub.escapeString( request.GET[f] ) )
 
-                if len(fields) == len(DATAVIEW_ADAPTERS[procName]['fields']):
+                if len(fields) == len(DATAVIEW_ADAPTERS[method]['fields']):
                     json = dm.dhub.execute(proc=fullProcPath,
                                            debug_show=settings.DEBUG,
                                            placeholders=fields,
                                            return_type='table_json')
 
                 else:
-                    json = '{ "error":"%s fields required, %s provided" }' % (str(len(DATAVIEW_ADAPTERS[procName]['fields'])),
+                    json = '{ "error":"%s fields required, %s provided" }' % (str(len(DATAVIEW_ADAPTERS[method]['fields'])),
                                                                               str(len(fields)))
 
             else:
@@ -142,11 +145,11 @@ def dataview(request, **kwargs):
         dm.disconnect();
 
     else:
-        json = '{ "error":"Data view name %s not recognized" }' % procName
+        json = '{ "error":"Data view name %s not recognized" }' % method
 
     return HttpResponse(json, mimetype=APP_JS)
 
-def _getTestReferenceData(procPath, procName, fullProcPath, request, dm):
+def _getTestReferenceData(project, method, request, dm):
 
     refData = dm.getTestReferenceData()
 
@@ -155,7 +158,7 @@ def _getTestReferenceData(procPath, procName, fullProcPath, request, dm):
     return jsonData
 
 
-def _getTestRunSummary(procPath, procName, fullProcPath, request, dm):
+def _getTestRunSummary(project, method, request, dm):
 
     productIds = []
     testIds = []
@@ -190,7 +193,7 @@ def _getTestRunSummary(procPath, procName, fullProcPath, request, dm):
         if len(productIds) > 1:
             extendList = { 'data':[], 'columns':[] }
             for id in productIds:
-                key = DatazillaModel.getCacheKey(str(id), timeKey)
+                key = DatazillaModel.getCacheKey(project, str(id), timeKey)
                 compressedJsonData = mc.get(key)
 
                 if compressedJsonData:
@@ -202,7 +205,9 @@ def _getTestRunSummary(procPath, procName, fullProcPath, request, dm):
             jsonData = json.dumps(extendList)
 
         else:
-            key = DatazillaModel.getCacheKey(str(productIds[0]), timeKey)
+            key = DatazillaModel.getCacheKey(project,
+                                             str(productIds[0]),
+                                             timeKey)
             compressedJsonData = mc.get(key)
 
             if compressedJsonData:
@@ -219,7 +224,7 @@ def _getTestRunSummary(procPath, procName, fullProcPath, request, dm):
 
     return jsonData
 
-def _getTestValues(procPath, procName, fullProcPath, request, dm):
+def _getTestValues(project, method, request, dm):
 
     data = {};
 
@@ -230,7 +235,7 @@ def _getTestValues(procPath, procName, fullProcPath, request, dm):
 
     return jsonData
 
-def _getPageValues(procPath, procName, fullProcPath, request, dm):
+def _getPageValues(project, method, request, dm):
 
     data = {};
 
@@ -241,8 +246,7 @@ def _getPageValues(procPath, procName, fullProcPath, request, dm):
 
     return jsonData
 
-
-def _getTestValueSummary(procPath, procName, fullProcPath, request, dm):
+def _getTestValueSummary(project, method, request, dm):
 
     data = {};
 
@@ -266,15 +270,24 @@ DATAVIEW_ADAPTERS = { ##Flat tables SQL##
                       'get_test_ref_data':{ 'adapter':_getTestReferenceData},
 
                       ##Visualization Tools##
-                      'test_runs':{ 'adapter':_getTestRunSummary, 'fields':['test_run_id', 'test_run_data'] },
+                      'test_runs':{ 'adapter':_getTestRunSummary,
+                                    'fields':['test_run_id',
+                                              'test_run_data']
+                                  },
 
-                      'test_chart':{ 'adapter':_getTestRunSummary, 'fields':['test_run_id', 'test_run_data'] },
+                      'test_chart':{ 'adapter':_getTestRunSummary,
+                                     'fields':['test_run_id',
+                                               'test_run_data'] },
 
-                      'test_values':{ 'adapter':_getTestValues, 'fields':['test_run_id'] },
+                      'test_values':{ 'adapter':_getTestValues,
+                                      'fields':['test_run_id'] },
 
-                      'page_values':{ 'adapter':_getPageValues, 'fields':['test_run_id', 'page_id'] },
+                      'page_values':{ 'adapter':_getPageValues,
+                                      'fields':['test_run_id',
+                                                'page_id'] },
 
-                      'test_value_summary':{ 'adapter':_getTestValueSummary, 'fields':['test_run_id'] } }
+                      'test_value_summary':{ 'adapter':_getTestValueSummary,
+                                             'fields':['test_run_id'] } }
 
 SIGNALS = set()
 for dv in DATAVIEW_ADAPTERS:
