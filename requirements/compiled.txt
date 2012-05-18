@@ -3,4 +3,3 @@
 
 MySQL-python
 simplejson
-coverage # only needed for generating test coverage metrics

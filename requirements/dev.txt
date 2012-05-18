@@ -1,0 +1,7 @@
+# Dependencies (both pure-Python and compiled) needed only in development
+
+py==1.4.7
+pytest==2.2.3
+pytest-cov==1.6
+cov-core==1.6
+coverage==3.5.2
