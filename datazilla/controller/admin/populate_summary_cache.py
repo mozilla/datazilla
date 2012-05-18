@@ -28,7 +28,10 @@ def cacheTestSummaries(project):
 
     for d in dataIter:
         for data in d:
-            key = DatazillaModel.getCacheKey( data['item_id'], data['item_data'] )
+            key = DatazillaModel.getCacheKey( project,
+                                              data['item_id'],
+                                              data['item_data'] )
+
             rv = mc.set(key, zlib.compress( data['value'] ))
             if not rv:
                 sys.stderr.write("ERROR: Failed to store object in memcache: %s, %s\n" % ( str(data['item_id']), data['item_data'] ) )

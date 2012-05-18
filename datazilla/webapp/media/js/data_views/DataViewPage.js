@@ -112,6 +112,10 @@ $(document).ready(function() {
 
     DV_PAGE = new DataViewPage();
 
+    console.log( DV_PAGE.urlObj );
+
+    DV_PAGE.project = DV_PAGE.urlObj.data.attr.path.replace(/\//g, "");
+
     DV_PAGE.navLookup = jQuery.parseJSON( $('#dv_nav_json' ).attr('value') );
     DV_PAGE.refData = jQuery.parseJSON( $('#dv_reference_json' ).attr('value') );
     DV_PAGE.DataViewCollection = new DataViewCollection('#DataViewCollection', {});
