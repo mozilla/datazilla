@@ -1,3 +1,0 @@
-MySQL-python==1.2.3
-simplejson==2.5.0
-git+git://github.com/jeads/datasource@021797d4

@@ -1,0 +1,5 @@
+# Dependencies with compiled extensions; should be installed via OS package
+# manager.
+
+MySQL-python
+simplejson
