@@ -6,6 +6,9 @@ import json
 import memcache
 import zlib
 
+from datazilla.vendor import add_vendor_lib
+add_vendor_lib()
+
 from optparse import OptionParser
 from datazilla.model.DatazillaModel import DatazillaModel
 
