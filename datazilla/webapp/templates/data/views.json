@@ -1,6 +1,6 @@
 [
    "Collections",
-   [ 
+   [
       { "name":"sheriff_duty",
           "read_name":"Sheriff Duty",
           "default":1,
@@ -27,12 +27,12 @@
         "read_name":"Test Table Explorer",
         "collection":[ { "dview":"test_run", "parent":"" },
                        { "dview":"test_value", "parent":"test_run" },
-                       { "dview":"test_aux_data", "parent":"test_run" }, 
+                       { "dview":"test_aux_data", "parent":"test_run" },
                        { "dview":"test_option_values", "parent":"test_run" } ]
-      }                                                                                       
+      }
    ],
 
-   "Talos Test Run Data", 
+   "Talos Test Run Data",
    [
       { "name":"test_runs",
         "default_load":1,
@@ -41,7 +41,7 @@
         "control_panel":"test_selector.html",
         "data_adapter":"test_selector",
         "charts":[ { "name":"average_thumbnails", "read_name":"Averages", "default":"1" },
-                   { "name":"table", "read_name":"Table" } ] 
+                   { "name":"table", "read_name":"Table" } ]
       },
       { "name":"test_chart",
         "read_name":"Run Detail",
@@ -51,7 +51,7 @@
         "control_panel":"test_selector.html",
         "data_adapter":"test_selector",
         "charts":[ { "name":"test_chart", "read_name":"Mean Plot", "default":"1" },
-                   { "name":"table", "read_name":"Table" } ] 
+                   { "name":"table", "read_name":"Table" } ]
       },
       { "name":"test_values",
         "read_name":"All Values",
@@ -82,15 +82,15 @@
 
    ],
 
-   "Test Data Tables", 
-   [  
+   "Test Data Tables",
+   [
       { "name":"test_run",
         "default_load":1,
         "read_name":"Test Runs",
         "signals":{ "test_run_id":"1" },
         "control_panel":"named_fields.html",
         "data_adapter":"crashes",
-        "charts":[ { "name":"table", "read_name":"Table", "default":"1" } ] 
+        "charts":[ { "name":"table", "read_name":"Table", "default":"1" } ]
       },
 
       { "name":"test_value",
@@ -100,7 +100,6 @@
         "data_adapter":"crashes",
         "charts":[ { "name":"table", "read_name":"Table", "default":"1" } ]
       },
-   
       { "name":"test_value",
         "read_name":"Test Values",
         "signals":{ "test_run_id":"1" },
@@ -124,5 +123,5 @@
         "data_adapter":"crashes",
         "charts":[ { "name":"table", "read_name":"Table", "default":"1" } ]
       }
-   ] 
+   ]
 ]

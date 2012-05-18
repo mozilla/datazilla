@@ -22,19 +22,15 @@ var DataViewCollection = new Class({
         this.model = new DataViewCollectionModel('#DataViewCollectionModel', {});
         this.view = new DataViewCollectionView('#DataViewCollectionView', {});
 
-        //This is set by resubmitUrls and contains the dviewIndex
-        //of the data view that triggered the URL_RESUBMISSION event.
-        //This is the only case where this attribute is defined
         this.dviewIndex = undefined;
  
         //Get the view marked as default in json structure
         this.defaultDataViewName = this.model.getDefaultDataView();
 
         this.subscriptionTargets = { CLOSE_DATAVIEW:this.closeDataView,
-                                              ADD_DATAVIEW:this.addDataView,
-                                              SIGNAL_DATAVIEW:this.sendSignalToChildWindows,
-                                              OPEN_COLLECTION_DATAVIEW:this.openDataViewCollection,
-                                              URL_RESUBMISSION:this.resubmitUrls };
+                                     ADD_DATAVIEW:this.addDataView,
+                                     SIGNAL_DATAVIEW:this.sendSignalToChildWindows,
+                                     OPEN_COLLECTION_DATAVIEW:this.openDataViewCollection };
 
         DV_PAGE.registerSubscribers(this.subscriptionTargets, 
                                             this.view.allViewsContainerSel,
@@ -187,7 +183,7 @@ var DataViewCollectionView = new Class({
 
         this.parent(options);
 
-        this.urlBase = '/views/';
+        this.urlBase = '/' + DV_PAGE.project + '/';
         this.allViewsContainerSel = '#dv_view_container';
         this.resubmitUrlDialogSel = '#dv_resubmit_urls';
         this.resubmitUrlTextareaSel = '#dv_urls_container';
@@ -326,7 +322,7 @@ var DataViewCollectionModel = new Class({
 
         this.parent(options);
 
-        this.newViewUrl = '/views';
+        this.newViewUrl = '/' + DV_PAGE.project;
         this.urlResubmissionUrl = '/api/resubmit/';
 
         //An object acting like an associative array that holds
@@ -350,21 +346,6 @@ var DataViewCollectionModel = new Class({
         //Used to manage cross tab communication.
         this.childWindows = [];
 
-    },
-    resubmitUrls: function(context, comments, urls, fnError, fnSuccess){
-
-        var data = JSON.stringify( { "comments":comments,
-                                              "urls":urls } );
-
-        jQuery.ajax( this.urlResubmissionUrl, { accepts:'application/json',
-                                                             dataType:'json',
-                                                             cache:false,
-                                                             processData:false,
-                                                             type:'POST',
-                                                             data:data,
-                                                             context:context,
-                                                             error:fnError,
-                                                             success:fnSuccess });
     },
     addParentChildRelationship: function(parentIndex, childIndex){
 
