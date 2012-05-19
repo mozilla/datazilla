@@ -1,7 +1,5 @@
 import os
 import sys
-import time
-import datetime
 import json
 import memcache
 import zlib
@@ -9,6 +7,9 @@ import zlib
 from datazilla.vendor import add_vendor_lib
 add_vendor_lib()
 
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "datazilla.settings.base")
+
+from django.conf import settings
 from optparse import OptionParser
 from datazilla.model.DatazillaModel import DatazillaModel
 
@@ -27,7 +28,7 @@ def cacheTestSummaries(project):
     gm = DatazillaModel(project, 'graphs.json')
     dataIter = gm.getAllSummaryCache()
 
-    mc = memcache.Client([os.environ["DATAZILLA_MEMCACHED"]], debug=0)
+    mc = memcache.Client([settings.DATAZILLA_MEMCACHED], debug=0)
 
     for d in dataIter:
         for data in d:

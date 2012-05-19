@@ -1033,8 +1033,8 @@ var DataViewView = new Class({
         this.parent(options);
 
         //HTML for navigation menu, control panel, and help
-        this.navMenuHtmlUrl = '/media/html/nav_menu.html';
-        this.controlPanelHtmlUrl = '/media/html/control_panels/';
+        this.navMenuHtmlUrl = '/static/html/nav_menu.html';
+        this.controlPanelHtmlUrl = '/static/html/control_panels/';
         this.helpHtmlUrl = '/help/';
 
         this.controlPanelWidth = 525;
