@@ -530,41 +530,30 @@ The initialization of a new project could be completely automated.  A script cou
 ##### Integration In Model.py
 Integrating the database table datazilla.datasource into the Model.py constructor will allow this system to scale to many projects and databases.  The overall change will look like this, the database connection environment variables in /etc/sysconfig/datazilla will point to datazilla.datasource.  When Model.py is instantiated it will load the contents of datazilla.datasource as dataSource associative arrays using BaseHub.addDataSource(dataSource).  The interface to the constructor in Model.py will probably need to be extended to take the project name and a list of sql files.  Every call to the Model.py constructor will need to be changed to reflect this.  This can then be integrated into the webservice url structure.  So, /datazilla/talos and /datazilla/test would point to the separate databases talos_1_perftest and test_1_perftest.
 
-## Installation
-1. Add system info to appropriate files in datazilla/webapp/conf/etc.  Copy the files to there appropriate location under /etc.
+## Installation / Deployment
 
-2. Install the Python dependencies with ``pip install -r requirements.txt``.
+1. Install memcached, MySQL, a WSGI application server, and a static files web
+server (in some cases, e.g. Apache, the latter two could be the same server).
 
-3. Start the datazilla, nginx, and memcached services.  There is a startup script for the datazilla and nginx services in datazilla/webapp/conf/bin.
+2. Install the compiled dependencies in `requirements/compiled.txt` via system
+package manager or via `pip install -r requirements/compiled.txt`.
+
+3. Configure the WSGI application server to serve the `application` object in
+`datazilla/wsgi.py` at the root of the domain, and configure the static files
+server to serve the files in `datazilla/webapp/static` at the URL path
+`/static/`. See the sample config files for Apache and nginx in
+`datazilla/webapp/sample_configs`.
+
+5. Copy `datazilla/settings/local.sample.py` to `datazilla/settings/local.py`
+and edit the settings it contains to the correct values for your installation.
 
 ## Running the tests
 
-To run the Python tests, run ``./test.sh``.
+This requires installing the dev-only dependencies: `pip install -r
+requirements/dev.txt`.
 
-## RHEL6 Configuration
-
-This configuration was done on a RHEL6 VM.
-
-1. cat /etc/redhat-release to get the correct version of EPEL
-
-2. rpm -Uvh http://download.fedora.redhat.com/pub/epel/6/i386/epel-release-6-5.noarch.rpm
-
-3. yum install nginx fcgi python-docutils MySQL-python python-flup
-
-4. yum install python-setuptools spawn-fcgi
-
-5. yum install mysql.x86_64 mysql-server.x86_64 mysql-devel.x86_64
-
-6. yum install git
-
-7. yum install memcached.x86_64 python-memcached.noarch
-
-8. Install the Python dependencies with ``pip install -r requirements.txt``.
-
-9. git clone https://github.com/jeads/datasource, python setup.py install
-
-10. Modify the contents of files in the datazilla/webapp/conf/etc directory to meet the needs of
-   your system and then copy the files to their corresponding locations under /etc.
+To run the Python tests, run `./test.sh`. This will output test coverage
+metrics in HTML format to the `htmlcov/` directory.
 
 
 [1]: https://wiki.mozilla.org/Auto-tools/Projects/BugHunter  "bughunter"

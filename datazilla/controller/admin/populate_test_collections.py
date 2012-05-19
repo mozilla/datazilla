@@ -1,6 +1,9 @@
 import os
 import sys
 
+from datazilla.vendor import add_vendor_lib
+add_vendor_lib()
+
 from optparse import OptionParser
 from datazilla.model.DatazillaModel import DatazillaModel
 

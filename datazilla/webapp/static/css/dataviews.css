@@ -1,0 +1,397 @@
+/******* 
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. 
+ * *****/
+body {
+	font-family: helvetica, arial, sans-serif;
+	font-size: 14px;
+   margin: 0;
+   padding: 0;
+   border-top: 2px solid #676767;
+   min-width: 980px;
+}
+
+div.pm-title {
+  background: url("/static/images/title.png") no-repeat scroll 0 center transparent;
+  position: absolute;
+  left: 15px;
+  width:400px;
+  height:100%;
+  top: 0;
+  z-index: 1;
+}
+
+/***********
+ * Header and user info styles
+ ***********/
+#userinfo {
+  float: right;
+  font-size: 12px;
+  margin-right: 20px;
+  margin-top: 15px;
+  color: #FFFFFF;
+}
+#userinfo a { 
+  color: #4292CE
+}
+.dv-loginmain {
+  width: 390px;
+  height: 300px;
+  margin-top: 120px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 10px;
+  text-align: center;
+}
+p.dv-loginmain {
+  margin-top: 10px;
+  margin-bottom: 5px;
+}
+input.dv-loginmain input[type="submit"] {
+  font-size: 16px;
+  margin-top: 5px;
+}
+
+/********
+ * Toolbar related classes
+ ********/
+div.dv-toolbar-base {
+   /*************
+    * Sets basic layout and background properties
+    * for toolbar components
+    *************/
+   position: relative;
+   margin-left: auto;
+   margin-right: auto;
+   background: transparent #2a2a2a;
+   background: transparent rgba(38,38,38,0.98);
+}
+div.dv-toppanel {
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  border: 0 solid #000;
+  background: -moz-linear-gradient(-90deg, #306298, #234375);
+  background: -webkit-gradient(linear, left top, left bottom, from(#306298), to(#234375));
+
+  height: 50px;
+  width: 95%;
+  margin-top: 20px;
+  padding-top: 10px;
+}
+div.dv-toolbar-border {
+  width: 95%;
+  height: 5px;
+  background: #386196;
+  margin-bottom: 10px;
+}
+div.dv-toolpanel {
+  width: 95%;
+  height:50px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  padding: 10px;
+  font-size:0.750em;
+}
+div.dv-nodata {
+
+   color: #4F4F4F;
+   font-weight: bold;
+   font-size:1.750em;
+   text-align:center;
+   margin-top: 100px;
+}
+
+/********
+ * Size adjustments for text and buttons
+ * inside a view
+ ********/
+.dv-viewtext {
+   /* Some html elements cannot take em, use pixels instead */
+   font-size:14px;
+}
+.dv-viewbutton {
+   height:19px;
+}
+
+/**********
+ * Styles for filament group menu buttons
+ * and toolbars.
+ **********/
+.fg-buttonset {
+  margin-right: 10px;
+  padding-left: 1px;
+}
+.fg-button {
+   outline: 0;
+   margin:0 0 0 0;
+   padding: .2em .2em;
+   text-decoration:none !important;
+   cursor:pointer;
+   position: relative;
+   text-align: center;
+   zoom: 1;
+   display: inline-block;
+   font-size: .6em;
+}
+
+/************
+ * jQuery ui styles
+ ************/
+.ui-widget-content a {
+  color: #225186;
+}
+
+/*************
+ * General styles
+ *************/
+.errormsgs {
+  color:#CD0000;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+.css-right {
+  float: right;
+}
+.css-left {
+  float: left;
+}
+.hidden {
+  display: none;
+}
+span.no-wrap {
+   white-space:nowrap;
+}
+a {
+  text-decoration: none;
+  color: #000080;
+}
+a:hover {
+  text-decoration: underline;
+}
+div.dv-title {
+   margin-top:8px;
+   margin-left:20px;
+   font-size:24px;
+}
+span.dv-redtext {
+   color:#CD0000;
+}
+div.dv-control-panel {
+   font-size:12px;
+   height:500px;
+   overflow-y:auto;
+}
+.dv-verticaltext {
+   -webkit-transform:rotate(270deg);
+   -moz-transform:rotate(270deg);
+   -o-transform: rotate(270deg);
+   white-space:nowrap;
+   display:block;
+   font-size:11px;
+   bottom:0;
+   width:20px;
+   height:20px;
+}
+.dv-horizontaltext {
+   text-align:center;
+   font-size:11px;
+   margin-bottom:10px;
+}
+
+/***********
+ * Modal and form styles
+ ***********/
+div.dv-modal {
+   z-index:3;
+   display:hidden;
+}
+hr.dv-horz-line {
+   background-color:#197F29;
+}
+hr.dv-light-horz-line {
+   background-color:#0D2054;
+}
+div.dv-modal-element {
+   margin-top:25px;
+   margin-bottom:25px;
+}
+div.dv-spinner {
+  background: transparent url(/static/images/spinner.gif) no-repeat center center;
+  height: 350px;
+}
+div.dv-wordwrap { 
+   white-space: pre-wrap;      /* CSS3 */   
+   white-space: -moz-pre-wrap; /* Firefox */    
+   white-space: -pre-wrap;     /* Opera <7 */   
+   white-space: -o-pre-wrap;   /* Opera 7 */    
+   word-wrap: break-word;      /* IE */
+}
+
+
+/***********
+ * URL resubmission styles
+ * *********/
+.dv-resubmission-modal {
+  width: 300px;
+  font-size: smaller;
+  border-spacing: 0;
+}
+/***********
+ *datatable styles
+ ***********/
+.dv-signal-title {
+  font-size: 12px;
+}
+.display {
+  font-size: smaller;
+  border-spacing: 0;
+}
+.css_right {
+  float: right;
+}
+.css_left {
+  float: left;
+}
+.dataTables_processing {
+  background: transparent url(/static/images/spinner.gif) no-repeat center center;
+  height: 350px;
+}
+
+/************
+ * Context menu styles
+ * **********/
+.contextMenu {
+	position: absolute;
+	width: 360px;
+	z-index: 99999;
+	border: solid 1px #CCC;
+	background: white;
+	padding: 0px;
+	margin: 0px;
+	display: none;
+}
+
+.contextMenu div {
+	list-style: none;
+	padding: 3px;
+	margin: 0px;
+}
+
+.contextMenu a {
+	color: #333;
+	text-decoration: none;
+	display: inline;
+	line-height: 20px;
+	height: 20px;
+	background-position: 6px center;
+	background-repeat: no-repeat;
+	outline: none;
+	padding-left: 20px;
+   padding-top:3px;
+}
+
+div.tip {
+   text-align: left;
+   min-width:150px;
+   max-width:350px;
+   background:white;
+   cursor: help; text-decoration: none;
+   position: relative;
+}
+div.tip-title {
+   font-size: 11px;
+   text-align:left;
+   padding:10px;
+}
+div.dv-vis-detail {
+   position:absolute;
+   left:750px;
+   top:200px;
+   padding:25px;
+   height:450px;
+}
+div.dv-vis-detail-panel {
+  margin-top: 5px; 
+  padding: 0.5em;
+  overflow: auto;
+}
+
+iframe.dv-help-frame {
+   width:570px;
+   height:700px;
+   border:0;
+   margin:0;
+}
+a.dv-help-link {
+   color:#5E68C6;
+}
+/* Reference UI image for the generic application help */
+.dv-help-sprite {
+   margin-left:10px;
+   background-repeat: no-repeat;
+   background-image: url('/static/images/bhview_panel.png');
+   background-position: 0 0;
+}
+.dv-nav-help {
+   width:132px;
+   height:40px;
+   background-position: 0 0;
+}
+.dv-controlpanel-help {
+   width:116px;
+   height:40px;
+   background-position: -130px 0;
+}
+.dv-parentchild-help {
+   width:260px;
+   height:40px;
+   background-position: -540px 0;
+}
+.dv-visualization-help {
+   width:115px;
+   height:40px;
+   background-position: -790px 0;
+}
+.dv-bcontrols-help {
+   width:150px;
+   height:40px;
+   background-position: -905px 0;
+}
+.dv-signals-help {
+   width:470px;
+   height:30px;
+   background-position: 0 -40px;
+}
+.dv-tablefilters-help {
+   width:200px;
+   height:35px;
+   background-position: 0 -70px;
+}
+.dv-tablesearch-help {
+   width:170px;
+   height:35px;
+   background-position: -890px -70px;
+}
+
+/******
+ * URL resubmission status styles
+ * ****/
+.dv-status-waiting {
+  color: #4C10AE;
+}
+.dv-status-executing {
+  color: #FF5600;
+}
+.dv-status-completed {
+  color: #007730;
+}
+
+
+
+
+.box { font-family: helvetica, arial, sans-serif; font-size:10px; }
+.box line, .box rect, .box circle { stroke: #000; stroke-width: 1.5px; fill: #fff; }
+.box .center { stroke-dasharray: 3 3; }
+.box .outlier { stroke: #ccc; fill: none; }
+
