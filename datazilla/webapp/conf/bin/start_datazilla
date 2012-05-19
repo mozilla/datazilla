@@ -1,6 +1,0 @@
-#!/bin/bash
-service nginx stop
-service datazilla stop
-
-service nginx start
-service datazilla start
