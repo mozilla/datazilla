@@ -8,6 +8,7 @@ from datazilla.vendor import add_vendor_lib
 add_vendor_lib()
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "datazilla.settings.base")
+from django.conf import settings
 
 from django.conf import settings
 from optparse import OptionParser
