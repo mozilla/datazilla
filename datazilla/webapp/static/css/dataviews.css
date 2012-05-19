@@ -13,7 +13,7 @@ body {
 }
 
 div.pm-title {
-  background: url("/media/images/title.png") no-repeat scroll 0 center transparent;
+  background: url("/static/images/title.png") no-repeat scroll 0 center transparent;
   position: absolute;
   left: 15px;
   width:400px;
@@ -217,7 +217,7 @@ div.dv-modal-element {
    margin-bottom:25px;
 }
 div.dv-spinner {
-  background: transparent url(/media/images/spinner.gif) no-repeat center center;
+  background: transparent url(/static/images/spinner.gif) no-repeat center center;
   height: 350px;
 }
 div.dv-wordwrap { 
@@ -254,7 +254,7 @@ div.dv-wordwrap {
   float: left;
 }
 .dataTables_processing {
-  background: transparent url(/media/images/spinner.gif) no-repeat center center;
+  background: transparent url(/static/images/spinner.gif) no-repeat center center;
   height: 350px;
 }
 
@@ -330,7 +330,7 @@ a.dv-help-link {
 .dv-help-sprite {
    margin-left:10px;
    background-repeat: no-repeat;
-   background-image: url('/media/images/bhview_panel.png');
+   background-image: url('/static/images/bhview_panel.png');
    background-position: 0 0;
 }
 .dv-nav-help {

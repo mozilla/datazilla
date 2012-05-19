@@ -7,6 +7,8 @@ import sys
 import os
 import re
 
+from django.conf import settings
+
 from datasource.bases.BaseHub import BaseHub
 from datasource.hubs.MySQL import MySQL
 
@@ -24,16 +26,11 @@ class Model:
         #####
         if not Model.projectHub:
 
-            Model.DATAZILLA_DATABASE_NAME     = \
-                os.environ["DATAZILLA_DATABASE_NAME"]
-            Model.DATAZILLA_DATABASE_USER     = \
-                os.environ["DATAZILLA_DATABASE_USER"]
-            Model.DATAZILLA_DATABASE_PASSWORD = \
-                os.environ["DATAZILLA_DATABASE_PASSWORD"]
-            Model.DATAZILLA_DATABASE_HOST     = \
-                os.environ["DATAZILLA_DATABASE_HOST"]
-            Model.DATAZILLA_DATABASE_PORT     = \
-                os.environ["DATAZILLA_DATABASE_PORT"]
+            Model.DATAZILLA_DATABASE_NAME = settings.DATAZILLA_DATABASE_NAME
+            Model.DATAZILLA_DATABASE_USER = settings.DATAZILLA_DATABASE_USER
+            Model.DATAZILLA_DATABASE_PASSWORD = settings.DATAZILLA_DATABASE_PASSWORD
+            Model.DATAZILLA_DATABASE_HOST = settings.DATAZILLA_DATABASE_HOST
+            Model.DATAZILLA_DATABASE_PORT = settings.DATAZILLA_DATABASE_PORT
 
             ####
             #Configuration of datasource hub:
@@ -92,10 +89,7 @@ class Model:
         self.project = project
         self.sqlFileName = sqlFileName
 
-        try:
-            self.DEBUG = os.environ["DATAZILLA_DEBUG"] is not None
-        except KeyError:
-            self.DEBUG = False
+        self.DEBUG = settings.DEBUG
 
         #####
         #Set the hub to the requested project

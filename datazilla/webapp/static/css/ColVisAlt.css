@@ -19,7 +19,7 @@
 	border-left-width: 0;
 	cursor: pointer;
 	*cursor: hand;
-	background: url('/media/images/col_button.png') no-repeat top left;
+	background: url('/static/images/col_button.png') no-repeat top left;
 }
 
 button.ColVis_Button::-moz-focus-inner { 
