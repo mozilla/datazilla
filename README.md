@@ -539,10 +539,10 @@ server (in some cases, e.g. Apache, the latter two could be the same server).
 package manager or via `pip install -r requirements/compiled.txt`.
 
 3. Configure the WSGI application server to serve the `application` object in
-`datazilla/wsgi.py` at the root of the domain.
-
-4. Configure the static files server to serve the files in
-`datazilla/webapp/static` at the URL path `/static/`.
+`datazilla/wsgi.py` at the root of the domain, and configure the static files
+server to serve the files in `datazilla/webapp/static` at the URL path
+`/static/`. See the sample config files for Apache and nginx in
+`datazilla/webapp/sample_configs`.
 
 5. Copy `datazilla/settings/local.sample.py` to `datazilla/settings/local.py`
 and edit the settings it contains to the correct values for your installation.
