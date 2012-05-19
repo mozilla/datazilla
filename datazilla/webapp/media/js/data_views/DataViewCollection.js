@@ -91,7 +91,6 @@ var DataViewCollection = new Class({
         return this.model.dviewRelationships[ childIndex ]['parent'];
     },
     addDataView: function(data){
-        
         var dviewName = data.selected_dview;
 
         if(!this.model.hasDataView(dviewName)){
@@ -135,12 +134,13 @@ var DataViewCollection = new Class({
 
             var dviewIndex = this.model.getNewDataViewIndex();
 
-            var dviewComponent = new DataViewComponent('#dviewComponent', 
-                                                                 { dview_name:dviewName, 
-                                                                    dview_parent_index:data.parent_dview_index,
-                                                                    dview_index:dviewIndex }); 
+            var dviewComponent = new DataViewComponent('#dviewComponent',
+                               { dview_name:dviewName,
+                                 dview_parent_index:data.parent_dview_index,
+                                 dview_index:dviewIndex });
 
-            this.model.addParentChildRelationship(data.parent_dview_index, dviewIndex);
+            this.model.addParentChildRelationship(data.parent_dview_index,
+                                                  dviewIndex);
 
             this.model.addDataView(dviewComponent, dviewIndex);
 
@@ -158,7 +158,6 @@ var DataViewCollection = new Class({
         this.model.loadNewChildWindow(childWindow);
     },
     sendSignalToChildWindows: function(data){
-
         //Make sure the message was not sent from another window
         if(data.window_message === undefined){
             //Send message to child windows and include which
@@ -168,7 +167,8 @@ var DataViewCollection = new Class({
             var targetOrigin = DV_PAGE.getTargetOrigin();
 
             for(var i=0; i<this.model.childWindows.length; i++){
-                this.model.childWindows[i].postMessage(JSON.stringify(data), targetOrigin);
+                this.model.childWindows[i].postMessage(JSON.stringify(data),
+                                                       targetOrigin);
             }
         }
     }

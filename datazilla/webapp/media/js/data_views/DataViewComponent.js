@@ -191,7 +191,6 @@ var DataViewComponent = new Class({
             //could send a message
             if( (dataObject.data != undefined) &&
                  (dataObject.window_sender != undefined) &&
-                 (dataObject.date_range != undefined) &&
                  (dataObject.signal != undefined) ){
 
                 //Yer all clear kid!
