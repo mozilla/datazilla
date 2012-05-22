@@ -17,7 +17,7 @@ DATAZILLA_MEMCACHED         = os.environ.get("DATAZILLA_MEMCACHED", "")
 # Set base URL via the environment
 DATAZILLA_URL               = os.environ.get("DATAZILLA_URL", "/")
 
-DATAZILLA_DEBUG = os.environ.get("DATAZILLA_DEBUG") is not None
+DEBUG = os.environ.get("DATAZILLA_DEBUG") is not None
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = os.environ.get("DATAZILLA_DJANGO_SECRET_KEY", "")
@@ -149,7 +149,6 @@ except ImportError:
 
 # Derived settings, whose values should vary with local settings:
 
-DEBUG = DATAZILLA_DEBUG
 TEMPLATE_DEBUG = DEBUG
 
 # The URL static assets will be served at.
