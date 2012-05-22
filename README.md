@@ -96,7 +96,7 @@ def _getTestValues(procPath, procName, fullProcPath, request, gm):
    return jsonData
 ```
 
-All environment variables required by datazilla are stored in a single file located in [/datazilla/webapp/conf/etc/sysconfig](https://github.com/jeads/datazilla/blob/master/webapp/conf/etc/sysconfig/). There is a single environment variable, ```DATAZILLA_DEBUG```, that can be used to turn on debugging options across all command line scripts and the django web service.  When set, the following message will be written to the server log or to stdout, if executing a command line script whenever SQL is executed in the application.
+All Datazilla configuration that is likely to vary per-deployment is found in the sample settings file `datazilla/settings/local.sample.py`; this file should be copied to `datazilla/settings/local.py` and modified as needed. There is a single setting, `DEBUG`, that can be used to turn on debugging options across all command line scripts and the web service.  When set, the following message will be written to the server log or to stdout, if executing a command line script whenever SQL is executed in the application.
 
 ```
 datasource.hubs.MySQL.MySQL debug message:
@@ -528,7 +528,7 @@ In general, the classifiers would provide semantic control enabling the examinat
 The initialization of a new project could be completely automated.  A script could be written to take a project, dataset, and contenttype classifier.  It could dump the schema for the contenttype and initialize a new database from it.  This script could also write out config files that the webservice could use so the database would be automatically available through the web service API without any manual intervention.
 
 ##### Integration In Model.py
-Integrating the database table datazilla.datasource into the Model.py constructor will allow this system to scale to many projects and databases.  The overall change will look like this, the database connection environment variables in /etc/sysconfig/datazilla will point to datazilla.datasource.  When Model.py is instantiated it will load the contents of datazilla.datasource as dataSource associative arrays using BaseHub.addDataSource(dataSource).  The interface to the constructor in Model.py will probably need to be extended to take the project name and a list of sql files.  Every call to the Model.py constructor will need to be changed to reflect this.  This can then be integrated into the webservice url structure.  So, /datazilla/talos and /datazilla/test would point to the separate databases talos_1_perftest and test_1_perftest.
+Integrating the database table datazilla.datasource into the Model.py constructor will allow this system to scale to many projects and databases.  The overall change will look like this, the database connection settings will point to datazilla.datasource.  When Model.py is instantiated it will load the contents of datazilla.datasource as dataSource associative arrays using BaseHub.addDataSource(dataSource).  The interface to the constructor in Model.py will probably need to be extended to take the project name and a list of sql files.  Every call to the Model.py constructor will need to be changed to reflect this.  This can then be integrated into the webservice url structure.  So, /datazilla/talos and /datazilla/test would point to the separate databases talos_1_perftest and test_1_perftest.
 
 ## Installation / Deployment
 
