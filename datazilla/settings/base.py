@@ -1,7 +1,7 @@
 # Django settings for webapp project.
 import os, posixpath
 
-USE_APP_ENGINE = "APPENGINE_RUNTIME" in os.environ
+USE_APP_ENGINE = "APPENGINE_RUNTIME" in os.environ or os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine') or os.getenv('SETTINGS_MODE') == 'prod'
 
 # These settings can all be optionally set via env vars, or in local.py:
 
@@ -17,10 +17,7 @@ DATAZILLA_MEMCACHED         = os.environ.get("DATAZILLA_MEMCACHED", "")
 # Set base URL via the environment
 DATAZILLA_URL               = os.environ.get("DATAZILLA_URL", "/")
 
-DEBUG = os.environ.get("DATAZILLA_DEBUG") is not None
-
-# Make this unique, and don't share it with anybody.
-SECRET_KEY = os.environ.get("DATAZILLA_DJANGO_SECRET_KEY", "")
+DATAZILLA_DEBUG             = os.environ.get("DATAZILLA_DEBUG") is not None
 
 
 ROOT = os.path.dirname(
