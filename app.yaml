@@ -1,0 +1,16 @@
+application: webkit-perf
+version: datazilla
+runtime: python27
+api_version: 1
+threadsafe: no
+
+libraries:
+- name: django
+  version: "1.2"
+
+handlers:
+- url: /static
+  static_dir: datazilla/webapp/static
+
+- url: .*
+  script: appengine.py
