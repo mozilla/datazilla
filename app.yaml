@@ -1,5 +1,6 @@
 application: webkit-perf
 version: datazilla
+#runtime: python
 runtime: python27
 api_version: 1
 threadsafe: no

@@ -17,8 +17,8 @@ class Model:
               "master_host":{
                 "host": settings.CLOUDSQL_INSTANCE,
                 "user": settings.CLOUDSQL_USERNAME, # FIXME: Cloud SQL doesn't have an user. Delete it.
-                "db": settings.CLOUDSQL_DATABASE},
-              "default_db": settings.DATAZILLA_DATABASE_NAME,
+              },
+              "default_db": settings.CLOUDSQL_DATABASE,
               "procs": ["%s/%s" % (Model.rootPath, '../sql/graphs.json')]
             } }
         BaseHub.addDataSource(dataSource)
