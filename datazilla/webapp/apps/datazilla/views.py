@@ -58,8 +58,7 @@ def graphs(request, project=""):
 
         mc.set(str(project) + '_reference_data', zlib.compress( jsonData ) )
 
-    data = { 'username':request.user.username,
-             'time_key':timeKey,
+    data = { 'time_key':timeKey,
              'reference_json':jsonData,
              'signals':signals }
 
