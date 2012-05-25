@@ -689,6 +689,8 @@ Description: ----------------------------------
            chunk_source - The table and column to use to compute the number of chunks to return.
                           Use an explicit column name like so: table_name.column_name.
         
+           chunk_min - A minimum id to start the chunks from.  This defaults to 0.
+        
            Ex: Using the chunking options
         
               ######

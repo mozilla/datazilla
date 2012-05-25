@@ -69,7 +69,8 @@ class TestMySQLHub(unittest.TestCase):
                  'testReplaceQuote',
                  'testPlaceholderQuote',
                  'testBigReplace',
-                 'testDropTable']
+                 'testDropTable',
+                 'testDisconnect']
 
         return unittest.TestSuite(map(TestMySQLHub, tests))
 
@@ -568,6 +569,11 @@ class TestMySQLHub(unittest.TestCase):
         if self.tableName in tableSet:
             msg = "The table, %s, was not dropped in %s." % (self.tableName, self.db)
             self.fail(msg)
+
+    def testDisconnect(self):
+
+        dh = MySQL(self.dataSource)
+        dh.disconnect()
 
     def __callbackTest(self, row):
         self.callbackCalls += 1
