@@ -1,18 +1,15 @@
-import os
 import datetime
 import json
 import urllib
-import datetime
-import time
 import zlib
 import memcache
 
-from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render_to_response
 from django.conf import settings
 from django.http import HttpResponse
 
 from datazilla.model.DatazillaModel import DatazillaModel
+from datazilla.model import utils
 
 APP_JS = 'application/json'
 
@@ -22,7 +19,7 @@ def graphs(request, project=""):
     #Load any signals provided in the page
     ####
     signals = []
-    timeRanges = DatazillaModel.getTimeRanges()
+    timeRanges = utils.get_time_ranges()
 
     for s in SIGNALS:
         if s in request.POST:
@@ -164,18 +161,18 @@ def _getTestRunSummary(project, method, request, dm):
     platformIds = []
 
     #####
-    #Calling _getIdList() insures that we have only numbers in the
+    #Calling get_id_list() insures that we have only numbers in the
     #lists, this gaurds against SQL injection
     #####
     if 'product_ids' in request.GET:
-        productIds = DatazillaModel.getIdList(request.GET['product_ids'])
+        productIds = utils.get_id_list(request.GET['product_ids'])
     if 'test_ids' in request.GET:
-        testIds = DatazillaModel.getIdList(request.GET['test_ids'])
+        testIds = utils.get_id_list(request.GET['test_ids'])
     if 'platform_ids' in request.GET:
-        platformIds = DatazillaModel.getIdList(request.GET['platform_ids'])
+        platformIds = utils.get_id_list(request.GET['platform_ids'])
 
     timeKey = 'days_30'
-    timeRanges = DatazillaModel.getTimeRanges()
+    timeRanges = DatazillaModel.get_time_ranges()
     if 'tkey' in request.GET:
         timeKey = request.GET['tkey']
 
@@ -192,7 +189,7 @@ def _getTestRunSummary(project, method, request, dm):
         if len(productIds) > 1:
             extendList = { 'data':[], 'columns':[] }
             for id in productIds:
-                key = DatazillaModel.getCacheKey(project, str(id), timeKey)
+                key = utils.get_cache_key(project, str(id), timeKey)
                 compressedJsonData = mc.get(key)
 
                 if compressedJsonData:
@@ -204,9 +201,11 @@ def _getTestRunSummary(project, method, request, dm):
             jsonData = json.dumps(extendList)
 
         else:
-            key = DatazillaModel.getCacheKey(project,
-                                             str(productIds[0]),
-                                             timeKey)
+            key = utils.get_cache_key(
+                project,
+                str(productIds[0]),
+                timeKey,
+                )
             compressedJsonData = mc.get(key)
 
             if compressedJsonData:
