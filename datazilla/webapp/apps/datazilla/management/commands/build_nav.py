@@ -47,7 +47,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         ##Load data views##
-        views_file_obj = open("%s%s" % (settings.ROOT, "/templates/data/views.json"))
+        views_file_obj = open("%s%s" % (settings.ROOT, "/datazilla/webapp/templates/data/views.json"))
         try:
             data_view_file = views_file_obj.read()
         finally:
@@ -62,7 +62,7 @@ class Command(BaseCommand):
         #pp = pprint.PrettyPrinter(indent=3)
         #self.stdout.write( pp.pformat(data_views) )
 
-        menu_file_obj = open("%s%s" % (settings.ROOT, "/media/html/nav_menu.html"), 'w+')
+        menu_file_obj = open("%s%s" % (settings.ROOT, "/datazilla/webapp/static/html/nav_menu.html"), 'w+')
         try:
             menu_file_obj.write( '<ul class="dv-viewtext">\n%s\n</ul>' % (dv_unorderedlist(data_views)) )
         finally:
@@ -76,7 +76,7 @@ class Command(BaseCommand):
         c = Context({ 'json_data':jstring })
         templateString = t.render(c)
 
-        nav_lookup_file_obj = open("%s%s" % (settings.ROOT, "/templates/graphs.navlookup.html"), 'w+')
+        nav_lookup_file_obj = open("%s%s" % (settings.ROOT, "/datazilla/webapp/templates/graphs.navlookup.html"), 'w+')
         try:
             nav_lookup_file_obj.write(templateString)
         finally:
