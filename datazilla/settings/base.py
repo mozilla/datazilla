@@ -88,9 +88,9 @@ TEMPLATE_LOADERS = [
 
 MIDDLEWARE_CLASSES = [
     "django.middleware.common.CommonMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
+#    "django.contrib.sessions.middleware.SessionMiddleware",
+#    "django.contrib.auth.middleware.AuthenticationMiddleware",
+#    "django.contrib.messages.middleware.MessageMiddleware",
 ]
 
 ROOT_URLCONF = "datazilla.webapp.urls"
@@ -105,7 +105,7 @@ INSTALLED_APPS = [
     #"django.contrib.sessions",
     #"django.contrib.sites",
     #"django.contrib.messages",
-    #"django.contrib.staticfiles",
+    "django.contrib.staticfiles",
     # Uncomment the next line to enable the admin:
     # "django.contrib.admin",
     # Uncomment the next line to enable admin documentation:
@@ -152,7 +152,7 @@ except ImportError:
 TEMPLATE_DEBUG = DEBUG
 
 # The URL static assets will be served at.
-STATIC_URL = posixpath.join(DATAZILLA_URL, "static")
+STATIC_URL = "/static/"
 
 CACHES = {
    "default": {

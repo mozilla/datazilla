@@ -31,8 +31,7 @@ def generate_vendor_lib():
         os.mkdir(target)
         create_environment(venv, site_packages=False)
         pip = os.path.join(venv, "bin", "pip")
-        install_opts = ''.format(
-            target)
+
         subprocess.check_call(
             "{0} install --no-deps -r {1} "
             '--install-option="--install-purelib={2}" '

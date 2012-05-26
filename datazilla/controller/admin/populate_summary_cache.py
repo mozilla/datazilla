@@ -1,11 +1,11 @@
+from datazilla.vendor import add_vendor_lib
+add_vendor_lib()
+
 import os
 import sys
 import json
 import memcache
 import zlib
-
-from datazilla.vendor import add_vendor_lib
-add_vendor_lib()
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "datazilla.settings.base")
 from django.conf import settings
