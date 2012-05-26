@@ -63,12 +63,14 @@ class TestMySQLHub(unittest.TestCase):
                  'testTableJsonReturnType',
                  'testCallbackReturnType',
                  'testChunking',
+                 'testChunkingWithMin',
                  'testRawSql',
                  'testReplace',
                  'testReplaceQuote',
                  'testPlaceholderQuote',
                  'testBigReplace',
-                 'testDropTable']
+                 'testDropTable',
+                 'testDisconnect']
 
         return unittest.TestSuite(map(TestMySQLHub, tests))
 
@@ -430,6 +432,23 @@ class TestMySQLHub(unittest.TestCase):
         msg = 'total chunk sets should be, %i, there were %i chunk sets found.' % (self.nsets, nsets)
         self.assertEqual(self.nsets, nsets, msg=msg)
 
+    def testChunkingWithMin(self):
+
+        chunkSize = 10
+        dh = MySQL(self.dataSource)
+
+        nsets = 0
+        for d in  dh.execute( db=self.db,
+                              proc="test.get_data",
+                              chunk_size=100,
+                              chunk_min=5,
+                              chunk_source='DATA_SOURCES_TEST_DATA.id'):
+
+            nsets += 1
+
+        msg = 'total chunk sets should be, %i, there were %i chunk sets found.' % (99, nsets)
+        self.assertEqual(99, nsets, msg=msg)
+
     def testRawSql(self):
 
         sql = """SELECT `id`, `auto_pfamA`, `go_id`, `term`, `category`
@@ -551,6 +570,11 @@ class TestMySQLHub(unittest.TestCase):
             msg = "The table, %s, was not dropped in %s." % (self.tableName, self.db)
             self.fail(msg)
 
+    def testDisconnect(self):
+
+        dh = MySQL(self.dataSource)
+        dh.disconnect()
+
     def __callbackTest(self, row):
         self.callbackCalls += 1
 
@@ -564,10 +588,12 @@ class TestMySQLHub(unittest.TestCase):
             ##OOh we should have an error here##
             self.fail("\tShould have raised RDBSHubExecuteError on args:%s" % (','.join(args.keys())))
 
-if __name__ == '__main__':
-
+def main():
     ##Load test data one time##
     TestMySQLHub.loadData()
 
     suite = TestMySQLHub.getSuite()
     unittest.TextTestRunner(verbosity=2).run(suite)
+
+if __name__ == '__main__':
+    main()

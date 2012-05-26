@@ -112,6 +112,7 @@ INSTALLED_APPS = [
     # "django.contrib.admindocs",
 
     "datazilla.webapp.apps.datazilla",
+    "datazilla.model",
 ]
 
 # A sample logging configuration. The only tangible logging
