@@ -32,8 +32,7 @@ CREATE TABLE `operating_system` (
   `name` varchar(50) COLLATE utf8_bin NOT NULL,
   `version` varchar(50) COLLATE utf8_bin NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_os` (`name`,`version`),
-  UNIQUE KEY `name_UNIQUE` (`name`)
+  UNIQUE KEY `unique_os` (`name`,`version`)
 );
 
 CREATE TABLE `option` (
