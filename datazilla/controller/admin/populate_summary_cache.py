@@ -1,3 +1,14 @@
+"""
+This script builds the test run summary data structure for
+a 7 and 30 day period interval for every product/branch/version.
+
+These data structures are stored in the summary_cache table.  They
+need to persist if the memcache goes down, they take several minutes
+to generate.  As the quantity of data grows this will likely take
+significantly longer.
+
+"""
+
 from datazilla.vendor import add_vendor_lib
 add_vendor_lib()
 
@@ -10,19 +21,11 @@ import zlib
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "datazilla.settings.base")
 from django.conf import settings
 
-from django.conf import settings
 from optparse import OptionParser
 from datazilla.model.DatazillaModel import DatazillaModel
+from datazilla.model import utils
 
-"""
-This script builds the test run summary data structure for
-a 7 and 30 day period interval for every product/branch/version.
 
-These data structures are stored in the summary_cache table.  They
-need to persist if the memcache goes down, they take several minutes
-to generate.  As the quantity of data grows this will likely take
-significantly longer.
-"""
 
 def cacheTestSummaries(project):
 
@@ -33,9 +36,11 @@ def cacheTestSummaries(project):
 
     for d in dataIter:
         for data in d:
-            key = DatazillaModel.getCacheKey( project,
-                                              data['item_id'],
-                                              data['item_data'] )
+            key = utils.get_cache_key(
+                project,
+                data['item_id'],
+                data['item_data'],
+                )
 
             rv = mc.set(key, zlib.compress( data['value'] ))
             if not rv:
@@ -47,7 +52,7 @@ def buildTestSummaries(project):
 
     gm = DatazillaModel(project, 'graphs.json')
 
-    timeRanges = DatazillaModel.getTimeRanges()
+    timeRanges = utils.get_time_ranges()
 
     products = gm.getProducts()
 

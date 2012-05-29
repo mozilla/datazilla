@@ -1,4 +1,3 @@
-import os
 import sys
 
 from datazilla.vendor import add_vendor_lib
@@ -23,8 +22,8 @@ def loadTestCollection(project):
                                  products[ productName ]['version'],
                                  products[ productName ]['branch'])
 
-            id = gm.setData('set_test_collection', [ name, "", name ])
-            gm.setData('set_test_collection_map', [ id, products[ productName ]['id'] ])
+            id = gm.set_data('set_test_collection', [ name, "", name ])
+            gm.set_data('set_test_collection_map', [ id, products[ productName ]['id'] ])
 
     gm.disconnect()
 

@@ -111,6 +111,7 @@ INSTALLED_APPS = [
     # Uncomment the next line to enable admin documentation:
     # "django.contrib.admindocs",
 
+    "datazilla.model",
     "datazilla.webapp.apps.datazilla",
     "datazilla.model",
 ]
