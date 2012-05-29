@@ -7,7 +7,9 @@ import datetime
 import time
 import os
 
-if "APPENGINE_RUNTIME" in os.environ:
+from django.conf import settings
+
+if settings.USE_APP_ENGINE:
     from datazilla.model.appengine.model import Model as Model
 else:
     from datazilla.model.sql.model import Model as Model
