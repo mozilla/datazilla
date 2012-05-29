@@ -1,3 +1,8 @@
+#####
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+#####
 import datetime
 import os
 import time
@@ -22,9 +27,17 @@ class DatazillaModel(object):
     """Public interface to all data access for a project."""
     def __init__(self, project):
         self.sources = {
-            "perftest": SQLDataSource(project, "perftest"),
+            "perftest": self.datasource_class(project, "perftest"),
             }
         self.DEBUG = settings.DEBUG
+
+
+    @property
+    def datasource_class(self):
+        if settings.USE_APP_ENGINE:
+            from .appengine.model import CloudSQLDataSource
+            return CloudSQLDataSource
+        return SQLDataSource
 
 
     @property
