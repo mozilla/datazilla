@@ -8,6 +8,7 @@ datasource.egg-info/requires.txt
 datasource.egg-info/top_level.txt
 datasource/bases/BaseHub.py
 datasource/bases/RDBSHub.py
+datasource/bases/SQLHub.py
 datasource/bases/__init__.py
 datasource/hubs/MySQL.py
 datasource/hubs/__init__.py

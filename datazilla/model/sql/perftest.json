@@ -231,6 +231,16 @@
       }
   },
   "selects":{
+      "get_all_test_data":{
+
+         "sql":"SELECT id, test_run_id, data
+                FROM test_data
+                WHERE id >= ?",
+
+         "host":"master_host"
+
+      },
+
       "get_test_run_summary":{
 
          "sql":"SELECT tr.id AS 'test_run_id', 

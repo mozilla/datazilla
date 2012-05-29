@@ -1,7 +1,7 @@
 # Django settings for webapp project.
 import os, posixpath
 
-USE_APP_ENGINE = "APPENGINE_RUNTIME" in os.environ
+USE_APP_ENGINE = "APPENGINE_RUNTIME" in os.environ or os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine') or os.getenv('SETTINGS_MODE') == 'prod'
 
 # These settings can all be optionally set via env vars, or in local.py:
 
@@ -113,6 +113,7 @@ INSTALLED_APPS = [
 
     "datazilla.model",
     "datazilla.webapp.apps.datazilla",
+    "datazilla.model",
 ]
 
 # A sample logging configuration. The only tangible logging

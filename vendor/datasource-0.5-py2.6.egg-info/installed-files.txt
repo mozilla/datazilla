@@ -1,7 +1,8 @@
-../datasource/DataHub.py
 ../datasource/__init__.py
-../datasource/bases/BaseHub.py
+../datasource/DataHub.py
 ../datasource/bases/__init__.py
+../datasource/bases/SQLHub.py
+../datasource/bases/BaseHub.py
 ../datasource/bases/RDBSHub.py
 ../datasource/hubs/__init__.py
 ../datasource/hubs/MySQL.py
@@ -12,10 +13,11 @@
 ../datasource/procs/mysql_procs/sql.json
 ../datasource/t/test_data.txt
 ../datasource/data_sources.json
-../datasource/DataHub.pyc
 ../datasource/__init__.pyc
-../datasource/bases/BaseHub.pyc
+../datasource/DataHub.pyc
 ../datasource/bases/__init__.pyc
+../datasource/bases/SQLHub.pyc
+../datasource/bases/BaseHub.pyc
 ../datasource/bases/RDBSHub.pyc
 ../datasource/hubs/__init__.pyc
 ../datasource/hubs/MySQL.pyc
@@ -24,7 +26,7 @@
 ../datasource/t/TestDataHub.pyc
 ./
 SOURCES.txt
+dependency_links.txt
 requires.txt
 top_level.txt
-dependency_links.txt
 PKG-INFO

@@ -304,6 +304,21 @@ class DatazillaModel(object):
         return dataIter
 
 
+    def getAllTestData(self, start):
+
+        proc = 'perftest.selects.get_all_test_data'
+
+        dataIter = self.dhub.execute(proc=proc,
+                                     debug_show=self.DEBUG,
+                                     placeholders=[start],
+                                     chunk_size=10,
+                                     chunk_min=start,
+                                     chunk_source="test_data.id",
+                                     return_type='tuple')
+
+        return dataIter
+
+
     def setSummaryCache(self, itemId, itemData, value):
 
         nowDatetime = str( datetime.datetime.now() )
@@ -422,12 +437,13 @@ class DatazillaModel(object):
 
     def _setOptionData(self, data, refData):
 
-        for option in data['testrun']['options']:
-            id = refData['option_id_map'][option]['id']
-            value = data['testrun']['options'][option]
-            self.setData('set_test_option_values', [refData['test_run_id'],
-                                                     id,
-                                                     value])
+        if 'options' in data['testrun']:
+            for option in data['testrun']['options']:
+                id = refData['option_id_map'][option]['id']
+                value = data['testrun']['options'][option]
+                self.setData('set_test_option_values', [refData['test_run_id'],
+                                                        id,
+                                                        value])
 
 
     def _setBuildData(self, data, refData):

@@ -41,7 +41,6 @@ the terms of any one of the MPL, the GPL or the LGPL.
 import sys
 import math
 import re
-import _mysql
 
 import sys
 from datasource.bases.BaseHub import BaseHub, DataHubError
@@ -92,6 +91,7 @@ class RDBSHub(BaseHub):
                               'offset',
                               'chunk_size',
                               'chunk_source',
+                              'chunk_min',
                               'return_type',
                               'key_column',
                               'callback',
@@ -433,6 +433,10 @@ class RDBSHub(BaseHub):
         sys.stdout.write(msg)
         sys.stdout.flush()
 
+    def escapeString(self, value):
+        # Should be implemented in the subclass
+        raise NotImplemented()
+
     ######
     #Private methods
     ######
@@ -447,7 +451,7 @@ class RDBSHub(BaseHub):
                     #r could contain integers which will break join
                     #make sure we cast to strings
                     ###
-                    r = joinChar.join( map(lambda s: _mysql.escape_string(str(s)), r) )
+                    r = joinChar.join( map(lambda s: self.escapeString(str(s)), r) )
 
                 sql = sql.replace("%s%i"%(self.replaceString, i), "%s%s%s"%(self.quoteChar, r, self.quoteChar))
 
@@ -473,7 +477,11 @@ class RDBSHub(BaseHub):
     def __getExecuteSets(self, sql, kwargs):
 
         table, column = kwargs['chunk_source'].split('.')
-        chunkSize = int(int(kwargs['chunk_size']))
+        chunkSize = int(kwargs['chunk_size'])
+
+        chunkStart = 0
+        if 'chunk_min' in kwargs:
+            chunkStart = int(kwargs['chunk_min'])
 
         if not (table and column and chunkSize):
             msg = "chunk_source must be set to explicit column name that includes the table. Example: table_name.column_name"
@@ -484,13 +492,17 @@ class RDBSHub(BaseHub):
                             replace=[ column, table ],
                             return_type='iter')
 
-        min = self.execute( db=kwargs['db'],
-                            proc='sql.ds_selects.get_min',
-                            replace=[ column, table ],
-                            return_type='iter')
+        minId = 0
+        if 'chunk_min' in kwargs:
+            minId = int( kwargs['chunk_min'] ) 
+        else:
+            min = self.execute( db=kwargs['db'],
+                                proc='sql.ds_selects.get_min',
+                                replace=[ column, table ],
+                                return_type='iter')
+            minId = int(min.getColumnData('min_id'))
 
         maxId = int(max.getColumnData('max_id') or 0)
-        minId = int(min.getColumnData('min_id') or 0)
 
         ##Total rows##
         nRows = (maxId - minId + 1)

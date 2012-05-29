@@ -136,10 +136,12 @@ class TestDataHub(unittest.TestCase):
             msg = "The table, %s, was not dropped in %s." % (self.tableName, self.db)
             self.fail(msg)
 
-if __name__ == '__main__':
-
+def main():
     ##Load test data one time##
     TestDataHub.loadData()
 
     suite = TestDataHub.getSuite()
     unittest.TextTestRunner(verbosity=2).run(suite)
+
+if __name__ == '__main__':
+    main()
