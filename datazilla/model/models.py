@@ -336,13 +336,15 @@ class DatazillaModel(object):
 
         nowDatetime = str( datetime.datetime.now() )
 
-        self.setData('set_summary_cache', [ itemId,
+        self.sources["perftest"].set_data('set_summary_cache', [ itemId,
                                             itemData,
                                             value,
                                             nowDatetime,
                                             value,
                                             nowDatetime ])
 
+    def disconnect(self):
+        return self.sources["perftest"].dhub
 
     def loadTestData(self, data, jsonData):
 
@@ -367,7 +369,8 @@ class DatazillaModel(object):
 
     def _setTestData(self, jsonData, refData):
 
-        self.setData('set_test_data', [refData['test_run_id'], jsonData])
+        self.sources["perftest"].set_data('set_test_data',
+                            [refData['test_run_id'], jsonData])
 
 
     def _setTestAuxData(self, data, refData):
@@ -387,11 +390,12 @@ class DatazillaModel(object):
                     else:
                         stringData = auxValues[index]
 
-                    self.setData('set_aux_values', [refData['test_run_id'],
-                                                    index + 1,
-                                                    auxDataId,
-                                                    numericData,
-                                                    stringData])
+                    self.sources["perftest"].set_data('set_aux_values',
+                                                 [refData['test_run_id'],
+                                                  index + 1,
+                                                  auxDataId,
+                                                  numericData,
+                                                  stringData])
 
 
     def _setTestValues(self, data, refData):
@@ -405,15 +409,16 @@ class DatazillaModel(object):
             for index in range(0, len(values)):
 
                 value = values[index]
-                self.setData('set_test_values', [refData['test_run_id'],
-                                                  index + 1,
-                                                  pageId,
-                                                  ######
-                                                  #TODO: Need to get the value
-                                                  #id into the json
-                                                  ######
-                                                  1,
-                                                  value])
+                self.sources["perftest"].set_data('set_test_values',
+                                             [refData['test_run_id'],
+                                              index + 1,
+                                              pageId,
+                                              ######
+                                              #TODO: Need to get the value
+                                              #id into the json
+                                              ######
+                                              1,
+                                              value])
 
 
     def _getAuxId(self, auxData, refData):
@@ -423,8 +428,9 @@ class DatazillaModel(object):
             if auxData in refData['aux_data']:
                 auxId = refData['aux_data'][auxData]['id']
             else:
-                auxId = self.setDataAndGetId('set_aux_data',
-                                             [refData['test_id'], auxData])
+                auxId = self.sources["perftest"].set_data_and_get_id('set_aux_data',
+                                             [refData['test_id'],
+                                             auxData])
 
         except KeyError:
             raise
@@ -439,7 +445,7 @@ class DatazillaModel(object):
             if page in refData['pages']:
                 pageId = refData['pages'][page]['id']
             else:
-                pageId = self.setDataAndGetId('set_pages_data',
+                pageId = self.sources["perftest"].set_data_and_get_id('set_pages_data',
                                               [refData['test_id'], page])
 
         except KeyError:
@@ -454,14 +460,14 @@ class DatazillaModel(object):
             for option in data['testrun']['options']:
                 id = refData['option_id_map'][option]['id']
                 value = data['testrun']['options'][option]
-                self.setData('set_test_option_values', [refData['test_run_id'],
+                self.sources["perftest"].set_data('set_test_option_values', [refData['test_run_id'],
                                                         id,
                                                         value])
 
 
     def _setBuildData(self, data, refData):
 
-        buildId = self.setDataAndGetId('set_build_data',
+        buildId = self.sources["perftest"].set_data_and_get_id('set_build_data',
                                        [ refData['operating_system_id'],
                                          refData['product_id'],
                                          refData['machine_id'],
@@ -481,7 +487,7 @@ class DatazillaModel(object):
 
     def _setTestRunData(self, data, refData):
 
-        testRunId = self.setDataAndGetId('set_test_run_data',
+        testRunId = self.sources["perftest"].set_data_and_get_id('set_test_run_data',
                                          [ refData['test_id'],
                                          refData['build_id'],
                                          data['test_build']['revision'],
@@ -498,7 +504,7 @@ class DatazillaModel(object):
             if name in refData['machines']:
                 machineId = refData['machines'][ name ]['id']
             else:
-                machineId = self.setDataAndGetId('set_machine_data',
+                machineId = self.sources["perftest"].set_data_and_get_id('set_machine_data',
                                                  [ name, int(time.time()) ])
 
         except KeyError:
@@ -518,7 +524,7 @@ class DatazillaModel(object):
                 if 'suite_version' in data['testrun']:
                     version = int(data['testrun']['suite_version'])
 
-                testId = self.setData('set_test',
+                testId = self.sources["perftest"].set_data('set_test',
                                       [ data['testrun']['suite'], version ])
         except KeyError:
             raise
@@ -536,7 +542,7 @@ class DatazillaModel(object):
             if osKey in refData['operating_systems']:
                 osId = refData['operating_systems'][osKey]
             else:
-                osId = self.setDataAndGetId('set_operating_system',
+                osId = self.sources["perftest"].set_data_and_get_id('set_operating_system',
                                             [ osName, osVersion ])
 
         except KeyError:
@@ -553,7 +559,7 @@ class DatazillaModel(object):
                 if option in refData['options']:
                     optionIds[ option ] = refData['options'][option]
                 else:
-                    testId = self.setDataAndGetId('set_option_data', [ option ])
+                    testId = self.sources["perftest"].set_data_and_get_id('set_option_data', [ option ])
                     optionIds[ option ] = testId
         except KeyError:
             raise
@@ -575,7 +581,7 @@ class DatazillaModel(object):
             if productKey in refData['products']:
                 productId = refData['products'][productKey]
             else:
-                productId = self.setDataAndGetId('set_product_data',
+                productId = self.sources["perftest"].set_data_and_get_id('set_product_data',
                                                  [ product, branch, version ])
 
         except KeyError:
@@ -593,6 +599,7 @@ class DatazillaModel(object):
                 uniqueKey += str(data[key])
             dataDict[ uniqueKey ] = data['id']
         return dataDict
+
 
 
 
@@ -759,7 +766,6 @@ class SQLDataSource(object):
             )
 
         return id_iter.getColumnData('id')
-
 
     def disconnect(self):
         self.dhub.disconnect()

@@ -1,5 +1,12 @@
+import os
 import unittest
 import sys
+
+from datazilla.vendor import add_vendor_lib
+add_vendor_lib()
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "datazilla.settings.base")
+from django.conf import settings
 
 from datazilla.model import DatazillaModel
 

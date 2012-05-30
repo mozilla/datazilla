@@ -22,14 +22,14 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "datazilla.settings.base")
 from django.conf import settings
 
 from optparse import OptionParser
-from datazilla.model.DatazillaModel import DatazillaModel
+from datazilla.model import DatazillaModel
 from datazilla.model import utils
 
 
 
 def cacheTestSummaries(project):
 
-    gm = DatazillaModel(project, 'graphs.json')
+    gm = DatazillaModel(project)
     dataIter = gm.getAllSummaryCache()
 
     mc = memcache.Client([settings.DATAZILLA_MEMCACHED], debug=0)
@@ -50,7 +50,7 @@ def cacheTestSummaries(project):
 
 def buildTestSummaries(project):
 
-    gm = DatazillaModel(project, 'graphs.json')
+    gm = DatazillaModel(project)
 
     timeRanges = utils.get_time_ranges()
 

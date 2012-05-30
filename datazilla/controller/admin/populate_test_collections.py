@@ -4,11 +4,11 @@ from datazilla.vendor import add_vendor_lib
 add_vendor_lib()
 
 from optparse import OptionParser
-from datazilla.model.DatazillaModel import DatazillaModel
+from datazilla.model import DatazillaModel
 
 def loadTestCollection(project):
 
-    gm = DatazillaModel(project, 'graphs.json')
+    gm = DatazillaModel(project)
 
     products = gm.getProducts('id')
 

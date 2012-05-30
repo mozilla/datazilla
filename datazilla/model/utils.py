@@ -12,7 +12,7 @@ import datetime
 
 
 
-def is_number(self, s):
+def is_number(s):
     try:
         float(s)
         return True
@@ -79,7 +79,7 @@ def get_time_ranges():
     return time_ranges
 
 
-def build_replacement(self, col_data):
+def build_replacement(col_data):
     return "AND " + " AND ".join(
         [
             "%s IN (%s)" % (key, value)

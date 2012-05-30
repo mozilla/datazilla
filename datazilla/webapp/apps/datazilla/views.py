@@ -8,7 +8,7 @@ from django.shortcuts import render_to_response
 from django.conf import settings
 from django.http import HttpResponse
 
-from datazilla.model.DatazillaModel import DatazillaModel
+from datazilla.model import DatazillaModel
 from datazilla.model import utils
 
 APP_JS = 'application/json'
@@ -45,7 +45,7 @@ def graphs(request, project=""):
         #reference data has not been cached:
         #serialize, compress, and cache
         ####
-        dm = DatazillaModel(project, 'graphs.json')
+        dm = DatazillaModel(project)
         refData = dm.getTestReferenceData()
         dm.disconnect()
 
@@ -84,7 +84,7 @@ def setTestData(request):
         unquotedJsonData = urllib.unquote(jsonData)
         data = json.loads( unquotedJsonData )
 
-        dm = DatazillaModel(project, 'graphs.json')
+        dm = DatazillaModel(project)
         dm.loadTestData( data, unquotedJsonData )
         dm.disconnect()
 
@@ -107,7 +107,7 @@ def dataview(request, project="", method=""):
 
     json = ""
     if method in DATAVIEW_ADAPTERS:
-        dm = DatazillaModel(project, 'graphs.json')
+        dm = DatazillaModel(project)
         if 'adapter' in DATAVIEW_ADAPTERS[method]:
             json = DATAVIEW_ADAPTERS[method]['adapter'](project,
                                                         method,
@@ -172,7 +172,7 @@ def _getTestRunSummary(project, method, request, dm):
         platformIds = utils.get_id_list(request.GET['platform_ids'])
 
     timeKey = 'days_30'
-    timeRanges = DatazillaModel.get_time_ranges()
+    timeRanges = utils.get_time_ranges()
     if 'tkey' in request.GET:
         timeKey = request.GET['tkey']
 

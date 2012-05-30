@@ -3,7 +3,7 @@ import json
 
 from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
-from datazilla.model.DatazillaModel import DatazillaModel
+from datazilla.model import DatazillaModel
 
 class Command(BaseCommand):
 
@@ -52,8 +52,8 @@ class Command(BaseCommand):
         records = int( options.get('records') )
         start = int( options.get('start') )
 
-        dm_source = DatazillaModel(source, 'graphs.json')
-        dm_target = DatazillaModel(target, 'graphs.json')
+        dm_source = DatazillaModel(source)
+        dm_target = DatazillaModel(target)
 
         data_iter = dm_source.getAllTestData(start)
 
