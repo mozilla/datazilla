@@ -189,7 +189,7 @@ CREATE TABLE `operating_system` (
   `name` varchar(50) COLLATE utf8_bin NOT NULL,
   `version` varchar(50) COLLATE utf8_bin NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_os` (`name`,`version`),
+  UNIQUE KEY `unique_os` (`name`,`version`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
