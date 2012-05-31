@@ -459,9 +459,10 @@ class DatazillaModel(object):
             for option in data['testrun']['options']:
                 id = refData['option_id_map'][option]['id']
                 value = data['testrun']['options'][option]
-                self.sources["perftest"].set_data('set_test_option_values', [refData['test_run_id'],
-                                                        id,
-                                                        value])
+                self.sources["perftest"].set_data('set_test_option_values',
+                                                  [refData['test_run_id'],
+                                                   id,
+                                                   value])
 
 
     def _setBuildData(self, data, refData):
