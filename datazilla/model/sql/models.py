@@ -3,24 +3,22 @@ Provides a SQLDataSource class which reads datasource configuration from the
 datasource table.
 
 """
+import datetime
 import os
+import subprocess
 
 from datasource.bases.BaseHub import BaseHub
 from datasource.hubs.MySQL import MySQL
 from django.conf import settings
 from django.core.cache import cache
-from django.db import models
+from django.db import models, transaction
+import MySQLdb
 
 
 # the cache key is specific to the database name we're pulling the data from
 SOURCES_CACHE_KEY = "{database}-datasources"
 
-SQL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sql")
-
-
-
-class MultipleDatasetsError(ValueError):
-    pass
+SQL_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
 
@@ -54,11 +52,9 @@ class SQLDataSource(object):
         """
         The configured datahub for this data source.
 
-        Raises ``MultipleDatasetsError`` if multiple active datasets are found
-        for the given project and contenttype.
-
-        Raises ``DatasetNotFoundError`` if no active dataset is found for the
-        given project and contenttype.
+        Raises ``DatasetNotFoundError`` if no dataset is found for the given
+        project and contenttype. Otherwise, uses the latest dataset for that
+        project and contenttype.
 
         """
         if self._dhub is None:
@@ -73,22 +69,13 @@ class SQLDataSource(object):
                     source.contenttype == self.contenttype):
                 candidate_sources.append(source)
 
-        # @@@ should we just pick the latest instead? would require switching
-        # dataset to an integer field
-        if len(candidate_sources) > 1:
-            raise MultipleDatasetsError(
-                "Project %r, contenttype %r has multiple active datasets: "
-                % (
-                    self.project,
-                    self.contenttype,
-                    ", ".join([s.dataset for s in candidate_sources])
-                    )
-                )
-        elif not candidate_sources:
+        if not candidate_sources:
             raise DatasetNotFoundError(
                 "No active dataset found for project %r, contenttype %r."
                 % (self.project, self.contenttype)
                 )
+
+        candidate_sources.sort(key=lambda s: s.dataset, reverse=True)
 
         return candidate_sources[0].dhub(self.procs_file_name)
 
@@ -114,8 +101,75 @@ class SQLDataSource(object):
 
         return id_iter.getColumnData('id')
 
+
     def disconnect(self):
         self.dhub.disconnect()
+
+
+    @classmethod
+    @transaction.commit_on_success
+    def create(
+        cls, project, contenttype=None, dataset=None, host=None, name=None):
+        """
+        Create a new ``SQLDataSource`` and its corresponding database.
+
+        Required arguments:
+
+        ``project``
+            The name of the project to create a database for.
+
+        Optional arguments:
+
+        ``contenttype``
+            The contenttype of this datasource; defaults to "perftest".
+
+        ``dataset``
+            The dataset number; defaults to 1 higher than the highest existing
+            dataset for this project; or 1 if none exist.
+
+        ``host``
+            The host on which to create this database; defaults to
+            ``DATAZILLA_DATABASE_HOST``.
+
+        ``name``
+            The name of the database to create; defaults to
+            ``project_contenttype_dataset``.
+
+        Assumes that the database server at ``host`` is accessible, and that
+        ``DATAZILLA_DATABASE_USER`` (identified by
+        ``DATAZILLA_DATABASE_PASSWORD`` exists on it and has permissions to
+        create databases.
+
+        """
+        if contenttype is None:
+            contenttype = "perftest"
+        if dataset is None:
+            try:
+                dataset = DataSource.objects.filter(
+                    project=project, contenttype=contenttype).order_by(
+                    "-dataset")[0].dataset + 1
+            except IndexError:
+                dataset = 1
+        if host is None:
+            host = settings.DATAZILLA_DATABASE_HOST
+        if name is None:
+            name = "{0}_{1}_{2}".format(project, contenttype, dataset)
+
+        ds = DataSource.objects.create(
+            host=host,
+            project=project,
+            contenttype=contenttype,
+            dataset=dataset,
+            name=name,
+            type="MySQL",
+            creation_date=datetime.datetime.now(),
+            )
+
+        ds.create_database()
+
+        sqlds = cls(project, contenttype)
+        sqlds._dhub = ds.dhub(sqlds.procs_file_name)
+        return sqlds
 
 
 
@@ -128,7 +182,7 @@ class DataSourceManager(models.Manager):
                 database=connections["default"].settings_dict["NAME"])
             )
         if sources is None:
-            sources = list(self.filter(active_status=True))
+            sources = list(self.all())
             cache.set(SOURCES_CACHE_KEY, sources)
         return sources
 
@@ -136,16 +190,15 @@ class DataSourceManager(models.Manager):
 
 class DataSource(models.Model):
     """
-    A source of data for a single project.
+    A dataset for a source of data for a single project / contenttype.
 
     """
     project = models.CharField(max_length=25)
-    dataset = models.CharField(max_length=25)
+    dataset = models.IntegerField()
     contenttype = models.CharField(max_length=25)
     host = models.CharField(max_length=128)
     name = models.CharField(max_length=128)
     type = models.CharField(max_length=25)
-    active_status = models.BooleanField(default=True, db_index=True)
     creation_date = models.DateTimeField()
 
     objects = DataSourceManager()
@@ -188,3 +241,42 @@ class DataSource(models.Model):
         BaseHub.addDataSource(data_source)
         # @@@ the datahub class should depend on self.type
         return MySQL(self.key)
+
+
+    def create_database(self, sql_schema_file=None):
+        """
+        Create the database for this source, using given SQL schema file.
+
+        Assumes that the database server at ``self.host`` is accessible, and
+        that ``DATAZILLA_DATABASE_USER`` (identified by
+        ``DATAZILLA_DATABASE_PASSWORD`` exists on it and has permissions to
+        create databases.
+
+        """
+        if sql_schema_file is None:
+            sql_schema_file = os.path.join(
+                SQL_PATH, "template_schema", "schema_perftest.sql")
+
+        conn = MySQLdb.connect(
+            host=self.host,
+            user=settings.DATAZILLA_DATABASE_USER,
+            passwd=settings.DATAZILLA_DATABASE_PASSWORD,
+            )
+        cur = conn.cursor()
+        cur.execute("CREATE DATABASE {0}".format(self.name))
+        conn.close()
+
+        # MySQLdb provides no way to execute an entire SQL file in bulk, so we
+        # have to shell out to the commandline client.
+        with open(sql_schema_file) as f:
+            subprocess.check_call(
+                [
+                    "mysql",
+                    "--host={0}".format(self.host),
+                    "--user={0}".format(settings.DATAZILLA_DATABASE_USER),
+                    "--password={0}".format(
+                        settings.DATAZILLA_DATABASE_PASSWORD),
+                    self.name,
+                    ],
+                stdin=f,
+                )
