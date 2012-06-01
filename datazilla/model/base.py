@@ -3,6 +3,11 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 #####
+"""
+``DatazillaModel`` (and subclasses) are the public interface for all data
+access.
+
+"""
 import datetime
 import time
 
@@ -16,10 +21,16 @@ from . import utils
 class DatazillaModel(object):
     """Public interface to all data access for a project."""
     def __init__(self, project):
+        self.project = project
         self.sources = {
             "perftest": self.datasource_class(project, "perftest"),
             }
         self.DEBUG = settings.DEBUG
+
+
+    def __unicode__(self):
+        """Unicode representation is project name."""
+        return self.project
 
 
     @property
@@ -336,7 +347,8 @@ class DatazillaModel(object):
                                             nowDatetime ])
 
     def disconnect(self):
-        return self.sources["perftest"].dhub
+        return self.sources["perftest"].disconnect()
+
 
     def loadTestData(self, data, jsonData):
 

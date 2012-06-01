@@ -44,7 +44,21 @@ class SQLDataSource(object):
         self.project = project
         self.contenttype = contenttype
         self.procs_file_name = procs_file_name or "%s.json" % contenttype
+        self._datasource = None
         self._dhub = None
+
+
+    def __unicode__(self):
+        """Unicode representation is project and contenttype."""
+        return "{0} - {1}".format(self.project, self.contenttype)
+
+
+    @property
+    def datasource(self):
+        """The DataSource model object backing this SQLDataSource."""
+        if self._datasource is None:
+            self._datasource = self._get_datasource()
+        return self._datasource
 
 
     @property
@@ -58,11 +72,11 @@ class SQLDataSource(object):
 
         """
         if self._dhub is None:
-            self._dhub = self._get_dhub()
+            self._dhub = self.datasource.dhub(self.procs_file_name)
         return self._dhub
 
 
-    def _get_dhub(self):
+    def _get_datasource(self):
         candidate_sources = []
         for source in DataSource.objects.cached():
             if (source.project == self.project and
@@ -77,7 +91,7 @@ class SQLDataSource(object):
 
         candidate_sources.sort(key=lambda s: s.dataset, reverse=True)
 
-        return candidate_sources[0].dhub(self.procs_file_name)
+        return candidate_sources[0]
 
 
     def set_data(self, statement, placeholders):
@@ -106,34 +120,41 @@ class SQLDataSource(object):
         self.dhub.disconnect()
 
 
-    @classmethod
-    @transaction.commit_on_success
-    def create(
-        cls, project, contenttype=None, dataset=None, host=None, name=None):
+    def create_next_dataset(self, schema_file=None):
         """
-        Create a new ``SQLDataSource`` and its corresponding database.
+        Create and return the next dataset for this project/contenttype.
 
-        Required arguments:
+        The database for the new dataset will be located on the same host.
 
-        ``project``
-            The name of the project to create a database for.
+        """
+        dataset = DataSource.objects.filter(
+            project=self.project,
+            contenttype=self.contenttype
+            ).order_by("-dataset")[0].dataset + 1
 
-        Optional arguments:
+        # @@@ should we store the schema file name used for the previous
+        # dataset in the db and use the same one again automatically? or should
+        # we actually copy the schema of an existing dataset rather than using
+        # a schema file at all?
+        return self._create_dataset(
+            project=self.project,
+            contenttype=self.contenttype,
+            dataset=dataset,
+            host=self.datasource.host,
+            schema_file=schema_file,
+            )
 
-        ``contenttype``
-            The contenttype of this datasource; defaults to "perftest".
 
-        ``dataset``
-            The dataset number; defaults to 1 higher than the highest existing
-            dataset for this project; or 1 if none exist.
+    @classmethod
+    def create(cls, project,
+               contenttype=None, host=None, name=None, schema_file=None):
+        """
+        Create and return a new datasource for given project/contenttype.
 
-        ``host``
-            The host on which to create this database; defaults to
-            ``DATAZILLA_DATABASE_HOST``.
-
-        ``name``
-            The name of the database to create; defaults to
-            ``project_contenttype_dataset``.
+        Creates the database ``name`` (defaults to "project_contenttype_1") on
+        host ``host`` (defaults to ``DATAZILLA_DATABASE_HOST``) and populates
+        the template schema from ``schema_file`` (defaults to
+        ``template_schema/schema_perftest.sql``).
 
         Assumes that the database server at ``host`` is accessible, and that
         ``DATAZILLA_DATABASE_USER`` (identified by
@@ -143,15 +164,24 @@ class SQLDataSource(object):
         """
         if contenttype is None:
             contenttype = "perftest"
-        if dataset is None:
-            try:
-                dataset = DataSource.objects.filter(
-                    project=project, contenttype=contenttype).order_by(
-                    "-dataset")[0].dataset + 1
-            except IndexError:
-                dataset = 1
         if host is None:
             host = settings.DATAZILLA_DATABASE_HOST
+
+        return cls._create_dataset(
+            project=project,
+            contenttype=contenttype,
+            dataset=1,
+            host=host,
+            name=name,
+            schema_file=schema_file,
+            )
+
+
+    @classmethod
+    @transaction.commit_on_success
+    def _create_dataset(cls, project, contenttype, dataset, host,
+                        name=None, schema_file=None):
+        """Create a new ``SQLDataSource`` and its corresponding database."""
         if name is None:
             name = "{0}_{1}_{2}".format(project, contenttype, dataset)
 
@@ -165,10 +195,10 @@ class SQLDataSource(object):
             creation_date=datetime.datetime.now(),
             )
 
-        ds.create_database()
+        ds.create_database(schema_file)
 
         sqlds = cls(project, contenttype)
-        sqlds._dhub = ds.dhub(sqlds.procs_file_name)
+        sqlds._datasource = ds
         return sqlds
 
 
@@ -206,7 +236,10 @@ class DataSource(models.Model):
 
     class Meta:
         db_table = "datasource"
-        unique_together = [["project", "dataset", "contenttype"]]
+        unique_together = [
+            ["project", "dataset", "contenttype"],
+            ["host", "name"],
+            ]
 
 
     @property
@@ -228,6 +261,8 @@ class DataSource(models.Model):
         """
         data_source = {
             self.key: {
+                # @@@ this should depend on self.type
+                # @@@ shouldn't have to specify this here and below
                 "hub": "MySQL",
                 "master_host": {
                     "host": self.host,
@@ -243,9 +278,12 @@ class DataSource(models.Model):
         return MySQL(self.key)
 
 
-    def create_database(self, sql_schema_file=None):
+    def create_database(self, schema_file=None):
         """
         Create the database for this source, using given SQL schema file.
+
+        If schema file is not given, defaults to
+        "template_schema/schema_perftest.sql".
 
         Assumes that the database server at ``self.host`` is accessible, and
         that ``DATAZILLA_DATABASE_USER`` (identified by
@@ -253,8 +291,8 @@ class DataSource(models.Model):
         create databases.
 
         """
-        if sql_schema_file is None:
-            sql_schema_file = os.path.join(
+        if schema_file is None:
+            schema_file = os.path.join(
                 SQL_PATH, "template_schema", "schema_perftest.sql")
 
         conn = MySQLdb.connect(
@@ -268,7 +306,7 @@ class DataSource(models.Model):
 
         # MySQLdb provides no way to execute an entire SQL file in bulk, so we
         # have to shell out to the commandline client.
-        with open(sql_schema_file) as f:
+        with open(schema_file) as f:
             subprocess.check_call(
                 [
                     "mysql",
