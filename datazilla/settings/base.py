@@ -157,11 +157,11 @@ TEMPLATE_DEBUG = DEBUG
 STATIC_URL = "/static/"
 
 CACHES = {
-   "default": {
-      "BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
-      "LOCATION": DATAZILLA_MEMCACHED,
-   }
-}
+    "default": {
+        "BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
+        "LOCATION": DATAZILLA_MEMCACHED,
+        }
+    }
 
 if not USE_APP_ENGINE:
     DATABASES = {

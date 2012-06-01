@@ -15,15 +15,14 @@ add_vendor_lib()
 import os
 import sys
 import json
-import memcache
+from optparse import OptionParser
 import zlib
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "datazilla.settings.base")
-from django.conf import settings
-
-from optparse import OptionParser
 from datazilla.model import DatazillaModel
 from datazilla.model import utils
+from django.core.cache import cache
+
 
 
 
@@ -31,8 +30,6 @@ def cacheTestSummaries(project):
 
     gm = DatazillaModel(project)
     dataIter = gm.getAllSummaryCache()
-
-    mc = memcache.Client([settings.DATAZILLA_MEMCACHED], debug=0)
 
     for d in dataIter:
         for data in d:
@@ -42,7 +39,7 @@ def cacheTestSummaries(project):
                 data['item_data'],
                 )
 
-            rv = mc.set(key, zlib.compress( data['value'] ))
+            rv = cache.set(key, zlib.compress( data['value'] ))
             if not rv:
                 sys.stderr.write("ERROR: Failed to store object in memcache: %s, %s\n" % ( str(data['item_id']), data['item_data'] ) )
 

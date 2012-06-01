@@ -309,7 +309,6 @@ class DjangoTestSuiteRunner(object):
         for alias, mirror_alias in mirrored_aliases.items():
             mirrors.append((alias, connections[alias].settings_dict['NAME']))
             connections[alias].settings_dict['NAME'] = connections[mirror_alias].settings_dict['NAME']
-
         return old_names, mirrors
 
     def run_suite(self, suite, **kwargs):

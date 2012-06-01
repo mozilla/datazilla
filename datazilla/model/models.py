@@ -10,14 +10,15 @@ import time
 from datasource.bases.BaseHub import BaseHub
 from datasource.hubs.MySQL import MySQL
 from django.conf import settings
+from django.core.cache import cache
 from django.db import models
-import memcache
 
 
 from . import utils
 
 
-SOURCES_CACHE_KEY = "datazilla-datasources"
+# the cache key is specific to the database name we're pulling the data from
+SOURCES_CACHE_KEY = "{database}-datasources"
 
 SQL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sql")
 
@@ -607,11 +608,14 @@ class DatazillaModel(object):
 class DataSourceManager(models.Manager):
     def cached(self):
         """Return all datasources, caching the results."""
-        mc = memcache.Client([settings.DATAZILLA_MEMCACHED])
-        sources = mc.get(SOURCES_CACHE_KEY)
+        from django.db import connections
+        sources = cache.get(
+            SOURCES_CACHE_KEY.format(
+                database=connections["default"].settings_dict["NAME"])
+            )
         if sources is None:
             sources = list(self.filter(active_status=True))
-            mc.set(SOURCES_CACHE_KEY, sources)
+            cache.set(SOURCES_CACHE_KEY, sources)
         return sources
 
 
