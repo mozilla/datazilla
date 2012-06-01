@@ -277,9 +277,7 @@ Data Model
 
 The data model for performance data consists of an RDBS schema, `schema_1_perftest.sql <https://github.com/mozilla/datazilla/blob/master/datazilla/model/sql/template_schema/schema_1_perftest.sql>`_, and JSON structure, `schema_1_perftest.json <https://github.com/mozilla/datazilla/blob/master/datazilla/model/sql/template_schema/schema_1_perftest.json>`_, that is used as the data input format.  The following schema image is useful for understanding the relationships in the data model
 
-.. image:: img/schema_1_perftest.png
-    :scale: 25 %
-
+`Click to view diagram <https://github.com/mozilla/datazilla/blob/master/datazilla/model/sql/template_schema/schema_1_perftest.png>`_
 
 At a top level the schema has four broad categories: Reference Data, Test Data, Metrics Data, and UI Support Data.  These four categories are defined as follows:
 
