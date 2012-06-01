@@ -111,9 +111,9 @@ INSTALLED_APPS = [
     # Uncomment the next line to enable admin documentation:
     # "django.contrib.admindocs",
 
-    "datazilla.model",
+    "datazilla.controller.admin",
+    "datazilla.model.sql",
     "datazilla.webapp.apps.datazilla",
-    "datazilla.model",
 ]
 
 # A sample logging configuration. The only tangible logging
