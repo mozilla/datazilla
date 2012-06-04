@@ -92,6 +92,8 @@ class RDBSHub(BaseHub):
                               'chunk_size',
                               'chunk_source',
                               'chunk_min',
+                              'chunk_total',
+                              'executemany',
                               'return_type',
                               'key_column',
                               'callback',
@@ -503,24 +505,45 @@ class RDBSHub(BaseHub):
             minId = int(min.getColumnData('min_id'))
 
         maxId = int(max.getColumnData('max_id') or 0)
+        if 'chunk_total' in kwargs:
+            maxId = minId + int(kwargs['chunk_total']) - 1
 
         ##Total rows##
         nRows = (maxId - minId + 1)
+
         ##Total sets##
-        nSets = int(math.ceil(float(nRows)/float(chunkSize)))
+        nSets = int(math.floor(float(nRows)/float(chunkSize)))
 
         ##Load table and column for execute##
         kwargs['chunk_table'] = table
         kwargs['chunk_column'] = column
 
-        ##Get all the set id chunks for execute##
         sqlChunks = []
-        for setNum in range(nSets):
-            idSet = range(minId+setNum*chunkSize, minId+(setNum+1)*chunkSize)
+        if nSets < 1:
+            idSet = range(minId, maxId + 1)
             setSql = self.__buildSetWhere(idSet, sql, kwargs)
             sqlChunks.append(setSql)
 
+        else:
+            ##Get all the set id chunks for execute##
+            idSet = []
+            for setNum in range(nSets):
+                idSet = range(minId+setNum*chunkSize, minId+(setNum+1)*chunkSize)
+                setSql = self.__buildSetWhere(idSet, sql, kwargs)
+                sqlChunks.append(setSql)
+
+            ##Get any remainder statements##
+            remainderMin = idSet[ len(idSet) - 1 ]
+
+            if remainderMin < maxId:
+                startId = remainderMin + 1
+                remainderSet = range(startId, maxId + 1)
+
+                setSql = self.__buildSetWhere(remainderSet, sql, kwargs)
+                sqlChunks.append(setSql)
+
         return sqlChunks
+
 
     def __buildSetWhere(self, idSet, sql, kwargs):
 
