@@ -52,14 +52,25 @@ class Command(BaseCommand):
         records = int( options.get('records') )
         start = int( options.get('start') )
 
+
         dm_source = DatazillaModel(source)
-        dm_target = DatazillaModel(target)
+        data_iter = dm_source.getAllTestData(start, records)
+        sql_chunks = data_iter.sqlChunks
+        dm_source.disconnect()
 
-        data_iter = dm_source.getAllTestData(start)
+        self.stdout.write("iterating over sql_chunks:\n")
 
-        iterations = 0
+        chunks = 0
+        total_chunks = len(sql_chunks)
+        for s in sql_chunks:
 
-        for d in data_iter:
+            dm_source = DatazillaModel(source)
+            d = dm_source.dhub.execute(sql=s%str(start), return_type='tuple')
+            dm_source.disconnect()
+
+            chunks += 1
+            dm_target = DatazillaModel(target)
+            self.stdout.write("\tinserting chunk %i out of %i\n" % (chunks, total_chunks))
             for data in d:
                 deserialized_data = json.loads( data['data'] )
 
@@ -68,15 +79,9 @@ class Command(BaseCommand):
                 else:
                     if options['show']:
                         self.stdout.write(data['data'] + "\n")
+
                     dm_target.loadTestData(deserialized_data, data['data'])
+            dm_target.disconnect()
 
-                iterations += 1
-
-                if iterations == records:
-
-                    dm_source.disconnect()
-                    dm_target.disconnect()
-
-                    return
 
 

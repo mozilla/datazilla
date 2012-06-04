@@ -64,11 +64,13 @@ class TestMySQLHub(unittest.TestCase):
                  'testCallbackReturnType',
                  'testChunking',
                  'testChunkingWithMin',
+                 'testChunkingWithRecords',
                  'testRawSql',
                  'testReplace',
                  'testReplaceQuote',
                  'testPlaceholderQuote',
                  'testBigReplace',
+                 'testExecutemany',
                  'testDropTable',
                  'testDisconnect']
 
@@ -120,7 +122,6 @@ class TestMySQLHub(unittest.TestCase):
         ###
 
         #########
-        #These are some hacky one way logic tests.
         #All tests should raise RDBSHubExecuteError
         #########
 
@@ -449,6 +450,23 @@ class TestMySQLHub(unittest.TestCase):
         msg = 'total chunk sets should be, %i, there were %i chunk sets found.' % (99, nsets)
         self.assertEqual(99, nsets, msg=msg)
 
+    def testChunkingWithRecords(self):
+
+        chunkSize = 10
+        dh = MySQL(self.dataSource)
+
+        nsets = 0
+        for d in  dh.execute( db=self.db,
+                              proc="test.get_data",
+                              chunk_size=5,
+                              chunk_total=50,
+                              chunk_source='DATA_SOURCES_TEST_DATA.id'):
+
+            nsets += 1
+
+        msg = 'total chunk sets should be, %i, there were %i chunk sets found.' % (10, nsets)
+        self.assertEqual(10, nsets, msg=msg)
+
     def testRawSql(self):
 
         sql = """SELECT `id`, `auto_pfamA`, `go_id`, `term`, `category`
@@ -553,6 +571,30 @@ class TestMySQLHub(unittest.TestCase):
                            return_type='tuple')
 
         rowcount = len(data)
+
+    def testExecutemany(self):
+
+        dh = MySQL(self.dataSource)
+        dh.useDatabase('test')
+
+        ##Load Data##
+        placeholders = []
+        for row in TestMySQLHub.testData:
+            placeholders.append( row )
+
+        dh.execute(proc="test.insert_test_data",
+                   executemany=True,
+                   placeholders=placeholders)
+
+        rowcount = dh.execute( db=self.db,
+                            proc="sql.ds_selects.get_row_count",
+                            replace=['auto_pfamA', self.tableName],
+                            return_type='iter').getColumnData('rowcount')
+
+        ##Confirm we loaded all of the rows##
+        targetRowcount = 2*TestMySQLHub.testDataRows
+        msg = 'Row count in data file, %i, does not match row count in db %i.' % (targetRowcount, rowcount)
+        self.assertEqual(rowcount, targetRowcount, msg=msg)
 
     def testDropTable(self):
 
