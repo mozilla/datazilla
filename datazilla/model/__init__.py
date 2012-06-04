@@ -1,1 +1,1 @@
-from .models import DatazillaModel
+from .base import DatazillaModel
