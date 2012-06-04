@@ -317,16 +317,17 @@ class DatazillaModel(object):
         return dataIter
 
 
-    def getAllTestData(self, start):
+    def getAllTestData(self, start, total):
 
         proc = 'perftest.selects.get_all_test_data'
 
         dataIter = self.dhub.execute(proc=proc,
                                      debug_show=self.DEBUG,
                                      placeholders=[start],
-                                     chunk_size=10,
+                                     chunk_size=20,
                                      chunk_min=start,
                                      chunk_source="test_data.id",
+                                     chunk_total=total,
                                      return_type='tuple')
 
         return dataIter
@@ -342,6 +343,21 @@ class DatazillaModel(object):
                                             nowDatetime,
                                             value,
                                             nowDatetime ])
+
+    def set_test_collection(self, name, description):
+
+        id = self.sources["perftest"].set_data_and_get_id('set_test_collection',
+                                                        [ name,
+                                                          description,
+                                                          name ])
+
+        return id
+
+    def set_test_collection_map(self, test_collection_id, product_id):
+
+        self.sources["perftest"].set_data('set_test_collection_map',
+                                          [ test_collection_id,
+                                            product_id ])
 
     def disconnect(self):
         return self.sources["perftest"].dhub
@@ -380,6 +396,7 @@ class DatazillaModel(object):
                 auxDataId = self._getAuxId(auxData, refData)
                 auxValues = data['results_aux'][auxData]
 
+                placeholders = []
                 for index in range(0, len(auxValues)):
 
                     stringData = ""
@@ -389,13 +406,15 @@ class DatazillaModel(object):
                     else:
                         stringData = auxValues[index]
 
-                    self.sources["perftest"].set_data('set_aux_values',
-                                                 [refData['test_run_id'],
-                                                  index + 1,
-                                                  auxDataId,
-                                                  numericData,
-                                                  stringData])
+                    placeholders.append( (refData['test_run_id'],
+                                          index + 1,
+                                          auxDataId,
+                                          numericData,
+                                          stringData))
 
+                self.sources["perftest"].set_data('set_aux_values',
+                                                  placeholders,
+                                                  True)
 
     def _setTestValues(self, data, refData):
 
@@ -405,19 +424,22 @@ class DatazillaModel(object):
 
             values = data['results'][page]
 
+            placeholders = []
             for index in range(0, len(values)):
-
                 value = values[index]
-                self.sources["perftest"].set_data('set_test_values',
-                                             [refData['test_run_id'],
-                                              index + 1,
-                                              pageId,
-                                              ######
-                                              #TODO: Need to get the value
-                                              #id into the json
-                                              ######
-                                              1,
-                                              value])
+                placeholders.append( (refData['test_run_id'],
+                                      index + 1,
+                                      pageId,
+                                      ######
+                                      #TODO: Need to get the value
+                                      #id into the json
+                                      ######
+                                      1,
+                                      value))
+
+            self.sources["perftest"].set_data('set_test_values',
+                                              placeholders,
+                                              True)
 
 
     def _getAuxId(self, auxData, refData):
@@ -515,17 +537,23 @@ class DatazillaModel(object):
 
 
     def _getTestId(self, data, refData):
-        testId = 1
+        testId = 0
         try:
             if data['testrun']['suite'] in refData['tests']:
                 testId = refData['tests'][ data['testrun']['suite'] ]['id']
             else:
+                ###
+                #TODO: version should be set in the data structure
+                #      provided.  This currently hard codes it to 1
+                #      for all tests
+                ###
                 version = 1
                 if 'suite_version' in data['testrun']:
                     version = int(data['testrun']['suite_version'])
 
-                testId = self.sources["perftest"].set_data('set_test',
+                testId = self.sources["perftest"].set_data_and_get_id('set_test',
                                       [ data['testrun']['suite'], version ])
+
         except KeyError:
             raise
         else:
@@ -610,7 +638,7 @@ class DataSourceManager(models.Manager):
         mc = memcache.Client([settings.DATAZILLA_MEMCACHED])
         sources = mc.get(SOURCES_CACHE_KEY)
         if sources is None:
-            sources = list(self.filter(active_status=True))
+            sources = list(self.filter())
             mc.set(SOURCES_CACHE_KEY, sources)
         return sources
 
@@ -627,7 +655,6 @@ class DataSource(models.Model):
     host = models.CharField(max_length=128)
     name = models.CharField(max_length=128)
     type = models.CharField(max_length=25)
-    active_status = models.BooleanField(default=True, db_index=True)
     creation_date = models.DateTimeField()
 
     objects = DataSourceManager()
@@ -747,12 +774,13 @@ class SQLDataSource(object):
         return candidate_sources[0].dhub(self.procs_file_name)
 
 
-    def set_data(self, statement, placeholders):
+    def set_data(self, statement, placeholders, executemany=False):
 
         self.dhub.execute(
             proc='perftest.inserts.' + statement,
             debug_show=self.DEBUG,
             placeholders=placeholders,
+            executemany=executemany
             )
 
 
