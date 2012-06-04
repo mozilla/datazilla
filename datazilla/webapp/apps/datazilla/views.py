@@ -19,7 +19,7 @@ def graphs(request, project=""):
     #Load any signals provided in the page
     ####
     signals = []
-    timeRanges = utils.get_time_ranges()
+    time_ranges = utils.get_time_ranges()
 
     for s in SIGNALS:
         if s in request.POST:
@@ -28,16 +28,16 @@ def graphs(request, project=""):
     ###
     #Get reference data
     ###
-    cacheKey = str(project) + '_reference_data'
-    jsonData = '{}'
-    compressedJsonData = cache.get(cacheKey)
+    cache_key = str(project) + '_reference_data'
+    json_data = '{}'
+    compressed_json_data = cache.get(cache_key)
 
-    timeKey = 'days_30'
+    time_key = 'days_30'
 
     ##reference data found in the cache: decompress##
-    if compressedJsonData:
+    if compressed_json_data:
 
-        jsonData = zlib.decompress( compressedJsonData )
+        json_data = zlib.decompress( compressed_json_data )
 
     else:
         ####
@@ -45,17 +45,17 @@ def graphs(request, project=""):
         #serialize, compress, and cache
         ####
         dm = DatazillaModel(project)
-        refData = dm.getTestReferenceData()
+        ref_data = dm.get_test_reference_data()
         dm.disconnect()
 
-        refData['time_ranges'] = timeRanges
+        ref_data['time_ranges'] = time_ranges
 
-        jsonData = json.dumps(refData)
+        json_data = json.dumps(ref_data)
 
-        cache.set(str(project) + '_reference_data', zlib.compress( jsonData ) )
+        cache.set(str(project) + '_reference_data', zlib.compress( json_data ) )
 
-    data = { 'time_key':timeKey,
-             'reference_json':jsonData,
+    data = { 'time_key':time_key,
+             'reference_json':json_data,
              'signals':signals }
 
     ####
@@ -63,39 +63,39 @@ def graphs(request, project=""):
     #This occurs when a data view is in its Pane form and is detached
     #to exist on it's own page.
     ####
-    parentIndexKey = 'dv_parent_dview_index'
-    if parentIndexKey in request.POST:
-        data[parentIndexKey] = request.POST[parentIndexKey]
+    parent_index_key = 'dv_parent_dview_index'
+    if parent_index_key in request.POST:
+        data[parent_index_key] = request.POST[parent_index_key]
 
     return render_to_response('graphs.views.html', data)
 
-def getHelp(request):
+def get_help(request):
     data = {}
     return render_to_response('help/dataview.generic.help.html', data)
 
-def setTestData(request, project=""):
+def set_test_data(request, project=""):
 
-    jsonData = '{"error":"No POST data found"}'
+    json_data = '{"error":"No POST data found"}'
 
     if 'data' in request.POST:
 
-        jsonData = request.POST['data']
-        unquotedJsonData = urllib.unquote(jsonData)
-        data = json.loads( unquotedJsonData )
+        json_data = request.POST['data']
+        unquoted_json_data = urllib.unquote(json_data)
+        data = json.loads( unquoted_json_data )
 
         dm = DatazillaModel(project)
-        dm.loadTestData( data, unquotedJsonData )
+        dm.load_test_data( data, unquoted_json_data )
         dm.disconnect()
 
-        jsonData = json.dumps( { 'loaded_test_pages':len(data['results']) } )
+        json_data = json.dumps( { 'loaded_test_pages':len(data['results']) } )
 
-    return HttpResponse(jsonData, mimetype=APP_JS)
+    return HttpResponse(json_data, mimetype=APP_JS)
 
 def dataview(request, project="", method=""):
 
-    procPath = "graphs.views."
+    proc_path = "graphs.views."
     ##Full proc name including base path in json file##
-    fullProcPath = "%s%s" % (procPath, method)
+    full_proc_path = "%s%s" % (proc_path, method)
 
     if settings.DEBUG:
         ###
@@ -117,12 +117,12 @@ def dataview(request, project="", method=""):
                 fields = []
                 for f in DATAVIEW_ADAPTERS[method]['fields']:
                     if f in request.POST:
-                        fields.append( dm.dhub.escapeString( request.POST[f] ) )
+                        fields.append( dm.dhub.escape_string( request.POST[f] ) )
                     elif f in request.GET:
-                        fields.append( dm.dhub.escapeString( request.GET[f] ) )
+                        fields.append( dm.dhub.escape_string( request.GET[f] ) )
 
                 if len(fields) == len(DATAVIEW_ADAPTERS[method]['fields']):
-                    json = dm.dhub.execute(proc=fullProcPath,
+                    json = dm.dhub.execute(proc=full_proc_path,
                                            debug_show=settings.DEBUG,
                                            placeholders=fields,
                                            return_type='table_json')
@@ -133,7 +133,7 @@ def dataview(request, project="", method=""):
 
             else:
 
-                json = dm.dhub.execute(proc=fullProcPath,
+                json = dm.dhub.execute(proc=full_proc_path,
                                        debug_show=settings.DEBUG,
                                        return_type='table_json')
 
@@ -144,113 +144,113 @@ def dataview(request, project="", method=""):
 
     return HttpResponse(json, mimetype=APP_JS)
 
-def _getTestReferenceData(project, method, request, dm):
+def _get_test_reference_data(project, method, request, dm):
 
-    refData = dm.getTestReferenceData()
+    ref_data = dm.get_test_reference_data()
 
-    jsonData = json.dumps( refData )
+    json_data = json.dumps( ref_data )
 
-    return jsonData
+    return json_data
 
 
-def _getTestRunSummary(project, method, request, dm):
+def _get_test_run_summary(project, method, request, dm):
 
-    productIds = []
-    testIds = []
-    platformIds = []
+    product_ids = []
+    test_ids = []
+    platform_ids = []
 
     #####
     #Calling get_id_list() insures that we have only numbers in the
     #lists, this gaurds against SQL injection
     #####
     if 'product_ids' in request.GET:
-        productIds = utils.get_id_list(request.GET['product_ids'])
+        product_ids = utils.get_id_list(request.GET['product_ids'])
     if 'test_ids' in request.GET:
-        testIds = utils.get_id_list(request.GET['test_ids'])
+        test_ids = utils.get_id_list(request.GET['test_ids'])
     if 'platform_ids' in request.GET:
-        platformIds = utils.get_id_list(request.GET['platform_ids'])
+        platform_ids = utils.get_id_list(request.GET['platform_ids'])
 
-    timeKey = 'days_30'
-    timeRanges = utils.get_time_ranges()
+    time_key = 'days_30'
+    time_ranges = utils.get_time_ranges()
     if 'tkey' in request.GET:
-        timeKey = request.GET['tkey']
+        time_key = request.GET['tkey']
 
-    if not productIds:
-        ##Set default productId##
-        productIds = [12]
+    if not product_ids:
+        ##Set default product_id##
+        product_ids = [12]
 
-    jsonData = '{}'
+    json_data = '{}'
 
-    if productIds and (not testIds) and (not platformIds):
+    if product_ids and (not test_ids) and (not platform_ids):
 
-        if len(productIds) > 1:
-            extendList = { 'data':[], 'columns':[] }
-            for id in productIds:
-                key = utils.get_cache_key(project, str(id), timeKey)
-                compressedJsonData = cache.get(key)
+        if len(product_ids) > 1:
+            extend_list = { 'data':[], 'columns':[] }
+            for id in product_ids:
+                key = utils.get_cache_key(project, str(id), time_key)
+                compressed_json_data = cache.get(key)
 
-                if compressedJsonData:
-                    jsonData = zlib.decompress( compressedJsonData )
-                    data = json.loads( jsonData )
-                    extendList['data'].extend( data['data'] )
-                    extendList['columns'] = data['columns']
+                if compressed_json_data:
+                    json_data = zlib.decompress( compressed_json_data )
+                    data = json.loads( json_data )
+                    extend_list['data'].extend( data['data'] )
+                    extend_list['columns'] = data['columns']
 
-            jsonData = json.dumps(extendList)
+            json_data = json.dumps(extend_list)
 
         else:
             key = utils.get_cache_key(
                 project,
-                str(productIds[0]),
-                timeKey,
+                str(product_ids[0]),
+                time_key,
                 )
-            compressedJsonData = cache.get(key)
+            compressed_json_data = cache.get(key)
 
-            if compressedJsonData:
-                jsonData = zlib.decompress( compressedJsonData )
+            if compressed_json_data:
+                json_data = zlib.decompress( compressed_json_data )
 
     else:
-        table = dm.getTestRunSummary(timeRanges[timeKey]['start'],
-                                     timeRanges[timeKey]['stop'],
-                                     productIds,
-                                     platformIds,
-                                     testIds)
+        table = dm.get_test_run_summary(time_ranges[time_key]['start'],
+                                     time_ranges[time_key]['stop'],
+                                     product_ids,
+                                     platform_ids,
+                                     test_ids)
 
-        jsonData = json.dumps( table )
+        json_data = json.dumps( table )
 
-    return jsonData
+    return json_data
 
-def _getTestValues(project, method, request, dm):
+def _get_test_values(project, method, request, dm):
 
     data = {};
 
     if 'test_run_id' in request.GET:
-        data = dm.getTestRunValues( request.GET['test_run_id'] )
+        data = dm.get_test_run_values( request.GET['test_run_id'] )
 
-    jsonData = json.dumps( data )
+    json_data = json.dumps( data )
 
-    return jsonData
+    return json_data
 
-def _getPageValues(project, method, request, dm):
+def _get_page_values(project, method, request, dm):
 
     data = {};
 
     if ('test_run_id' in request.GET) and ('page_id' in request.GET):
-        data = dm.getPageValues( request.GET['test_run_id'], request.GET['page_id'] )
+        data = dm.get_page_values( request.GET['test_run_id'], request.GET['page_id'] )
 
-    jsonData = json.dumps( data )
+    json_data = json.dumps( data )
 
-    return jsonData
+    return json_data
 
-def _getTestValueSummary(project, method, request, dm):
+def _get_test_value_summary(project, method, request, dm):
 
     data = {};
 
     if 'test_run_id' in request.GET:
-        data = dm.getTestRunValueSummary( request.GET['test_run_id'] )
+        data = dm.get_test_run_value_summary( request.GET['test_run_id'] )
 
-    jsonData = json.dumps( data )
+    json_data = json.dumps( data )
 
-    return jsonData
+    return json_data
 
 #####
 #UTILITY METHODS
@@ -262,26 +262,26 @@ DATAVIEW_ADAPTERS = { ##Flat tables SQL##
                       'test_aux_data':{ 'fields':[ 'test_run_id', ] },
 
                       ##API only##
-                      'get_test_ref_data':{ 'adapter':_getTestReferenceData},
+                      'get_test_ref_data':{ 'adapter':_get_test_reference_data},
 
                       ##Visualization Tools##
-                      'test_runs':{ 'adapter':_getTestRunSummary,
+                      'test_runs':{ 'adapter':_get_test_run_summary,
                                     'fields':['test_run_id',
                                               'test_run_data']
                                   },
 
-                      'test_chart':{ 'adapter':_getTestRunSummary,
+                      'test_chart':{ 'adapter':_get_test_run_summary,
                                      'fields':['test_run_id',
                                                'test_run_data'] },
 
-                      'test_values':{ 'adapter':_getTestValues,
+                      'test_values':{ 'adapter':_get_test_values,
                                       'fields':['test_run_id'] },
 
-                      'page_values':{ 'adapter':_getPageValues,
+                      'page_values':{ 'adapter':_get_page_values,
                                       'fields':['test_run_id',
                                                 'page_id'] },
 
-                      'test_value_summary':{ 'adapter':_getTestValueSummary,
+                      'test_value_summary':{ 'adapter':_get_test_value_summary,
                                              'fields':['test_run_id'] } }
 
 SIGNALS = set()

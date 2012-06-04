@@ -48,283 +48,283 @@ class DatazillaModel(object):
         return self.sources["perftest"].dhub
 
 
-    def getProductTestOsMap(self):
+    def get_product_test_os_map(self):
 
         proc = 'perftest.selects.get_product_test_os_map'
 
-        productTuple = self.dhub.execute(proc=proc,
+        product_tuple = self.dhub.execute(proc=proc,
                                          debug_show=self.DEBUG,
                                          return_type='tuple')
 
-        return productTuple
+        return product_tuple
 
 
-    def getOperatingSystems(self, keyColumn=None):
+    def get_operating_systems(self, key_column=None):
 
-        operatingSystems = dict()
+        operating_systems = dict()
 
         proc = 'perftest.selects.get_operating_systems'
 
-        if keyColumn:
-            operatingSystems = self.dhub.execute(proc=proc,
+        if key_column:
+            operating_systems = self.dhub.execute(proc=proc,
                                                  debug_show=self.DEBUG,
-                                                 key_column=keyColumn,
+                                                 key_column=key_column,
                                                  return_type='dict')
         else:
-            osTuple = self.dhub.execute(proc=proc,
+            os_tuple = self.dhub.execute(proc=proc,
                                         debug_show=self.DEBUG,
                                         return_type='tuple')
 
-            operatingSystems = self._getUniqueKeyDict(osTuple,
+            operating_systems = self._get_unique_key_dict(os_tuple,
                                                       ['name', 'version'])
 
-        return operatingSystems
+        return operating_systems
 
 
-    def getTests(self, keyColumn='name'):
+    def get_tests(self, key_column='name'):
 
         proc = 'perftest.selects.get_tests'
 
-        testDict = self.dhub.execute(proc=proc,
+        test_dict = self.dhub.execute(proc=proc,
                                      debug_show=self.DEBUG,
-                                     key_column=keyColumn,
+                                     key_column=key_column,
                                      return_type='dict')
 
-        return testDict
+        return test_dict
 
 
-    def getProducts(self, keyColumn=None):
+    def get_products(self, key_column=None):
 
         products = dict()
 
         proc = 'perftest.selects.get_product_data'
 
-        if keyColumn:
+        if key_column:
             products = self.dhub.execute(proc=proc,
                                          debug_show=self.DEBUG,
-                                         key_column=keyColumn,
+                                         key_column=key_column,
                                          return_type='dict')
         else:
-            productsTuple = self.dhub.execute(proc=proc,
+            products_tuple = self.dhub.execute(proc=proc,
                                               debug_show=self.DEBUG,
                                               return_type='tuple')
 
-            products = self._getUniqueKeyDict(productsTuple,
+            products = self._get_unique_key_dict(products_tuple,
                                              ['product', 'branch', 'version'])
 
         return products
 
 
-    def getMachines(self):
+    def get_machines(self):
 
         proc = 'perftest.selects.get_machines'
 
-        machinesDict = self.dhub.execute(proc=proc,
+        machines_dict = self.dhub.execute(proc=proc,
                                          debug_show=self.DEBUG,
                                          key_column='name',
                                          return_type='dict')
 
-        return machinesDict
+        return machines_dict
 
 
-    def getOptions(self):
+    def get_options(self):
 
         proc = 'perftest.selects.get_options'
 
-        optionsDict = self.dhub.execute(proc=proc,
+        options_dict = self.dhub.execute(proc=proc,
                                         debug_show=self.DEBUG,
                                         key_column='name',
                                         return_type='dict')
 
-        return optionsDict
+        return options_dict
 
 
-    def getPages(self):
+    def get_pages(self):
 
         proc = 'perftest.selects.get_pages'
 
-        pagesDict = self.dhub.execute(proc=proc,
+        pages_dict = self.dhub.execute(proc=proc,
                                       debug_show=self.DEBUG,
                                       key_column='url',
                                       return_type='dict')
 
-        return pagesDict
+        return pages_dict
 
 
-    def getAuxData(self):
+    def get_aux_data(self):
 
         proc = 'perftest.selects.get_aux_data'
 
-        auxDataDict = self.dhub.execute(proc=proc,
+        aux_data_dict = self.dhub.execute(proc=proc,
                                         debug_show=self.DEBUG,
                                         key_column='name',
                                         return_type='dict')
 
-        return auxDataDict
+        return aux_data_dict
 
 
-    def getReferenceData(self):
+    def get_reference_data(self):
 
-        referenceData = dict( operating_systems=self.getOperatingSystems(),
-                              tests=self.getTests(),
-                              products=self.getProducts(),
-                              machines=self.getMachines(),
-                              options=self.getOptions(),
-                              pages=self.getPages(),
-                              aux_data=self.getAuxData())
+        reference_data = dict( operating_systems=self.get_operating_systems(),
+                              tests=self.get_tests(),
+                              products=self.get_products(),
+                              machines=self.get_machines(),
+                              options=self.get_options(),
+                              pages=self.get_pages(),
+                              aux_data=self.get_aux_data())
 
-        return referenceData
+        return reference_data
 
 
-    def getTestCollections(self):
+    def get_test_collections(self):
 
         proc = 'perftest.selects.get_test_collections'
 
-        testCollectionTuple = self.dhub.execute(proc=proc,
+        test_collection_tuple = self.dhub.execute(proc=proc,
                                                 debug_show=self.DEBUG,
                                                 return_type='tuple')
 
-        testCollection = dict()
-        for data in testCollectionTuple:
+        test_collection = dict()
+        for data in test_collection_tuple:
 
-            if data['id'] not in testCollection:
+            if data['id'] not in test_collection:
 
                 id = data['id']
-                testCollection[ id ] = dict()
-                testCollection[ id ]['name'] = data['name']
-                testCollection[ id ]['description'] = data['description']
-                testCollection[ id ]['data'] = []
+                test_collection[ id ] = dict()
+                test_collection[ id ]['name'] = data['name']
+                test_collection[ id ]['description'] = data['description']
+                test_collection[ id ]['data'] = []
 
-            productId = data['product_id']
-            osId = data['operating_system_id']
+            product_id = data['product_id']
+            os_id = data['operating_system_id']
 
-            testCollection[ id ]['data'].append({'test_id':data['test_id'],
+            test_collection[ id ]['data'].append({'test_id':data['test_id'],
                                                  'name':data['name'],
-                                                 'product_id':productId,
-                                                 'operating_system_id':osId })
+                                                 'product_id':product_id,
+                                                 'operating_system_id':os_id })
 
 
-        return testCollection
+        return test_collection
 
 
-    def getTestReferenceData(self):
+    def get_test_reference_data(self):
 
-        referenceData = dict(operating_systems=self.getOperatingSystems('id'),
-                             tests=self.getTests('id'),
-                             products=self.getProducts('id'),
-                             product_test_os_map=self.getProductTestOsMap(),
-                             test_collections=self.getTestCollections())
+        reference_data = dict(operating_systems=self.get_operating_systems('id'),
+                             tests=self.get_tests('id'),
+                             products=self.get_products('id'),
+                             product_test_os_map=self.get_product_test_os_map(),
+                             test_collections=self.get_test_collections())
 
-        return referenceData
+        return reference_data
 
 
-    def getTestRunSummary(self,
+    def get_test_run_summary(self,
                           start,
                           end,
-                          productIds,
-                          operatingSystemIds,
-                          testIds):
+                          product_ids,
+                          operating_system_ids,
+                          test_ids):
 
-        colData = {
-           'b.product_id': utils.get_id_string(productIds),
+        col_data = {
+           'b.product_id': utils.get_id_string(product_ids),
 
-           'b.operating_system_id': utils.get_id_string(operatingSystemIds),
+           'b.operating_system_id': utils.get_id_string(operating_system_ids),
 
-           'tr.test_id': utils.get_id_string(testIds)
+           'tr.test_id': utils.get_id_string(test_ids)
         }
 
-        rep = utils.build_replacement(colData)
+        rep = utils.build_replacement(col_data)
 
         proc = 'perftest.selects.get_test_run_summary'
 
-        testRunSummaryTable = self.dhub.execute(proc=proc,
+        test_run_summary_table = self.dhub.execute(proc=proc,
                                                 debug_show=self.DEBUG,
                                                 replace=[ str(end),
                                                           str(start), rep ],
                                                 return_type='table')
 
-        return testRunSummaryTable
+        return test_run_summary_table
 
 
-    def getAllTestRuns(self):
+    def get_all_test_runs(self):
 
         proc = 'perftest.selects.get_all_test_runs'
 
-        testRunSummaryTable = self.dhub.execute(proc=proc,
+        test_run_summary_table = self.dhub.execute(proc=proc,
                                                 debug_show=self.DEBUG,
                                                 return_type='table')
 
-        return testRunSummaryTable
+        return test_run_summary_table
 
 
-    def getTestRunValues(self, testRunId):
+    def get_test_run_values(self, test_run_id):
 
         proc = 'perftest.selects.get_test_run_values'
 
-        testRunValueTable = self.dhub.execute(proc=proc,
+        test_run_value_table = self.dhub.execute(proc=proc,
                                               debug_show=self.DEBUG,
-                                              placeholders=[ testRunId ],
+                                              placeholders=[ test_run_id ],
                                               return_type='table')
 
-        return testRunValueTable
+        return test_run_value_table
 
 
-    def getTestRunValueSummary(self, testRunId):
+    def get_test_run_value_summary(self, test_run_id):
 
         proc = 'perftest.selects.get_test_run_value_summary'
 
-        testRunValueTable = self.dhub.execute(proc=proc,
+        test_run_value_table = self.dhub.execute(proc=proc,
                                               debug_show=self.DEBUG,
-                                              placeholders=[ testRunId ],
+                                              placeholders=[ test_run_id ],
                                               return_type='table')
 
-        return testRunValueTable
+        return test_run_value_table
 
 
-    def getPageValues(self, testRunId, pageId):
+    def get_page_values(self, test_run_id, page_id):
 
         proc = 'perftest.selects.get_page_values'
 
-        pageValuesTable = self.dhub.execute(proc=proc,
+        page_values_table = self.dhub.execute(proc=proc,
                                             debug_show=self.DEBUG,
-                                            placeholders=[ testRunId,
-                                                           pageId ],
+                                            placeholders=[ test_run_id,
+                                                           page_id ],
                                             return_type='table')
 
-        return pageValuesTable
+        return page_values_table
 
 
-    def getSummaryCache(self, itemId, itemData):
+    def get_summary_cache(self, item_id, item_data):
 
         proc = 'perftest.selects.get_summary_cache'
 
-        cachedData = self.dhub.execute(proc=proc,
+        cached_data = self.dhub.execute(proc=proc,
                                        debug_show=self.DEBUG,
-                                       placeholders=[ itemId, itemData ],
+                                       placeholders=[ item_id, item_data ],
                                        return_type='tuple')
 
-        return cachedData
+        return cached_data
 
 
-    def getAllSummaryCache(self):
+    def get_all_summary_cache(self):
 
         proc = 'perftest.selects.get_all_summary_cache_data'
 
-        dataIter = self.dhub.execute(proc=proc,
+        data_iter = self.dhub.execute(proc=proc,
                                      debug_show=self.DEBUG,
                                      chunk_size=5,
                                      chunk_source="summary_cache.id",
                                      return_type='tuple')
 
 
-        return dataIter
+        return data_iter
 
 
-    def getAllTestData(self, start, total):
+    def get_all_test_data(self, start, total):
 
         proc = 'perftest.selects.get_all_test_data'
 
-        dataIter = self.dhub.execute(proc=proc,
+        data_iter = self.dhub.execute(proc=proc,
                                      debug_show=self.DEBUG,
                                      placeholders=[start],
                                      chunk_size=20,
@@ -333,19 +333,19 @@ class DatazillaModel(object):
                                      chunk_total=total,
                                      return_type='tuple')
 
-        return dataIter
+        return data_iter
 
 
-    def setSummaryCache(self, itemId, itemData, value):
+    def set_summary_cache(self, item_id, item_data, value):
 
-        nowDatetime = str( datetime.datetime.now() )
+        now_datetime = str( datetime.datetime.now() )
 
-        self.sources["perftest"].set_data('set_summary_cache', [ itemId,
-                                            itemData,
+        self.sources["perftest"].set_data('set_summary_cache', [ item_id,
+                                            item_data,
                                             value,
-                                            nowDatetime,
+                                            now_datetime,
                                             value,
-                                            nowDatetime ])
+                                            now_datetime ])
 
     def set_test_collection(self, name, description):
 
@@ -366,74 +366,74 @@ class DatazillaModel(object):
         return self.sources["perftest"].disconnect()
 
 
-    def loadTestData(self, data, jsonData):
+    def load_test_data(self, data, json_data):
 
         ##Get the reference data##
-        refData = self.getReferenceData()
+        ref_data = self.get_reference_data()
 
         ##Get/Set reference info##
-        refData['test_id'] = self._getTestId(data, refData)
-        refData['option_id_map'] = self._getOptionIds(data, refData)
-        refData['operating_system_id'] = self._getOsId(data, refData)
-        refData['product_id'] = self._getProductId(data, refData)
-        refData['machine_id'] = self._getMachineId(data, refData)
+        ref_data['test_id'] = self._get_test_id(data, ref_data)
+        ref_data['option_id_map'] = self._get_option_ids(data, ref_data)
+        ref_data['operating_system_id'] = self._get_os_id(data, ref_data)
+        ref_data['product_id'] = self._get_product_id(data, ref_data)
+        ref_data['machine_id'] = self._get_machine_id(data, ref_data)
 
-        refData['build_id'] = self._setBuildData(data, refData)
-        refData['test_run_id'] = self._setTestRunData(data, refData)
+        ref_data['build_id'] = self._set_build_data(data, ref_data)
+        ref_data['test_run_id'] = self._set_test_run_data(data, ref_data)
 
-        self._setOptionData(data, refData)
-        self._setTestValues(data, refData)
-        self._setTestAuxData(data, refData)
-        self._setTestData(jsonData, refData)
+        self._set_option_data(data, ref_data)
+        self._set_test_values(data, ref_data)
+        self._set_test_aux_data(data, ref_data)
+        self._set_test_data(json_data, ref_data)
 
-    def _setTestData(self, jsonData, refData):
+    def _set_test_data(self, json_data, ref_data):
 
         self.sources["perftest"].set_data('set_test_data',
-                            [refData['test_run_id'], jsonData])
+                            [ref_data['test_run_id'], json_data])
 
 
-    def _setTestAuxData(self, data, refData):
+    def _set_test_aux_data(self, data, ref_data):
 
         if 'results_aux' in data:
 
-            for auxData in data['results_aux']:
-                auxDataId = self._getAuxId(auxData, refData)
-                auxValues = data['results_aux'][auxData]
+            for aux_data in data['results_aux']:
+                aux_data_id = self._get_aux_id(aux_data, ref_data)
+                aux_values = data['results_aux'][aux_data]
 
                 placeholders = []
-                for index in range(0, len(auxValues)):
+                for index in range(0, len(aux_values)):
 
-                    stringData = ""
-                    numericData = 0
-                    if utils.is_number(auxValues[index]):
-                        numericData = auxValues[index]
+                    string_data = ""
+                    numeric_data = 0
+                    if utils.is_number(aux_values[index]):
+                        numeric_data = aux_values[index]
                     else:
-                        stringData = auxValues[index]
+                        string_data = aux_values[index]
 
-                    placeholders.append( (refData['test_run_id'],
+                    placeholders.append( (ref_data['test_run_id'],
                                           index + 1,
-                                          auxDataId,
-                                          numericData,
-                                          stringData))
+                                          aux_data_id,
+                                          numeric_data,
+                                          string_data))
 
                 self.sources["perftest"].set_data('set_aux_values',
                                                   placeholders,
                                                   True)
 
-    def _setTestValues(self, data, refData):
+    def _set_test_values(self, data, ref_data):
 
         for page in data['results']:
 
-            pageId = self._getPageId(page, refData)
+            page_id = self._get_page_id(page, ref_data)
 
             values = data['results'][page]
 
             placeholders = []
             for index in range(0, len(values)):
                 value = values[index]
-                placeholders.append( (refData['test_run_id'],
+                placeholders.append( (ref_data['test_run_id'],
                                       index + 1,
-                                      pageId,
+                                      page_id,
                                       ######
                                       #TODO: Need to get the value
                                       #id into the json
@@ -446,57 +446,57 @@ class DatazillaModel(object):
                                               True)
 
 
-    def _getAuxId(self, auxData, refData):
+    def _get_aux_id(self, aux_data, ref_data):
 
-        auxId = 0
+        aux_id = 0
         try:
-            if auxData in refData['aux_data']:
-                auxId = refData['aux_data'][auxData]['id']
+            if aux_data in ref_data['aux_data']:
+                aux_id = ref_data['aux_data'][aux_data]['id']
             else:
-                auxId = self.sources["perftest"].set_data_and_get_id('set_aux_data',
-                                             [refData['test_id'],
-                                             auxData])
+                aux_id = self.sources["perftest"].set_data_and_get_id('set_aux_data',
+                                             [ref_data['test_id'],
+                                             aux_data])
 
         except KeyError:
             raise
         else:
-            return auxId
+            return aux_id
 
 
-    def _getPageId(self, page, refData):
+    def _get_page_id(self, page, ref_data):
 
-        pageId = 0
+        page_id = 0
         try:
-            if page in refData['pages']:
-                pageId = refData['pages'][page]['id']
+            if page in ref_data['pages']:
+                page_id = ref_data['pages'][page]['id']
             else:
-                pageId = self.sources["perftest"].set_data_and_get_id('set_pages_data',
-                                              [refData['test_id'], page])
+                page_id = self.sources["perftest"].set_data_and_get_id('set_pages_data',
+                                              [ref_data['test_id'], page])
 
         except KeyError:
             raise
         else:
-            return pageId
+            return page_id
 
 
-    def _setOptionData(self, data, refData):
+    def _set_option_data(self, data, ref_data):
 
         if 'options' in data['testrun']:
             for option in data['testrun']['options']:
-                id = refData['option_id_map'][option]['id']
+                id = ref_data['option_id_map'][option]['id']
                 value = data['testrun']['options'][option]
                 self.sources["perftest"].set_data('set_test_option_values',
-                                                  [refData['test_run_id'],
+                                                  [ref_data['test_run_id'],
                                                    id,
                                                    value])
 
 
-    def _setBuildData(self, data, refData):
+    def _set_build_data(self, data, ref_data):
 
-        buildId = self.sources["perftest"].set_data_and_get_id('set_build_data',
-                                       [ refData['operating_system_id'],
-                                         refData['product_id'],
-                                         refData['machine_id'],
+        build_id = self.sources["perftest"].set_data_and_get_id('set_build_data',
+                                       [ ref_data['operating_system_id'],
+                                         ref_data['product_id'],
+                                         ref_data['machine_id'],
                                          data['test_build']['id'],
                                          data['test_machine']['platform'],
                                          data['test_build']['revision'],
@@ -508,43 +508,43 @@ class DatazillaModel(object):
                                          ##Need to get the build_date into the json##
                                          int(time.time()) ] )
 
-        return buildId
+        return build_id
 
 
-    def _setTestRunData(self, data, refData):
+    def _set_test_run_data(self, data, ref_data):
 
-        testRunId = self.sources["perftest"].set_data_and_get_id('set_test_run_data',
-                                         [ refData['test_id'],
-                                         refData['build_id'],
+        test_run_id = self.sources["perftest"].set_data_and_get_id('set_test_run_data',
+                                         [ ref_data['test_id'],
+                                         ref_data['build_id'],
                                          data['test_build']['revision'],
                                          data['testrun']['date'] ])
 
-        return testRunId
+        return test_run_id
 
 
-    def _getMachineId(self, data, refData):
+    def _get_machine_id(self, data, ref_data):
 
-        machineId = 0
+        machine_id = 0
         try:
             name = data['test_machine']['name']
-            if name in refData['machines']:
-                machineId = refData['machines'][ name ]['id']
+            if name in ref_data['machines']:
+                machine_id = ref_data['machines'][ name ]['id']
             else:
-                machineId = self.sources["perftest"].set_data_and_get_id('set_machine_data',
+                machine_id = self.sources["perftest"].set_data_and_get_id('set_machine_data',
                                                  [ name, int(time.time()) ])
 
         except KeyError:
             raise
 
         else:
-            return machineId
+            return machine_id
 
 
-    def _getTestId(self, data, refData):
-        testId = 0
+    def _get_test_id(self, data, ref_data):
+        test_id = 0
         try:
-            if data['testrun']['suite'] in refData['tests']:
-                testId = refData['tests'][ data['testrun']['suite'] ]['id']
+            if data['testrun']['suite'] in ref_data['tests']:
+                test_id = ref_data['tests'][ data['testrun']['suite'] ]['id']
             else:
                 ###
                 #TODO: version should be set in the data structure
@@ -555,80 +555,80 @@ class DatazillaModel(object):
                 if 'suite_version' in data['testrun']:
                     version = int(data['testrun']['suite_version'])
 
-                testId = self.sources["perftest"].set_data_and_get_id('set_test',
+                test_id = self.sources["perftest"].set_data_and_get_id('set_test',
                                       [ data['testrun']['suite'], version ])
 
         except KeyError:
             raise
         else:
-            return testId
+            return test_id
 
 
-    def _getOsId(self, data, refData):
+    def _get_os_id(self, data, ref_data):
 
-        osId = 0
+        os_id = 0
         try:
-            osName = data['test_machine']['os']
-            osVersion = data['test_machine']['osversion']
-            osKey = osName + osVersion
-            if osKey in refData['operating_systems']:
-                osId = refData['operating_systems'][osKey]
+            os_name = data['test_machine']['os']
+            os_version = data['test_machine']['osversion']
+            os_key = os_name + os_version
+            if os_key in ref_data['operating_systems']:
+                os_id = ref_data['operating_systems'][os_key]
             else:
-                osId = self.sources["perftest"].set_data_and_get_id('set_operating_system',
-                                            [ osName, osVersion ])
+                os_id = self.sources["perftest"].set_data_and_get_id('set_operating_system',
+                                            [ os_name, os_version ])
 
         except KeyError:
             raise
 
         else:
-            return osId
+            return os_id
 
 
-    def _getOptionIds(self, data, refData):
-        optionIds = dict()
+    def _get_option_ids(self, data, ref_data):
+        option_ids = dict()
         try:
             if 'options' in data['testrun']:
                 for option in data['testrun']['options']:
-                    if option in refData['options']:
-                        optionIds[ option ] = refData['options'][option]
+                    if option in ref_data['options']:
+                        option_ids[ option ] = ref_data['options'][option]
                     else:
-                        testId = self.sources["perftest"].set_data_and_get_id('set_option_data', [ option ])
-                        optionIds[ option ] = testId
+                        test_id = self.sources["perftest"].set_data_and_get_id('set_option_data', [ option ])
+                        option_ids[ option ] = test_id
         except KeyError:
             raise
         else:
-            return optionIds
+            return option_ids
 
 
-    def _getProductId(self, data, refData):
+    def _get_product_id(self, data, ref_data):
 
-        productId = 0
+        product_id = 0
 
         try:
             product = data['test_build']['name']
             branch = data['test_build']['branch']
             version = data['test_build']['version']
 
-            productKey = product + branch + version
+            product_key = product + branch + version
 
-            if productKey in refData['products']:
-                productId = refData['products'][productKey]
+            if product_key in ref_data['products']:
+                product_id = ref_data['products'][product_key]
             else:
-                productId = self.sources["perftest"].set_data_and_get_id('set_product_data',
+                product_id = self.sources["perftest"].set_data_and_get_id('set_product_data',
                                                  [ product, branch, version ])
 
         except KeyError:
             raise
         else:
-            return productId
+            return product_id
 
 
-    def _getUniqueKeyDict(self, dataTuple, keyStrings):
+    def _get_unique_key_dict(self, data_tuple, key_strings):
 
-        dataDict = dict()
-        for data in dataTuple:
-            uniqueKey = ""
-            for key in keyStrings:
-                uniqueKey += str(data[key])
-            dataDict[ uniqueKey ] = data['id']
-        return dataDict
+        data_dict = dict()
+        for data in data_tuple:
+            unique_key = ""
+            for key in key_strings:
+                unique_key += str(data[key])
+            data_dict[ unique_key ] = data['id']
+        return data_dict

@@ -9,7 +9,7 @@ from datazilla.models import SQLDataSource, SQL_PATH
 
 class CloudSQLDataSource(SQLDataSource):
     def _get_dhub(self):
-        dataSource = {
+        data_source = {
             self.project : {
                 "hub":"MySQL",
                 "master_host":{
@@ -21,7 +21,7 @@ class CloudSQLDataSource(SQLDataSource):
                 "procs": [os.path.join(SQL_PATH, self.procs_file_name)]
                 }
             }
-        BaseHub.addDataSource(dataSource)
+        BaseHub.add_data_source(data_source)
 
         try:
             return CloudSQL(self.project)

@@ -8,24 +8,24 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "datazilla.settings.base")
 from optparse import OptionParser
 from datazilla.model import DatazillaModel
 
-def loadTestCollection(project):
+def load_test_collection(project):
 
     dm = DatazillaModel(project)
 
-    products = dm.getProducts('id')
+    products = dm.get_products('id')
 
-    for productName in products:
+    for product_name in products:
 
-        if products[ productName ]['product'] and \
-           products[ productName ]['version'] and \
-           products[ productName ]['branch']:
+        if products[ product_name ]['product'] and \
+           products[ product_name ]['version'] and \
+           products[ product_name ]['branch']:
 
-            name = "%s %s %s" % (products[ productName ]['product'],
-                                 products[ productName ]['version'],
-                                 products[ productName ]['branch'])
+            name = "%s %s %s" % (products[ product_name ]['product'],
+                                 products[ product_name ]['version'],
+                                 products[ product_name ]['branch'])
 
             id = dm.set_test_collection(name, "")
-            dm.set_test_collection_map(id, products[ productName ]['id'])
+            dm.set_test_collection_map(id, products[ product_name ]['id'])
 
     dm.disconnect()
 
@@ -58,4 +58,4 @@ if __name__ == '__main__':
         sys.exit(0)
 
     if options.load:
-        loadTestCollection(options.project)
+        load_test_collection(options.project)
