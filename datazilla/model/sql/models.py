@@ -85,7 +85,7 @@ class SQLDataSource(object):
 
         if not candidate_sources:
             raise DatasetNotFoundError(
-                "No active dataset found for project %r, contenttype %r."
+                "No dataset found for project %r, contenttype %r."
                 % (self.project, self.contenttype)
                 )
 
@@ -94,12 +94,13 @@ class SQLDataSource(object):
         return candidate_sources[0]
 
 
-    def set_data(self, statement, placeholders):
+    def set_data(self, statement, placeholders, executemany=False):
 
         self.dhub.execute(
             proc='perftest.inserts.' + statement,
             debug_show=self.DEBUG,
             placeholders=placeholders,
+            executemany=executemany,
             )
 
 

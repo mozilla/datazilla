@@ -73,7 +73,7 @@ def getHelp(request):
     data = {}
     return render_to_response('help/dataview.generic.help.html', data)
 
-def setTestData(request):
+def setTestData(request, project=""):
 
     jsonData = '{"error":"No POST data found"}'
 

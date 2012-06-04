@@ -275,7 +275,7 @@ class SQLHub(RDBSHub):
             return []
 
         ##Caller wants to sql execution time##
-        if 'debug_show' in kwargs:
+        if ('debug_show' in kwargs) and (kwargs['debug_show']):
 
             def timewrapper():
                 self.__cursorExecute(sql, kwargs, cursor)
@@ -303,6 +303,10 @@ class SQLHub(RDBSHub):
 
     def __cursorExecute(self, sql, kwargs, cursor):
         if 'placeholders' in kwargs:
-            cursor.execute(sql, kwargs['placeholders'])
+
+            if ('executemany' in kwargs) and kwargs['executemany']:
+                cursor.executemany(sql, kwargs['placeholders'])
+            else:
+                cursor.execute(sql, kwargs['placeholders'])
         else:
             cursor.execute(sql)
