@@ -1,5 +1,4 @@
 *.pyc
 htmlcov/
 datazilla/settings/local.py
-docs/build/
-build/
+docs/_build/
