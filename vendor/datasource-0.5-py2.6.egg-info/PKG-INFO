@@ -177,7 +177,7 @@ Description: ----------------------------------
               #        FROM `test`.`REP5`",
               #  }
               ####
-              repValues = ['id',
+              rep_values = ['id',
                            'auto_pfamA',
                            'go_id',
                            'term',
@@ -185,7 +185,7 @@ Description: ----------------------------------
                            'DATA_SOURCES_TEST_DATA']
         
               data = dh.execute(proc="test.get_replace_quote",
-                                replace=repValues,
+                                replace=rep_values,
                                 return_type="tuple_json")
         
               ####
@@ -325,7 +325,7 @@ Description: ----------------------------------
         
            from datasource.bases.BaseHub import BaseHub
         
-           dataSource = { DATASOURCE_NAME : { "hub":"MySQL",
+           data_source = { DATASOURCE_NAME : { "hub":"MySQL",
                                               "master_host":{"host":HOST,
                                                             "user":USER,
                                                             "passwd":PASSWORD},
@@ -334,9 +334,9 @@ Description: ----------------------------------
                                             }
            }
         
-           BaseHub.addDataSource(dataSource)
+           BaseHub.add_data_source(data_source)
         
-           The structure of dataSource should be the
+           The structure of data_source should be the
            same as the datasources file.
         
         3.) There is a data_source.json file in the datasource directory.
@@ -612,7 +612,7 @@ Description: ----------------------------------
         The caller can also provide a cursor to use instead of formulating
         a new connection to the database:
         
-        hub = RDBSHub(datasource, cursor=myCursor)
+        hub = RDBSHub(datasource, cursor=my_cursor)
         data = hub.execute(proc="my.awesome.proc", return_type="tuple_json")
         
         When the cursor keyword argument is provided it is up to the caller
@@ -666,6 +666,10 @@ Description: ----------------------------------
            replace_quote - Same as replace but the items from the list are quoted before
                            the statement is executed.
         
+           executemany - When set to true, placeholders can be a list of lists of parameters
+                         for MySQL-python's executemany function.  This is very useful for
+                         multi-row inserts.
+        
            limit - A limit to append to the sql as LIMIT integer.
         
            offset - An offset to append to the sql as OFFSET integer.
@@ -691,6 +695,8 @@ Description: ----------------------------------
         
            chunk_min - A minimum id to start the chunks from.  This defaults to 0.
         
+           chunk_total - A total number of records to return.  This defaults to the max id from chunk_source.
+        
            Ex: Using the chunking options
         
               ######
@@ -711,22 +717,22 @@ Description: ----------------------------------
               #  SELECT `id`, `auto_pfamA`, `go_id`, `term`, `category` FROM `test`.`DATA_SOURCES_TEST_DATA`
               ######
         
-              dataIter = dh.execute(proc="test.get_data",
+              data_iter = dh.execute(proc="test.get_data",
                                     chunk_size=1000,
                                     chunk_source="Data_SOURCES_TEST_DATA.id",
                                     return_type="tuple_json"):
         
               ####
               #Data iterator will have an item number equivalent to:
-              #  rows = (maxId - minId + 1)
-              #  itemsInDataIter = rows/chunkSize
+              #  rows = (max_id - min_id + 1)
+              #  items_in_data_iter = rows/chunk_size
               ####
         
-              for data in dataIter:
+              for data in data_iter:
                  #####
                  #data contains 1000 rows in a array of hashes in a json string
                  #####
-                 doSomethingAwesome(data)
+                 do_something_awesome(data)
         
            -------------------
            Output related keys
@@ -741,7 +747,7 @@ Description: ----------------------------------
               ------------------
               iter - A DataHub iterator will be returned.  The iterator can be used in list
                      context like any other iter but there are also additional data retrieval
-                     functions like getColumnData() which return the value of a single column,
+                     functions like get_column_data() which return the value of a single column,
                      great when you're expecting a single value and don't want to iterate.
         
               dict - A dictionary is returned where the key is set to the column name provided in
