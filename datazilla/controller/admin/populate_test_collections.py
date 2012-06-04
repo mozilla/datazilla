@@ -1,16 +1,18 @@
-import sys
+import sys, os
 
 from datazilla.vendor import add_vendor_lib
 add_vendor_lib()
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "datazilla.settings.base")
 
 from optparse import OptionParser
 from datazilla.model import DatazillaModel
 
 def loadTestCollection(project):
 
-    gm = DatazillaModel(project)
+    dm = DatazillaModel(project)
 
-    products = gm.getProducts('id')
+    products = dm.getProducts('id')
 
     for productName in products:
 
@@ -22,10 +24,10 @@ def loadTestCollection(project):
                                  products[ productName ]['version'],
                                  products[ productName ]['branch'])
 
-            id = gm.set_data('set_test_collection', [ name, "", name ])
-            gm.set_data('set_test_collection_map', [ id, products[ productName ]['id'] ])
+            id = dm.set_test_collection(name, "")
+            dm.set_test_collection_map(id, products[ productName ]['id'])
 
-    gm.disconnect()
+    dm.disconnect()
 
 if __name__ == '__main__':
 
