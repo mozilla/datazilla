@@ -6,10 +6,14 @@ USE_APP_ENGINE = "APPENGINE_RUNTIME" in os.environ or os.getenv('SERVER_SOFTWARE
 # These settings can all be optionally set via env vars, or in local.py:
 
 # Set Database connectivity via environment
-DATAZILLA_DATABASE_NAME     = os.environ.get("DATAZILLA_DATABASE_NAME", "")
-DATAZILLA_DATABASE_USER     = os.environ.get("DATAZILLA_DATABASE_USER", "")
-DATAZILLA_DATABASE_PASSWORD = os.environ.get("DATAZILLA_DATABASE_PASSWORD", "")
-DATAZILLA_DATABASE_HOST     = os.environ.get("DATAZILLA_DATABASE_HOST", "")
+DATAZILLA_DATABASE_NAME     = os.environ.get(
+    "DATAZILLA_DATABASE_NAME", "datazilla")
+DATAZILLA_DATABASE_USER     = os.environ.get(
+    "DATAZILLA_DATABASE_USER", os.environ.get("USER", ""))
+DATAZILLA_DATABASE_PASSWORD = os.environ.get(
+    "DATAZILLA_DATABASE_PASSWORD", "")
+DATAZILLA_DATABASE_HOST     = os.environ.get(
+    "DATAZILLA_DATABASE_HOST", "localhost")
 DATAZILLA_DATABASE_PORT     = os.environ.get("DATAZILLA_DATABASE_PORT", "")
 
 DATAZILLA_MEMCACHED         = os.environ.get("DATAZILLA_MEMCACHED", "")
@@ -111,9 +115,9 @@ INSTALLED_APPS = [
     # Uncomment the next line to enable admin documentation:
     # "django.contrib.admindocs",
 
-    "datazilla.model",
+    "datazilla.controller.admin",
+    "datazilla.model.sql",
     "datazilla.webapp.apps.datazilla",
-    "datazilla.model",
 ]
 
 # A sample logging configuration. The only tangible logging
@@ -157,11 +161,11 @@ TEMPLATE_DEBUG = DEBUG
 STATIC_URL = "/static/"
 
 CACHES = {
-   "default": {
-      "BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
-      "LOCATION": DATAZILLA_MEMCACHED,
-   }
-}
+    "default": {
+        "BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
+        "LOCATION": DATAZILLA_MEMCACHED,
+        }
+    }
 
 if not USE_APP_ENGINE:
     DATABASES = {
