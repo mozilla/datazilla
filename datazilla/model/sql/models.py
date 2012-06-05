@@ -114,7 +114,7 @@ class SQLDataSource(object):
             return_type='iter',
             )
 
-        return id_iter.getColumnData('id')
+        return id_iter.get_column_data('id')
 
 
     def disconnect(self):
@@ -274,7 +274,7 @@ class DataSource(models.Model):
                 "procs": [os.path.join(SQL_PATH, procs_file_name)],
                 }
             }
-        BaseHub.addDataSource(data_source)
+        BaseHub.add_data_source(data_source)
         # @@@ the datahub class should depend on self.type
         return MySQL(self.key)
 

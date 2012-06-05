@@ -53,8 +53,8 @@ class Command(BaseCommand):
         finally:
             views_file_obj.close()
         ##Strip out comments and newlines##
-        t = BaseHub.stripPythonComments(data_view_file)
-        data_views = BaseHub.deserializeJson(data_view_file)
+        t = BaseHub.strip_python_comments(data_view_file)
+        data_views = BaseHub.deserialize_json(data_view_file)
 
         Command.build_nav(data_views)
 
@@ -74,10 +74,10 @@ class Command(BaseCommand):
         html = """<input id="dv_nav_json" type="hidden" value="{{ json_data }}" />"""
         t = Template(html)
         c = Context({ 'json_data':jstring })
-        templateString = t.render(c)
+        template_string = t.render(c)
 
         nav_lookup_file_obj = open("%s%s" % (settings.ROOT, "/datazilla/webapp/templates/graphs.navlookup.html"), 'w+')
         try:
-            nav_lookup_file_obj.write(templateString)
+            nav_lookup_file_obj.write(template_string)
         finally:
             nav_lookup_file_obj.close()

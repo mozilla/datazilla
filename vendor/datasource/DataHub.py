@@ -55,57 +55,57 @@ from datasource.bases.BaseHub import BaseHub, DataHubError, DataSourceKeyError
 class DataHub:
 
     ##Location of all base hub derived classes##
-    dataHubDir = os.path.dirname(__file__) + '/hubs/'
+    data_hub_dir = os.path.dirname(__file__) + '/hubs/'
     """
     dict( "Module name": dict( source="full file path to module source",
                                compiled="full path to compiled module if it exists" )
     """
-    dataHubClasses = dict()
+    data_hub_classes = dict()
 
     @staticmethod
-    def get(dataSourceName):
+    def get(data_source_name):
         """
         Staticmethod that imports the requested data hub module and returns a class instance.
 
         Parameters:
-           dataSourceName - String containing unique data source name found in data_source.json file.
+           data_source_name - String containing unique data source name found in data_source.json file.
 
         Returns:
            Instance of the appropriate data hub class
         """
         ##Find the module name##
-        moduleName = None
-        if dataSourceName in BaseHub.dataSources:
-            if 'hub' in BaseHub.dataSources[dataSourceName]:
-                moduleName = BaseHub.dataSources[dataSourceName]['hub']
+        module_name = None
+        if data_source_name in BaseHub.data_sources:
+            if 'hub' in BaseHub.data_sources[data_source_name]:
+                module_name = BaseHub.data_sources[data_source_name]['hub']
             else:
                 raise DataSourceKeyError()
 
-        if not moduleName:
-            raise DataSourceNotFoundError(dataSourceName)
+        if not module_name:
+            raise DataSourceNotFoundError(data_source_name)
 
         ##Load the module##
         module = None
-        if moduleName in DataHub.dataHubClasses:
-            mod = DataHub.dataHubClasses[moduleName]
+        if module_name in DataHub.data_hub_classes:
+            mod = DataHub.data_hub_classes[module_name]
             if mod['compiled']:
                 ##Use the compiled module if we have it##
-                module = imp.load_compiled(moduleName, mod['compiled'])
+                module = imp.load_compiled(module_name, mod['compiled'])
             elif mod['source']:
-                module = imp.load_source(moduleName, mod['source'])
+                module = imp.load_source(module_name, mod['source'])
 
         if not module:
             ##Whoa there skippy! Something horrible has happened##
-            raise DataHubNotFoundError(moduleName)
+            raise DataHubNotFoundError(module_name)
 
         ##Get the class##
-        class_ = getattr(module, moduleName)
+        class_ = getattr(module, module_name)
 
         ##Yer all clear kid! instantiate the data hub class##
-        return class_(dataSourceName)
+        return class_(data_source_name)
 
     @staticmethod
-    def getDataSourceModuleCallback(arg, dirname, names):
+    def get_data_source_module_callback(arg, dirname, names):
         """
         Callback for os.path.walk.  Loads the module name and full path to
         the source and compiled version if it exists.  I was thinking this
@@ -128,22 +128,22 @@ class DataHub:
         Returns:
            None
         """
-        for fileName in names:
+        for file_name in names:
 
-            moduleName, fileExt = os.path.splitext(fileName)
+            module_name, file_ext = os.path.splitext(file_name)
 
-            if moduleName == '__init__' or moduleName[0] == '.':
+            if module_name == '__init__' or module_name[0] == '.':
                 #Skip __init__ files and file names beginning with a '.'
                 continue
-            if moduleName not in DataHub.dataHubClasses:
-                DataHub.dataHubClasses[moduleName] = dict( source="", compiled="" )
-            if fileExt == '.pyc':
-                DataHub.dataHubClasses[moduleName]['compiled'] = dirname + fileName
-            if fileExt == '.py':
-                DataHub.dataHubClasses[moduleName]['source'] = dirname + fileName
+            if module_name not in DataHub.data_hub_classes:
+                DataHub.data_hub_classes[module_name] = dict( source="", compiled="" )
+            if file_ext == '.pyc':
+                DataHub.data_hub_classes[module_name]['compiled'] = dirname + file_name
+            if file_ext == '.py':
+                DataHub.data_hub_classes[module_name]['source'] = dirname + file_name
 
     @staticmethod
-    def showDataHubModules():
+    def show_data_hub_modules():
         """
         Prints a list of all available data hub classes stdout.
 
@@ -154,32 +154,32 @@ class DataHub:
               None
         """
         pp = pprint.PrettyPrinter(indent=3)
-        pp.pprint(DataHub.dataHubClasses)
+        pp.pprint(DataHub.data_hub_classes)
 
 class DataHubNotFoundError(DataHubError):
-    def __init__(self, moduleName):
-        self.moduleName = moduleName
+    def __init__(self, module_name):
+        self.module_name = module_name
     def __repr__(self):
-        classKeys = DataHub.dataHubClasses.keys()
-        return "The DataHub class requested, %s, was not found.  The available data hub modules include: %s" % (self.moduleName, ','.join(classKeys))
+        class_keys = DataHub.data_hub_classes.keys()
+        return "The DataHub class requested, %s, was not found.  The available data hub modules include: %s" % (self.module_name, ','.join(class_keys))
 
 class DataSourceNotFoundError(DataHubError):
-    def __init__(self, dataSourceName):
-        self.dataSourceName = dataSourceName
+    def __init__(self, data_source_name):
+        self.data_source_name = data_source_name
     def __repr__(self):
-        dataSourceKeys = DataHub.dataSources.keys()
-        return "The data source requested, %s, was not found.  The available data sources include: %s" % (self.dataSourceName, ','.join(dataSourceKeys))
+        data_source_keys = DataHub.data_sources.keys()
+        return "The data source requested, %s, was not found.  The available data sources include: %s" % (self.data_source_name, ','.join(data_source_keys))
 
-if not DataHub.dataHubClasses:
+if not DataHub.data_hub_classes:
     """
     Load the names and paths of all of the derived data source
-    modules available.  The class variable dataHubClasses will
+    modules available.  The class variable data_hub_classes will
     only be loaded a single time when the DataHub is
     imported.
     """
-    os.path.walk(DataHub.dataHubDir,
-                 DataHub.getDataSourceModuleCallback,
-                 DataHub.dataHubClasses)
+    os.path.walk(DataHub.data_hub_dir,
+                 DataHub.get_data_source_module_callback,
+                 DataHub.data_hub_classes)
 
 def main(options, args, parser):
 
@@ -236,8 +236,8 @@ def main(options, args, parser):
                                 stdout=subprocess.PIPE,
                                 stdin=subprocess.PIPE)
 
-        stdoutValue = proc.communicate(input="%s"%d)
-        print stdoutValue[0]
+        stdout_value = proc.communicate(input="%s"%d)
+        print stdout_value[0]
     else:
         ###
         #All other return types available to the command line tool
@@ -245,7 +245,7 @@ def main(options, args, parser):
         pp = pprint.PrettyPrinter(indent=3)
         pp.pprint(d)
 
-def loadOptionGroup(parser, options, action):
+def load_option_group(parser, options, action):
 
     for o in options:
 
@@ -268,12 +268,12 @@ if __name__ == '__main__':
                      "command line interface to the datasource hub's\nexecute function. "+\
                      "For more extensive docs see the README in datasource.")
 
-    executeOptions = (('db', '-d', 'Name of database to connect to. Optional, if set in datasource.'),
+    execute_options = (('db', '-d', 'Name of database to connect to. Optional, if set in datasource.'),
                       ('proc', '-p', 'Name of the procedure to call.'),
                       ('host_type', '-H', 'Possible values include master_host, read_host, or dev_host.  Defaults to master_host.'))
 
 
-    procGroup = (('placeholders', '-P', 'A list of placeholder parameters for the proc.'),
+    proc_group = (('placeholders', '-P', 'A list of placeholder parameters for the proc.'),
                 ('replace', '-r', 'A list of replacements to make in the proc.'+\
                    'REP0, REP1, REP2, REP3 etc... in the sql.'),
                 ('replace_quote', '-q', 'Same as replace but the items from the list are quoted'),
@@ -282,17 +282,17 @@ if __name__ == '__main__':
                 ('key_column', '-k', 'table.column to use as a key_column for return_types of dict* or set*'),
                 ('return_type', '-R', 'Possible values are dict, dict_json, tuple, tuple_json, set, table, table_json, and set_json.  Defaults to list'))
 
-    debugGroup = (('debug_show', '-s', 'Show SQL and other info about the query including execution time.'),
+    debug_group = (('debug_show', '-s', 'Show SQL and other info about the query including execution time.'),
                   ('debug_noex', '-n', 'Show SQL and other info about the query without executing it.'))
 
-    loadOptionGroup(parser, executeOptions, None)
+    load_option_group(parser, execute_options, None)
 
     ##Group proc related options##
     pgroup = optparse.OptionGroup(parser, "Proc Options")
-    loadOptionGroup(pgroup, procGroup, None)
+    load_option_group(pgroup, proc_group, None)
     ##Group Debug Options##
     dgroup = optparse.OptionGroup(parser, "Debug Options")
-    loadOptionGroup(dgroup, debugGroup, True)
+    load_option_group(dgroup, debug_group, True)
 
     parser.add_option_group(pgroup)
     parser.add_option_group(dgroup)
