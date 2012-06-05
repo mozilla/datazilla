@@ -51,13 +51,13 @@ class RDBSHub(BaseHub):
     """
 
     @staticmethod
-    def executeDecorator(func):
+    def execute_decorator(func):
         """
         Function decorator for execute().  Initializes wrapper
         function that checks the execute rules against the kwargs
         provided by caller and sets values for sql, host_type, db,
         and sql_chunks.  The execute function in all derived RDBSHub's
-        should use the executeDecorator.
+        should use the execute_decorator.
 
            Parameters:
               func - function ref
@@ -66,13 +66,13 @@ class RDBSHub(BaseHub):
               wrapped function ref
         """
         def wrapper(self, **kwargs):
-            self.setExecuteRules(kwargs)
-            self.getExecuteData(self.dataSource, kwargs)
+            self.set_execute_rules(kwargs)
+            self.get_execute_data(self.data_source, kwargs)
             return func(self, **kwargs)
 
         return wrapper
 
-    def __init__(self, dataSourceName):
+    def __init__(self, data_source_name):
         """
         A derived class of BaseHub, serves as a base class for any Relational
         Database hubs.
@@ -80,7 +80,7 @@ class RDBSHub(BaseHub):
         BaseHub.__init__(self)
 
         ##allowed keys in execute##
-        self.executeKeys = set(['db',
+        self.execute_keys = set(['db',
                               'proc',
                               'sql',
                               'host_type',
@@ -101,29 +101,29 @@ class RDBSHub(BaseHub):
                               'debug_noex' ])
 
         ##Default values for execute kwargs##
-        self.defaultHostType = 'master_host'
-        self.defaultReturnType = 'tuple'
+        self.default_host_type = 'master_host'
+        self.default_return_type = 'tuple'
 
         ##replace string base for replace functionality in execute##
-        self.replaceString = 'REP'
+        self.replace_string = 'REP'
 
         #####
         #set of return types that require a key_column
         #####
-        self.returnTypeKeyColumns = set(['dict', 'dict_json', 'set', 'set_json'])
+        self.return_type_key_columns = set(['dict', 'dict_json', 'set', 'set_json'])
 
         #####
         #One of these keys must be provided to execute
         #####
-        self.executeRequiredKeys = set(['proc', 'sql'])
+        self.execute_required_keys = set(['proc', 'sql'])
 
         ###
         #This data structure is used to map the return_type provided to
         #execute() to the derived hub method.  Derived hub's have to map
         #their methods by setting the appropriate function reference to
-        #its associated key in validReturnTypes.
+        #its associated key in valid_return_types.
         ###
-        self.validReturnTypes = { 'iter':None,
+        self.valid_return_types = { 'iter':None,
                                   'dict':None,
                                   'dict_json':None,
                                   'tuple':None,
@@ -135,7 +135,7 @@ class RDBSHub(BaseHub):
                                   'callback':None }
 
         ##Dictionary of required keys for RDBS datasources##
-        self.dataSourceReqKeys = dict(
+        self.data_source_req_keys = dict(
                            #required keys
                            req=set(['hub', 'master_host']),
                            #optional keys but if present have additional key requirements
@@ -147,109 +147,109 @@ class RDBSHub(BaseHub):
         ###
         #List of SQL tokens that must follow a WHERE statement
         ###
-        self.postWhereTokens = ['GROUP BY','HAVING','ORDER BY','LIMIT','OFFSET','PROCEDURE','INTO','FOR UPDATE']
+        self.post_where_tokens = ['GROUP BY','HAVING','ORDER BY','LIMIT','OFFSET','PROCEDURE','INTO','FOR UPDATE']
 
         ####
-        #Validate the information in dataSources is complete
+        #Validate the information in data_sources is complete
         #so we can provide the caller with useful messaging
         #regarding what is missing when a class is instantiated.
         ####
-        self.validateDataSource(dataSourceName)
+        self.validate_data_source(data_source_name)
 
-        self.prettySqlRegex = re.compile('\s+', re.DOTALL)
+        self.pretty_sql_regex = re.compile('\s+', re.DOTALL)
 
-        self.defaultPlaceholder = '?'
+        self.default_placeholder = '?'
 
-        __all__ = ['loadProcs',
-                   'getProc',
-                   'getData',
-                   'validateDataSource',
-                   'setExecuteRules',
-                   'getExecuteData']
+        __all__ = ['load_procs',
+                   'get_proc',
+                   'get_data',
+                   'validate_data_source',
+                   'set_execute_rules',
+                   'get_execute_data']
 
     """
     Public Interface
     """
-    def loadProcs(self, dataSource):
-        BaseHub.loadProcs(dataSource)
+    def load_procs(self, data_source):
+        BaseHub.load_procs(data_source)
 
-    def getProc(self, dataSource, proc):
+    def get_proc(self, data_source, proc):
         """
-        Pass through to the BaseHub.getProc() method.
+        Pass through to the BaseHub.get_proc() method.
 
         Parameters:
-           dataSource - data source to retrive proc from
+           data_source - data source to retrive proc from
            proc - full proc path ex: mysql.selects.get_stuff
 
         Returns:
            proc datastructure from the data source
         """
-        return BaseHub.getProc(dataSource, proc)
+        return BaseHub.get_proc(data_source, proc)
 
-    def getData(self, cursor, kwargs):
+    def get_data(self, cursor, kwargs):
         """
-        Executes the appropriate derived class getData function associated
-        with the return type.  Derived classes register getData functions
-        in self.validReturnTypes[ return_type ] = getDataFunctionRef.
+        Executes the appropriate derived class get_data function associated
+        with the return type.  Derived classes register get_data functions
+        in self.valid_return_types[ return_type ] = get_data_function_ref.
 
         Parameters:
            cursor - db cursor reference
            kwargs - argument dictionary to pass to the derived class execute
 
         Returns:
-           return value of derived class getData function
+           return value of derived class get_data function
         """
         if 'return_type' in kwargs:
-            returnType = kwargs['return_type']
-            if returnType not in self.validReturnTypes:
-                msg = 'The return_type value %s is not recognized. Possible values include [%s].'%(returnType, ','.join(self.validReturnTypes.keys()))
+            return_type = kwargs['return_type']
+            if return_type not in self.valid_return_types:
+                msg = 'The return_type value %s is not recognized. Possible values include [%s].'%(return_type, ','.join(self.valid_return_types.keys()))
                 raise RDBSHubExecuteError(msg)
 
-            if not self.validReturnTypes[returnType]:
+            if not self.valid_return_types[return_type]:
                 ##Derived class has not mapped a function ref to the return type##
-                msg = 'The derived hub, %s, has not mapped a function to %s in self.validReturnTypes.'%(self.__class__.__name__, returnType)
+                msg = 'The derived hub, %s, has not mapped a function to %s in self.valid_return_types.'%(self.__class__.__name__, return_type)
                 raise RDBSHubExecuteError(msg)
 
-            returnValue = self.validReturnTypes[returnType](cursor, kwargs)
-            return returnValue
+            return_value = self.valid_return_types[return_type](cursor, kwargs)
+            return return_value
 
         else:
             ##Return type not provided##
-            msg = 'The return_type key was not provided.  Add key:"return_type" value: [%s] to kwargs.'%(','.join(self.validReturnTypes.keys()))
+            msg = 'The return_type key was not provided.  Add key:"return_type" value: [%s] to kwargs.'%(','.join(self.valid_return_types.keys()))
             raise RDBSHubError(msg)
 
-    def validateDataSource(self, dataSourceName):
+    def validate_data_source(self, data_source_name):
         """
-        Iterates through dataSourceReqKeys and confirms required
+        Iterates through data_source_req_keys and confirms required
         key/value pairs.  Probably a better way of doing this but
         not thinking of anything more elegent at the moment.  Attempting
         to provide the caller with clear messaging regarding missing fields
         in the data source file.
 
         Parameters:
-           dataSourceName - name of the datasource to test
+           data_source_name - name of the datasource to test
 
         Returns:
            None
         """
-        for key in self.dataSourceReqKeys:
+        for key in self.data_source_req_keys:
             if key is 'req':
-                msg = 'the %s source object in %s' % (dataSourceName, BaseHub.sourceListFile)
+                msg = 'the %s source object in %s' % (data_source_name, BaseHub.source_list_file)
                 ##Confirm required keys##
-                BaseHub.checkKeys(self.dataSourceReqKeys[key], BaseHub.dataSources[dataSourceName], True, msg)
+                BaseHub.check_keys(self.data_source_req_keys[key], BaseHub.data_sources[data_source_name], True, msg)
             elif key is 'databases':
 
-                if key in BaseHub.dataSources[dataSourceName]:
-                    for i in range(len(BaseHub.dataSources[dataSourceName][key])):
-                        db = BaseHub.dataSources[dataSourceName][key][i]
-                        msg = 'the %s.%s index position %i in %s' % (dataSourceName, key, i, BaseHub.sourceListFile)
-                        BaseHub.checkKeys(self.dataSourceReqKeys[key], db, True, msg)
+                if key in BaseHub.data_sources[data_source_name]:
+                    for i in range(len(BaseHub.data_sources[data_source_name][key])):
+                        db = BaseHub.data_sources[data_source_name][key][i]
+                        msg = 'the %s.%s index position %i in %s' % (data_source_name, key, i, BaseHub.source_list_file)
+                        BaseHub.check_keys(self.data_source_req_keys[key], db, True, msg)
             else:
-                msg = 'the %s.%s in %s' % (dataSourceName, key, BaseHub.sourceListFile)
-                if key in BaseHub.dataSources[dataSourceName]:
-                    BaseHub.checkKeys(self.dataSourceReqKeys[key], BaseHub.dataSources[dataSourceName][key], True, msg)
+                msg = 'the %s.%s in %s' % (data_source_name, key, BaseHub.source_list_file)
+                if key in BaseHub.data_sources[data_source_name]:
+                    BaseHub.check_keys(self.data_source_req_keys[key], BaseHub.data_sources[data_source_name][key], True, msg)
 
-    def setExecuteRules(self, kwargs):
+    def set_execute_rules(self, kwargs):
         """
         Implement the ruleset associated with the arguments to execute.  If a rule
         fails raise RDBSHubExecuteError.  The entire api to execute() is driven by
@@ -269,14 +269,14 @@ class RDBSHub(BaseHub):
         #Set default return_type here so we
         #can test for valid return types
         ####
-        kwargs.setdefault('return_type', self.defaultReturnType)
+        kwargs.setdefault('return_type', self.default_return_type)
 
         ###
         #Converting kwargs.keys to a set so
         #we can use snappy set operations, trying
         #to cut down on the number of conditional statements
         ###
-        kwargsSet = set(kwargs.keys())
+        kwargs_set = set(kwargs.keys())
 
         #########
         #This kinda sucks and won't scale...
@@ -289,77 +289,77 @@ class RDBSHub(BaseHub):
         ###
         # make sure we recognize all of the kwargs
         ###
-        if not kwargsSet <= self.executeKeys:
-            ##Caller has provided keys not in executeKeys, get the difference##
-            d = kwargsSet - self.executeKeys
+        if not kwargs_set <= self.execute_keys:
+            ##Caller has provided keys not in execute_keys, get the difference##
+            d = kwargs_set - self.execute_keys
             raise RDBSHubExecuteError("The following keys, %s, are not recognized by execute()" % (','.join(d)))
 
         ###
         #  proc or sql must be provided or we have nothing to execute
         ###
         #If we don't have intersection none of the required keys are present##
-        if not self.executeRequiredKeys & kwargsSet:
+        if not self.execute_required_keys & kwargs_set:
             raise RDBSHubExecuteError("The proc or sql argument must be provided to execute()")
 
         ###
         # placeholders and replace must be set to lists
         ###
-        if ('placeholders' in kwargsSet) and (type(kwargs['placeholders']) is not list):
+        if ('placeholders' in kwargs_set) and (type(kwargs['placeholders']) is not list):
             raise RDBSHubExecuteError("The value of the placeholders argument must be a list.")
-        if ('replace' in kwargsSet) and (type(kwargs['replace']) is not list):
+        if ('replace' in kwargs_set) and (type(kwargs['replace']) is not list):
             raise RDBSHubExecuteError("The value of the replace argument must be a list.")
         ###
         # key_column is required if the return type is dict, dict_json,
         # set, or set_json
         ###
-        if (kwargs['return_type'] in self.returnTypeKeyColumns) and ('key_column' not in kwargsSet):
-            ##No keyColumns found in kwargsSet##
-            raise RDBSHubExecuteError("return types of %s require the key_column argument" % ','.join(self.returnTypeKeyColumns))
+        if (kwargs['return_type'] in self.return_type_key_columns) and ('key_column' not in kwargs_set):
+            ##No key_columns found in kwargs_set##
+            raise RDBSHubExecuteError("return types of %s require the key_column argument" % ','.join(self.return_type_key_columns))
 
         ###
         # If a return type of callback is selected a callback key must be
         # provided wih a function reference
         ###
-        if (kwargs['return_type'] == 'callback') and ('callback' not in kwargsSet):
+        if (kwargs['return_type'] == 'callback') and ('callback' not in kwargs_set):
             raise RDBSHubExecuteError("the callback return type requires the callback argument")
 
         ###
         # chunk_size must be provided with a chunk_source
         ###
-        if ('chunk_size' in kwargsSet) and ('chunk_source' not in kwargsSet):
+        if ('chunk_size' in kwargs_set) and ('chunk_source' not in kwargs_set):
             raise RDBSHubExecuteError("when a chunk size is provided the chunk_source argument must be provided")
-        if ('chunk_source' in kwargsSet) and ('chunk_size' not in kwargsSet):
+        if ('chunk_source' in kwargs_set) and ('chunk_size' not in kwargs_set):
             raise RDBSHubExecuteError("when a chunk column is provided the chunk_size argument must be provided")
 
-    def getExecuteData(self, dataSource, kwargs):
+    def get_execute_data(self, data_source, kwargs):
 
         ##Al of these values are loaded in kwargs##
         db = ""
-        sqlStruct = None
-        hostType = ""
+        sql_struct = None
+        host_type = ""
         sql = ""
-        sqlChunks = []
+        sql_chunks = []
 
         ##Set sql##
         if 'proc' in kwargs:
-            sqlStruct = self.getProc(dataSource, kwargs['proc'])
-            sql = sqlStruct['sql']
+            sql_struct = self.get_proc(data_source, kwargs['proc'])
+            sql = sql_struct['sql']
             ##If a host type is found in the proc file use it
-            if 'host_type' in sqlStruct:
-                hostType = sqlStruct['host_type']
+            if 'host_type' in sql_struct:
+                host_type = sql_struct['host_type']
         elif 'sql' in kwargs:
             sql = kwargs['sql']
 
-        ##Set hostType##
+        ##Set host_type##
         if 'host_type' in kwargs:
             ####
             #If the caller provides a host_type, override one
             #found in the proc file
             ####
-            hostType = kwargs['host_type']
-        elif not hostType:
+            host_type = kwargs['host_type']
+        elif not host_type:
             ##No host type in proc file or in kwargs, set default
-            hostType = self.defaultHostType
+            host_type = self.default_host_type
 
         ##Set db##
         if 'db' in kwargs:
@@ -375,7 +375,7 @@ class RDBSHub(BaseHub):
 
         if 'placeholders' in kwargs:
             ##Set DB interface placeholder char##
-            sql = sql.replace(self.defaultPlaceholder, self.placeholderChar)
+            sql = sql.replace(self.default_placeholder, self.placeholder_char)
 
         ##Make replacements in sql##
         key = ""
@@ -386,7 +386,7 @@ class RDBSHub(BaseHub):
             key = 'replace_quote'
             quote = True
         if key:
-            sql = self.__replaceSql(sql, key, kwargs, quote)
+            sql = self.__replace_sql(sql, key, kwargs, quote)
 
         ##Set limits and offset##
         if 'limit' in kwargs:
@@ -400,22 +400,22 @@ class RDBSHub(BaseHub):
         #after all alterations are made to it.
         ####
         if ('chunk_size' in kwargs) and ('chunk_source' in kwargs):
-            sqlChunks = self.__getExecuteSets(sql, kwargs)
+            sql_chunks = self.__get_execute_sets(sql, kwargs)
 
         ##Load data for execute##
         kwargs['sql'] = sql
-        kwargs['host_type'] = hostType
+        kwargs['host_type'] = host_type
         kwargs['db'] = db
-        kwargs['sql_chunks'] = sqlChunks
+        kwargs['sql_chunks'] = sql_chunks
 
-    def showDebug(self, db, host, hostType, proc, sql, tmsg):
+    def show_debug(self, db, host, host_type, proc, sql, tmsg):
         """
         Writes debug message to stdout.
 
         Parameters:
            db - name of database that query is executed against
            host - host name the database resides on.
-           hostType - type of host ex: master_host, read_host, or dev_host
+           host_type - type of host ex: master_host, read_host, or dev_host
            proc - full path to proc
            tmsg - execution time
 
@@ -424,38 +424,38 @@ class RDBSHub(BaseHub):
         """
         msg = ""
 
-        sql = self.prettySqlRegex.sub(" ", sql)
+        sql = self.pretty_sql_regex.sub(" ", sql)
         if tmsg:
             msg = "%s debug message:\n\thost:%s db:%s host_type:%s proc:%s\n\tExecuting SQL:%s\n\tExecution Time:%.4e sec\n\n"\
-                  %(self.__class__, host, db, hostType, proc, sql, tmsg)
+                  %(self.__class__, host, db, host_type, proc, sql, tmsg)
         else:
             msg = "%s debug message:\n\thost:%s db:%s host_type:%s proc:%s\n\tExecuting SQL:%s\n\n"\
-                  %(self.__class__, host, db, hostType, proc, sql)
+                  %(self.__class__, host, db, host_type, proc, sql)
 
         sys.stdout.write(msg)
         sys.stdout.flush()
 
-    def escapeString(self, value):
+    def escape_string(self, value):
         # Should be implemented in the subclass
         raise NotImplemented()
 
     ######
     #Private methods
     ######
-    def __replaceSql(self, sql, key, kwargs, quote):
+    def __replace_sql(self, sql, key, kwargs, quote):
         for i in range(len(kwargs[key])):
             r = kwargs[key][i]
             if quote:
 
                 if type(r) == type([]):
-                    joinChar = "%s,%s"%(self.quoteChar,self.quoteChar)
+                    join_char = "%s,%s"%(self.quote_char,self.quote_char)
                     ###
                     #r could contain integers which will break join
                     #make sure we cast to strings
                     ###
-                    r = joinChar.join( map(lambda s: self.escapeString(str(s)), r) )
+                    r = join_char.join( map(lambda s: self.escape_string(str(s)), r) )
 
-                sql = sql.replace("%s%i"%(self.replaceString, i), "%s%s%s"%(self.quoteChar, r, self.quoteChar))
+                sql = sql.replace("%s%i"%(self.replace_string, i), "%s%s%s"%(self.quote_char, r, self.quote_char))
 
             else:
 
@@ -466,26 +466,26 @@ class RDBSHub(BaseHub):
                     ###
                     r = ",".join(map(str, r))
 
-                sql = sql.replace("%s%i"%(self.replaceString, i), r)
+                sql = sql.replace("%s%i"%(self.replace_string, i), r)
 
         ####
         #If any replace failed, make sure we get rid of all of
         #the REP strings
         ####
-        sql = re.sub( '%s%s' % (self.replaceString, '\d+'), '', sql)
+        sql = re.sub( '%s%s' % (self.replace_string, '\d+'), '', sql)
 
         return sql
 
-    def __getExecuteSets(self, sql, kwargs):
+    def __get_execute_sets(self, sql, kwargs):
 
         table, column = kwargs['chunk_source'].split('.')
-        chunkSize = int(kwargs['chunk_size'])
+        chunk_size = int(kwargs['chunk_size'])
 
-        chunkStart = 0
+        chunk_start = 0
         if 'chunk_min' in kwargs:
-            chunkStart = int(kwargs['chunk_min'])
+            chunk_start = int(kwargs['chunk_min'])
 
-        if not (table and column and chunkSize):
+        if not (table and column and chunk_size):
             msg = "chunk_source must be set to explicit column name that includes the table. Example: table_name.column_name"
             raise RDBSHubError(msg)
 
@@ -494,58 +494,58 @@ class RDBSHub(BaseHub):
                             replace=[ column, table ],
                             return_type='iter')
 
-        minId = 0
+        min_id = 0
         if 'chunk_min' in kwargs:
-            minId = int( kwargs['chunk_min'] ) 
+            min_id = int( kwargs['chunk_min'] ) 
         else:
             min = self.execute( db=kwargs['db'],
                                 proc='sql.ds_selects.get_min',
                                 replace=[ column, table ],
                                 return_type='iter')
-            minId = int(min.getColumnData('min_id'))
+            min_id = int(min.get_column_data('min_id'))
 
-        maxId = int(max.getColumnData('max_id') or 0)
+        max_id = int(max.get_column_data('max_id') or 0)
         if 'chunk_total' in kwargs:
-            maxId = minId + int(kwargs['chunk_total']) - 1
+            max_id = min_id + int(kwargs['chunk_total']) - 1
 
         ##Total rows##
-        nRows = (maxId - minId + 1)
+        n_rows = (max_id - min_id + 1)
 
         ##Total sets##
-        nSets = int(math.floor(float(nRows)/float(chunkSize)))
+        n_sets = int(math.floor(float(n_rows)/float(chunk_size)))
 
         ##Load table and column for execute##
         kwargs['chunk_table'] = table
         kwargs['chunk_column'] = column
 
-        sqlChunks = []
-        if nSets < 1:
-            idSet = range(minId, maxId + 1)
-            setSql = self.__buildSetWhere(idSet, sql, kwargs)
-            sqlChunks.append(setSql)
+        sql_chunks = []
+        if n_sets < 1:
+            id_set = range(min_id, max_id + 1)
+            set_sql = self.__build_set_where(id_set, sql, kwargs)
+            sql_chunks.append(set_sql)
 
         else:
             ##Get all the set id chunks for execute##
-            idSet = []
-            for setNum in range(nSets):
-                idSet = range(minId+setNum*chunkSize, minId+(setNum+1)*chunkSize)
-                setSql = self.__buildSetWhere(idSet, sql, kwargs)
-                sqlChunks.append(setSql)
+            id_set = []
+            for set_num in range(n_sets):
+                id_set = range(min_id+set_num*chunk_size, min_id+(set_num+1)*chunk_size)
+                set_sql = self.__build_set_where(id_set, sql, kwargs)
+                sql_chunks.append(set_sql)
 
             ##Get any remainder statements##
-            remainderMin = idSet[ len(idSet) - 1 ]
+            remainder_min = id_set[ len(id_set) - 1 ]
 
-            if remainderMin < maxId:
-                startId = remainderMin + 1
-                remainderSet = range(startId, maxId + 1)
+            if remainder_min < max_id:
+                start_id = remainder_min + 1
+                remainder_set = range(start_id, max_id + 1)
 
-                setSql = self.__buildSetWhere(remainderSet, sql, kwargs)
-                sqlChunks.append(setSql)
+                set_sql = self.__build_set_where(remainder_set, sql, kwargs)
+                sql_chunks.append(set_sql)
 
-        return sqlChunks
+        return sql_chunks
 
 
-    def __buildSetWhere(self, idSet, sql, kwargs):
+    def __build_set_where(self, id_set, sql, kwargs):
 
         #####
         #Build the WHERE IN clause for chunk set
@@ -553,44 +553,44 @@ class RDBSHub(BaseHub):
         t = kwargs['chunk_table']
         c = kwargs['chunk_column']
 
-        whereInSql = '(%s IN (%s))' % (c, ','.join(map(str, idSet)))
+        where_in_sql = '(%s IN (%s))' % (c, ','.join(map(str, id_set)))
 
-        whereIndex = sql.find('WHERE')
+        where_index = sql.find('WHERE')
 
-        if whereIndex > 0:
+        if where_index > 0:
             ####
             #Statement already has a WHERE clause, append just the IN (list) bit
             ####
-            sql = '%s %s AND %s' % (sql[0:(whereIndex+5)],whereInSql,sql[(whereIndex+6):])
+            sql = '%s %s AND %s' % (sql[0:(where_index+5)],where_in_sql,sql[(where_index+6):])
             return sql
         else:
             ####
-            #We don't have a WHERE clause, check for postWhereTokens to place
+            #We don't have a WHERE clause, check for post_where_tokens to place
             #the WHERE clause before
             ####
-            for token in self.postWhereTokens:
-                tokenIndex = sql.find(token)
-                if tokenIndex > 0:
-                    sql = '%s WHERE %s %s' % (sql[0:(tokenIndex-1)],whereInSql,sql[tokenIndex:])
+            for token in self.post_where_tokens:
+                token_index = sql.find(token)
+                if token_index > 0:
+                    sql = '%s WHERE %s %s' % (sql[0:(token_index-1)],where_in_sql,sql[token_index:])
                     return sql
 
         ######
         #If we make it to here the sql has no pre-existing
-        #WHERE and no postWhereTokens, we can append safely
+        #WHERE and no post_where_tokens, we can append safely
         ######
-        sql += ' WHERE %s'%(whereInSql)
+        sql += ' WHERE %s'%(where_in_sql)
 
         return sql
 
 class ChunkIterator:
 
-    def __init__(self, sqlChunks, kwargs, executeRef):
+    def __init__(self, sql_chunks, kwargs, execute_ref):
 
-        self.sqlChunks = sqlChunks
+        self.sql_chunks = sql_chunks
         self.kwargs = kwargs
-        self.chunks = len(sqlChunks)
-        self.chunkIndex = 0
-        self.executeRef = executeRef
+        self.chunks = len(sql_chunks)
+        self.chunk_index = 0
+        self.execute_ref = execute_ref
 
     def __iter__(self):
         return self
@@ -598,13 +598,13 @@ class ChunkIterator:
     def next(self):
 
         try:
-            sql = self.sqlChunks[ self.chunkIndex ]
-            self.chunkIndex += 1
-            return self.executeRef(sql, self.kwargs)
+            sql = self.sql_chunks[ self.chunk_index ]
+            self.chunk_index += 1
+            return self.execute_ref(sql, self.kwargs)
 
         except IndexError:
             ##Reset iterator##
-            self.chunkIndex = 0
+            self.chunk_index = 0
             raise StopIteration
 
 class DataIterator:
@@ -614,15 +614,15 @@ class DataIterator:
         self.data = data
         self.description = desc
         self.rowcount = rowcount
-        self.rowIndex = 0
+        self.row_index = 0
 
     def __iter__(self):
         return self
 
-    def getColumnData(self, columnName):
+    def get_column_data(self, column_name):
 
         try:
-            return self.data[0][columnName]
+            return self.data[0][column_name]
 
         except IndexError:
             ##Either no column match, or no data##
@@ -630,13 +630,13 @@ class DataIterator:
 
     def next(self):
         try:
-            row = self.data[ self.rowIndex ]
-            self.rowIndex += 1
+            row = self.data[ self.row_index ]
+            self.row_index += 1
             return row
 
         except IndexError:
             ##Reset iterator##
-            self.rowIndex = 0
+            self.row_index = 0
             raise StopIteration
 
 class RDBSHubError(DataHubError):

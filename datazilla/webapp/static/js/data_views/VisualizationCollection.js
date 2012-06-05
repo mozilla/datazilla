@@ -165,11 +165,10 @@ var AverageThumbnails = new Class({
         this.setOptions(options);
         this.parent(options);
 
-        this.adaptedDataFields = [ 'average',
+        this.adaptedDataFields = [ 'avg',
                                             'min',
                                             'max',
-                                            'standard_deviation',
-                                            'variance',
+                                            'std',
                                             'revision',
                                             'date_run',
                                             'readable_date' ];
@@ -231,10 +230,10 @@ var AverageThumbnails = new Class({
                                 //If there are less than 5 data points pad the data so we can
                                 //draw a full tile to maintain grid alignment and insure there is
                                 //enough clickable space for the user to access
-                                if(data.average.length <= 5){
+                                if(data.avg.length <= 5){
                                     for(var j=0; j<10; j++){
-                                        data.average.push( parseFloat(data.average[0] || 0) );
-                                        data.standard_deviation.push( parseFloat(data.standard_deviation[0] || 0) );
+                                        data.avg.push( parseFloat(data.avg[0] || 0) );
+                                        data.std.push( parseFloat(data.std[0] || 0) );
                                     }
                                 }
 
@@ -265,11 +264,10 @@ var AverageThumbnails = new Class({
              * Aggregate datastructure looks like this:
              *
              * ['data'][ product_id ][ test_id ][ operating_system_id ] =
-             *    { average:[],
+             *    { avg:[],
              *      min:[],
              *      max:[],
-             *      standard_deviation:[],
-             *      variance:[],
+             *      std:[],
              *      revision:[],
              *      date_run:[],
              *      readable_date:[] }
@@ -290,11 +288,10 @@ var AverageThumbnails = new Class({
             }
             if( aggregateData['data'][ data[i].product_id ][ data[i].test_id ][ data[i].operating_system_id ] === undefined ){
 
-                var values = { average:[],
+                var values = { avg:[],
                                     min:[],
                                     max:[],
-                                    standard_deviation:[],
-                                    variance:[],
+                                    std:[],
                                     revision:[],
                                     date_run:[],
                                     readable_date:[] };
@@ -380,13 +377,13 @@ var AverageThumbnails = new Class({
     },
     _drawTile: function(data, padding, width, height){
 
-        var max = d3.max(data.average);
-        var min = d3.min(data.average);
+        var max = d3.max(data.avg);
+        var min = d3.min(data.avg);
 
         //REMOVE BEFORE RELEASE: Fake threshold for tile
-        var threshold = d3.median(data.average);
+        var threshold = d3.median(data.avg);
 
-        var x = d3.scale.linear().domain([1, data.average.length]).range([1, width]);
+        var x = d3.scale.linear().domain([1, data.avg.length]).range([1, width]);
         x.clamp(true);
         var y = d3.scale.linear().domain([min, max+( (.5*height)+height)]).range([.3*height, height]);
 
@@ -449,25 +446,25 @@ var AverageThumbnails = new Class({
 
         //Mean area 
         lineGroup.append("svg:path")
-                    .attr("d", area(data.average) )
+                    .attr("d", area(data.avg) )
                     .attr("fill", "steelblue")
                     .attr("stroke-width", "2");
 
         // threshold line 
         /*******
         lineGroup.append("svg:path")
-                    .attr("d", thresholdLine(data.average) )
+                    .attr("d", thresholdLine(data.avg) )
                     .attr("stroke", "orange")
                     .attr("stroke-width", "1.5");
         *********/
 
         // baseline
         lineGroup.append("svg:path")
-                    .attr("d", baseLine(data.average) )
+                    .attr("d", baseLine(data.avg) )
                     .attr("stroke", "black")
                     .attr("stroke-width", "2");
 
-        var stdData = data.standard_deviation;
+        var stdData = data.std;
 
         //standard deviation line
         var stdMax = d3.max(stdData);
@@ -637,24 +634,24 @@ var ScatterPlot = new Class({
             var displayObj = { test_run_id:data[i].test_run_id,
                                      revision:data[i].revision, 
                                      date_run:this.formatTimestamp(  new Date(data[i].date_run*1000) ),
-                                     mean:data[i].average,
+                                     mean:data[i].avg,
                                      max:data[i].max,
                                      min:data[i].min,
-                                     std:data[i].standard_deviation };
+                                     std:data[i].std };
 
             this.datasets[key].xvalue++;
             var xvalue = this.datasets[key].xvalue;
             //var xvalue = parseInt(data[i].date_run)*1000;
 
             //data structure used by flot to render the graph
-            this.datasets[key].data.average.
-                        push([xvalue, data[i].average, displayObj]); 
+            this.datasets[key].data.avg.
+                        push([xvalue, data[i].avg, displayObj]); 
             this.datasets[key].data.std.
-                        push([xvalue, data[i].standard_deviation, displayObj]); 
+                        push([xvalue, data[i].std, displayObj]); 
             this.datasets[key].data.std_min.
-                        push([xvalue, data[i].average - data[i].standard_deviation, displayObj]); 
+                        push([xvalue, data[i].avg - data[i].std, displayObj]); 
             this.datasets[key].data.std_max.
-                        push([xvalue, data[i].average + data[i].standard_deviation, displayObj]); 
+                        push([xvalue, data[i].avg + data[i].std, displayObj]); 
             this.datasets[key].data.min.
                         push([xvalue, data[i].min, displayObj]); 
             this.datasets[key].data.max.
@@ -673,7 +670,7 @@ var ScatterPlot = new Class({
         return data;
     },
     _getAdaptedDataStruct: function(){
-        return { average:[],
+        return { avg:[],
                     std:[],
                     std_min:[],
                     std_max:[],
@@ -713,7 +710,7 @@ var ScatterPlot = new Class({
 
         //This datastructure is for the flot option API
         this.datasets[key]['dataset'] = [ 
-                    { data: this.datasets[key].data.average,
+                    { data: this.datasets[key].data.avg,
                       color:color,
                       points:{show:true},
                       grid:{ show:true, clickable:true, hoverable:true },
@@ -1347,21 +1344,21 @@ var ScatterLabelPlot = new Class({
                                      page_id:data[i].page_id, 
                                      revision:revision, 
                                      date_run:this.formatTimestamp(  new Date(data[i].date_run*1000) ),
-                                     mean:data[i].average,
+                                     mean:data[i].avg,
                                      max:data[i].max,
                                      min:data[i].min,
-                                     std:data[i].standard_deviation,
+                                     std:data[i].std,
                                      url:data[i].url };
 
             //data structure used by flot to render the graph
-            this.datasets[key].data.average.
-                        push([xvalue, data[i].average, displayObj]); 
+            this.datasets[key].data.avg.
+                        push([xvalue, data[i].avg, displayObj]); 
             this.datasets[key].data.std.
-                        push([xvalue, data[i].standard_deviation, displayObj]); 
+                        push([xvalue, data[i].std, displayObj]); 
             this.datasets[key].data.std_min.
-                        push([xvalue, data[i].average - data[i].standard_deviation, displayObj]); 
+                        push([xvalue, data[i].avg - data[i].std, displayObj]); 
             this.datasets[key].data.std_max.
-                        push([xvalue, data[i].average + data[i].standard_deviation, displayObj]); 
+                        push([xvalue, data[i].avg + data[i].std, displayObj]); 
             this.datasets[key].data.min.
                         push([xvalue, data[i].min, displayObj]); 
             this.datasets[key].data.max.

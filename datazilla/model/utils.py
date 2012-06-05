@@ -61,8 +61,8 @@ def get_time_ranges():
     time_ranges = {
         'days_7': { 'start': now, 'stop': now - 604800 },
         'days_30': { 'start': now, 'stop': now - 2592000 },
-        'days_60': { 'start': now, 'stop': now - 5184000 },
-        'days_90': { 'start': now, 'stop': now - 7776000 },
+        #'days_60': { 'start': now, 'stop': now - 5184000 },
+        #'days_90': { 'start': now, 'stop': now - 7776000 },
         #'days_360': { 'start':now, 'stop':now - 31557600 },
         }
     ###

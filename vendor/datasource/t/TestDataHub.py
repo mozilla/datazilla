@@ -8,28 +8,28 @@ from datasource.DataHub import DataHub
 
 class TestDataHub(unittest.TestCase):
 
-    testData = []
+    test_data = []
 
     ##Set path to data file##
-    filePath = os.path.dirname(__file__)
+    file_path = os.path.dirname(__file__)
 
-    if filePath:
-        dataFile = filePath + '/test_data.txt'
+    if file_path:
+        data_file = file_path + '/test_data.txt'
     else:
-        dataFile = './test_data.txt'
+        data_file = './test_data.txt'
 
     @staticmethod
-    def loadData():
+    def load_data():
 
-        dataFileObj = open(TestDataHub.dataFile)
+        data_file_obj = open(TestDataHub.data_file)
         try:
-            for line in dataFileObj.read().split("\n"):
+            for line in data_file_obj.read().split("\n"):
                 if line:
-                    TestDataHub.testData.append(line.split("\t"))
+                    TestDataHub.test_data.append(line.split("\t"))
         finally:
-            dataFileObj.close()
+            data_file_obj.close()
 
-        TestDataHub.testDataRows = len(TestDataHub.testData)
+        TestDataHub.test_data_rows = len(TestDataHub.test_data)
 
     @staticmethod
     def getSuite():
@@ -43,11 +43,11 @@ class TestDataHub(unittest.TestCase):
         Returns:
            test suite
         """
-        tests = ['testParseDataSources',
-                 'testDbExistance',
-                 'testCreateDataTable',
-                 'testLoadData',
-                 'testDropTable' ]
+        tests = ['test_parse_data_sources',
+                 'test_db_existance',
+                 'test_create_data_table',
+                 'test_load_data',
+                 'test_drop_table' ]
 
         return unittest.TestSuite(map(TestDataHub, tests))
 
@@ -59,86 +59,86 @@ class TestDataHub(unittest.TestCase):
         #in __init__.  However, I get a doc string related error when
         #I try that from the base class, not sure why.  Skipping for now.
         ###
-        self.testDataRows = 0
-        self.dataSource = 'MySQL_test'
+        self.test_data_rows = 0
+        self.data_source = 'MySQL_test'
         self.db = 'test'
-        self.tableName = 'DATA_SOURCES_TEST_DATA'
-        self.callbackCalls = 0
+        self.table_name = 'DATA_SOURCES_TEST_DATA'
+        self.callback_calls = 0
         self.limit = 100
         self.columns = set(['category', 'term', 'go_id', 'id', 'auto_pfamA'])
 
     def tearDown(self):
         sys.stdout.flush()
 
-    def testParseDataSources(self):
+    def test_parse_data_sources(self):
 
         ##Instantiating base hub triggers data_sources.json parsing##
         bh = BaseHub()
-        if self.dataSource not in BaseHub.dataSources:
-            msg = "The required data source, %s, was not found in %s" % (self.dataSource, BaseHub.sourceListFile)
+        if self.data_source not in BaseHub.data_sources:
+            msg = "The required data source, %s, was not found in %s" % (self.data_source, BaseHub.source_list_file)
             fail(msg)
 
-    def testDbExistance(self):
+    def test_db_existance(self):
 
-        dh = DataHub.get(self.dataSource)
-        dbs = dh.getDatabases()
+        dh = DataHub.get(self.data_source)
+        dbs = dh.get_databases()
 
         if 'test' not in dbs:
-            msg = "No 'test' database found in %s.  To run this method create a 'test' db in %s." % (self.dataSource, self.dataSource)
+            msg = "No 'test' database found in %s.  To run this method create a 'test' db in %s." % (self.data_source, self.data_source)
             self.fail(msg)
 
-    def testCreateDataTable(self):
+    def test_create_data_table(self):
 
-        dh = DataHub.get(self.dataSource)
+        dh = DataHub.get(self.data_source)
         dh.execute(db=self.db,
                    proc="test.create_table")
 
-        tableSet = dh.execute(db=self.db,
+        table_set = dh.execute(db=self.db,
                              proc="sql.ds_selects.get_tables",
                              key_column="Tables_in_test",
                              return_type="set")
 
-        if self.tableName not in tableSet:
-            msg = "The table, %s, was not created in %s." % (self.tableName, self.db)
+        if self.table_name not in table_set:
+            msg = "The table, %s, was not created in %s." % (self.table_name, self.db)
             self.fail(msg)
 
-    def testLoadData(self):
+    def test_load_data(self):
 
-        dh = DataHub.get(self.dataSource)
-        dh.useDatabase('test')
+        dh = DataHub.get(self.data_source)
+        dh.use_database('test')
 
         ##Load Data##
-        for row in TestDataHub.testData:
+        for row in TestDataHub.test_data:
             dh.execute(proc="test.insert_test_data",
                        placeholders=row)
 
         rowcount = dh.execute( db=self.db,
                             proc="sql.ds_selects.get_row_count",
-                            replace=['auto_pfamA', self.tableName],
-                            return_type='iter').getColumnData('rowcount')
+                            replace=['auto_pfamA', self.table_name],
+                            return_type='iter').get_column_data('rowcount')
 
         ##Confirm we loaded all of the rows##
-        msg = 'Row count in data file, %i, does not match row count in db %i.' % (TestDataHub.testDataRows, rowcount)
-        self.assertEqual(rowcount, TestDataHub.testDataRows, msg=msg)
+        msg = 'Row count in data file, %i, does not match row count in db %i.' % (TestDataHub.test_data_rows, rowcount)
+        self.assertEqual(rowcount, TestDataHub.test_data_rows, msg=msg)
 
-    def testDropTable(self):
+    def test_drop_table(self):
 
-        dh = DataHub.get(self.dataSource)
+        dh = DataHub.get(self.data_source)
         dh.execute(db=self.db,
                    proc="test.drop_table")
 
-        tableSet = dh.execute(db=self.db,
+        table_set = dh.execute(db=self.db,
                              proc="sql.ds_selects.get_tables",
                              key_column="Tables_in_test",
                              return_type="set")
 
-        if self.tableName in tableSet:
-            msg = "The table, %s, was not dropped in %s." % (self.tableName, self.db)
+        if self.table_name in table_set:
+            msg = "The table, %s, was not dropped in %s." % (self.table_name, self.db)
             self.fail(msg)
 
 def main():
     ##Load test data one time##
-    TestDataHub.loadData()
+    TestDataHub.load_data()
 
     suite = TestDataHub.getSuite()
     unittest.TextTestRunner(verbosity=2).run(suite)

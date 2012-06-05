@@ -249,11 +249,10 @@
                        b.product_id, 
                        tr.test_id, 
                        b.operating_system_id,
-                       ROUND( AVG(tv.value), 2 ) AS average, 
+                       ROUND( AVG(tv.value), 2 ) AS avg, 
                        ROUND( MIN(tv.value), 2 ) AS min, 
                        ROUND( MAX(tv.value), 2 ) AS max, 
-                       ROUND( STDDEV(tv.value), 2 ) AS 'standard_deviation',
-                       ROUND( VARIANCE(tv.value), 2 ) AS variance
+                       ROUND( STDDEV(tv.value), 2 ) AS 'std'
                 FROM test_run AS tr
                 LEFT JOIN test_value AS tv ON tr.id = tv.test_run_id
                 LEFT JOIN build AS b ON tr.build_id = b.id
@@ -273,11 +272,10 @@
                        b.product_id,
                        tr.test_id,
                        b.operating_system_id,
-                       ROUND( AVG(tv.value), 2 ) AS average,
+                       ROUND( AVG(tv.value), 2 ) AS avg,
                        ROUND( MIN(tv.value), 2 ) AS min,
                        ROUND( MAX(tv.value), 2 ) AS max,
-                       ROUND( STDDEV(tv.value), 2 ) AS 'standard_deviation',
-                       ROUND( VARIANCE(tv.value), 2 ) AS variance
+                       ROUND( STDDEV(tv.value), 2 ) AS 'std'
                 FROM test_run AS tr
                 LEFT JOIN test_value AS tv ON tr.id = tv.test_run_id
                 LEFT JOIN build AS b ON tr.build_id = b.id
@@ -323,11 +321,10 @@
                         tr.test_id,
                         b.operating_system_id,
                         p.url,
-                        ROUND( AVG(tv.value), 2 ) AS average,
+                        ROUND( AVG(tv.value), 2 ) AS avg,
                         ROUND( MIN(tv.value), 2 ) AS min,
                         ROUND( MAX(tv.value), 2 ) AS max,
-                        ROUND( STDDEV(tv.value), 2 ) AS 'standard_deviation',
-                        ROUND( VARIANCE(tv.value), 2 ) AS variance
+                        ROUND( STDDEV(tv.value), 2 ) AS 'std'
                FROM test_value AS tv
                LEFT JOIN pages AS p ON tv.page_id = p.id
                LEFT JOIN value AS v ON tv.value_id = v.id

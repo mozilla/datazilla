@@ -15,62 +15,62 @@ class SQLHub(RDBSHub):
     Derived RDBSHub class for MySQL.  Encapsulates sql execution and data retrieval.
     """
 
-    def __init__(self, dataSource, **kwargs):
+    def __init__(self, data_source, **kwargs):
 
         ##Confirms required keys for datasource config info##
-        RDBSHub.__init__(self, dataSource)
+        RDBSHub.__init__(self, data_source)
 
         ##These attributes are required for certain base class methods##
-        self.dataSource = dataSource
-        self.placeholderChar = '%s'
+        self.data_source = data_source
+        self.placeholder_char = '%s'
 
-        self.quoteChar = """'"""
-        self.maxConnectAttempts = 20
-        self.sleepInterval = 1
+        self.quote_char = """'"""
+        self.max_connect_attempts = 20
+        self.sleep_interval = 1
 
-        self.clientCursor = None
+        self.client_cursor = None
         if 'cursor' in kwargs:
-            self.clientCursor = kwargs['cursor']
+            self.client_cursor = kwargs['cursor']
 
         ##Register return_type methods##
-        self.validReturnTypes['iter'] = self.getIter
-        self.validReturnTypes['dict'] = self.getDict
-        self.validReturnTypes['dict_json'] = self.getDictJson
-        self.validReturnTypes['tuple'] = self.getTuple
-        self.validReturnTypes['tuple_json'] = self.getTupleJson
-        self.validReturnTypes['set'] = self.getSet
-        self.validReturnTypes['table'] = self.getTable
-        self.validReturnTypes['table_json'] = self.getTableJson
-        self.validReturnTypes['set_json'] = self.getSetJson
-        self.validReturnTypes['callback'] = self.getCallback
+        self.valid_return_types['iter'] = self.get_iter
+        self.valid_return_types['dict'] = self.get_dict
+        self.valid_return_types['dict_json'] = self.get_dict_json
+        self.valid_return_types['tuple'] = self.get_tuple
+        self.valid_return_types['tuple_json'] = self.get_tuple_json
+        self.valid_return_types['set'] = self.get_set
+        self.valid_return_types['table'] = self.get_table
+        self.valid_return_types['table_json'] = self.get_table_json
+        self.valid_return_types['set_json'] = self.get_set_json
+        self.valid_return_types['callback'] = self.get_callback
 
         """
-        SQLHub.connection[ hostType ][ con_obj="Connection Object",
+        SQLHub.connection[ host_type ][ con_obj="Connection Object",
                                   cursor="Database cursor" ]
         """
         SQLHub.connection = dict()
 
         ##Configuration object for data source instance##
-        self.conf = self.getDataSourceConfig(self.dataSource)
+        self.conf = self.get_data_source_config(self.data_source)
 
         ##Load the procedures##
-        self.loadProcs(self.dataSource)
+        self.load_procs(self.data_source)
 
-        __all__ = ['getDatabases',
-                   'useDatabase',
-                   'escapeString',
+        __all__ = ['get_databases',
+                   'use_database',
+                   'escape_string',
                    'disconnect',
                    'execute',
-                   'getIter',
-                   'getDict',
-                   'getDictJson',
-                   'getList',
-                   'getListJson',
-                   'getSet',
-                   'getSetJson',
-                   'getCallback']
+                   'get_iter',
+                   'get_dict',
+                   'get_dict_json',
+                   'get_list',
+                   'get_list_json',
+                   'get_set',
+                   'get_set_json',
+                   'get_callback']
 
-    def getDatabases(self):
+    def get_databases(self):
         """
         Return a set of databases available for the datasource. The
         list is dynamically retrieved from the db instance specified
@@ -89,7 +89,7 @@ class SQLHub(RDBSHub):
 
         return dbs
 
-    def useDatabase(self, db):
+    def use_database(self, db):
         """
         Selects the database to use.
 
@@ -102,39 +102,39 @@ class SQLHub(RDBSHub):
         self.execute(proc='sql.ds_use.select_database',
                      replace=[db] )
 
-    @RDBSHub.executeDecorator
+    @RDBSHub.execute_decorator
     def execute(self, **kwargs):
 
-        ##These values are populated by the base class executeDecorator
-        hostType = kwargs['host_type']
+        ##These values are populated by the base class execute_decorator
+        host_type = kwargs['host_type']
         sql = kwargs['sql']
         db = kwargs['db']
 
         ##########
-        #sqlChunks is a list of sql statements to execute.  It's built
+        #sql_chunks is a list of sql statements to execute.  It's built
         #by the base class when a caller requests chunking.
         ##########
-        sqlChunks = kwargs['sql_chunks']
+        sql_chunks = kwargs['sql_chunks']
 
         args = False
         if 'args' in kwargs:
             args = kwargs['args']
 
-        if not self.clientCursor:
-            self.tryToConnect(hostType, db)
+        if not self.client_cursor:
+            self.try_to_connect(host_type, db)
 
-        if len(sqlChunks) > 0:
-            return ChunkIterator(sqlChunks, kwargs, self.__execute)
+        if len(sql_chunks) > 0:
+            return ChunkIterator(sql_chunks, kwargs, self.__execute)
 
         return self.__execute(sql, kwargs)
 
-    def getIter(self, cursor, kwargs):
+    def get_iter(self, cursor, kwargs):
         return DataIterator(cursor.fetchall(), cursor.description, cursor.rowcount)
 
-    def getDict(self, cursor, kwargs):
+    def get_dict(self, cursor, kwargs):
 
-        rowsDict = dict()
-        keyColumn = kwargs['key_column']
+        rows_dict = dict()
+        key_column = kwargs['key_column']
 
         while(1):
             row = cursor.fetchone()
@@ -142,61 +142,61 @@ class SQLHub(RDBSHub):
             if row == None:
                 break
 
-            if keyColumn in row:
-                rowsDict[ row[keyColumn] ] = row
+            if key_column in row:
+                rows_dict[ row[key_column] ] = row
             else:
-                msg = "The key_column provided, %s, does not match any of the available keys %s"%(keyColumn, ','.join(row.keys))
+                msg = "The key_column provided, %s, does not match any of the available keys %s"%(key_column, ','.join(row.keys))
                 raise RDBSHubError(msg)
 
-        return rowsDict
+        return rows_dict
 
-    def getDictJson(self, cursor, kwargs):
-        rowsDict = self.getDict(cursor, kwargs)
-        return json.dumps(rowsDict)
+    def get_dict_json(self, cursor, kwargs):
+        rows_dict = self.get_dict(cursor, kwargs)
+        return json.dumps(rows_dict)
 
-    def getTuple(self, cursor, kwargs):
+    def get_tuple(self, cursor, kwargs):
         return cursor.fetchall()
 
-    def getTupleJson(self, cursor, kwargs):
-        rows = self.getTuple(cursor, kwargs)
+    def get_tuple_json(self, cursor, kwargs):
+        rows = self.get_tuple(cursor, kwargs)
         return json.dumps(rows)
 
-    def getSet(self, cursor, kwargs):
+    def get_set(self, cursor, kwargs):
 
-        dbSet = set()
-        keyColumn = kwargs['key_column']
+        db_set = set()
+        key_column = kwargs['key_column']
 
         while(1):
             row = cursor.fetchone()
             #All done
             if row == None:
                 break
-            if keyColumn in row:
-                dbSet.add(row[keyColumn])
+            if key_column in row:
+                db_set.add(row[key_column])
             else:
-                msg = "The key_column provided, %s, does not match any of the available keys %s"%(keyColumn, ','.join(row.keys))
+                msg = "The key_column provided, %s, does not match any of the available keys %s"%(key_column, ','.join(row.keys))
                 raise RDBSHubError(msg)
 
-        return dbSet
+        return db_set
 
-    def getSetJson(self, cursor, kwargs):
+    def get_set_json(self, cursor, kwargs):
         ##Sets are not serializable into json, build a dict with None for each key##
-        rowsDict = dict()
-        keyColumn = kwargs['key_column']
+        rows_dict = dict()
+        key_column = kwargs['key_column']
         while(1):
             row = cursor.fetchone()
             #All done
             if row == None:
                 break
-            if keyColumn in row:
-                rowsDict[row[keyColumn]] = None
+            if key_column in row:
+                rows_dict[row[key_column]] = None
             else:
-                msg = "The key_column provided, %s, does not match any of the available keys %s"%(keyColumn, ','.join(row.keys))
+                msg = "The key_column provided, %s, does not match any of the available keys %s"%(key_column, ','.join(row.keys))
                 raise RDBSHubError(msg)
 
-        return json.dumps(rowsDict)
+        return json.dumps(rows_dict)
 
-    def getTable(self, cursor, kwargs):
+    def get_table(self, cursor, kwargs):
 
         ##Get ordered list of column names##
         cols = []
@@ -206,11 +206,11 @@ class SQLHub(RDBSHub):
 
         return { 'columns':cols, 'data':data }
 
-    def getTableJson(self, cursor, kwargs):
-        dataStruct = self.getTable(cursor, kwargs)
-        return json.dumps(dataStruct)
+    def get_table_json(self, cursor, kwargs):
+        data_struct = self.get_table(cursor, kwargs)
+        return json.dumps(data_struct)
 
-    def getCallback(self, cursor, kwargs):
+    def get_callback(self, cursor, kwargs):
         callback = kwargs['callback']
         if cursor.rowcount > 0:
             while(1):
@@ -231,33 +231,33 @@ class SQLHub(RDBSHub):
         Return:
            None
         """
-        for hostType in SQLHub.connection:
-            if SQLHub.connection[hostType]['cursor']:
-                SQLHub.connection[hostType]['cursor'].close()
+        for host_type in SQLHub.connection:
+            if SQLHub.connection[host_type]['cursor']:
+                SQLHub.connection[host_type]['cursor'].close()
 
-            if SQLHub.connection[hostType]['con_obj'].open:
-                SQLHub.connection[hostType]['con_obj'].commit()
-                SQLHub.connection[hostType]['con_obj'].close()
+            if SQLHub.connection[host_type]['con_obj'].open:
+                SQLHub.connection[host_type]['con_obj'].commit()
+                SQLHub.connection[host_type]['con_obj'].close()
 
 
     """
     Private Methods
     """
-    def connect(self, hostType, db):
+    def connect(self, host_type, db):
         raise NotImplemented
 
-    def tryToConnect(self, hostType, db):
+    def try_to_connect(self, host_type, db):
         raise NotImplemented
 
     def __execute(self, sql, kwargs):
 
         db = kwargs['db']
-        hostType = kwargs['host_type']
+        host_type = kwargs['host_type']
         cursor = None
-        if self.clientCursor:
-            cursor = self.clientCursor
+        if self.client_cursor:
+            cursor = self.client_cursor
         else:
-            cursor = SQLHub.connection[hostType]['cursor']
+            cursor = SQLHub.connection[host_type]['cursor']
 
         ##Get the proc name for debug message##
         proc = ""
@@ -266,9 +266,9 @@ class SQLHub(RDBSHub):
 
         ##Caller requests no sql execution##
         if 'debug_noex' in kwargs:
-            self.showDebug(db,
-                           self.conf[hostType]['host'],
-                           hostType,
+            self.show_debug(db,
+                           self.conf[host_type]['host'],
+                           host_type,
                            proc,
                            sql,
                            None)
@@ -278,7 +278,7 @@ class SQLHub(RDBSHub):
         if ('debug_show' in kwargs) and (kwargs['debug_show']):
 
             def timewrapper():
-                self.__cursorExecute(sql, kwargs, cursor)
+                self.__cursor_execute(sql, kwargs, cursor)
 
             t = Timer(timewrapper)
             tmsg = ""
@@ -287,21 +287,21 @@ class SQLHub(RDBSHub):
             except:
                 t.print_exc()
 
-            self.showDebug(db,
-                           self.conf[hostType]['host'],
-                           hostType,
+            self.show_debug(db,
+                           self.conf[host_type]['host'],
+                           host_type,
                            proc,
                            sql,
                            tmsg)
         else:
-            self.__cursorExecute(sql, kwargs, cursor)
+            self.__cursor_execute(sql, kwargs, cursor)
 
         ##Commit transaction##
-        SQLHub.connection[hostType]['con_obj'].commit()
+        SQLHub.connection[host_type]['con_obj'].commit()
 
-        return self.getData(cursor, kwargs)
+        return self.get_data(cursor, kwargs)
 
-    def __cursorExecute(self, sql, kwargs, cursor):
+    def __cursor_execute(self, sql, kwargs, cursor):
         if 'placeholders' in kwargs:
 
             if ('executemany' in kwargs) and kwargs['executemany']:

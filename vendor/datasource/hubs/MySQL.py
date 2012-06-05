@@ -30,9 +30,9 @@ class MySQL(SQLHub):
     def __del__(self):
         self.disconnect()
 
-    def escapeString(self, value):
+    def escape_string(self, value):
         """
-        Pass through to _mysql escapeString which calls mysql_escape_string().
+        Pass through to _mysql escape_string which calls mysql_escape_string().
         Would be better to call mysql_real_escape_string() since it takes the
         character set into account but it requires a connection object.  Connection
         objects are only created on query execution so we need to call it through
@@ -46,14 +46,14 @@ class MySQL(SQLHub):
     """
     Private Methods
     """
-    def connect(self, hostType, db):
+    def connect(self, host_type, db):
 
         ##Make sure we really need to connect##
         connect = False
-        if hostType in SQLHub.connection and SQLHub.connection[hostType]['con_obj']:
+        if host_type in SQLHub.connection and SQLHub.connection[host_type]['con_obj']:
             try:
                 ##We have a connection, make sure it's active##
-                SQLHub.connection[hostType]['con_obj'].ping()
+                SQLHub.connection[host_type]['con_obj'].ping()
             except OperationalError:
                 ##Connection is corrupt, reconnect##
                 connect = True
@@ -63,57 +63,57 @@ class MySQL(SQLHub):
 
         if connect:
             ##No connection exists, connect##
-            SQLHub.connection[hostType] = dict( con_obj=None, cursor=None)
+            SQLHub.connection[host_type] = dict( con_obj=None, cursor=None)
 
             if db:
-                SQLHub.connection[hostType]['con_obj'] = MySQLdb.connect( host=self.conf[hostType]['host'],
-                                                                          user=self.conf[hostType]['user'],
-                                                                          passwd=self.conf[hostType].get('passwd', ''),
+                SQLHub.connection[host_type]['con_obj'] = MySQLdb.connect( host=self.conf[host_type]['host'],
+                                                                          user=self.conf[host_type]['user'],
+                                                                          passwd=self.conf[host_type].get('passwd', ''),
                                                                           cursorclass=MySQLdb.cursors.DictCursor,
                                                                           db=db)
             else:
-                SQLHub.connection[hostType]['con_obj'] = MySQLdb.connect( host=self.conf[hostType]['host'],
-                                                                          user=self.conf[hostType]['user'],
-                                                                          passwd=self.conf[hostType].get('passwd', ''),
+                SQLHub.connection[host_type]['con_obj'] = MySQLdb.connect( host=self.conf[host_type]['host'],
+                                                                          user=self.conf[host_type]['user'],
+                                                                          passwd=self.conf[host_type].get('passwd', ''),
                                                                           cursorclass = MySQLdb.cursors.DictCursor)
 
-            SQLHub.connection[hostType]['cursor'] = SQLHub.connection[hostType]['con_obj'].cursor()
+            SQLHub.connection[host_type]['cursor'] = SQLHub.connection[host_type]['con_obj'].cursor()
 
 
-    def tryToConnect(self, hostType, db):
+    def try_to_connect(self, host_type, db):
 
-        for i in range(self.maxConnectAttempts):
+        for i in range(self.max_connect_attempts):
             try:
-                self.connect(hostType, db)
+                self.connect(host_type, db)
 
                 ##Let someone know this is not happening on the first try##
                 if i > 0:
-                    sys.stderr.write("\n%s: tryToConnect succeeded on %i attempt. Database:%s" % (__name__, i, db))
+                    sys.stderr.write("\n%s: try_to_connect succeeded on %i attempt. Database:%s" % (__name__, i, db))
                     sys.stderr.flush()
                 ##We have a connection, move along##
                 break
 
             except OperationalError, err:
                 ##Connect failed, take a breather and then try again##
-                sys.stderr.write("\n%s: tryToConnect OperationalError encountered on attempt %i. Database:%s" % (__name__, i, db))
+                sys.stderr.write("\n%s: try_to_connect OperationalError encountered on attempt %i. Database:%s" % (__name__, i, db))
                 sys.stderr.write("\nError detected was:\n%s\n" % (err))
                 sys.stderr.flush()
-                time.sleep(self.sleepInterval)
+                time.sleep(self.sleep_interval)
                 continue
 
-        if not SQLHub.connection[hostType]['con_obj']:
+        if not SQLHub.connection[host_type]['con_obj']:
             ###
-            #If we made it here we've tried to connect maxConnectAttempts, it's time to throw
+            #If we made it here we've tried to connect max_connect_attempts, it's time to throw
             #in the towel.  Clearly the universe is working against us today, chin up
             #tomorrow could be better.
             ###
-            raise MySQLConnectError(self.maxConnectAttempts, self.dataSource)
+            raise MySQLConnectError(self.max_connect_attempts, self.data_source)
 
 
 class MySQLConnectError(RDBSHubError):
 
-    def __init__(self, iterations, dataSource):
+    def __init__(self, iterations, data_source):
         self.iter = iterations
-        self.dataSource = dataSource
+        self.data_source = data_source
     def __repr__(self):
-        msg = "OperationalError encountered repeatedly while connecting.  Attempted to connect %i times to data source %s and failed... Feeling kindof sad right now :-(" % (self.iter, self.dataSource)
+        msg = "OperationalError encountered repeatedly while connecting.  Attempted to connect %i times to data source %s and failed... Feeling kindof sad right now :-(" % (self.iter, self.data_source)

@@ -15,23 +15,26 @@ add_vendor_lib()
 import os
 import sys
 import json
-from optparse import OptionParser
+import memcache
 import zlib
 
+from optparse import OptionParser
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "datazilla.settings.base")
+
+from django.conf import settings
 from datazilla.model import DatazillaModel
 from datazilla.model import utils
 from django.core.cache import cache
 
 
-
-
-def cacheTestSummaries(project):
+def cache_test_summaries(project):
 
     gm = DatazillaModel(project)
-    dataIter = gm.getAllSummaryCache()
+    data_iter = gm.get_all_summary_cache()
 
-    for d in dataIter:
+    mc = memcache.Client([settings.DATAZILLA_MEMCACHED], debug=0)
+
+    for d in data_iter:
         for data in d:
             key = utils.get_cache_key(
                 project,
@@ -39,33 +42,35 @@ def cacheTestSummaries(project):
                 data['item_data'],
                 )
 
-            rv = cache.set(key, zlib.compress( data['value'] ))
+            rv = mc.set(key, zlib.compress( data['value'] ))
             if not rv:
-                sys.stderr.write("ERROR: Failed to store object in memcache: %s, %s\n" % ( str(data['item_id']), data['item_data'] ) )
+                msg = "ERROR: Failed to store object in memcache: %s, %s\n" % \
+                        ( str(data['item_id']), data['item_data'] ) 
+                sys.stderr.write(msg)
 
     gm.disconnect()
 
-def buildTestSummaries(project):
+def build_test_summaries(project):
 
     gm = DatazillaModel(project)
 
-    timeRanges = utils.get_time_ranges()
+    time_ranges = utils.get_time_ranges()
 
-    products = gm.getProducts()
+    products = gm.get_products()
 
-    for productName in products:
+    for product_name in products:
 
         for tr in ['days_7', 'days_30']:
 
-            table = gm.getTestRunSummary(str( timeRanges[tr]['start']),
-                                         str( timeRanges[tr]['stop']),
-                                         [ products[ productName ] ],
+            table = gm.get_test_run_summary(str( time_ranges[tr]['start']),
+                                         str( time_ranges[tr]['stop']),
+                                         [ products[ product_name ] ],
                                          [],
                                          [])
 
-            jsonData = json.dumps( table )
+            json_data = json.dumps( table )
 
-            gm.setSummaryCache( products[ productName ], tr, jsonData )
+            gm.set_summary_cache( products[ product_name ], tr, json_data )
 
     gm.disconnect()
 
@@ -108,7 +113,7 @@ if __name__ == '__main__':
         sys.exit(0)
 
     if options.build:
-        buildTestSummaries(options.project)
+        build_test_summaries(options.project)
 
     if options.cache:
-        cacheTestSummaries(options.project)
+        cache_test_summaries(options.project)
