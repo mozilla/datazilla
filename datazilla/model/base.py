@@ -397,14 +397,12 @@ class DatazillaModel(object):
 
 
     def disconnect(self):
-        return self.sources["perftest"].disconnect()
+        for src in self.sources.itervalues():
+          src.disconnect()
 
 
     def store_test_data(self, json_data):
-        self.sources["objectstore"].set_data(
-            "store_json",
-            [json_data],
-        )
+        self.sources["objectstore"].set_data("store_json",[json_data])
 
 
     def load_test_data(self, data, json_data):
