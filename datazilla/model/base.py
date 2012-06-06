@@ -401,10 +401,9 @@ class DatazillaModel(object):
 
 
     def store_test_data(self, json_data):
-        self.sources["objectstore"].create(
-            project=self.project,
-            contenttype="objectstore",
-
+        self.sources["objectstore"].set_data(
+            "store_json",
+            [json_data],
         )
 
 
@@ -427,6 +426,7 @@ class DatazillaModel(object):
         self._set_test_values(data, ref_data)
         self._set_test_aux_data(data, ref_data)
         self._set_test_data(json_data, ref_data)
+
 
     def _set_test_data(self, json_data, ref_data):
 
