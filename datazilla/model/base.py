@@ -406,6 +406,18 @@ class DatazillaModel(object):
         """Write the JSON to the objectstore to be queued for processing."""
         self.sources["objectstore"].set_data("store_json",[json_data])
 
+    def retrieve_test_data(self, limit):
+        """Retrieve the JSON from the objectstore to be processed"""
+        proc = 'objectstore.selects.get_unprocessed'
+
+        json_blobs = self.sources["objectstore"].dhub.execute(
+            proc=proc,
+            placeholders=[ limit ],
+            debug_show=self.DEBUG,
+            return_type='tuple'
+            )
+
+        return json_blobs
 
     def load_test_data(self, data, json_data):
         """Process the JSON test data into the database."""
