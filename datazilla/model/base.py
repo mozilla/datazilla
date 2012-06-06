@@ -24,6 +24,7 @@ class DatazillaModel(object):
         self.project = project
         self.sources = {
             "perftest": self.datasource_class(project, "perftest"),
+            "objectstore": self.datasource_class(project, "objectstore")
             }
         self.DEBUG = settings.DEBUG
 
@@ -43,18 +44,15 @@ class DatazillaModel(object):
             return SQLDataSource
 
 
-    @property
-    def dhub(self):
-        return self.sources["perftest"].dhub
-
-
     def get_product_test_os_map(self):
 
         proc = 'perftest.selects.get_product_test_os_map'
 
-        product_tuple = self.dhub.execute(proc=proc,
-                                         debug_show=self.DEBUG,
-                                         return_type='tuple')
+        product_tuple = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            )
 
         return product_tuple
 
@@ -66,14 +64,18 @@ class DatazillaModel(object):
         proc = 'perftest.selects.get_operating_systems'
 
         if key_column:
-            operating_systems = self.dhub.execute(proc=proc,
-                                                 debug_show=self.DEBUG,
-                                                 key_column=key_column,
-                                                 return_type='dict')
+            operating_systems = self.sources["perftest"].dhub.execute(
+                proc=proc,
+                debug_show=self.DEBUG,
+                key_column=key_column,
+                return_type='dict',
+                )
         else:
-            os_tuple = self.dhub.execute(proc=proc,
-                                        debug_show=self.DEBUG,
-                                        return_type='tuple')
+            os_tuple = self.sources["perftest"].dhub.execute(
+                proc=proc,
+                debug_show=self.DEBUG,
+                return_type='tuple',
+                )
 
             operating_systems = self._get_unique_key_dict(os_tuple,
                                                       ['name', 'version'])
@@ -85,10 +87,12 @@ class DatazillaModel(object):
 
         proc = 'perftest.selects.get_tests'
 
-        test_dict = self.dhub.execute(proc=proc,
-                                     debug_show=self.DEBUG,
-                                     key_column=key_column,
-                                     return_type='dict')
+        test_dict = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            key_column=key_column,
+            return_type='dict',
+            )
 
         return test_dict
 
@@ -100,14 +104,18 @@ class DatazillaModel(object):
         proc = 'perftest.selects.get_product_data'
 
         if key_column:
-            products = self.dhub.execute(proc=proc,
-                                         debug_show=self.DEBUG,
-                                         key_column=key_column,
-                                         return_type='dict')
+            products = self.sources["perftest"].dhub.execute(
+                proc=proc,
+                debug_show=self.DEBUG,
+                key_column=key_column,
+                return_type='dict',
+                )
         else:
-            products_tuple = self.dhub.execute(proc=proc,
-                                              debug_show=self.DEBUG,
-                                              return_type='tuple')
+            products_tuple = self.sources["perftest"].dhub.execute(
+                proc=proc,
+                debug_show=self.DEBUG,
+                return_type='tuple',
+                )
 
             products = self._get_unique_key_dict(products_tuple,
                                              ['product', 'branch', 'version'])
@@ -119,10 +127,12 @@ class DatazillaModel(object):
 
         proc = 'perftest.selects.get_machines'
 
-        machines_dict = self.dhub.execute(proc=proc,
-                                         debug_show=self.DEBUG,
-                                         key_column='name',
-                                         return_type='dict')
+        machines_dict = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            key_column='name',
+            return_type='dict',
+            )
 
         return machines_dict
 
@@ -131,10 +141,12 @@ class DatazillaModel(object):
 
         proc = 'perftest.selects.get_options'
 
-        options_dict = self.dhub.execute(proc=proc,
-                                        debug_show=self.DEBUG,
-                                        key_column='name',
-                                        return_type='dict')
+        options_dict = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            key_column='name',
+            return_type='dict',
+            )
 
         return options_dict
 
@@ -143,10 +155,12 @@ class DatazillaModel(object):
 
         proc = 'perftest.selects.get_pages'
 
-        pages_dict = self.dhub.execute(proc=proc,
-                                      debug_show=self.DEBUG,
-                                      key_column='url',
-                                      return_type='dict')
+        pages_dict = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            key_column='url',
+            return_type='dict',
+            )
 
         return pages_dict
 
@@ -155,10 +169,12 @@ class DatazillaModel(object):
 
         proc = 'perftest.selects.get_aux_data'
 
-        aux_data_dict = self.dhub.execute(proc=proc,
-                                        debug_show=self.DEBUG,
-                                        key_column='name',
-                                        return_type='dict')
+        aux_data_dict = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            key_column='name',
+            return_type='dict',
+            )
 
         return aux_data_dict
 
@@ -180,9 +196,11 @@ class DatazillaModel(object):
 
         proc = 'perftest.selects.get_test_collections'
 
-        test_collection_tuple = self.dhub.execute(proc=proc,
-                                                debug_show=self.DEBUG,
-                                                return_type='tuple')
+        test_collection_tuple = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            )
 
         test_collection = dict()
         for data in test_collection_tuple:
@@ -237,11 +255,12 @@ class DatazillaModel(object):
 
         proc = 'perftest.selects.get_test_run_summary'
 
-        test_run_summary_table = self.dhub.execute(proc=proc,
-                                                debug_show=self.DEBUG,
-                                                replace=[ str(end),
-                                                          str(start), rep ],
-                                                return_type='table')
+        test_run_summary_table = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            replace=[ str(end), str(start), rep ],
+            return_type='table',
+            )
 
         return test_run_summary_table
 
@@ -250,9 +269,11 @@ class DatazillaModel(object):
 
         proc = 'perftest.selects.get_all_test_runs'
 
-        test_run_summary_table = self.dhub.execute(proc=proc,
-                                                debug_show=self.DEBUG,
-                                                return_type='table')
+        test_run_summary_table = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            return_type='table',
+            )
 
         return test_run_summary_table
 
@@ -261,10 +282,12 @@ class DatazillaModel(object):
 
         proc = 'perftest.selects.get_test_run_values'
 
-        test_run_value_table = self.dhub.execute(proc=proc,
-                                              debug_show=self.DEBUG,
-                                              placeholders=[ test_run_id ],
-                                              return_type='table')
+        test_run_value_table = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            placeholders=[ test_run_id ],
+            return_type='table',
+            )
 
         return test_run_value_table
 
@@ -273,10 +296,12 @@ class DatazillaModel(object):
 
         proc = 'perftest.selects.get_test_run_value_summary'
 
-        test_run_value_table = self.dhub.execute(proc=proc,
-                                              debug_show=self.DEBUG,
-                                              placeholders=[ test_run_id ],
-                                              return_type='table')
+        test_run_value_table = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            placeholders=[ test_run_id ],
+            return_type='table',
+            )
 
         return test_run_value_table
 
@@ -285,11 +310,12 @@ class DatazillaModel(object):
 
         proc = 'perftest.selects.get_page_values'
 
-        page_values_table = self.dhub.execute(proc=proc,
-                                            debug_show=self.DEBUG,
-                                            placeholders=[ test_run_id,
-                                                           page_id ],
-                                            return_type='table')
+        page_values_table = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            placeholders=[ test_run_id, page_id ],
+            return_type='table',
+            )
 
         return page_values_table
 
@@ -298,10 +324,12 @@ class DatazillaModel(object):
 
         proc = 'perftest.selects.get_summary_cache'
 
-        cached_data = self.dhub.execute(proc=proc,
-                                       debug_show=self.DEBUG,
-                                       placeholders=[ item_id, item_data ],
-                                       return_type='tuple')
+        cached_data = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            placeholders=[ item_id, item_data ],
+            return_type='tuple',
+            )
 
         return cached_data
 
@@ -310,12 +338,13 @@ class DatazillaModel(object):
 
         proc = 'perftest.selects.get_all_summary_cache_data'
 
-        data_iter = self.dhub.execute(proc=proc,
-                                     debug_show=self.DEBUG,
-                                     chunk_size=5,
-                                     chunk_source="summary_cache.id",
-                                     return_type='tuple')
-
+        data_iter = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            chunk_size=5,
+            chunk_source="summary_cache.id",
+            return_type='tuple',
+            )
 
         return data_iter
 
@@ -324,14 +353,16 @@ class DatazillaModel(object):
 
         proc = 'perftest.selects.get_all_test_data'
 
-        data_iter = self.dhub.execute(proc=proc,
-                                     debug_show=self.DEBUG,
-                                     placeholders=[start],
-                                     chunk_size=20,
-                                     chunk_min=start,
-                                     chunk_source="test_data.id",
-                                     chunk_total=total,
-                                     return_type='tuple')
+        data_iter = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            placeholders=[start],
+            chunk_size=20,
+            chunk_min=start,
+            chunk_source="test_data.id",
+            chunk_total=total,
+            return_type='tuple',
+            )
 
         return data_iter
 
@@ -347,6 +378,7 @@ class DatazillaModel(object):
                                             value,
                                             now_datetime ])
 
+
     def set_test_collection(self, name, description):
 
         id = self.sources["perftest"].set_data_and_get_id('set_test_collection',
@@ -356,14 +388,24 @@ class DatazillaModel(object):
 
         return id
 
+
     def set_test_collection_map(self, test_collection_id, product_id):
 
         self.sources["perftest"].set_data('set_test_collection_map',
                                           [ test_collection_id,
                                             product_id ])
 
+
     def disconnect(self):
         return self.sources["perftest"].disconnect()
+
+
+    def store_test_data(self, json_data):
+        self.sources["objectstore"].create(
+            project=self.project,
+            contenttype="objectstore",
+
+        )
 
 
     def load_test_data(self, data, json_data):

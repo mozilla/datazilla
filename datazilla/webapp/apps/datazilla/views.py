@@ -84,6 +84,8 @@ def set_test_data(request, project=""):
         unquoted_json_data = urllib.unquote(json_data)
         data = json.loads( unquoted_json_data )
 
+
+
         dm = DatazillaModel(project)
         dm.load_test_data( data, unquoted_json_data )
         dm.disconnect()
@@ -108,6 +110,8 @@ def dataview(request, project="", method=""):
     json = ""
     if method in DATAVIEW_ADAPTERS:
         dm = DatazillaModel(project)
+        pt_dhub = dm.sources["perftest"].dhub
+
         if 'adapter' in DATAVIEW_ADAPTERS[method]:
             json = DATAVIEW_ADAPTERS[method]['adapter'](project,
                                                         method,
@@ -118,12 +122,14 @@ def dataview(request, project="", method=""):
                 fields = []
                 for f in DATAVIEW_ADAPTERS[method]['fields']:
                     if f in request.POST:
-                        fields.append( dm.dhub.escape_string( request.POST[f] ) )
+                        fields.append(
+                            pt_dhub.escape_string(request.POST[f]))
+
                     elif f in request.GET:
-                        fields.append( dm.dhub.escape_string( request.GET[f] ) )
+                        fields.append(pt_dhub.escape_string(request.GET[f]))
 
                 if len(fields) == len(DATAVIEW_ADAPTERS[method]['fields']):
-                    json = dm.dhub.execute(proc=full_proc_path,
+                    json = pt_dhub.execute(proc=full_proc_path,
                                            debug_show=settings.DEBUG,
                                            placeholders=fields,
                                            return_type='table_json')
@@ -134,7 +140,7 @@ def dataview(request, project="", method=""):
 
             else:
 
-                json = dm.dhub.execute(proc=full_proc_path,
+                json = pt_dhub.execute(proc=full_proc_path,
                                        debug_show=settings.DEBUG,
                                        return_type='table_json')
 

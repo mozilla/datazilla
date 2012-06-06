@@ -65,7 +65,8 @@ class Command(BaseCommand):
         for s in sql_chunks:
 
             dm_source = DatazillaModel(source)
-            d = dm_source.dhub.execute(sql=s%str(start), return_type='tuple')
+            dhub = dm_source.sources["perftest"].dhub
+            dhub.execute(sql=s%str(start), return_type='tuple')
             dm_source.disconnect()
 
             chunks += 1

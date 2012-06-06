@@ -284,7 +284,7 @@ class DataSource(models.Model):
         Create the database for this source, using given SQL schema file.
 
         If schema file is not given, defaults to
-        "template_schema/schema_perftest.sql".
+        "template_schema/schema_<contenttype>.sql".
 
         Assumes that the database server at ``self.host`` is accessible, and
         that ``DATAZILLA_DATABASE_USER`` (identified by
@@ -294,7 +294,10 @@ class DataSource(models.Model):
         """
         if schema_file is None:
             schema_file = os.path.join(
-                SQL_PATH, "template_schema", "schema_perftest.sql")
+                SQL_PATH,
+                "template_schema",
+                "schema_{0}.sql".format(self.contenttype),
+                )
 
         conn = MySQLdb.connect(
             host=self.host,
