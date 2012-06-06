@@ -397,15 +397,18 @@ class DatazillaModel(object):
 
 
     def disconnect(self):
+        """Iterate over and disconnect all data sources."""
         for src in self.sources.itervalues():
-          src.disconnect()
+            src.disconnect()
 
 
     def store_test_data(self, json_data):
+        """Write the JSON to the objectstore to be queued for processing."""
         self.sources["objectstore"].set_data("store_json",[json_data])
 
 
     def load_test_data(self, data, json_data):
+        """Process the JSON test data into the database."""
 
         ##Get the reference data##
         ref_data = self.get_reference_data()
