@@ -147,15 +147,15 @@ class SQLDataSource(object):
 
 
     @classmethod
-    def create(cls, project,
-               contenttype=None, host=None, name=None, schema_file=None):
+    def create(cls, project, contenttype,
+               host=None, name=None, schema_file=None):
         """
         Create and return a new datasource for given project/contenttype.
 
         Creates the database ``name`` (defaults to "project_contenttype_1") on
         host ``host`` (defaults to ``DATAZILLA_DATABASE_HOST``) and populates
         the template schema from ``schema_file`` (defaults to
-        ``template_schema/schema_perftest.sql``).
+        ``template_schema/schema_<contenttype>.sql``).
 
         Assumes that the database server at ``host`` is accessible, and that
         ``DATAZILLA_DATABASE_USER`` (identified by
@@ -163,8 +163,6 @@ class SQLDataSource(object):
         create databases.
 
         """
-        if contenttype is None:
-            contenttype = "perftest"
         if host is None:
             host = settings.DATAZILLA_DATABASE_HOST
 
