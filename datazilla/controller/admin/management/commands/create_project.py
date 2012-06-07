@@ -1,8 +1,8 @@
-
 from django.core.management.base import BaseCommand, CommandError
 from datazilla.model import DatazillaModel
 
 class Command(BaseCommand):
+    """Management command to Create all necessary tables for a new project."""
 
     help = "Create all necessary tables for a new project."
 

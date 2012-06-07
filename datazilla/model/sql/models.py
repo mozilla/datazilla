@@ -94,19 +94,7 @@ class SQLDataSource(object):
         return candidate_sources[0]
 
 
-    def set_data(self, statement, placeholders, executemany=False):
-
-        self.dhub.execute(
-            proc='perftest.inserts.' + statement,
-            debug_show=self.DEBUG,
-            placeholders=placeholders,
-            executemany=executemany,
-            )
-
-
-    def set_data_and_get_id(self, statement, placeholders):
-
-        self.set_data(statement, placeholders)
+    def get_last_insert_id(self, statement, placeholders):
 
         id_iter = self.dhub.execute(
             proc='perftest.selects.get_last_insert_id',
@@ -269,7 +257,10 @@ class DataSource(models.Model):
                     "passwd": settings.DATAZILLA_DATABASE_PASSWORD,
                     },
                 "default_db": self.name,
-                "procs": [os.path.join(SQL_PATH, procs_file_name)],
+                "procs": [
+                    os.path.join(SQL_PATH, procs_file_name),
+                    os.path.join(SQL_PATH, "sql.json"),
+                    ],
                 }
             }
         BaseHub.add_data_source(data_source)
