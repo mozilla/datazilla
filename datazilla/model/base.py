@@ -20,12 +20,16 @@ from . import utils
 
 class DatazillaModel(object):
     """Public interface to all data access for a project."""
+
+    CONTENT_TYPES = ["perftest", "objectstore"]
+
     def __init__(self, project):
         self.project = project
-        self.sources = {
-            "perftest": self.datasource_class(project, "perftest"),
-            "objectstore": self.datasource_class(project, "objectstore")
-            }
+
+        self.sources = {}
+        for ct in CONTENT_TYPES:
+            self.sources[ct] = self.get_datasource_class()(project, ct)
+
         self.DEBUG = settings.DEBUG
 
 
@@ -34,14 +38,24 @@ class DatazillaModel(object):
         return self.project
 
 
-    @property
-    def datasource_class(self):
+    @classmethod
+    def get_datasource_class(cls):
         if settings.USE_APP_ENGINE:
             from .appengine.model import CloudSQLDataSource
             return CloudSQLDataSource
         else:
             from .sql.models import SQLDataSource
             return SQLDataSource
+
+
+    @classmethod
+    def create(cls, project):
+        """Create all the datasource tables for this project."""
+
+        for ct in CONTENT_TYPES:
+            cls.get_datasource_class().create(project, ct)
+
+        return cls(project=project)
 
 
     def get_product_test_os_map(self):
