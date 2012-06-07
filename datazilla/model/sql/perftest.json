@@ -243,15 +243,15 @@
 
       "get_test_run_summary":{
 
-         "sql":"SELECT tr.id AS 'test_run_id', 
+         "sql":"SELECT tr.id AS 'test_run_id',
                        tr.revision,
-                       tr.date_run, 
-                       b.product_id, 
-                       tr.test_id, 
+                       tr.date_run,
+                       b.product_id,
+                       tr.test_id,
                        b.operating_system_id,
-                       ROUND( AVG(tv.value), 2 ) AS avg, 
-                       ROUND( MIN(tv.value), 2 ) AS min, 
-                       ROUND( MAX(tv.value), 2 ) AS max, 
+                       ROUND( AVG(tv.value), 2 ) AS avg,
+                       ROUND( MIN(tv.value), 2 ) AS min,
+                       ROUND( MAX(tv.value), 2 ) AS max,
                        ROUND( STDDEV(tv.value), 2 ) AS 'std'
                 FROM test_run AS tr
                 LEFT JOIN test_value AS tv ON tr.id = tv.test_run_id
@@ -421,12 +421,6 @@
       "get_pages":{
 
          "sql":"SELECT `id`, `test_id`, `url` FROM `pages`",
-
-         "host":"master_host"
-      },
-      "get_last_insert_id":{
-
-         "sql":"SELECT LAST_INSERT_ID() AS 'id'",
 
          "host":"master_host"
       },

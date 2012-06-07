@@ -70,27 +70,53 @@ def graphs(request, project=""):
 
     return render_to_response('graphs.views.html', data)
 
+
 def get_help(request):
     data = {}
     return render_to_response('help/dataview.generic.help.html', data)
 
+
 def set_test_data(request, project=""):
+    """
+    Post a JSON blob of data for the specified project.
 
-    json_data = '{"error":"No POST data found"}'
+    Store the JSON in the objectstore where it will be held for
+    later processing.
 
-    if 'data' in request.POST:
+    """
 
+    # default to bad request if the JSON is malformed or not present
+    status = 400
+
+    try:
         json_data = request.POST['data']
-        unquoted_json_data = urllib.unquote(json_data)
-        data = json.loads( unquoted_json_data )
+    except KeyError as e:
+        result = {"status":"No POST data found", "message": e.message}
 
+    unquoted_json_data = urllib.unquote(json_data)
+
+    try:
+        json.loads( unquoted_json_data )
+    except ValueError as e:
+        result = {"status": "Malformed JSON", "message": e.message}
+
+    try:
         dm = DatazillaModel(project)
-        dm.load_test_data( data, unquoted_json_data )
+        dm.store_test_data( unquoted_json_data )
         dm.disconnect()
 
-        json_data = json.dumps( { 'loaded_test_pages':len(data['results']) } )
+        status = 200
+        result = {
+            "status": "well-formed JSON stored",
+            "size": str(len(unquoted_json_data)),
+            }
 
-    return HttpResponse(json_data, mimetype=APP_JS)
+    except Exception as e:
+        status = 500
+        result = {"status":"Unknown error", "message": e.message}
+
+    return HttpResponse(json.dumps(result), mimetype=APP_JS, status=status)
+
 
 def dataview(request, project="", method=""):
 
@@ -108,6 +134,8 @@ def dataview(request, project="", method=""):
     json = ""
     if method in DATAVIEW_ADAPTERS:
         dm = DatazillaModel(project)
+        pt_dhub = dm.sources["perftest"].dhub
+
         if 'adapter' in DATAVIEW_ADAPTERS[method]:
             json = DATAVIEW_ADAPTERS[method]['adapter'](project,
                                                         method,
@@ -118,12 +146,14 @@ def dataview(request, project="", method=""):
                 fields = []
                 for f in DATAVIEW_ADAPTERS[method]['fields']:
                     if f in request.POST:
-                        fields.append( dm.dhub.escape_string( request.POST[f] ) )
+                        fields.append(
+                            pt_dhub.escape_string(request.POST[f]))
+
                     elif f in request.GET:
-                        fields.append( dm.dhub.escape_string( request.GET[f] ) )
+                        fields.append(pt_dhub.escape_string(request.GET[f]))
 
                 if len(fields) == len(DATAVIEW_ADAPTERS[method]['fields']):
-                    json = dm.dhub.execute(proc=full_proc_path,
+                    json = pt_dhub.execute(proc=full_proc_path,
                                            debug_show=settings.DEBUG,
                                            placeholders=fields,
                                            return_type='table_json')
@@ -134,7 +164,7 @@ def dataview(request, project="", method=""):
 
             else:
 
-                json = dm.dhub.execute(proc=full_proc_path,
+                json = pt_dhub.execute(proc=full_proc_path,
                                        debug_show=settings.DEBUG,
                                        return_type='table_json')
 
@@ -144,6 +174,7 @@ def dataview(request, project="", method=""):
         json = '{ "error":"Data view name %s not recognized" }' % method
 
     return HttpResponse(json, mimetype=APP_JS)
+
 
 def _get_test_reference_data(project, method, request, dm):
 
@@ -222,6 +253,7 @@ def _get_test_run_summary(project, method, request, dm):
 
     return json_data
 
+
 def _get_test_values(project, method, request, dm):
 
     data = {};
@@ -232,6 +264,7 @@ def _get_test_values(project, method, request, dm):
     json_data = json.dumps( data )
 
     return json_data
+
 
 def _get_page_values(project, method, request, dm):
 
@@ -244,6 +277,7 @@ def _get_page_values(project, method, request, dm):
 
     return json_data
 
+
 def _get_test_value_summary(project, method, request, dm):
 
     data = {};
@@ -254,6 +288,7 @@ def _get_test_value_summary(project, method, request, dm):
     json_data = json.dumps( data )
 
     return json_data
+
 
 #####
 #UTILITY METHODS

@@ -94,22 +94,10 @@ class SQLDataSource(object):
         return candidate_sources[0]
 
 
-    def set_data(self, statement, placeholders, executemany=False):
-
-        self.dhub.execute(
-            proc='perftest.inserts.' + statement,
-            debug_show=self.DEBUG,
-            placeholders=placeholders,
-            executemany=executemany,
-            )
-
-
-    def set_data_and_get_id(self, statement, placeholders):
-
-        self.set_data(statement, placeholders)
+    def get_last_insert_id(self, statement, placeholders):
 
         id_iter = self.dhub.execute(
-            proc='perftest.selects.get_last_insert_id',
+            proc='sql.selects.get_last_insert_id',
             debug_show=self.DEBUG,
             return_type='iter',
             )
@@ -147,15 +135,15 @@ class SQLDataSource(object):
 
 
     @classmethod
-    def create(cls, project,
-               contenttype=None, host=None, name=None, schema_file=None):
+    def create(cls, project, contenttype,
+               host=None, name=None, schema_file=None):
         """
         Create and return a new datasource for given project/contenttype.
 
         Creates the database ``name`` (defaults to "project_contenttype_1") on
         host ``host`` (defaults to ``DATAZILLA_DATABASE_HOST``) and populates
         the template schema from ``schema_file`` (defaults to
-        ``template_schema/schema_perftest.sql``).
+        ``template_schema/schema_<contenttype>.sql``).
 
         Assumes that the database server at ``host`` is accessible, and that
         ``DATAZILLA_DATABASE_USER`` (identified by
@@ -163,8 +151,6 @@ class SQLDataSource(object):
         create databases.
 
         """
-        if contenttype is None:
-            contenttype = "perftest"
         if host is None:
             host = settings.DATAZILLA_DATABASE_HOST
 
@@ -271,7 +257,10 @@ class DataSource(models.Model):
                     "passwd": settings.DATAZILLA_DATABASE_PASSWORD,
                     },
                 "default_db": self.name,
-                "procs": [os.path.join(SQL_PATH, procs_file_name)],
+                "procs": [
+                    os.path.join(SQL_PATH, procs_file_name),
+                    os.path.join(SQL_PATH, "sql.json"),
+                    ],
                 }
             }
         BaseHub.add_data_source(data_source)
@@ -284,7 +273,7 @@ class DataSource(models.Model):
         Create the database for this source, using given SQL schema file.
 
         If schema file is not given, defaults to
-        "template_schema/schema_perftest.sql".
+        "template_schema/schema_<contenttype>.sql".
 
         Assumes that the database server at ``self.host`` is accessible, and
         that ``DATAZILLA_DATABASE_USER`` (identified by
@@ -294,7 +283,10 @@ class DataSource(models.Model):
         """
         if schema_file is None:
             schema_file = os.path.join(
-                SQL_PATH, "template_schema", "schema_perftest.sql")
+                SQL_PATH,
+                "template_schema",
+                "schema_{0}.sql".format(self.contenttype),
+                )
 
         conn = MySQLdb.connect(
             host=self.host,

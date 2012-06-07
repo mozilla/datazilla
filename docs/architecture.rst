@@ -14,7 +14,7 @@ The ``gm.getProductTestOsMap()`` method looks like ::
 
     #python
         def getProductTestOsMap(self):
-        productTuple = self.dhub.execute(proc='graphs.selects.get_product_test_os_map',debug_show=self.DEBUG,return_type='tuple')
+        productTuple = self.sources["perftest"].dhub.execute(proc='graphs.selects.get_product_test_os_map',debug_show=self.DEBUG,return_type='tuple')
         return productTuple
 
 ``graphs.selects.get_product_test_os_map`` found in `datazilla/model/sql/perftest.json <https://github.com/mozilla/datazilla/blob/master/datazilla/model/sql/perftest.json>`_ looks like ::
