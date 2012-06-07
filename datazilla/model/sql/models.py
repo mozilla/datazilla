@@ -97,7 +97,7 @@ class SQLDataSource(object):
     def get_last_insert_id(self, statement, placeholders):
 
         id_iter = self.dhub.execute(
-            proc='perftest.selects.get_last_insert_id',
+            proc='sql.selects.get_last_insert_id',
             debug_show=self.DEBUG,
             return_type='iter',
             )
