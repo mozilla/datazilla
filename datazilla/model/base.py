@@ -49,11 +49,12 @@ class DatazillaModel(object):
 
 
     @classmethod
-    def create(cls, project, hosts):
+    def create(cls, project, hosts=None):
         """Create all the datasource tables for this project."""
+        hosts = hosts or {}
 
         for ct in cls.CONTENT_TYPES:
-            cls.get_datasource_class().create(project, ct, hosts[ct])
+            cls.get_datasource_class().create(project, ct, host=hosts.get(ct))
 
         return cls(project=project)
 

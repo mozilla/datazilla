@@ -288,14 +288,15 @@ class DataSource(models.Model):
         # MySQLdb provides no way to execute an entire SQL file in bulk, so we
         # have to shell out to the commandline client.
         with open(schema_file) as f:
-            subprocess.check_call(
-                [
-                    "mysql",
-                    "--host={0}".format(self.host),
-                    "--user={0}".format(settings.DATAZILLA_DATABASE_USER),
+            args = [
+                "mysql",
+                "--host={0}".format(self.host),
+                "--user={0}".format(settings.DATAZILLA_DATABASE_USER),
+                ]
+            if settings.DATAZILLA_DATABASE_PASSWORD:
+                args.append(
                     "--password={0}".format(
-                        settings.DATAZILLA_DATABASE_PASSWORD),
-                    self.name,
-                    ],
-                stdin=f,
-                )
+                        settings.DATAZILLA_DATABASE_PASSWORD)
+                    )
+            args.append(self.name)
+            subprocess.check_call(args, stdin=f)
