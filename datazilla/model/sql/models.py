@@ -93,18 +93,6 @@ class SQLDataSource(object):
 
         return candidate_sources[0]
 
-
-    def get_last_insert_id(self, statement, placeholders):
-
-        id_iter = self.dhub.execute(
-            proc='sql.selects.get_last_insert_id',
-            debug_show=self.DEBUG,
-            return_type='iter',
-            )
-
-        return id_iter.get_column_data('id')
-
-
     def disconnect(self):
         self.dhub.disconnect()
 
@@ -259,7 +247,7 @@ class DataSource(models.Model):
                 "default_db": self.name,
                 "procs": [
                     os.path.join(SQL_PATH, procs_file_name),
-                    os.path.join(SQL_PATH, "sql.json"),
+                    #os.path.join(SQL_PATH, "sql.json"),
                     ],
                 }
             }

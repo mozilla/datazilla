@@ -231,6 +231,12 @@
       }
   },
   "selects":{
+      "get_last_insert_id":{
+
+            "sql":"SELECT LAST_INSERT_ID() AS 'id'",
+
+            "host":"master_host"
+      },
       "get_all_test_data":{
 
          "sql":"SELECT id, test_run_id, data

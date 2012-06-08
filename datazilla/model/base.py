@@ -49,11 +49,12 @@ class DatazillaModel(object):
 
 
     @classmethod
-    def create(cls, project):
+    def create(cls, project, hosts=None):
         """Create all the datasource tables for this project."""
+        hosts = hosts or {}
 
         for ct in cls.CONTENT_TYPES:
-            cls.get_datasource_class().create(project, ct)
+            cls.get_datasource_class().create(project, ct, host=hosts.get(ct))
 
         return cls(project=project)
 
@@ -404,10 +405,10 @@ class DatazillaModel(object):
 
     def set_test_collection(self, name, description):
 
-        id = self.sources["perftest"].get_last_insert_id('set_test_collection',
-                                                        [ name,
-                                                          description,
-                                                          name ])
+        id = self._insert_data_and_get_id('set_test_collection',
+                                          [ name,
+                                            description,
+                                            name ])
 
         return id
 
@@ -422,9 +423,7 @@ class DatazillaModel(object):
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_test_collection_map',
             debug_show=settings.DEBUG,
-            placeholders=placeholders,
-            executemany=False,
-            )
+            placeholders=placeholders)
 
 
     def disconnect(self):
@@ -481,12 +480,8 @@ class DatazillaModel(object):
 
     def _set_test_data(self, json_data, ref_data):
 
-        self.sources["perftest"].dhub.execute(
-            proc='perftest.inserts.set_test_data',
-            debug_show=settings.DEBUG,
-            placeholders=[ref_data['test_run_id'], json_data],
-            executemany=False,
-            )
+        self._insert_data('set_test_data',
+                          [ref_data['test_run_id'], json_data])
 
 
     def _set_test_aux_data(self, data, ref_data):
@@ -513,12 +508,9 @@ class DatazillaModel(object):
                                           numeric_data,
                                           string_data))
 
-                self.sources["perftest"].dhub.execute(
-                    proc='perftest.inserts.set_aux_values',
-                    debug_show=settings.DEBUG,
-                    placeholders=placeholders,
-                    executemany=True,
-                    )
+                self._insert_data('set_aux_values',
+                                  placeholders,
+                                  True)
 
 
     def _set_test_values(self, data, ref_data):
@@ -542,12 +534,9 @@ class DatazillaModel(object):
                                       1,
                                       value))
 
-            self.sources["perftest"].dhub.execute(
-                proc='perftest.inserts.set_test_values',
-                debug_show=settings.DEBUG,
-                placeholders=placeholders,
-                executemany=True,
-                )
+            self._insert_data('set_test_values',
+                              placeholders,
+                              True)
 
 
     def _get_aux_id(self, aux_data, ref_data):
@@ -557,9 +546,9 @@ class DatazillaModel(object):
             if aux_data in ref_data['aux_data']:
                 aux_id = ref_data['aux_data'][aux_data]['id']
             else:
-                aux_id = self.sources["perftest"].get_last_insert_id('set_aux_data',
-                                             [ref_data['test_id'],
-                                             aux_data])
+                aux_id = self._insert_data('set_aux_data',
+                                           [ref_data['test_id'],
+                                            aux_data])
 
         except KeyError:
             raise
@@ -574,8 +563,9 @@ class DatazillaModel(object):
             if page in ref_data['pages']:
                 page_id = ref_data['pages'][page]['id']
             else:
-                page_id = self.sources["perftest"].get_last_insert_id('set_pages_data',
-                                              [ref_data['test_id'], page])
+                page_id = self._insert_data_and_get_id('set_pages_data',
+                                                       [ref_data['test_id'],
+                                                        page])
 
         except KeyError:
             raise
@@ -596,17 +586,13 @@ class DatazillaModel(object):
                     value,
                     ]
 
-                self.sources["perftest"].dhub.execute(
-                    proc='perftest.inserts.set_test_option_values',
-                    debug_show=settings.DEBUG,
-                    placeholders=placeholders,
-                    executemany=False,
-                    )
+                self._insert_data( 'set_test_option_values',
+                                    placeholders)
 
 
     def _set_build_data(self, data, ref_data):
 
-        build_id = self.sources["perftest"].get_last_insert_id('set_build_data',
+        build_id = self._insert_data_and_get_id('set_build_data',
                                        [ ref_data['operating_system_id'],
                                          ref_data['product_id'],
                                          ref_data['machine_id'],
@@ -626,13 +612,35 @@ class DatazillaModel(object):
 
     def _set_test_run_data(self, data, ref_data):
 
-        test_run_id = self.sources["perftest"].get_last_insert_id('set_test_run_data',
+        test_run_id = self._insert_data_and_get_id('set_test_run_data',
                                          [ ref_data['test_id'],
                                          ref_data['build_id'],
                                          data['test_build']['revision'],
                                          data['testrun']['date'] ])
 
         return test_run_id
+
+    def _insert_data(self, statement, placeholders, executemany=False):
+
+        self.sources["perftest"].dhub.execute(
+            proc='perftest.inserts.' + statement,
+            debug_show=self.DEBUG,
+            placeholders=placeholders,
+            executemany=executemany,
+            )
+
+
+    def _insert_data_and_get_id(self, statement, placeholders):
+
+        self._insert_data(statement, placeholders)
+
+        id_iter = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_last_insert_id',
+            debug_show=self.DEBUG,
+            return_type='iter',
+            )
+
+        return id_iter.get_column_data('id')
 
 
     def _get_machine_id(self, data, ref_data):
@@ -643,7 +651,7 @@ class DatazillaModel(object):
             if name in ref_data['machines']:
                 machine_id = ref_data['machines'][ name ]['id']
             else:
-                machine_id = self.sources["perftest"].get_last_insert_id('set_machine_data',
+                machine_id = self._insert_data_and_get_id('set_machine_data',
                                                  [ name, int(time.time()) ])
 
         except KeyError:
@@ -668,7 +676,7 @@ class DatazillaModel(object):
                 if 'suite_version' in data['testrun']:
                     version = int(data['testrun']['suite_version'])
 
-                test_id = self.sources["perftest"].get_last_insert_id('set_test',
+                test_id = self._insert_data_and_get_id('set_test',
                                       [ data['testrun']['suite'], version ])
 
         except KeyError:
@@ -687,7 +695,7 @@ class DatazillaModel(object):
             if os_key in ref_data['operating_systems']:
                 os_id = ref_data['operating_systems'][os_key]
             else:
-                os_id = self.sources["perftest"].get_last_insert_id('set_operating_system',
+                os_id = self._insert_data_and_get_id('set_operating_system',
                                             [ os_name, os_version ])
 
         except KeyError:
@@ -705,7 +713,8 @@ class DatazillaModel(object):
                     if option in ref_data['options']:
                         option_ids[ option ] = ref_data['options'][option]
                     else:
-                        test_id = self.sources["perftest"].get_last_insert_id('set_option_data', [ option ])
+                        test_id = self._insert_data_and_get_id('set_option_data',
+                                                               [ option ])
                         option_ids[ option ] = test_id
         except KeyError:
             raise
@@ -727,8 +736,8 @@ class DatazillaModel(object):
             if product_key in ref_data['products']:
                 product_id = ref_data['products'][product_key]
             else:
-                product_id = self.sources["perftest"].get_last_insert_id('set_product_data',
-                                                 [ product, branch, version ])
+                product_id = self._insert_data_and_get_id('set_product_data',
+                                              [ product, branch, version ])
 
         except KeyError:
             raise

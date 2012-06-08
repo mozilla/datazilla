@@ -71,7 +71,7 @@ def graphs(request, project=""):
     return render_to_response('graphs.views.html', data)
 
 
-def get_help(request):
+def get_help(request, project=""):
     data = {}
     return render_to_response('help/dataview.generic.help.html', data)
 
