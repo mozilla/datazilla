@@ -27,7 +27,7 @@ class DatazillaModel(object):
         self.project = project
 
         self.sources = {}
-        for ct in CONTENT_TYPES:
+        for ct in self.CONTENT_TYPES:
             self.sources[ct] = self.get_datasource_class()(project, ct)
 
         self.DEBUG = settings.DEBUG
@@ -52,7 +52,7 @@ class DatazillaModel(object):
     def create(cls, project):
         """Create all the datasource tables for this project."""
 
-        for ct in CONTENT_TYPES:
+        for ct in cls.CONTENT_TYPES:
             cls.get_datasource_class().create(project, ct)
 
         return cls(project=project)

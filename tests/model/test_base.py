@@ -1,8 +1,3 @@
-def pytest_funcarg__dm(request):
-    from datazilla.model import DatazillaModel
-    return DatazillaModel("talos")
-
-
 def test_get_operating_systems(dm):
     dm.get_operating_systems()
 

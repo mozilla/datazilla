@@ -1,3 +1,4 @@
+from functools import partial
 import os
 from random import choice
 from string import letters
@@ -29,9 +30,64 @@ def pytest_sessionstart(session):
     from django.core.cache import cache
     cache.key_prefix = "t-" + "".join([choice(letters) for i in range(5)])
 
+    from datazilla.model import DatazillaModel
+    DatazillaModel.create("testproj")
+
 
 def pytest_sessionfinish(session):
     """Tear down the test environment, including databases."""
     print("\n")
+
+    from django.conf import settings
+    from datazilla.model import DatazillaModel
+    import MySQLdb
+
+    for sds in DatazillaModel("testproj").sources.values():
+        conn = MySQLdb.connect(
+            host=sds.datasource.host,
+            user=settings.DATAZILLA_DATABASE_USER,
+            passwd=settings.DATAZILLA_DATABASE_PASSWORD,
+            )
+        cur = conn.cursor()
+        cur.execute("DROP DATABASE {0}".format(sds.datasource.name))
+        conn.close()
+
     session.django_runner.teardown_databases(session.django_db_config)
     session.django_runner.teardown_test_environment()
+
+
+
+def truncate(dm):
+    """Truncates all tables in all databases in given DatazillaModel."""
+    from django.conf import settings
+    import MySQLdb
+    for sds in dm.sources.values():
+        conn = MySQLdb.connect(
+            host=sds.datasource.host,
+            user=settings.DATAZILLA_DATABASE_USER,
+            passwd=settings.DATAZILLA_DATABASE_PASSWORD,
+            db=sds.datasource.name,
+            )
+        cur = conn.cursor()
+        cur.execute("SET FOREIGN_KEY_CHECKS = 0")
+        cur.execute("SHOW TABLES")
+        for table, in cur.fetchmany():
+            cur.execute("TRUNCATE TABLE {0}".format(table))
+        cur.execute("SET FOREIGN_KEY_CHECKS = 1")
+        conn.close()
+
+
+
+def pytest_funcarg__dm(request):
+    """
+    A DatazillaModel instance.
+
+    Truncates all tables between tests in order to provide isolation.
+
+    """
+    from datazilla.model import DatazillaModel
+
+    dm = DatazillaModel("testproj")
+    request.addfinalizer(partial(truncate, dm))
+    return dm
+
