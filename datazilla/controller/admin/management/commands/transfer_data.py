@@ -66,12 +66,13 @@ class Command(BaseCommand):
 
             dm_source = DatazillaModel(source)
             dhub = dm_source.sources["perftest"].dhub
-            dhub.execute(sql=s%str(start), return_type='tuple')
+            d = dhub.execute(sql=s%str(start), return_type='tuple')
             dm_source.disconnect()
 
             chunks += 1
             dm_target = DatazillaModel(target)
-            self.stdout.write("\tinserting chunk %i out of %i\n" % (chunks, total_chunks))
+            self.stdout.write("\tinserting chunk %i out of %i\n" % \
+                    (chunks, total_chunks))
             for data in d:
                 deserialized_data = json.loads( data['data'] )
 

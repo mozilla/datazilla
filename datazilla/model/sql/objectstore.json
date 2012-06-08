@@ -1,15 +1,12 @@
 {
-  "views":{
-
-  },
   "inserts":{
       "store_json":{
 
          "sql":"INSERT INTO `objectstore` (`timestamp`, `json_blob`) VALUES (NOW(), ?)",
 
          "host":"master_host"
-
-      },
+      }
+  },
   "selects":{
       "get_unprocessed":{
 
@@ -21,9 +18,6 @@
          "host":"master_host"
 
       }
-  }
-  "updates":{
-
   }
 }
 

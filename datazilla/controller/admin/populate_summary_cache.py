@@ -29,8 +29,8 @@ from django.core.cache import cache
 
 def cache_test_summaries(project):
 
-    gm = DatazillaModel(project)
-    data_iter = gm.get_all_summary_cache()
+    dm = DatazillaModel(project)
+    data_iter = dm.get_all_summary_cache()
 
     mc = memcache.Client([settings.DATAZILLA_MEMCACHED], debug=0)
 
@@ -48,21 +48,21 @@ def cache_test_summaries(project):
                         ( str(data['item_id']), data['item_data'] ) 
                 sys.stderr.write(msg)
 
-    gm.disconnect()
+    dm.disconnect()
 
 def build_test_summaries(project):
 
-    gm = DatazillaModel(project)
+    dm = DatazillaModel(project)
 
     time_ranges = utils.get_time_ranges()
 
-    products = gm.get_products()
+    products = dm.get_products()
 
     for product_name in products:
 
         for tr in ['days_7', 'days_30']:
 
-            table = gm.get_test_run_summary(str( time_ranges[tr]['start']),
+            table = dm.get_test_run_summary(str( time_ranges[tr]['start']),
                                          str( time_ranges[tr]['stop']),
                                          [ products[ product_name ] ],
                                          [],
@@ -70,9 +70,9 @@ def build_test_summaries(project):
 
             json_data = json.dumps( table )
 
-            gm.set_summary_cache( products[ product_name ], tr, json_data )
+            dm.set_summary_cache( products[ product_name ], tr, json_data )
 
-    gm.disconnect()
+    dm.disconnect()
 
 if __name__ == '__main__':
 

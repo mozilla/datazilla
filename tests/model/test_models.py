@@ -3,49 +3,49 @@ def pytest_funcarg__dm(request):
     return DatazillaModel("talos")
 
 
-def testGetOperatingSystems(dm):
-    testData = dm.getOperatingSystems()
+def test_get_operating_systems(dm):
+    test_data = dm.get_operating_systems()
 
 
-def testGetTests(dm):
-    testData = dm.getTests()
+def test_get_tests(dm):
+    test_data = dm.get_tests()
 
 
-def testGetProducts(dm):
-    testData = dm.getProducts()
+def test_get_products(dm):
+    test_data = dm.get_products()
 
 
-def testGetMachines(dm):
-    testData = dm.getMachines()
+def test_get_machines(dm):
+    test_data = dm.get_machines()
 
 
-def testGetOptions(dm):
-    testData = dm.getOptions()
+def test_get_options(dm):
+    test_data = dm.get_options()
 
 
-def testGetPages(dm):
-    testData = dm.getPages()
+def test_get_pages(dm):
+    test_data = dm.get_pages()
 
 
-def testGetAuxData(dm):
-    testData = dm.getAuxData()
+def test_get_aux_data(dm):
+    test_data = dm.get_aux_data()
 
 
-def testGetRef(dm):
-    testData = dm.getReferenceData()
+def test_get_ref(dm):
+    test_data = dm.get_reference_data()
 
 
-def testGetTestCollections(dm):
-    testData = dm.getTestCollections()
+def test_get_test_collections(dm):
+    test_data = dm.get_test_collections()
 
 
-def testGetTestReferenceData(dm):
-    testData = dm.getTestReferenceData()
+def test_get_test_reference_data(dm):
+    test_data = dm.get_test_reference_data()
 
 
-def testGetProductTestOsMap(dm):
-    testData = dm.getProductTestOsMap()
+def test_get_product_test_os_map(dm):
+    test_data = dm.get_product_test_os_map()
 
 
-def testGetSummaryCache(dm):
-    cacheData = dm.getSummaryCache(10, 'days_30')
+def test_get_summary_cache(dm):
+    cache_data = dm.get_summary_cache(10, 'days_30')
