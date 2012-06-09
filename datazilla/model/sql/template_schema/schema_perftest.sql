@@ -40,7 +40,7 @@ CREATE TABLE `aux_data` (
   `name` varchar(25) COLLATE utf8_bin NOT NULL,
   `description` mediumtext COLLATE utf8_bin,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `name_UNIQUE` (`name`),
+  UNIQUE KEY `test_id_name_UNIQUE` (`test_id`, `name`),
   KEY `test_id_key` (`test_id`),
   CONSTRAINT `fk_aux_data_test` FOREIGN KEY (`test_id`) REFERENCES `test` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
@@ -237,9 +237,10 @@ associated with it.
 CREATE TABLE `pages` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `test_id` int(11) NOT NULL,
-  `url` varchar(1000) COLLATE utf8_bin NOT NULL,
+  `url` varchar(255) COLLATE utf8_bin NOT NULL,
   PRIMARY KEY (`id`),
   KEY `test_id_key` (`test_id`),
+  UNIQUE KEY `unique_test_url` (`test_id`,`url`),
   CONSTRAINT `fk_pages_test` FOREIGN KEY (`test_id`) REFERENCES `test` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -324,7 +325,8 @@ CREATE TABLE `test` (
   `name` varchar(128) COLLATE utf8_bin NOT NULL,
   `description` mediumtext COLLATE utf8_bin,
   `version` int(11) NOT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name_UNIQUE` (`name`, `version`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
