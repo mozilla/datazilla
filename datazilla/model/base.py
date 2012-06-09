@@ -459,24 +459,36 @@ class DatazillaModel(object):
     def load_test_data(self, data, json_data):
         """Process the JSON test data into the database."""
 
-        ##Get the reference data##
-        ref_data = self.get_reference_data()
+        ##reference id data required by insert methods in ref_data##
+        ref_data = dict()
 
-        ##Get/Set reference info##
-        ref_data['test_id'] = self._get_test_id(data, ref_data)
-        ref_data['option_id_map'] = self._get_option_ids(data, ref_data)
-        ref_data['operating_system_id'] = self._get_os_id(data, ref_data)
-        ref_data['product_id'] = self._get_product_id(data, ref_data)
-        ref_data['machine_id'] = self._get_machine_id(data, ref_data)
+        ###
+        #Get/Set reference info, all inserts use an on duplicate key
+        #approach
+        ###
+        ref_data['test_id'] = self._get_test_id(data)
+        ref_data['option_ids'] = self._get_option_ids(data)
+        ref_data['operating_system_id'] = self._get_os_id(data)
+        ref_data['product_id'] = self._get_product_id(data)
+        ref_data['machine_id'] = self._get_machine_id(data)
 
+        ###
+        #Insert build and test_run data.  All other test data
+        #types require the build_id and test_run_id to meet foreign key
+        #constriants.
+        ###
         ref_data['build_id'] = self._set_build_data(data, ref_data)
         ref_data['test_run_id'] = self._set_test_run_data(data, ref_data)
 
         self._set_option_data(data, ref_data)
         self._set_test_values(data, ref_data)
         self._set_test_aux_data(data, ref_data)
-        self._set_test_data(json_data, ref_data)
 
+        ###
+        #TODO: Once the object store is in place
+        #this function call should be removed.
+        ###
+        self._set_test_data(json_data, ref_data)
 
     def _set_test_data(self, json_data, ref_data):
 
@@ -543,12 +555,22 @@ class DatazillaModel(object):
 
         aux_id = 0
         try:
-            if aux_data in ref_data['aux_data']:
-                aux_id = ref_data['aux_data'][aux_data]['id']
-            else:
-                aux_id = self._insert_data('set_aux_data',
-                                           [ref_data['test_id'],
-                                            aux_data])
+            ##Insert the test id and aux data on duplicate key update##
+            insert_proc = 'perftest.inserts.set_aux_ref_data'
+            self.sources["perftest"].dhub.execute(
+                proc=insert_proc,
+                placeholders=[ ref_data['test_id'], aux_data ],
+                debug_show=self.DEBUG)
+
+            ##Get the aux data id##
+            select_proc = 'perftest.selects.get_aux_data_id'
+            id_iter = self.sources["perftest"].dhub.execute(
+                proc=select_proc,
+                placeholders=[ ref_data['test_id'], aux_data ],
+                debug_show=self.DEBUG,
+                return_type='iter')
+
+            aux_id = id_iter.get_column_data('id')
 
         except KeyError:
             raise
@@ -560,12 +582,22 @@ class DatazillaModel(object):
 
         page_id = 0
         try:
-            if page in ref_data['pages']:
-                page_id = ref_data['pages'][page]['id']
-            else:
-                page_id = self._insert_data_and_get_id('set_pages_data',
-                                                       [ref_data['test_id'],
-                                                        page])
+            ##Insert the test id and page name on duplicate key update##
+            insert_proc = 'perftest.inserts.set_pages_ref_data'
+            self.sources["perftest"].dhub.execute(
+                proc=insert_proc,
+                placeholders=[ ref_data['test_id'], page ],
+                debug_show=self.DEBUG)
+
+            ##Get the page id##
+            select_proc = 'perftest.selects.get_page_id'
+            id_iter = self.sources["perftest"].dhub.execute(
+                proc=select_proc,
+                placeholders=[ ref_data['test_id'], page ],
+                debug_show=self.DEBUG,
+                return_type='iter')
+
+            page_id = id_iter.get_column_data('id')
 
         except KeyError:
             raise
@@ -577,7 +609,9 @@ class DatazillaModel(object):
 
         if 'options' in data['testrun']:
             for option in data['testrun']['options']:
-                id = ref_data['option_id_map'][option]['id']
+
+                id = ref_data['option_ids'][option]
+
                 value = data['testrun']['options'][option]
 
                 placeholders = [
@@ -643,16 +677,28 @@ class DatazillaModel(object):
         return id_iter.get_column_data('id')
 
 
-    def _get_machine_id(self, data, ref_data):
+    def _get_machine_id(self, data):
 
         machine_id = 0
         try:
             name = data['test_machine']['name']
-            if name in ref_data['machines']:
-                machine_id = ref_data['machines'][ name ]['id']
-            else:
-                machine_id = self._insert_data_and_get_id('set_machine_data',
-                                                 [ name, int(time.time()) ])
+
+            ##Insert the the machine name and timestamp on duplicate key update##
+            insert_proc = 'perftest.inserts.set_machine_ref_data'
+            self.sources["perftest"].dhub.execute(
+                proc=insert_proc,
+                placeholders=[ name, int(time.time()) ],
+                debug_show=self.DEBUG)
+
+            ##Get the machine id##
+            select_proc = 'perftest.selects.get_machine_id'
+            id_iter = self.sources["perftest"].dhub.execute(
+                proc=select_proc,
+                placeholders=[ name ],
+                debug_show=self.DEBUG,
+                return_type='iter')
+
+            machine_id = id_iter.get_column_data('id')
 
         except KeyError:
             raise
@@ -661,23 +707,34 @@ class DatazillaModel(object):
             return machine_id
 
 
-    def _get_test_id(self, data, ref_data):
+    def _get_test_id(self, data):
         test_id = 0
         try:
-            if data['testrun']['suite'] in ref_data['tests']:
-                test_id = ref_data['tests'][ data['testrun']['suite'] ]['id']
-            else:
-                ###
-                #TODO: version should be set in the data structure
-                #      provided.  This currently hard codes it to 1
-                #      for all tests
-                ###
-                version = 1
-                if 'suite_version' in data['testrun']:
-                    version = int(data['testrun']['suite_version'])
+            #TODO: version should be set in the data structure
+            #      provided.  This currently hard codes it to 1
+            #      for all tests
+            ###
+            version = 1
 
-                test_id = self._insert_data_and_get_id('set_test',
-                                      [ data['testrun']['suite'], version ])
+            if 'suite_version' in data['testrun']:
+                version = int(data['testrun']['suite_version'])
+
+            ##Insert the test name and version on duplicate key update##
+            insert_proc = 'perftest.inserts.set_test_ref_data'
+            self.sources["perftest"].dhub.execute(
+                proc=insert_proc,
+                placeholders=[ data['testrun']['suite'], version ],
+                debug_show=self.DEBUG)
+
+            ##Get the test name id##
+            select_proc = 'perftest.selects.get_test_id'
+            id_iter = self.sources["perftest"].dhub.execute(
+                proc=select_proc,
+                placeholders=[ data['testrun']['suite'], version ],
+                debug_show=self.DEBUG,
+                return_type='iter')
+
+            test_id = id_iter.get_column_data('id')
 
         except KeyError:
             raise
@@ -685,18 +742,29 @@ class DatazillaModel(object):
             return test_id
 
 
-    def _get_os_id(self, data, ref_data):
+    def _get_os_id(self, data):
 
         os_id = 0
         try:
             os_name = data['test_machine']['os']
             os_version = data['test_machine']['osversion']
-            os_key = os_name + os_version
-            if os_key in ref_data['operating_systems']:
-                os_id = ref_data['operating_systems'][os_key]
-            else:
-                os_id = self._insert_data_and_get_id('set_operating_system',
-                                            [ os_name, os_version ])
+
+            ##Insert the operating system name and version on duplicate key update##
+            insert_proc = 'perftest.inserts.set_os_ref_data'
+            self.sources["perftest"].dhub.execute(
+                proc=insert_proc,
+                placeholders=[ os_name, os_version ],
+                debug_show=self.DEBUG)
+
+            ##Get the operating system name id##
+            select_proc = 'perftest.selects.get_os_id'
+            id_iter = self.sources["perftest"].dhub.execute(
+                proc=select_proc,
+                placeholders=[ os_name, os_version ],
+                debug_show=self.DEBUG,
+                return_type='iter')
+
+            os_id = id_iter.get_column_data('id')
 
         except KeyError:
             raise
@@ -705,24 +773,36 @@ class DatazillaModel(object):
             return os_id
 
 
-    def _get_option_ids(self, data, ref_data):
+    def _get_option_ids(self, data):
         option_ids = dict()
         try:
             if 'options' in data['testrun']:
                 for option in data['testrun']['options']:
-                    if option in ref_data['options']:
-                        option_ids[ option ] = ref_data['options'][option]
-                    else:
-                        test_id = self._insert_data_and_get_id('set_option_data',
-                                                               [ option ])
-                        option_ids[ option ] = test_id
+
+                    ##Insert the option name on duplicate key update##
+                    insert_proc = 'perftest.inserts.set_option_ref_data'
+                    self.sources["perftest"].dhub.execute(
+                        proc=insert_proc,
+                        placeholders=[ option ],
+                        debug_show=self.DEBUG)
+
+                    ##Get the option id##
+                    select_proc = 'perftest.selects.get_option_id'
+                    id_iter = self.sources["perftest"].dhub.execute(
+                        proc=select_proc,
+                        placeholders=[ option ],
+                        debug_show=self.DEBUG,
+                        return_type='iter')
+
+                    option_ids[option] = id_iter.get_column_data('id')
+
         except KeyError:
             raise
         else:
             return option_ids
 
 
-    def _get_product_id(self, data, ref_data):
+    def _get_product_id(self, data):
 
         product_id = 0
 
@@ -731,13 +811,22 @@ class DatazillaModel(object):
             branch = data['test_build']['branch']
             version = data['test_build']['version']
 
-            product_key = product + branch + version
+            ##Insert the product, branch, and version on duplicate key update##
+            insert_proc = 'perftest.inserts.set_product_ref_data'
+            self.sources["perftest"].dhub.execute(
+                proc=insert_proc,
+                placeholders=[ product, branch, version ],
+                debug_show=self.DEBUG)
 
-            if product_key in ref_data['products']:
-                product_id = ref_data['products'][product_key]
-            else:
-                product_id = self._insert_data_and_get_id('set_product_data',
-                                              [ product, branch, version ])
+            ##Get the product id##
+            select_proc = 'perftest.selects.get_product_id'
+            id_iter = self.sources["perftest"].dhub.execute(
+                proc=select_proc,
+                placeholders=[ product, branch, version ],
+                debug_show=self.DEBUG,
+                return_type='iter')
+
+            product_id = id_iter.get_column_data('id')
 
         except KeyError:
             raise
