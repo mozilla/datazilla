@@ -276,6 +276,8 @@ class DataSource(models.Model):
         """
         if self.type.lower().startswith("mysql-"):
             engine = self.type[len("mysql-"):]
+        elif self.type.lower() == "mysql":
+            engine = "InnoDB"
         else:
             raise NotImplementedError(
                 "Currently SQLDataSource supports only MySQL data sources.")
