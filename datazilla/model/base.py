@@ -49,12 +49,29 @@ class DatazillaModel(object):
 
 
     @classmethod
-    def create(cls, project, hosts=None):
-        """Create all the datasource tables for this project."""
+    def create(cls, project, hosts=None, types=None):
+        """
+        Create all the datasource tables for this project.
+
+        ``hosts`` is an optional dictionary mapping contenttype names to the
+        database server host on which the database for that contenttype should
+        be created. Not all contenttypes need to be represented; any that
+        aren't will use the default (``DATAZILLA_DATABASE_HOST``).
+
+        ``types`` is an optional dictionary mapping contenttype names to the
+        type of database that should be created. For MySQL/MariaDB databases,
+        use "MySQL-Engine", where "Engine" could be "InnoDB", "Aria", etc. Not
+        all contenttypes need to be represented; any that aren't will use the
+        default (``MySQL-InnoDB``).
+
+
+        """
         hosts = hosts or {}
+        types = types or {}
 
         for ct in cls.CONTENT_TYPES:
-            cls.get_datasource_class().create(project, ct, host=hosts.get(ct))
+            cls.get_datasource_class().create(
+                project, ct, host=hosts.get(ct), db_type=types.get(ct))
 
         return cls(project=project)
 

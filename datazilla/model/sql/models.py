@@ -118,22 +118,22 @@ class SQLDataSource(object):
             contenttype=self.contenttype,
             dataset=dataset,
             host=self.datasource.host,
-            engine=self.engine,
+            db_type=self.datasource.type,
             schema_file=schema_file,
             )
 
 
     @classmethod
     def create(cls, project, contenttype,
-               host=None, name=None, engine=None, schema_file=None):
+               host=None, name=None, db_type=None, schema_file=None):
         """
         Create and return a new datasource for given project/contenttype.
 
         Creates the database ``name`` (defaults to "project_contenttype_1") on
         host ``host`` (defaults to ``DATAZILLA_DATABASE_HOST``) and populates
         the template schema from ``schema_file`` (defaults to
-        ``template_schema/schema_<contenttype>.sql``) using the table engine
-        ``engine`` (defaults to "InnoDB").
+        ``template_schema/schema_<contenttype>.sql``) using the db type
+        ``db_type`` (defaults to "MySQL-InnoDB").
 
         Assumes that the database server at ``host`` is accessible, and that
         ``DATAZILLA_DATABASE_USER`` (identified by
@@ -150,7 +150,7 @@ class SQLDataSource(object):
             dataset=1,
             host=host,
             name=name,
-            engine=engine,
+            db_type=db_type,
             schema_file=schema_file,
             )
 
@@ -158,12 +158,12 @@ class SQLDataSource(object):
     @classmethod
     @transaction.commit_on_success
     def _create_dataset(cls, project, contenttype, dataset, host,
-                        name=None, engine=None, schema_file=None):
+                        name=None, db_type=None, schema_file=None):
         """Create a new ``SQLDataSource`` and its corresponding database."""
         if name is None:
             name = "{0}_{1}_{2}".format(project, contenttype, dataset)
-        if engine is None:
-            engine = "InnoDB"
+        if db_type is None:
+            db_type = "MySQL-InnoDB"
 
         ds = DataSource.objects.create(
             host=host,
@@ -171,8 +171,7 @@ class SQLDataSource(object):
             contenttype=contenttype,
             dataset=dataset,
             name=name,
-            type="MySQL",
-            engine="InnoDB",
+            type=db_type,
             creation_date=datetime.datetime.now(),
             )
 
@@ -210,7 +209,6 @@ class DataSource(models.Model):
     host = models.CharField(max_length=128)
     name = models.CharField(max_length=128)
     type = models.CharField(max_length=25)
-    engine = models.CharField(max_length=25, blank=True)
     creation_date = models.DateTimeField()
 
     objects = DataSourceManager()
@@ -276,6 +274,12 @@ class DataSource(models.Model):
         create databases.
 
         """
+        if self.type.lower().startswith("mysql-"):
+            engine = self.type[len("mysql-"):]
+        else:
+            raise NotImplementedError(
+                "Currently SQLDataSource supports only MySQL data sources.")
+
         if schema_file is None:
             schema_file = os.path.join(
                 SQL_PATH,
@@ -296,7 +300,7 @@ class DataSource(models.Model):
         # have to shell out to the commandline client.
         with open(schema_file) as f:
             # set the engine to use
-            sql = f.read().format(engine=self.engine)
+            sql = f.read().format(engine=engine)
 
         args = [
             "mysql",
