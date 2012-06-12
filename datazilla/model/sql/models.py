@@ -118,20 +118,22 @@ class SQLDataSource(object):
             contenttype=self.contenttype,
             dataset=dataset,
             host=self.datasource.host,
+            engine=self.engine,
             schema_file=schema_file,
             )
 
 
     @classmethod
     def create(cls, project, contenttype,
-               host=None, name=None, schema_file=None):
+               host=None, name=None, engine=None, schema_file=None):
         """
         Create and return a new datasource for given project/contenttype.
 
         Creates the database ``name`` (defaults to "project_contenttype_1") on
         host ``host`` (defaults to ``DATAZILLA_DATABASE_HOST``) and populates
         the template schema from ``schema_file`` (defaults to
-        ``template_schema/schema_<contenttype>.sql``).
+        ``template_schema/schema_<contenttype>.sql``) using the table engine
+        ``engine`` (defaults to "InnoDB").
 
         Assumes that the database server at ``host`` is accessible, and that
         ``DATAZILLA_DATABASE_USER`` (identified by
@@ -148,6 +150,7 @@ class SQLDataSource(object):
             dataset=1,
             host=host,
             name=name,
+            engine=engine,
             schema_file=schema_file,
             )
 
@@ -155,10 +158,12 @@ class SQLDataSource(object):
     @classmethod
     @transaction.commit_on_success
     def _create_dataset(cls, project, contenttype, dataset, host,
-                        name=None, schema_file=None):
+                        name=None, engine=None, schema_file=None):
         """Create a new ``SQLDataSource`` and its corresponding database."""
         if name is None:
             name = "{0}_{1}_{2}".format(project, contenttype, dataset)
+        if engine is None:
+            engine = "InnoDB"
 
         ds = DataSource.objects.create(
             host=host,
@@ -167,6 +172,7 @@ class SQLDataSource(object):
             dataset=dataset,
             name=name,
             type="MySQL",
+            engine="InnoDB",
             creation_date=datetime.datetime.now(),
             )
 
@@ -204,6 +210,7 @@ class DataSource(models.Model):
     host = models.CharField(max_length=128)
     name = models.CharField(max_length=128)
     type = models.CharField(max_length=25)
+    engine = models.CharField(max_length=25, blank=True)
     creation_date = models.DateTimeField()
 
     objects = DataSourceManager()
@@ -261,7 +268,7 @@ class DataSource(models.Model):
         Create the database for this source, using given SQL schema file.
 
         If schema file is not given, defaults to
-        "template_schema/schema_<contenttype>.sql".
+        "template_schema/schema_<contenttype>.sql.tmpl".
 
         Assumes that the database server at ``self.host`` is accessible, and
         that ``DATAZILLA_DATABASE_USER`` (identified by
@@ -273,7 +280,7 @@ class DataSource(models.Model):
             schema_file = os.path.join(
                 SQL_PATH,
                 "template_schema",
-                "schema_{0}.sql".format(self.contenttype),
+                "schema_{0}.sql.tmpl".format(self.contenttype),
                 )
 
         conn = MySQLdb.connect(
@@ -288,15 +295,30 @@ class DataSource(models.Model):
         # MySQLdb provides no way to execute an entire SQL file in bulk, so we
         # have to shell out to the commandline client.
         with open(schema_file) as f:
-            args = [
-                "mysql",
-                "--host={0}".format(self.host),
-                "--user={0}".format(settings.DATAZILLA_DATABASE_USER),
-                ]
-            if settings.DATAZILLA_DATABASE_PASSWORD:
-                args.append(
-                    "--password={0}".format(
-                        settings.DATAZILLA_DATABASE_PASSWORD)
-                    )
-            args.append(self.name)
-            subprocess.check_call(args, stdin=f)
+            # set the engine to use
+            sql = f.read().format(engine=self.engine)
+
+        args = [
+            "mysql",
+            "--host={0}".format(self.host),
+            "--user={0}".format(settings.DATAZILLA_DATABASE_USER),
+            ]
+        if settings.DATAZILLA_DATABASE_PASSWORD:
+            args.append(
+                "--password={0}".format(
+                    settings.DATAZILLA_DATABASE_PASSWORD)
+                )
+        args.append(self.name)
+        proc = subprocess.Popen(
+            args,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            )
+        (output, _) = proc.communicate(sql)
+        if proc.returncode:
+            raise IOError(
+                "Unable to set up schema for datasource {0}: "
+                "mysql returned code {1}, output follows:\n\n{2}".format(
+                    self.key, proc.returncode, output)
+                )
