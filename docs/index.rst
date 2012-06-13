@@ -17,8 +17,8 @@ Contents
    :maxdepth: 2
 
    installation
+   development
    architecture
-   tests
 
 * :ref:`search`
 
