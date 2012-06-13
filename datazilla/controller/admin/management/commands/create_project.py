@@ -1,11 +1,11 @@
 from optparse import make_option
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from datazilla.model import DatazillaModel
 
 class Command(BaseCommand):
-    """Management command to Create all necessary tables for a new project."""
+    """Management command to create all databases for a new project."""
 
-    help = "Create all necessary tables for a new project."
+    help = "Create all databases for a new project."
 
     option_list = BaseCommand.option_list + (
         make_option('--project',
@@ -25,32 +25,42 @@ class Command(BaseCommand):
                     action='store',
                     dest='objectstore_host',
                     default=None,
-                    help='The host name for the objectstore database'),)
+                    help='The host name for the objectstore database'),
+
+        make_option('--perftest_type',
+                    action='store',
+                    dest='perftest_type',
+                    default=None,
+                    help='The database type (e.g. "MySQL-InnoDB") '
+                    'for the perftest database'),
+
+        make_option('--objectstore_type',
+                    action='store',
+                    dest='objectstore_type',
+                    default=None,
+                    help='The database type (e.g. "MySQL-Aria") '
+                    'for the objectstore database'),)
 
     def handle(self, *args, **options):
-        """ Create tables for a new project based on the args value. """
+        """ Create databases for a new project based on the args value. """
 
         project = options.get('project')
-        perftest_host = options.get('perftest_host')
-        objectstore_host = options.get('objectstore_host')
 
         if not project:
             self.stdout.write("You must supply a project name " +
                               "to create: --project project\n")
+            return
 
-        if not perftest_host:
-            self.stdout.write("You must supply the host name of the " +
-                              "perftest database: --perftest_host " +
-                              "hostname\n")
+        hosts = dict(
+            perftest=options.get("perftest_host"),
+            objectstore=options.get("objectstore_host"),
+            )
 
-        if not objectstore_host:
-            self.stdout.write("You must supply the host name of the " +
-                              "objectstore database: --objectstore_host " +
-                              "hostname\n")
+        types = dict(
+            perftest=options.get("perftest_type"),
+            objectstore=options.get("objectstore_type"),
+            )
 
-        hosts = dict(perftest=perftest_host,
-                     objectstore=objectstore_host)
-
-        dm = DatazillaModel.create(project, hosts)
+        dm = DatazillaModel.create(project, hosts=hosts, types=types)
 
         dm.disconnect()
