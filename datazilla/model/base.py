@@ -443,21 +443,42 @@ class DatazillaModel(object):
             )
 
 
-    def retrieve_test_data(self, limit):
+    def retrieve_test_data(self, limit, lock_rows=False):
         """Retrieve the JSON from the objectstore to be processed"""
-        proc = 'objectstore.selects.get_unprocessed'
+        proc_mark = 'objectstore.updates.mark_loading'
+        proc_get  = 'objectstore.selects.get_unprocessed'
 
-        json_blobs = self.sources["objectstore"].dhub.execute(
-            proc=proc,
-            placeholders=[ limit ],
-            debug_show=self.DEBUG,
-            return_type='tuple'
-            )
+        if lock_rows:
+            ## Lock rows for processing ##
+            self.sources["objectstore"].dhub.execute(
+                proc=proc_mark,
+                placeholders=[ limit ],
+                debug_show=self.DEBUG,
+                )
+
+            ### Retrieve data from those rows ##
+            json_blobs = self.sources["objectstore"].dhub.execute(
+                proc=proc_get,
+                placeholders=[ limit ],
+                debug_show=self.DEBUG,
+                return_type='tuple'
+                )
+        else:
+            ## Retrieve data without locking ##
+            ## Used by transfer_data.py ##
+            proc = "objectstore.selects.get_unprocessed_nolock"
+            json_blobs = self.sources["objectstore"].dhub.execute(
+                proc=proc,
+                placeholders=[ limit ],
+                debug_show=self.DEBUG,
+                return_Type='tuple'
+                )
 
         return json_blobs
 
-    def load_test_data(self, data, json_data):
+    def load_test_data(self, data, call_completed=False, objstore_id=0):
         """Process the JSON test data into the database."""
+
 
         ##reference id data required by insert methods in ref_data##
         ref_data = dict()
@@ -484,11 +505,15 @@ class DatazillaModel(object):
         self._set_test_values(data, ref_data)
         self._set_test_aux_data(data, ref_data)
 
-        ###
-        #TODO: Once the object store is in place
-        #this function call should be removed.
-        ###
-        self._set_test_data(json_data, ref_data)
+        if call_completed:
+            ## Call to database to mark the task completed ##
+            proc_completed = "objectstore.updates.mark_complete"
+
+            self.sources["objectstore"].dhub.execute(
+                proc=proc_completed,
+                placeholders=[ objstore_id ],
+                debug_show=self.DEBUG
+                )
 
     def _set_test_data(self, json_data, ref_data):
 

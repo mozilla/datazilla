@@ -50,10 +50,10 @@ class MySQL(SQLHub):
 
         ##Make sure we really need to connect##
         connect = False
-        if host_type in SQLHub.connection and SQLHub.connection[host_type]['con_obj']:
+        if host_type in self.connection and self.connection[host_type]['con_obj']:
             try:
                 ##We have a connection, make sure it's active##
-                SQLHub.connection[host_type]['con_obj'].ping()
+                self.connection[host_type]['con_obj'].ping()
             except OperationalError:
                 ##Connection is corrupt, reconnect##
                 connect = True
@@ -63,22 +63,22 @@ class MySQL(SQLHub):
 
         if connect:
             ##No connection exists, connect##
-            SQLHub.connection[host_type] = dict( con_obj=None, cursor=None)
+            self.connection[host_type] = dict( con_obj=None, cursor=None)
 
             if db:
-                SQLHub.connection[host_type]['con_obj'] = MySQLdb.connect( host=self.conf[host_type]['host'],
+                self.connection[host_type]['con_obj'] = MySQLdb.connect( host=self.conf[host_type]['host'],
                                                                           user=self.conf[host_type]['user'],
                                                                           passwd=self.conf[host_type].get('passwd', ''),
                                                                           cursorclass=MySQLdb.cursors.DictCursor,
                                                                           db=db)
             else:
-                SQLHub.connection[host_type]['con_obj'] = MySQLdb.connect( host=self.conf[host_type]['host'],
+                self.connection[host_type]['con_obj'] = MySQLdb.connect( host=self.conf[host_type]['host'],
                                                                           user=self.conf[host_type]['user'],
                                                                           passwd=self.conf[host_type].get('passwd', ''),
                                                                           cursorclass = MySQLdb.cursors.DictCursor)
 
-            SQLHub.connection[host_type]['cursor'] = SQLHub.connection[host_type]['con_obj'].cursor()
-
+            self.connection[host_type]['con_obj'].autocommit(False)
+            self.connection[host_type]['cursor'] = self.connection[host_type]['con_obj'].cursor()
 
     def try_to_connect(self, host_type, db):
 
@@ -101,7 +101,7 @@ class MySQL(SQLHub):
                 time.sleep(self.sleep_interval)
                 continue
 
-        if not SQLHub.connection[host_type]['con_obj']:
+        if not self.connection[host_type]['con_obj']:
             ###
             #If we made it here we've tried to connect max_connect_attempts, it's time to throw
             #in the towel.  Clearly the universe is working against us today, chin up
