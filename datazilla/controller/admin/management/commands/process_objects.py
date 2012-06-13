@@ -57,8 +57,8 @@ objectstore to perftest.
 """ WIP, right now this is just copied from transfer_data.py """
 class Command(BaseCommand):
 
-    help = "Transfer json blobs from the key/value store, uncompacting
-            them appropriately to the appropriate database."
+    help = "Transfer json blobs from the key/value store, uncompacting" \
+            "them appropriately to the appropriate database."
 
     option_list = BaseCommand.option_list + (
         make_option('--project',
@@ -68,11 +68,11 @@ class Command(BaseCommand):
                     help='Source project to pull data from: talos, ' +
                          'b2g, stoneridge, test etc...'),
         make_option('--loadlimit',
-                    action='store'
-                    dest='loadlimit'
+                    action='store',
+                    dest='loadlimit',
                     default=1,
                     help='Number of JSON blobs to fetch per '+
-                         'single iteration of uncompacting')
+                         'single iteration of uncompacting'),
         make_option('--debug',
                     action='store_true',
                     dest='debug',
@@ -86,22 +86,26 @@ class Command(BaseCommand):
         debug     = options.get('debug')
         loadlimit = options.get('loadlimit')
 
+        if not project:
+            print "ERROR: Enter a valid project name"
+            quit()
+
 
         dm = DatazillaModel(project)
 
-        # Fetch all unprocessed json blobs
+        ## TODO: MAKE THIS A LOCKING READ UPDATE OF processed_flag ##
         json_blobs = dm.retrieve_test_data(loadlimit)
 
         for json_blob in json_blobs:
-            self.stdout.write("unpacking json...\n")
+            deserialized_json = json.loads(json_blob)
+
+            ## Print only if debug, otherwise load into perftest db ##
             if options['debug']:
                 self.stdout.write("DEBUG MODE!")
+                self.stdout.write(json_blob)
+            else:
+                dm.load_test_data(deserialized_json)
 
-            # WIP
-            # TODO: use dm model to unpack the json blob
-            #       to a database e.g talos_perftest_1
-            # TODO: validate that it's correctly formatted
-            #       for ingestion into the database
-
+        ## TODO: UPDATE OBJECTSTORE WITH 'PROCESSED' FLAG ##
 
         dm.disconnect()

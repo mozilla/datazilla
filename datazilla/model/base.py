@@ -456,7 +456,7 @@ class DatazillaModel(object):
 
         return json_blobs
 
-    def load_test_data(self, data, json_data):
+    def load_test_data(self, data):
         """Process the JSON test data into the database."""
 
         ##reference id data required by insert methods in ref_data##
@@ -483,12 +483,6 @@ class DatazillaModel(object):
         self._set_option_data(data, ref_data)
         self._set_test_values(data, ref_data)
         self._set_test_aux_data(data, ref_data)
-
-        ###
-        #TODO: Once the object store is in place
-        #this function call should be removed.
-        ###
-        self._set_test_data(json_data, ref_data)
 
     def _set_test_data(self, json_data, ref_data):
 
