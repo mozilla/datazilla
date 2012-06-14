@@ -1,9 +1,8 @@
 from functools import partial
 import os
-from random import choice
-from string import letters
 
 from datazilla.vendor import add_vendor_lib
+
 
 
 def pytest_sessionstart(session):
@@ -28,7 +27,13 @@ def pytest_sessionstart(session):
 
     # this effectively clears memcached to make tests deterministic
     from django.core.cache import cache
-    cache.key_prefix = "t-" + "".join([choice(letters) for i in range(5)])
+    prefix_counter_cache_key = "datazilla-tests-key-prefix-counter"
+    try:
+        key_prefix_counter = cache.incr(prefix_counter_cache_key)
+    except ValueError:
+        key_prefix_counter = 0
+        cache.set(prefix_counter_cache_key, key_prefix_counter)
+    cache.key_prefix = "t{0}".format(key_prefix_counter)
 
     from datazilla.model import DatazillaModel
     DatazillaModel.create("testproj")

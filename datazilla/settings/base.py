@@ -162,8 +162,11 @@ STATIC_URL = "/static/"
 
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
+        "BACKEND": "datazilla.cache.MemcachedCache",
         "LOCATION": DATAZILLA_MEMCACHED,
+        "TIMEOUT": 0,
+        # bumping this is effectively equivalent to restarting memcached
+        "VERSION": 1,
         }
     }
 
