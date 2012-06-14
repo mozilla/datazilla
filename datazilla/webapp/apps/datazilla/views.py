@@ -2,10 +2,10 @@ import datetime
 import json
 import urllib
 import zlib
-import memcache
 
 from django.shortcuts import render_to_response
 from django.conf import settings
+from django.core.cache import cache
 from django.http import HttpResponse
 
 from datazilla.model import DatazillaModel
@@ -30,8 +30,7 @@ def graphs(request, project=""):
     ###
     cache_key = str(project) + '_reference_data'
     json_data = '{}'
-    mc = memcache.Client([settings.DATAZILLA_MEMCACHED], debug=0)
-    compressed_json_data = mc.get(cache_key)
+    compressed_json_data = cache.get(cache_key)
 
     time_key = 'days_30'
 
@@ -53,7 +52,7 @@ def graphs(request, project=""):
 
         json_data = json.dumps(ref_data)
 
-        mc.set(str(project) + '_reference_data', zlib.compress( json_data ) )
+        cache.set(str(project) + '_reference_data', zlib.compress( json_data ) )
 
     data = { 'time_key':time_key,
              'reference_json':json_data,
@@ -213,15 +212,13 @@ def _get_test_run_summary(project, method, request, dm):
 
     json_data = '{}'
 
-    mc = memcache.Client([settings.DATAZILLA_MEMCACHED], debug=0)
-
     if product_ids and (not test_ids) and (not platform_ids):
 
         if len(product_ids) > 1:
             extend_list = { 'data':[], 'columns':[] }
             for id in product_ids:
                 key = utils.get_cache_key(project, str(id), time_key)
-                compressed_json_data = mc.get(key)
+                compressed_json_data = cache.get(key)
 
                 if compressed_json_data:
                     json_data = zlib.decompress( compressed_json_data )
@@ -237,7 +234,7 @@ def _get_test_run_summary(project, method, request, dm):
                 str(product_ids[0]),
                 time_key,
                 )
-            compressed_json_data = mc.get(key)
+            compressed_json_data = cache.get(key)
 
             if compressed_json_data:
                 json_data = zlib.decompress( compressed_json_data )
