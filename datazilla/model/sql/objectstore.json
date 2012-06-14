@@ -23,6 +23,17 @@
             "host":"master_host"
         },
 
+        "get_unprocessed_nolock":{
+
+            "sql":"SELECT   `json_blob`, `id`
+                   FROM     `objectstore`
+                   WHERE    processed_flag = 'ready'
+                   LIMIT ?
+                  ",
+
+            "host":"master_host"
+        },
+
         "get_error_ids":{
 
             "sql":"SELECT   `id`

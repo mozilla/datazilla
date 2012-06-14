@@ -34,10 +34,11 @@ class Command(BaseCommand):
 
         project   = options.get('project')
         debug     = options.get('debug')
-        loadlimit = options.get('loadlimit')
 
-        if not loadlimit:
+        if not options['loadlimit']:
             loadlimit = 1
+        else:
+            loadlimit = int(options.get('loadlimit'))
 
         if not project:
             print "ERROR: Enter a valid project name"
@@ -50,11 +51,14 @@ class Command(BaseCommand):
         Note: this is a locking retrieval. Failure
         to call load_test_data on this data will result
         in some loads of json being stuck in limbo,
-        which merits creating a cleanup utility.
+        which merits a cleanup (utility doesn't exist yet).
         """
+
         json_blobs = dm.retrieve_test_data(loadlimit, lock_rows=True)
 
         for json_blob in json_blobs:
+            data = json.loads(json_blob['json_blob'])
+            row_id = int(json_blob['id'])
 
             ## Print only if debug, otherwise load into perftest db ##
             if options['debug']:
@@ -65,6 +69,6 @@ class Command(BaseCommand):
                 json is well-formed to ensure load_test_data
                 won't fail.
                 """
-                dm.load_test_data(json_blob, call_completed=True)
+                dm.load_test_data(data, call_completed=True, objstore_id=row_id)
 
         dm.disconnect()

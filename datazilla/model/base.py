@@ -10,7 +10,6 @@ access.
 """
 import datetime
 import time
-import json
 
 from django.conf import settings
 
@@ -457,19 +456,29 @@ class DatazillaModel(object):
                 debug_show=self.DEBUG,
                 )
 
-        ### Retrieve data from those rows ##
-        json_blobs = self.sources["objectstore"].dhub.execute(
-            proc=proc_get,
-            placeholders=[ limit ],
-            debug_show=self.DEBUG,
-            return_type='tuple'
-            )
+            ### Retrieve data from those rows ##
+            json_blobs = self.sources["objectstore"].dhub.execute(
+                proc=proc_get,
+                placeholders=[ limit ],
+                debug_show=self.DEBUG,
+                return_type='tuple'
+                )
+        else:
+            ## Retrieve data without locking ##
+            ## Used by transfer_data.py ##
+            proc = "objectstore.selects.get_unprocessed_nolock"
+            json_blobs = self.sources["objectstore"].dhub.execute(
+                proc=proc,
+                placeholders=[ limit ],
+                debug_show=self.DEBUG,
+                return_Type='tuple'
+                )
 
         return json_blobs
 
-    def load_test_data(self, json_blob, call_completed=False):
+    def load_test_data(self, data, call_completed=False, objstore_id=0):
         """Process the JSON test data into the database."""
-        data = json.loads(json_blob['json_blob'])
+
 
         ##reference id data required by insert methods in ref_data##
         ref_data = dict()
@@ -502,7 +511,7 @@ class DatazillaModel(object):
 
             self.sources["objectstore"].dhub.execute(
                 proc=proc_completed,
-                placeholders=[ int(json_blob['id']) ],
+                placeholders=[ objstore_id ],
                 debug_show=self.DEBUG
                 )
 
