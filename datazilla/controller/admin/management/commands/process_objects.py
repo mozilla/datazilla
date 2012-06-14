@@ -86,6 +86,9 @@ class Command(BaseCommand):
         debug     = options.get('debug')
         loadlimit = options.get('loadlimit')
 
+        if not loadlimit:
+            loadlimit = 1
+
         if not project:
             print "ERROR: Enter a valid project name"
             quit()
@@ -93,19 +96,14 @@ class Command(BaseCommand):
 
         dm = DatazillaModel(project)
 
-        ## TODO: MAKE THIS A LOCKING READ UPDATE OF processed_flag ##
         json_blobs = dm.retrieve_test_data(loadlimit)
 
         for json_blob in json_blobs:
-            deserialized_json = json.loads(json_blob)
 
             ## Print only if debug, otherwise load into perftest db ##
             if options['debug']:
-                self.stdout.write("DEBUG MODE!")
-                self.stdout.write(json_blob)
+                self.stdout.write(str(json_blob)+'\n')
             else:
-                dm.load_test_data(deserialized_json)
-
-        ## TODO: UPDATE OBJECTSTORE WITH 'PROCESSED' FLAG ##
+                dm.load_test_data(json_blob)
 
         dm.disconnect()

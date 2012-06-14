@@ -445,10 +445,19 @@ class DatazillaModel(object):
 
     def retrieve_test_data(self, limit):
         """Retrieve the JSON from the objectstore to be processed"""
-        proc = 'objectstore.selects.get_unprocessed'
+        proc_mark = 'objectstore.updates.mark_loading'
+        proc_get  = 'objectstore.selects.get_unprocessed'
 
+        ## Lock rows for processing ##
+        self.sources["objectstore"].dhub.execute(
+            proc=proc_mark,
+            placeholders=[ limit ],
+            debug_show=self.DEBUG,
+            )
+
+        ### Retrieve data from those rows ##
         json_blobs = self.sources["objectstore"].dhub.execute(
-            proc=proc,
+            proc=proc_get,
             placeholders=[ limit ],
             debug_show=self.DEBUG,
             return_type='tuple'
@@ -483,6 +492,16 @@ class DatazillaModel(object):
         self._set_option_data(data, ref_data)
         self._set_test_values(data, ref_data)
         self._set_test_aux_data(data, ref_data)
+
+        ## Call to database to mark the task completed ##
+        proc_completed = "objectstore.updates.mark_complete"
+
+        self.sources["objectstore"].dhub.execute(
+            proc=proc_completed,
+            placeholders=[ id_of_object ],
+            debug_show=self.DEBUG,
+            return_type='tuple'
+            )
 
     def _set_test_data(self, json_data, ref_data):
 
