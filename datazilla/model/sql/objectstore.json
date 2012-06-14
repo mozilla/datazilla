@@ -64,7 +64,7 @@
             "sql":"UPDATE   `objectstore`
                    SET      `processed_flag` = 'complete'
                    WHERE    `processed_flag` = 'loading'
-                   AND      id = ?
+                   AND      `id` = ?
                   ",
 
             "host":"master_host"

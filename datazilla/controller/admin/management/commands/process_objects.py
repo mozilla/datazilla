@@ -46,14 +46,25 @@ class Command(BaseCommand):
 
         dm = DatazillaModel(project)
 
-        json_blobs = dm.retrieve_test_data(loadlimit)
+        """
+        Note: this is a locking retrieval. Failure
+        to call load_test_data on this data will result
+        in some loads of json being stuck in limbo,
+        which merits creating a cleanup utility.
+        """
+        json_blobs = dm.retrieve_test_data(loadlimit, lock_rows=True)
 
         for json_blob in json_blobs:
 
             ## Print only if debug, otherwise load into perftest db ##
             if options['debug']:
-                self.stdout.write(str(json_blob)+'\n')
+                self.stdout.write(str(json_blob['json_blob'])+'\n')
             else:
-                dm.load_test_data(json_blob)
+                """
+                TODO: Implement some sort of verification
+                json is well-formed to ensure load_test_data
+                won't fail.
+                """
+                dm.load_test_data(json_blob, call_completed=True)
 
         dm.disconnect()
