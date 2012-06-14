@@ -45,7 +45,9 @@
 
    "ds_use": {
 
-      "select_database": {"sql":"USE REP0" }
+      "select_database": {"sql":"USE REP0" },
+
+      "begin_transaction":{"sql":"START TRANSACTION"}
 
    }
 

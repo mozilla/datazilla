@@ -82,6 +82,7 @@ class RDBSHub(BaseHub):
         ##allowed keys in execute##
         self.execute_keys = set(['db',
                               'proc',
+                              'nocommit',
                               'sql',
                               'host_type',
                               'placeholders',

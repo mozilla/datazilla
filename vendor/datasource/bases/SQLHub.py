@@ -1,6 +1,3 @@
-import sys
-import time
-import re
 from timeit import Timer
 
 try:
@@ -48,7 +45,7 @@ class SQLHub(RDBSHub):
         SQLHub.connection[ host_type ][ con_obj="Connection Object",
                                   cursor="Database cursor" ]
         """
-        SQLHub.connection = dict()
+        self.connection = dict()
 
         ##Configuration object for data source instance##
         self.conf = self.get_data_source_config(self.data_source)
@@ -69,6 +66,14 @@ class SQLHub(RDBSHub):
                    'get_set',
                    'get_set_json',
                    'get_callback']
+
+    ##Expose commit, rollback for manual transaction support##
+    ##begin() is implicit when a cursor calls execute##
+    def commit(self, host_type):
+        self.connection[host_type]['con_obj'].commit()
+
+    def rollback(self, host_type):
+        self.connection[host_type]['con_obj'].rollback()
 
     def get_databases(self):
         """
@@ -231,13 +236,13 @@ class SQLHub(RDBSHub):
         Return:
            None
         """
-        for host_type in SQLHub.connection:
-            if SQLHub.connection[host_type]['cursor']:
-                SQLHub.connection[host_type]['cursor'].close()
+        for host_type in self.connection:
+            if self.connection[host_type]['cursor']:
+                self.connection[host_type]['cursor'].close()
 
-            if SQLHub.connection[host_type]['con_obj'].open:
-                SQLHub.connection[host_type]['con_obj'].commit()
-                SQLHub.connection[host_type]['con_obj'].close()
+            if self.connection[host_type]['con_obj'].open:
+                self.connection[host_type]['con_obj'].commit()
+                self.connection[host_type]['con_obj'].close()
 
 
     """
@@ -257,7 +262,7 @@ class SQLHub(RDBSHub):
         if self.client_cursor:
             cursor = self.client_cursor
         else:
-            cursor = SQLHub.connection[host_type]['cursor']
+            cursor = self.connection[host_type]['cursor']
 
         ##Get the proc name for debug message##
         proc = ""
@@ -296,8 +301,12 @@ class SQLHub(RDBSHub):
         else:
             self.__cursor_execute(sql, kwargs, cursor)
 
-        ##Commit transaction##
-        SQLHub.connection[host_type]['con_obj'].commit()
+        """
+        If the flag nocommit is set, postpone commit.
+        Otherwise, automatically commit after a transaction.
+        """
+        if not kwargs.get('nocommit', False):
+            self.connection[host_type]['con_obj'].commit()
 
         return self.get_data(cursor, kwargs)
 
