@@ -55,9 +55,6 @@ class Command(BaseCommand):
 
         dm_source = DatazillaModel(source)
 
-        # TODO: NEEDS REWRITING TO USE OBJECTSTORE
-        # I'm guessing all places where test_data is
-        # used also needs to be upated.
         data_iter = dm_source.get_all_test_data(start, records)
         sql_chunks = data_iter.sql_chunks
         dm_source.disconnect()
