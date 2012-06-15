@@ -73,6 +73,7 @@ def pytest_runtest_setup(item):
 
     # this effectively clears the cache to make tests deterministic
     from django.core.cache import cache
+    cache.key_prefix = ""
     prefix_counter_cache_key = "datazilla-tests-key-prefix-counter"
     try:
         key_prefix_counter = cache.incr(prefix_counter_cache_key)
