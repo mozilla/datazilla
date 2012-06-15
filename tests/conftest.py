@@ -1,9 +1,8 @@
 from functools import partial
 import os
-from random import choice
-from string import letters
 
 from datazilla.vendor import add_vendor_lib
+
 
 
 def pytest_sessionstart(session):
@@ -25,10 +24,6 @@ def pytest_sessionstart(session):
     session.django_runner.setup_test_environment()
     # this sets up a clean test-only database
     session.django_db_config = session.django_runner.setup_databases()
-
-    # this effectively clears memcached to make tests deterministic
-    from django.core.cache import cache
-    cache.key_prefix = "t-" + "".join([choice(letters) for i in range(5)])
 
     from datazilla.model import DatazillaModel
     DatazillaModel.create("testproj")
@@ -57,6 +52,53 @@ def pytest_sessionfinish(session):
 
 
 
+def pytest_runtest_setup(item):
+    """
+    Per-test setup.
+
+    Starts a transaction and disables transaction methods for the duration of
+    the test. The transaction will be rolled back after the test. This prevents
+    any database changes made to Django ORM models from persisting between
+    tests, providing test isolation.
+
+    Also clears the cache (by incrementing the key prefix).
+
+    """
+    from django.test.testcases import disable_transaction_methods
+    from django.db import transaction
+
+    transaction.enter_transaction_management()
+    transaction.managed(True)
+    disable_transaction_methods()
+
+    # this effectively clears the cache to make tests deterministic
+    from django.core.cache import cache
+    prefix_counter_cache_key = "datazilla-tests-key-prefix-counter"
+    try:
+        key_prefix_counter = cache.incr(prefix_counter_cache_key)
+    except ValueError:
+        key_prefix_counter = 0
+        cache.set(prefix_counter_cache_key, key_prefix_counter)
+    cache.key_prefix = "t{0}".format(key_prefix_counter)
+
+
+
+def pytest_runtest_teardown(item):
+    """
+    Per-test teardown.
+
+    Rolls back the Django ORM transaction.
+
+    """
+    from django.test.testcases import restore_transaction_methods
+    from django.db import transaction
+
+    restore_transaction_methods()
+    transaction.rollback()
+    transaction.leave_transaction_management()
+
+
+
 def truncate(dm):
     """Truncates all tables in all databases in given DatazillaModel."""
     from django.conf import settings
@@ -80,9 +122,9 @@ def truncate(dm):
 
 def pytest_funcarg__dm(request):
     """
-    A DatazillaModel instance.
+    Gives a test access to a DatazillaModel instance.
 
-    Truncates all tables between tests in order to provide isolation.
+    Truncates all project tables between tests in order to provide isolation.
 
     """
     from datazilla.model import DatazillaModel
@@ -90,4 +132,3 @@ def pytest_funcarg__dm(request):
     dm = DatazillaModel("testproj")
     request.addfinalizer(partial(truncate, dm))
     return dm
-

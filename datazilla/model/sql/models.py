@@ -16,7 +16,7 @@ import MySQLdb
 
 
 # the cache key is specific to the database name we're pulling the data from
-SOURCES_CACHE_KEY = "{database}-datasources"
+SOURCES_CACHE_KEY = "datazilla-datasources"
 
 SQL_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -186,11 +186,7 @@ class SQLDataSource(object):
 class DataSourceManager(models.Manager):
     def cached(self):
         """Return all datasources, caching the results."""
-        from django.db import connections
-        sources = cache.get(
-            SOURCES_CACHE_KEY.format(
-                database=connections["default"].settings_dict["NAME"])
-            )
+        sources = cache.get(SOURCES_CACHE_KEY)
         if sources is None:
             sources = list(self.all())
             cache.set(SOURCES_CACHE_KEY, sources)
@@ -220,6 +216,18 @@ class DataSource(models.Model):
             ["project", "dataset", "contenttype"],
             ["host", "name"],
             ]
+
+
+    def save(self, *args, **kwargs):
+        """Clear the cached datasources when a new one is saved."""
+        clear_cache = (self.pk is None)
+
+        super(DataSource, self).save(*args, **kwargs)
+
+        # Don't actually clear the cache until after the new DataSource is
+        # saved, to avoid a race condition where it gets re-populated too soon.
+        if clear_cache:
+            cache.delete(SOURCES_CACHE_KEY)
 
 
     @property
