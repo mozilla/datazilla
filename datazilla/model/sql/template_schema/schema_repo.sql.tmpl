@@ -1,0 +1,84 @@
+/* This file contains {engine} markers that must be replaced
+   before it is sent to MySQL.
+*/
+
+-- MySQL dump 10.13  Distrib 5.1.53, for apple-darwin10.3.0 (i386)
+--
+-- Host: s4n4.qa.phx1.mozilla.com    Database: repo
+-- ------------------------------------------------------
+-- Server version	5.1.61
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `files`
+--
+
+DROP TABLE IF EXISTS `files`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `files` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `node_id` int(11) DEFAULT NULL,
+  `filespec` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_node_id` (`node_id`),
+  CONSTRAINT `fk_node_id` FOREIGN KEY (`node_id`) REFERENCES `nodes` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='This table holds the list of files for each changeset node. ';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `nodes`
+--
+
+DROP TABLE IF EXISTS `nodes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `nodes` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `node` varchar(50) DEFAULT NULL,
+  `author` varchar(100) DEFAULT NULL,
+  `branch` varchar(45) DEFAULT NULL,
+  `desc` varchar(1000) DEFAULT NULL,
+  `push_log_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_push_log` (`push_log_id`),
+  CONSTRAINT `fk_push_log` FOREIGN KEY (`push_log_id`) REFERENCES `push_log` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='The nodes table holds representations of each changeset node';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `push_log`
+--
+
+DROP TABLE IF EXISTS `push_log`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `push_log` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `push_id` int(11) NOT NULL,
+  `date` int(11) DEFAULT NULL,
+  `user` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='The push_log table holds references to each push.  It is the';
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2012-06-14 12:36:34

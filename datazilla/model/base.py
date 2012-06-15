@@ -21,6 +21,7 @@ from . import utils
 class DatazillaModel(object):
     """Public interface to all data access for a project."""
 
+    # content types that every project will have
     CONTENT_TYPES = ["perftest", "objectstore"]
 
     def __init__(self, project):
@@ -29,6 +30,15 @@ class DatazillaModel(object):
         self.sources = {}
         for ct in self.CONTENT_TYPES:
             self.sources[ct] = self.get_datasource_class()(project, ct)
+
+        # The "project" is always "hg.mozilla.org" but when
+        # we add new repo types, like github, then subclasses of
+        # DatazillaModel will need to handle using a different repo
+        # "project" database.
+        self.sources[ct] = self.get_datasource_class()(
+            "hg.mozilla.org",
+            "pushlog",
+            )
 
         self.DEBUG = settings.DEBUG
 
