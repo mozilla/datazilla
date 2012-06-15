@@ -1,5 +1,4 @@
 import os
-import json
 
 from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
@@ -7,8 +6,10 @@ from datazilla.model import DatazillaModel
 
 class Command(BaseCommand):
 
-    help = "Transfer json blobs from the key/value store, uncompacting" \
+    help = (
+            "Transfer json blobs from the key/value store, uncompacting"
             "them appropriately to the appropriate database."
+            )
 
     option_list = BaseCommand.option_list + (
         make_option('--project',
@@ -21,7 +22,7 @@ class Command(BaseCommand):
                     action='store',
                     dest='loadlimit',
                     default=1,
-                    help='Number of JSON blobs to fetch per '+
+                    help='Number of JSON blobs to fetch per '
                          'single iteration of uncompacting'),
         make_option('--debug',
                     action='store_true',
@@ -35,40 +36,11 @@ class Command(BaseCommand):
         project   = options.get('project')
         debug     = options.get('debug')
 
-        if not options['loadlimit']:
-            loadlimit = 1
-        else:
-            loadlimit = int(options.get('loadlimit'))
+        loadlimit = int(options.get("loadlimit", 1))
 
         if not project:
-            print "ERROR: Enter a valid project name"
-            quit()
-
+            raise CommandError("Enter a valid project name")
 
         dm = DatazillaModel(project)
-
-        """
-        Note: this is a locking retrieval. Failure
-        to call load_test_data on this data will result
-        in some loads of json being stuck in limbo,
-        which merits a cleanup (utility doesn't exist yet).
-        """
-
-        json_blobs = dm.retrieve_test_data(loadlimit, lock_rows=True)
-
-        for json_blob in json_blobs:
-            data = json.loads(json_blob['json_blob'])
-            row_id = int(json_blob['id'])
-
-            ## Print only if debug, otherwise load into perftest db ##
-            if options['debug']:
-                self.stdout.write(str(json_blob['json_blob'])+'\n')
-            else:
-                """
-                TODO: Implement some sort of verification
-                json is well-formed to ensure load_test_data
-                won't fail.
-                """
-                dm.load_test_data(data, call_completed=True, objstore_id=row_id)
-
+        dm.process_objects(loadlimit)
         dm.disconnect()

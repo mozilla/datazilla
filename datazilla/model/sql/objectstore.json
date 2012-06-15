@@ -11,7 +11,7 @@
     },
 
     "selects":{
-        "get_unprocessed":{
+        "get_claimed":{
 
             "sql":"SELECT   `json_blob`, `id`
                    FROM     `objectstore`
@@ -23,7 +23,7 @@
             "host":"master_host"
         },
 
-        "get_unprocessed_nolock":{
+        "get_unprocessed":{
 
             "sql":"SELECT   `json_blob`, `id`
                    FROM     `objectstore`

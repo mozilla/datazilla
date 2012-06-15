@@ -10,6 +10,7 @@ access.
 """
 import datetime
 import time
+import json
 
 from django.conf import settings
 
@@ -443,30 +444,14 @@ class DatazillaModel(object):
             )
 
 
-    def retrieve_test_data(self, limit, lock_rows=False):
+    def retrieve_test_data(self, limit, claim_rows=False):
         """Retrieve the JSON from the objectstore to be processed"""
-        proc_mark = 'objectstore.updates.mark_loading'
-        proc_get  = 'objectstore.selects.get_unprocessed'
-
-        if lock_rows:
-            ## Lock rows for processing ##
-            self.sources["objectstore"].dhub.execute(
-                proc=proc_mark,
-                placeholders=[ limit ],
-                debug_show=self.DEBUG,
-                )
-
-            ### Retrieve data from those rows ##
-            json_blobs = self.sources["objectstore"].dhub.execute(
-                proc=proc_get,
-                placeholders=[ limit ],
-                debug_show=self.DEBUG,
-                return_type='tuple'
-                )
+        if claim_rows:
+            json_blobs = self.claim_rows(limit)
         else:
-            ## Retrieve data without locking ##
-            ## Used by transfer_data.py ##
-            proc = "objectstore.selects.get_unprocessed_nolock"
+            # Retrieve unprocessed data without claiming rows. Used by
+            # transfer_data.py
+            proc = "objectstore.selects.get_unprocessed"
             json_blobs = self.sources["objectstore"].dhub.execute(
                 proc=proc,
                 placeholders=[ limit ],
@@ -476,28 +461,23 @@ class DatazillaModel(object):
 
         return json_blobs
 
-    def load_test_data(self, data, call_completed=False, objstore_id=0):
+    def load_test_data(self, data):
         """Process the JSON test data into the database."""
 
-
-        ##reference id data required by insert methods in ref_data##
+        # reference id data required by insert methods in ref_data
         ref_data = dict()
 
-        ###
-        #Get/Set reference info, all inserts use an on duplicate key
-        #approach
-        ###
+        # Get/Set reference info, all inserts use an on duplicate key
+        # approach
         ref_data['test_id'] = self._get_test_id(data)
         ref_data['option_ids'] = self._get_option_ids(data)
         ref_data['operating_system_id'] = self._get_os_id(data)
         ref_data['product_id'] = self._get_product_id(data)
         ref_data['machine_id'] = self._get_machine_id(data)
 
-        ###
-        #Insert build and test_run data.  All other test data
-        #types require the build_id and test_run_id to meet foreign key
-        #constriants.
-        ###
+        # Insert build and test_run data.  All other test data
+        # types require the build_id and test_run_id to meet foreign key
+        # constriants.
         ref_data['build_id'] = self._set_build_data(data, ref_data)
         ref_data['test_run_id'] = self._set_test_run_data(data, ref_data)
 
@@ -505,15 +485,61 @@ class DatazillaModel(object):
         self._set_test_values(data, ref_data)
         self._set_test_aux_data(data, ref_data)
 
-        if call_completed:
-            ## Call to database to mark the task completed ##
-            proc_completed = "objectstore.updates.mark_complete"
 
-            self.sources["objectstore"].dhub.execute(
-                proc=proc_completed,
-                placeholders=[ objstore_id ],
-                debug_show=self.DEBUG
-                )
+
+    def process_objects(self, loadlimit):
+        """ Takes objects from the objectstore and moves them to perftest """
+        json_blobs = self.retrieve_test_data(loadlimit, claim_rows=True)
+
+        for json_blob in json_blobs:
+            data = json.loads(json_blob['json_blob'])
+            row_id = int(json_blob['id'])
+
+            # TODO: Implement some sort of verification json is well-formed
+            # to ensure load_test_data won't fail.
+            if self.verify_json(data):
+                self.load_test_data(data)
+                self.unclaim_rows(row_id)
+
+    def claim_rows(self,limit):
+        """ Return json in the objectstore, mark them for use by this conn """
+        proc_mark = 'objectstore.updates.mark_loading'
+        proc_get  = 'objectstore.selects.get_claimed'
+
+        # Note: this is a locking retrieval. Failure to call load_test_data on
+        # this data will result in some loads of json being stuck in limbo,
+        # which merits a cleanup (utility doesn't exist yet).
+        self.sources["objectstore"].dhub.execute(
+            proc=proc_mark,
+            placeholders=[ limit ],
+            debug_show=self.DEBUG,
+            )
+
+        # Return json blobs from those rows
+        json_blobs = self.sources["objectstore"].dhub.execute(
+            proc=proc_get,
+            placeholders=[ limit ],
+            debug_show=self.DEBUG,
+            return_type='tuple'
+            )
+
+        return json_blobs
+
+    def unclaim_rows(self,object_id):
+        """ Call to database to mark the task completed """
+        proc_completed = "objectstore.updates.mark_complete"
+
+        self.sources["objectstore"].dhub.execute(
+            proc=proc_completed,
+            placeholders=[ object_id ],
+            debug_show=self.DEBUG
+            )
+
+    def verify_json(self, json_data):
+        """ Verify that json is valid for ingestion """
+        # TODO (stub)
+        return True
+
 
     def _set_test_data(self, json_data, ref_data):
 
