@@ -4,6 +4,7 @@ from datazilla.model.sql.models import SQLDataSource
 import urllib
 import json
 import datetime
+from django.conf import settings
 
 
 
@@ -47,6 +48,7 @@ class Command(BaseCommand):
                     default=None,
                     help="Number of days worth of pushlogs to return."),
         )
+
 
     def handle(self, *args, **options):
         """ Store pushlog data in the database. """
@@ -101,12 +103,8 @@ class Command(BaseCommand):
 
         # one pushlog
         for k, v in data.items():
-            placeholders = [
-                k,
-                v["date"],
-                v["user"]
-            ]
-            iter = self._insert_data(
+            placeholders = [k, v["date"], v["user"]]
+            push_log_id = self._insert_data_and_get_id(
                 ds,
                 "set_push_log",
                 placeholders=placeholders,
@@ -114,10 +112,39 @@ class Command(BaseCommand):
             # TODO How do I determine if I inserted a new row or not?
             # If not, I don't want to do the child items
 
-            for i in iter:
-                print i
+#            for i in iter.items():
+#                print i
 
-            # now process the nodes
+            # process the nodes
+            # for uniqueness here, use node
+            # TODO: should this table be called "changesets" instead?
+            for cs in v["changesets"]:
+                placeholders = [
+                    cs["node"],
+                    cs["author"],
+                    cs["branch"],
+                    cs["desc"],
+                    push_log_id,
+                    ]
+                node_id = self._insert_data_and_get_id(
+                    ds,
+                    "set_node",
+                    placeholders=placeholders,
+                    )
+
+                # process the files
+                # TODO for uniquness here, do I have to have a key
+                # that is node_id AND filespec?
+                for file in cs["files"]:
+                    placeholders = [
+                        node_id,
+                        file["filespec"],
+                        ]
+                    self._insert_data(
+                        ds,
+                        "set_file",
+                        placeholders=placeholders,
+                        )
 
         ds.disconnect()
 
@@ -141,7 +168,7 @@ class Command(BaseCommand):
 
         id_iter = ds.dhub.execute(
             proc='pushlog.selects.get_last_insert_id',
-            debug_show=self.DEBUG,
+            debug_show=settings.DEBUG,
             return_type='iter',
             )
 

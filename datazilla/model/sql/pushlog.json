@@ -6,13 +6,13 @@
                    ON DUPLICATE KEY UPDATE `push_id`=`push_id`",
             "host":"master_host"
         },
-        "set_nodes":{
+        "set_node":{
             "sql":"INSERT INTO `nodes` (`node`, `author`, `branch`, `desc`, `push_log_id`)
                    VALUES (?,?,?,?,?)
                    ON DUPLICATE KEY UPDATE `node`=`node`",
             "host":"master_host"
         },
-        "set_files":{
+        "set_file":{
             "sql":"INSERT INTO `files` (`node_id`, `filespec`)
                    VALUES (?,?)
                    ON DUPLICATE KEY UPDATE `node_id`=`node_id`",
