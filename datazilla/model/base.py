@@ -398,7 +398,7 @@ class DatazillaModel(object):
 
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_summary_cache',
-            debug_show=settings.DEBUG,
+            debug_show=self.DEBUG,
             placeholders=placeholders,
             executemany=False,
             )
@@ -423,7 +423,7 @@ class DatazillaModel(object):
 
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_test_collection_map',
-            debug_show=settings.DEBUG,
+            debug_show=self.DEBUG,
             placeholders=placeholders)
 
 
@@ -438,9 +438,8 @@ class DatazillaModel(object):
 
         self.sources["objectstore"].dhub.execute(
             proc='objectstore.inserts.store_json',
-            debug_show=settings.DEBUG,
-            placeholders=[json_data],
-            executemany=False,
+            placeholders=[ json_data ],
+            debug_show=self.DEBUG
             )
 
 
@@ -457,6 +456,7 @@ class DatazillaModel(object):
             )
 
         return json_blobs
+
 
     def load_test_data(self, data):
         """Process the JSON test data into the database."""
@@ -483,6 +483,19 @@ class DatazillaModel(object):
         self._set_test_aux_data(data, ref_data)
 
 
+    def transfer_objects(self, start_id, limit):
+        """ Transfer objects from test_data to objectstore """
+        proc = "perftest.selects.get_test_data"
+        data_objects = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            placeholders=[ int(start_id), int(limit) ],
+            debug_show=self.DEBUG,
+            return_type='tuple'
+            )
+
+        for data_object in data_objects:
+            json_data = data_object['data']
+            self.store_test_data( json_data )
 
     def process_objects(self, loadlimit):
         """ Takes objects from the objectstore and moves them to perftest """
@@ -492,11 +505,10 @@ class DatazillaModel(object):
             data = json.loads(json_blob['json_blob'])
             row_id = int(json_blob['id'])
 
-            # TODO: Implement some sort of verification json is well-formed
-            # to ensure load_test_data won't fail.
             if self.verify_json(data):
                 self.load_test_data(data)
                 self.mark_object_complete(row_id)
+
 
     def claim_objects(self,limit):
         """ Return json in the objectstore, mark them for use by this conn """
@@ -522,6 +534,7 @@ class DatazillaModel(object):
 
         return json_blobs
 
+
     def mark_object_complete(self,object_id):
         """ Call to database to mark the task completed """
         proc_completed = "objectstore.updates.mark_complete"
@@ -532,9 +545,12 @@ class DatazillaModel(object):
             debug_show=self.DEBUG
             )
 
+
     def verify_json(self, json_data):
         """ Verify that json is valid for ingestion """
         # TODO (stub)
+        # Need to implement some sort of verification json is well-formed
+        # to ensure load_test_data won't fail.
         return True
 
 
