@@ -2,20 +2,17 @@
     "inserts":{
         "set_push_log":{
             "sql":"INSERT INTO `push_log` (`push_id`, `date`, `user`)
-                   VALUES (?, ?, ?)
-                   ON DUPLICATE KEY UPDATE `push_id`=`push_id`",
+                   VALUES (?, ?, ?)",
             "host":"master_host"
         },
         "set_node":{
             "sql":"INSERT INTO `nodes` (`node`, `author`, `branch`, `desc`, `push_log_id`)
-                   VALUES (?,?,?,?,?)
-                   ON DUPLICATE KEY UPDATE `node`=`node`",
+                   VALUES (?,?,?,?,?)",
             "host":"master_host"
         },
         "set_file":{
             "sql":"INSERT INTO `files` (`node_id`, `filespec`)
-                   VALUES (?,?)
-                   ON DUPLICATE KEY UPDATE `node_id`=`node_id`",
+                   VALUES (?,?)",
             "host":"master_host"
         }
     },

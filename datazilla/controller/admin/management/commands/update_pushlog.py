@@ -1,3 +1,4 @@
+from MySQLdb import IntegrityError
 from optparse import make_option
 from django.core.management.base import BaseCommand
 from datazilla.model.sql.models import SQLDataSource
@@ -74,7 +75,7 @@ class Command(BaseCommand):
         else:
             _enddate = datetime.date.today()
 
-        # calcualte the startdate
+        # calculate the startdate
 
         _startdate = _enddate - datetime.timedelta(days=numdays)
 
@@ -102,60 +103,78 @@ class Command(BaseCommand):
         ds = SQLDataSource(repo_host, "pushlog")
 
         # one pushlog
-        for k, v in data.items():
-            placeholders = [k, v["date"], v["user"]]
-            push_log_id = self._insert_data_and_get_id(
-                ds,
-                "set_push_log",
-                placeholders=placeholders,
-                )
-            # TODO How do I determine if I inserted a new row or not?
-            # If not, I don't want to do the child items
+        for pushlog_json_id, pushlog in data.items():
+            # make sure the push_log_id isn't confused with a previous iteration
 
-#            for i in iter.items():
-#                print i
-
-            # process the nodes
-            # for uniqueness here, use node
-            # TODO: should this table be called "changesets" instead?
-            for cs in v["changesets"]:
-                placeholders = [
-                    cs["node"],
-                    cs["author"],
-                    cs["branch"],
-                    cs["desc"],
-                    push_log_id,
-                    ]
-                node_id = self._insert_data_and_get_id(
+            placeholders = [
+                pushlog_json_id,
+                pushlog["date"],
+                pushlog["user"],
+                ]
+            try:
+                push_log_id = self._insert_data_and_get_id(
                     ds,
-                    "set_node",
+                    "set_push_log",
                     placeholders=placeholders,
                     )
 
-                # process the files
-                # TODO for uniquness here, do I have to have a key
-                # that is node_id AND filespec?
-                for file in cs["files"]:
+                # process the nodes
+                # TODO: should this table be called "changesets" instead?
+                for cs in pushlog["changesets"]:
                     placeholders = [
-                        node_id,
-                        file["filespec"],
+                        cs["node"],
+                        cs["author"],
+                        cs["branch"],
+                        cs["desc"],
+                        push_log_id,
                         ]
-                    self._insert_data(
-                        ds,
-                        "set_file",
-                        placeholders=placeholders,
-                        )
+
+                    try:
+                        node_id = self._insert_data_and_get_id(
+                            ds,
+                            "set_node",
+                            placeholders=placeholders,
+                            )
+
+                        # process the files
+                        for file in cs["files"]:
+                            placeholders = [
+                                node_id,
+                                file,
+                                ]
+                            try:
+                                self._insert_data(
+                                    ds,
+                                    "set_file",
+                                    placeholders=placeholders,
+                                    )
+                            except IntegrityError, e:
+                                self.stdout.write("Skip dup- pushlog: {0}, node: {1}, file: {2}".format(
+                                    pushlog_json_id,
+                                    cs["node"],
+                                    file,
+                                ))
+
+                    except IntegrityError, e:
+                        self.stdout.write("Skip dup- pushlog: {0}, node: {1}".format(
+                            pushlog_json_id,
+                            cs["node"],
+                            ))
+
+
+            except IntegrityError:
+                self.stdout.write("Skip dup- pushlog: {0}".format(
+                    pushlog_json_id,
+                ))
 
         ds.disconnect()
-
-#        print json.dumps(data, indent=4)
 
 
     def _insert_data(self, ds, statement, placeholders, executemany=False):
 
         return ds.dhub.execute(
             proc='pushlog.inserts.' + statement,
-            debug_show=False,
+            debug_show=settings.DEBUG,
             placeholders=placeholders,
             executemany=executemany,
             return_type='iter',
