@@ -444,20 +444,17 @@ class DatazillaModel(object):
             )
 
 
-    def retrieve_test_data(self, limit, claim_rows=False):
+    def retrieve_test_data(self, limit):
         """Retrieve the JSON from the objectstore to be processed"""
-        if claim_rows:
-            json_blobs = self.claim_rows(limit)
-        else:
-            # Retrieve unprocessed data without claiming rows. Used by
-            # transfer_data.py
-            proc = "objectstore.selects.get_unprocessed"
-            json_blobs = self.sources["objectstore"].dhub.execute(
-                proc=proc,
-                placeholders=[ limit ],
-                debug_show=self.DEBUG,
-                return_Type='tuple'
-                )
+        # Retrieve unprocessed data without claiming rows. Used by
+        # transfer_data.py
+        proc = "objectstore.selects.get_unprocessed"
+        json_blobs = self.sources["objectstore"].dhub.execute(
+            proc=proc,
+            placeholders=[ limit ],
+            debug_show=self.DEBUG,
+            return_Type='tuple'
+            )
 
         return json_blobs
 
@@ -489,7 +486,7 @@ class DatazillaModel(object):
 
     def process_objects(self, loadlimit):
         """ Takes objects from the objectstore and moves them to perftest """
-        json_blobs = self.retrieve_test_data(loadlimit, claim_rows=True)
+        json_blobs = self.claim_objects(loadlimit)
 
         for json_blob in json_blobs:
             data = json.loads(json_blob['json_blob'])
@@ -499,9 +496,9 @@ class DatazillaModel(object):
             # to ensure load_test_data won't fail.
             if self.verify_json(data):
                 self.load_test_data(data)
-                self.unclaim_rows(row_id)
+                self.mark_object_complete(row_id)
 
-    def claim_rows(self,limit):
+    def claim_objects(self,limit):
         """ Return json in the objectstore, mark them for use by this conn """
         proc_mark = 'objectstore.updates.mark_loading'
         proc_get  = 'objectstore.selects.get_claimed'
@@ -525,7 +522,7 @@ class DatazillaModel(object):
 
         return json_blobs
 
-    def unclaim_rows(self,object_id):
+    def mark_object_complete(self,object_id):
         """ Call to database to mark the task completed """
         proc_completed = "objectstore.updates.mark_complete"
 
