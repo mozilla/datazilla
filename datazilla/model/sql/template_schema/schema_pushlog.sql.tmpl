@@ -31,9 +31,10 @@ CREATE TABLE `files` (
   `node_id` int(11) DEFAULT NULL,
   `filespec` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_node_file` (`node_id`,`filespec`),
   KEY `fk_node_id` (`node_id`),
   CONSTRAINT `fk_node_id` FOREIGN KEY (`node_id`) REFERENCES `nodes` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE={engine} DEFAULT CHARSET=utf8 COMMENT='This table holds the list of files for each changeset node. ';
+) ENGINE={engine} DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -51,9 +52,10 @@ CREATE TABLE `nodes` (
   `desc` varchar(1000) DEFAULT NULL,
   `push_log_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_node` (`node`),
   KEY `fk_push_log` (`push_log_id`),
   CONSTRAINT `fk_push_log` FOREIGN KEY (`push_log_id`) REFERENCES `push_log` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE={engine} DEFAULT CHARSET=utf8 COMMENT='The nodes table holds representations of each changeset node';
+) ENGINE={engine} DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -69,8 +71,8 @@ CREATE TABLE `push_log` (
   `date` int(11) DEFAULT NULL,
   `user` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `push_id_UNIQUE` (`push_id`)
-) ENGINE={engine} DEFAULT CHARSET=utf8 COMMENT='The push_log table holds references to each push.  It is the';
+  UNIQUE KEY `uq_push` (`push_id`)
+) ENGINE={engine} DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

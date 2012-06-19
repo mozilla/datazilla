@@ -3,7 +3,7 @@
 
                   ##Required##
                   "master_host": { "host":"localhost",
-                                   "user":"username",
+                                   "user":"usr",
                                    "passwd":"password" },
 
                   ##Not required if you don't have one##
