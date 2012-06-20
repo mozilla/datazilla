@@ -452,7 +452,7 @@ class DatazillaModel(object):
             proc=proc,
             placeholders=[ limit ],
             debug_show=self.DEBUG,
-            return_Type='tuple'
+            return_type='tuple'
             )
 
         return json_blobs
