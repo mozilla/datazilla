@@ -57,6 +57,7 @@
                    SET      `processed_flag` = 'complete'
                    WHERE    `processed_flag` = 'loading'
                    AND      `id` = ?
+                   AND      `worker_id` = CONNECTION_ID()
                   ",
 
             "host":"master_host"
