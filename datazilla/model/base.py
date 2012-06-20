@@ -686,7 +686,7 @@ class DatazillaModel(object):
         self._insert_data(statement, placeholders)
 
         id_iter = self.sources["perftest"].dhub.execute(
-            proc='perftest.selects.get_last_insert_id',
+            proc='generic.selects.get_last_insert_id',
             debug_show=self.DEBUG,
             return_type='iter',
             )
