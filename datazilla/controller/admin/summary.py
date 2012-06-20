@@ -1,8 +1,6 @@
 """
 Functions for populating summary cache.
 
-@@@ Should these just be methods on DatazillaModel instead?
-
 """
 import json
 import zlib
