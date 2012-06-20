@@ -525,6 +525,9 @@ class DatazillaModel(object):
             )
 
         # Return json blobs from those rows
+        # Note: this query asks for "limit" # of objects belonging to
+        # CONNECTION_ID -- if a connection id is reused, it will pick
+        # up objects that it didn't mark in mark_loading this iteration
         json_blobs = self.sources["objectstore"].dhub.execute(
             proc=proc_get,
             placeholders=[ limit ],

@@ -15,6 +15,7 @@ CREATE TABLE `objectstore` (
   `error_flag` enum('N','Y') DEFAULT 'N',
   `error_msg` mediumtext,
   `json_blob` blob,
+  `worker_id` int(11),
   PRIMARY KEY (`id`)
 ) ENGINE=Aria DEFAULT CHARSET=utf8 PAGE_CHECKSUM=1;
 

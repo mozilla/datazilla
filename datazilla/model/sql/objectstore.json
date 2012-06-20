@@ -33,28 +33,8 @@
                   ",
 
             "host":"master_host"
-        },
-
-        "get_error_ids":{
-
-            "sql":"SELECT   `id`
-                   FROM     `objectstore`
-                   WHERE    error_flag = 'Y'
-                   LIMIT ?
-                  ",
-
-            "host":"master_host"
-        },
-
-        "get_error_msg":{
-
-            "sql":"SELECT   `error_msg`
-                   FROM     `objectstore`
-                   WHERE    `id` = ?
-                  ",
-
-            "host":"master_host"
         }
+
     },
 
     "updates":{
