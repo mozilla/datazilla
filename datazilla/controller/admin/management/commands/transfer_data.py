@@ -3,7 +3,7 @@ import json
 
 from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
-from datazilla.model import DatazillaModel
+from datazilla.model import PerformanceTestModel
 
 class Command(BaseCommand):
 
@@ -53,7 +53,7 @@ class Command(BaseCommand):
         start = int( options.get('start') )
 
 
-        dm_source = DatazillaModel(source)
+        dm_source = PerformanceTestModel(source)
         data_iter = dm_source.get_all_test_data(start, records)
         sql_chunks = data_iter.sql_chunks
         dm_source.disconnect()
@@ -64,13 +64,13 @@ class Command(BaseCommand):
         total_chunks = len(sql_chunks)
         for s in sql_chunks:
 
-            dm_source = DatazillaModel(source)
+            dm_source = PerformanceTestModel(source)
             dhub = dm_source.sources["perftest"].dhub
             d = dhub.execute(sql=s%str(start), return_type='tuple')
             dm_source.disconnect()
 
             chunks += 1
-            dm_target = DatazillaModel(target)
+            dm_target = PerformanceTestModel(target)
             self.stdout.write("\tinserting chunk %i out of %i\n" % \
                     (chunks, total_chunks))
             for data in d:

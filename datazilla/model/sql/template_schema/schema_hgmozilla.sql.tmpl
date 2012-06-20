@@ -33,18 +33,18 @@ CREATE TABLE `files` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_node_file` (`node_id`,`filespec`),
   KEY `fk_node_id` (`node_id`),
-  CONSTRAINT `fk_node_id` FOREIGN KEY (`node_id`) REFERENCES `nodes` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  CONSTRAINT `fk_node_id` FOREIGN KEY (`node_id`) REFERENCES `changesets` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE={engine} DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `nodes`
+-- Table structure for table `changesets`
 --
 
-DROP TABLE IF EXISTS `nodes`;
+DROP TABLE IF EXISTS `changesets`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `nodes` (
+CREATE TABLE `changesets` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `node` varchar(50) DEFAULT NULL,
   `author` varchar(100) DEFAULT NULL,

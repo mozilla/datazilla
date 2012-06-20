@@ -20,14 +20,14 @@ import zlib
 from optparse import OptionParser
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "datazilla.settings.base")
 
-from datazilla.model import DatazillaModel
+from datazilla.model import PerformanceTestModel
 from datazilla.model import utils
 from django.core.cache import cache
 
 
 def cache_test_summaries(project):
 
-    dm = DatazillaModel(project)
+    dm = PerformanceTestModel(project)
     data_iter = dm.get_all_summary_cache()
 
     for d in data_iter:
@@ -48,7 +48,7 @@ def cache_test_summaries(project):
 
 def build_test_summaries(project):
 
-    dm = DatazillaModel(project)
+    dm = PerformanceTestModel(project)
 
     time_ranges = utils.get_time_ranges()
 

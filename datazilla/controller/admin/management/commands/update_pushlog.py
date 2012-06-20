@@ -1,7 +1,7 @@
 from MySQLdb import IntegrityError
 from optparse import make_option
 from django.core.management.base import BaseCommand
-from datazilla.model.sql.models import SQLDataSource
+from datazilla.model import PushLogModel
 import urllib
 import json
 import datetime
@@ -100,7 +100,8 @@ class Command(BaseCommand):
         json_data = res.read()
         data = json.loads(json_data)
 
-        ds = SQLDataSource(repo_host, "pushlog")
+        plm = PushLogModel()
+        ds = plm.sources["hgmozilla"]
 
         # one pushlog
         for pushlog_json_id, pushlog in data.items():
@@ -118,7 +119,7 @@ class Command(BaseCommand):
                     placeholders=placeholders,
                     )
 
-                # process the nodes
+                # process the nodes of the pushlog
                 # TODO: should this table be called "changesets" instead?
                 for cs in pushlog["changesets"]:
                     placeholders = [
@@ -136,7 +137,7 @@ class Command(BaseCommand):
                             placeholders=placeholders,
                             )
 
-                        # process the files
+                        # process the files of nodes
                         for file in cs["files"]:
                             placeholders = [
                                 node_id,
@@ -173,7 +174,7 @@ class Command(BaseCommand):
     def _insert_data(self, ds, statement, placeholders, executemany=False):
 
         return ds.dhub.execute(
-            proc='pushlog.inserts.' + statement,
+            proc='hgmozilla.inserts.' + statement,
             debug_show=settings.DEBUG,
             placeholders=placeholders,
             executemany=executemany,
@@ -186,7 +187,7 @@ class Command(BaseCommand):
         self._insert_data(ds, statement, placeholders)
 
         id_iter = ds.dhub.execute(
-            proc='pushlog.selects.get_last_insert_id',
+            proc='hgmozilla.selects.get_last_insert_id',
             debug_show=settings.DEBUG,
             return_type='iter',
             )

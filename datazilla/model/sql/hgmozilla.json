@@ -6,7 +6,7 @@
             "host":"master_host"
         },
         "set_node":{
-            "sql":"INSERT INTO `nodes` (`node`, `author`, `branch`, `desc`, `push_log_id`)
+            "sql":"INSERT INTO `changesets` (`node`, `author`, `branch`, `desc`, `push_log_id`)
                    VALUES (?,?,?,?,?)",
             "host":"master_host"
         },

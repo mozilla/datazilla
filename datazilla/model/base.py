@@ -4,7 +4,7 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 #####
 """
-``DatazillaModel`` (and subclasses) are the public interface for all data
+``DatazillaModelBase`` (and subclasses) are the public interface for all data
 access.
 
 """
@@ -17,12 +17,8 @@ from django.conf import settings
 from . import utils
 
 
-
-class DatazillaModel(object):
-    """Public interface to all data access for a project."""
-
-    # content types that every project will have
-    CONTENT_TYPES = ["perftest", "objectstore"]
+class DatazillaModelBase(object):
+    """Base model class for all Datazilla models"""
 
     def __init__(self, project):
         self.project = project
@@ -31,21 +27,7 @@ class DatazillaModel(object):
         for ct in self.CONTENT_TYPES:
             self.sources[ct] = self.get_datasource_class()(project, ct)
 
-        # The "project" is always "hg.mozilla.org" but when
-        # we add new repo types, like github, then subclasses of
-        # DatazillaModel will need to handle using a different repo
-        # "project" database.
-        self.sources[ct] = self.get_datasource_class()(
-            "hg.mozilla.org",
-            "pushlog",
-            )
-
         self.DEBUG = settings.DEBUG
-
-
-    def __unicode__(self):
-        """Unicode representation is project name."""
-        return self.project
 
 
     @classmethod
@@ -56,6 +38,66 @@ class DatazillaModel(object):
         else:
             from .sql.models import SQLDataSource
             return SQLDataSource
+
+
+
+class PushLogModel(DatazillaModelBase):
+    """Public interface for all push logs"""
+
+    CONTENT_TYPES = ["hgmozilla"]
+    PROJECT = "pushlog"
+
+    # The "project" is always "hg.mozilla.org" but when
+    # we add new repo types, like github, then subclasses of
+    # PerformanceTestModel will need to handle using a different repo
+    # "project" database.
+
+    def __init__(self):
+        super(PushLogModel, self).__init__(self.PROJECT)
+
+
+    @classmethod
+    def create(cls, host=None, type=None):
+        """
+        Create all the datasource tables for this pushlog.
+
+        ``hosts`` is an optional dictionary mapping contenttype names to the
+        database server host on which the database for that contenttype should
+        be created. Not all contenttypes need to be represented; any that
+        aren't will use the default (``DATAZILLA_DATABASE_HOST``).
+
+        ``types`` is an optional dictionary mapping contenttype names to the
+        type of database that should be created. For MySQL/MariaDB databases,
+        use "MySQL-Engine", where "Engine" could be "InnoDB", "Aria", etc. Not
+        all contenttypes need to be represented; any that aren't will use the
+        default (``MySQL-InnoDB``).
+
+
+        """
+
+        for ct in cls.CONTENT_TYPES:
+            cls.get_datasource_class().create(
+                cls.PROJECT, ct, host=host, db_type=type)
+
+        return cls()
+
+
+    def disconnect(self):
+        """Iterate over and disconnect all data sources."""
+        for src in self.sources.itervalues():
+            src.disconnect()
+
+
+class PerformanceTestModel(DatazillaModelBase):
+    """Public interface to all data access for a performance project."""
+
+    # content types that every project will have
+    CONTENT_TYPES = ["perftest", "objectstore"]
+
+
+    def __unicode__(self):
+        """Unicode representation is project name."""
+        return self.project
 
 
     @classmethod
@@ -451,12 +493,6 @@ class DatazillaModel(object):
             proc='perftest.inserts.set_test_collection_map',
             debug_show=settings.DEBUG,
             placeholders=placeholders)
-
-
-    def disconnect(self):
-        """Iterate over and disconnect all data sources."""
-        for src in self.sources.itervalues():
-            src.disconnect()
 
 
     def store_test_data(self, json_data):

@@ -25,8 +25,8 @@ def pytest_sessionstart(session):
     # this sets up a clean test-only database
     session.django_db_config = session.django_runner.setup_databases()
 
-    from datazilla.model import DatazillaModel
-    DatazillaModel.create("testproj")
+    from datazilla.model import PerformanceTestModel
+    PerformanceTestModel.create("testproj")
 
 
 def pytest_sessionfinish(session):
@@ -34,10 +34,10 @@ def pytest_sessionfinish(session):
     print("\n")
 
     from django.conf import settings
-    from datazilla.model import DatazillaModel
+    from datazilla.model import PerformanceTestModel
     import MySQLdb
 
-    for sds in DatazillaModel("testproj").sources.values():
+    for sds in PerformanceTestModel("testproj").sources.values():
         conn = MySQLdb.connect(
             host=sds.datasource.host,
             user=settings.DATAZILLA_DATABASE_USER,
@@ -101,7 +101,7 @@ def pytest_runtest_teardown(item):
 
 
 def truncate(dm):
-    """Truncates all tables in all databases in given DatazillaModel."""
+    """Truncates all tables in all databases in given PerformanceTestModel."""
     from django.conf import settings
     import MySQLdb
     for sds in dm.sources.values():
@@ -123,13 +123,13 @@ def truncate(dm):
 
 def pytest_funcarg__dm(request):
     """
-    Gives a test access to a DatazillaModel instance.
+    Gives a test access to a PerformanceTestModel instance.
 
     Truncates all project tables between tests in order to provide isolation.
 
     """
-    from datazilla.model import DatazillaModel
+    from datazilla.model import PerformanceTestModel
 
-    dm = DatazillaModel("testproj")
+    dm = PerformanceTestModel("testproj")
     request.addfinalizer(partial(truncate, dm))
     return dm
