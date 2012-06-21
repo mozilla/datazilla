@@ -461,9 +461,15 @@ class DatazillaModel(object):
 
 
     def retrieve_test_data(self, limit):
-        """Retrieve the JSON from the objectstore to be processed"""
-        # Retrieve unprocessed data without claiming rows. Used by
-        # transfer_data.py
+        """
+        Retrieve JSON blobs from the objectstore.
+
+        Does not claim rows for processing; should not be used for actually
+        processing JSON blobs into perftest schema.
+
+        Used only by the `transfer_data` management command.
+
+        """
         proc = "objectstore.selects.get_unprocessed"
         json_blobs = self.sources["objectstore"].dhub.execute(
             proc=proc,
@@ -476,7 +482,7 @@ class DatazillaModel(object):
 
 
     def load_test_data(self, data):
-        """Process the JSON test data into the database."""
+        """Process JSON test data into the perftest database."""
 
         # reference id data required by insert methods in ref_data
         ref_data = dict()
@@ -501,7 +507,14 @@ class DatazillaModel(object):
 
 
     def transfer_objects(self, start_id, limit):
-        """ Transfer objects from test_data to objectstore """
+        """
+        Transfer objects from test_data table to objectstore.
+
+        TODO: This can go away once all projects have been migrated away from
+        using the old test_data table in the perftest schema to using the
+        objectstore.
+
+        """
         proc = "perftest.selects.get_test_data"
         data_objects = self.sources["perftest"].dhub.execute(
             proc=proc,
@@ -514,8 +527,9 @@ class DatazillaModel(object):
             json_data = data_object['data']
             self.store_test_data( json_data )
 
+
     def process_objects(self, loadlimit):
-        """ Takes objects from the objectstore and moves them to perftest """
+        """Processes JSON blobs from the objectstore into perftest schema."""
         json_blobs = self.claim_objects(loadlimit)
 
         for json_blob in json_blobs:
@@ -527,27 +541,31 @@ class DatazillaModel(object):
                 self.mark_object_complete(row_id)
 
 
-    def claim_objects(self,limit):
-        """ Return json in the objectstore, mark them for use by this conn """
+    def claim_objects(self, limit):
+        """
+        Claim & return up to ``limit`` unprocessed blobs from the objectstore.
+
+        May return more than ``limit`` rows if there are existing orphaned rows
+        that were claimed by an earlier connection with the same connection ID
+        but never completed.
+
+        """
         proc_mark = 'objectstore.updates.mark_loading'
         proc_get  = 'objectstore.selects.get_claimed'
 
-        # Note: this is a locking retrieval. Failure to call load_test_data on
-        # this data will result in some loads of json being stuck in limbo,
-        # which merits a cleanup (utility doesn't exist yet).
+        # Note: this claims rows for processing. Failure to call load_test_data
+        # on this data will result in some json blobs being stuck in limbo
+        # until another worker comes along with the same connection ID.
         self.sources["objectstore"].dhub.execute(
             proc=proc_mark,
             placeholders=[ limit ],
             debug_show=self.DEBUG,
             )
 
-        # Return json blobs from those rows
-        # Note: this query asks for "limit" # of objects belonging to
-        # CONNECTION_ID -- if a connection id is reused, it will pick
-        # up objects that it didn't mark in mark_loading this iteration
+        # Return all JSON blobs claimed by this connection ID (could possibly
+        # include orphaned rows from a previous run).
         json_blobs = self.sources["objectstore"].dhub.execute(
             proc=proc_get,
-            placeholders=[ limit ],
             debug_show=self.DEBUG,
             return_type='tuple'
             )

@@ -18,7 +18,6 @@
                    FROM     `objectstore`
                    WHERE    `worker_id` = CONNECTION_ID()
                    AND      processed_flag = 'loading'
-                   LIMIT ?
                   ",
 
             "host":"master_host"
