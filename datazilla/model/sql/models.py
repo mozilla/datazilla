@@ -260,7 +260,7 @@ class DataSource(models.Model):
                 "default_db": self.name,
                 "procs": [
                     os.path.join(SQL_PATH, procs_file_name),
-                    #os.path.join(SQL_PATH, "sql.json"),
+                    os.path.join(SQL_PATH, "generic.json"),
                     ],
                 }
             }
