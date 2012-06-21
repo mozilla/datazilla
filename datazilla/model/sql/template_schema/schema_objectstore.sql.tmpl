@@ -1,3 +1,7 @@
+/* This file contains {engine} markers that must be replaced
+   before it is sent to MySQL.
+*/
+
 -- MariaDB dump
 --
 -- Host: localhost    Database: schema_objectstore_1
@@ -17,7 +21,7 @@ CREATE TABLE `objectstore` (
   `json_blob` blob,
   `worker_id` int(11),
   PRIMARY KEY (`id`)
-) ENGINE=Aria DEFAULT CHARSET=utf8 PAGE_CHECKSUM=1;
+) ENGINE={engine} DEFAULT CHARSET=utf8;
 
 
 -- Dump completed on 2012-06-05 11:02:48

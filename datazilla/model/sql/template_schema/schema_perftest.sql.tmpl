@@ -1,3 +1,7 @@
+/* This file contains {engine} markers that must be replaced
+   before it is sent to MySQL.
+*/
+
 -- MySQL dump 10.13  Distrib 5.1.61, for redhat-linux-gnu (x86_64)
 --
 -- Host: localhost    Database: schema_1_perftest
@@ -43,7 +47,7 @@ CREATE TABLE `aux_data` (
   UNIQUE KEY `test_id_name_UNIQUE` (`test_id`, `name`),
   KEY `test_id_key` (`test_id`),
   CONSTRAINT `fk_aux_data_test` FOREIGN KEY (`test_id`) REFERENCES `test` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 
@@ -83,7 +87,7 @@ CREATE TABLE `build` (
   CONSTRAINT `fk_build_machine` FOREIGN KEY (`machine_id`) REFERENCES `machine` (`id`),
   CONSTRAINT `fk_build_operating_system` FOREIGN KEY (`operating_system_id`) REFERENCES `operating_system` (`id`),
   CONSTRAINT `fk_build_product` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE={engine} DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -112,7 +116,7 @@ CREATE TABLE `machine` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`),
   UNIQUE KEY `unique_machine` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -140,7 +144,7 @@ CREATE TABLE `method` (
   `code_ref` varchar(255) COLLATE utf8_bin DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name_UNIQUE` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -167,7 +171,7 @@ CREATE TABLE `metric` (
   `description` mediumtext COLLATE utf8_bin NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name_UNIQUE` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -190,7 +194,7 @@ CREATE TABLE `operating_system` (
   `version` varchar(50) COLLATE utf8_bin NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_os` (`name`,`version`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -216,7 +220,7 @@ CREATE TABLE `option` (
   `description` mediumtext COLLATE utf8_bin,
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_option` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -242,7 +246,7 @@ CREATE TABLE `pages` (
   KEY `test_id_key` (`test_id`),
   UNIQUE KEY `unique_test_url` (`test_id`,`url`),
   CONSTRAINT `fk_pages_test` FOREIGN KEY (`test_id`) REFERENCES `test` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -268,7 +272,7 @@ CREATE TABLE `product` (
   `version` varchar(16) COLLATE utf8_bin NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_branch` (`product`,`branch`,`version`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -300,7 +304,7 @@ CREATE TABLE `summary_cache` (
   UNIQUE KEY `item_id_item_data` (`item_id`,`item_data`),
   KEY `item_id_key` (`item_id`),
   KEY `item_data_key` (`item_data`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -327,7 +331,7 @@ CREATE TABLE `test` (
   `version` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name_UNIQUE` (`name`, `version`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -356,7 +360,7 @@ CREATE TABLE `test_aux_data` (
   KEY `fk_aux_data` (`aux_data_id`),
   CONSTRAINT `fk_test_aux_data_test_run` FOREIGN KEY (`test_run_id`) REFERENCES `test_run` (`id`),
   CONSTRAINT `fk_aux_data` FOREIGN KEY (`aux_data_id`) REFERENCES `aux_data` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -382,7 +386,7 @@ CREATE TABLE `test_collection` (
   `description` mediumtext COLLATE utf8_bin,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name_UNIQUE` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -410,7 +414,7 @@ CREATE TABLE `test_collection_map` (
   PRIMARY KEY (`id`),
   KEY `fk_test_collection_map_test_collection` (`test_collection_id`),
   CONSTRAINT `fk_test_collection_map_test_collection` FOREIGN KEY (`test_collection_id`) REFERENCES `test_collection` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -437,7 +441,7 @@ CREATE TABLE `test_data` (
   PRIMARY KEY (`id`),
   KEY `test_run_id_key` (`test_run_id`),
   CONSTRAINT `fk_test_data_test_run` FOREIGN KEY (`test_run_id`) REFERENCES `test_run` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -467,7 +471,7 @@ CREATE TABLE `test_metric` (
   KEY `metric_id_key` (`metric_id`),
   CONSTRAINT `fk_test_metric_method` FOREIGN KEY (`method_id`) REFERENCES `method` (`id`),
   CONSTRAINT `fk_test_metric_metric` FOREIGN KEY (`metric_id`) REFERENCES `metric` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -496,7 +500,7 @@ CREATE TABLE `test_option_values` (
   KEY `option_id_key` (`option_id`),
   CONSTRAINT `fk_test_option_values_option` FOREIGN KEY (`option_id`) REFERENCES `option` (`id`),
   CONSTRAINT `fk_test_option_values_test_run` FOREIGN KEY (`test_run_id`) REFERENCES `test_run` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -529,7 +533,7 @@ CREATE TABLE `test_run` (
   KEY `changeset_key` (`revision`),
   CONSTRAINT `fk_test_run_build` FOREIGN KEY (`build_id`) REFERENCES `build` (`id`),
   CONSTRAINT `fk_test_run_test` FOREIGN KEY (`test_id`) REFERENCES `test` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE={engine} DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -560,7 +564,7 @@ CREATE TABLE `test_value` (
   KEY `page_id_key` (`page_id`),
   CONSTRAINT `fk_test_value_test_run` FOREIGN KEY (`test_run_id`) REFERENCES `test_run` (`id`),
   CONSTRAINT `fk_test_value_page` FOREIGN KEY (`page_id`) REFERENCES `pages` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -590,7 +594,7 @@ CREATE TABLE `threshold` (
   KEY `test_id_key` (`test_id`),
   CONSTRAINT `fk_threshold_test` FOREIGN KEY (`test_id`) REFERENCES `test` (`id`),
   CONSTRAINT `fk_threshold_value` FOREIGN KEY (`value_id`) REFERENCES `value` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -615,7 +619,7 @@ CREATE TABLE `value` (
   `description` mediumtext NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name_UNIQUE` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE={engine} DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

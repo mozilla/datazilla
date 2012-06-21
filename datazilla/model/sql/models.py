@@ -16,7 +16,7 @@ import MySQLdb
 
 
 # the cache key is specific to the database name we're pulling the data from
-SOURCES_CACHE_KEY = "{database}-datasources"
+SOURCES_CACHE_KEY = "datazilla-datasources"
 
 SQL_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -118,20 +118,22 @@ class SQLDataSource(object):
             contenttype=self.contenttype,
             dataset=dataset,
             host=self.datasource.host,
+            db_type=self.datasource.type,
             schema_file=schema_file,
             )
 
 
     @classmethod
     def create(cls, project, contenttype,
-               host=None, name=None, schema_file=None):
+               host=None, name=None, db_type=None, schema_file=None):
         """
         Create and return a new datasource for given project/contenttype.
 
         Creates the database ``name`` (defaults to "project_contenttype_1") on
         host ``host`` (defaults to ``DATAZILLA_DATABASE_HOST``) and populates
         the template schema from ``schema_file`` (defaults to
-        ``template_schema/schema_<contenttype>.sql``).
+        ``template_schema/schema_<contenttype>.sql``) using the db type
+        ``db_type`` (defaults to "MySQL-InnoDB").
 
         Assumes that the database server at ``host`` is accessible, and that
         ``DATAZILLA_DATABASE_USER`` (identified by
@@ -148,6 +150,7 @@ class SQLDataSource(object):
             dataset=1,
             host=host,
             name=name,
+            db_type=db_type,
             schema_file=schema_file,
             )
 
@@ -155,10 +158,12 @@ class SQLDataSource(object):
     @classmethod
     @transaction.commit_on_success
     def _create_dataset(cls, project, contenttype, dataset, host,
-                        name=None, schema_file=None):
+                        name=None, db_type=None, schema_file=None):
         """Create a new ``SQLDataSource`` and its corresponding database."""
         if name is None:
             name = "{0}_{1}_{2}".format(project, contenttype, dataset)
+        if db_type is None:
+            db_type = "MySQL-InnoDB"
 
         ds = DataSource.objects.create(
             host=host,
@@ -166,7 +171,7 @@ class SQLDataSource(object):
             contenttype=contenttype,
             dataset=dataset,
             name=name,
-            type="MySQL",
+            type=db_type,
             creation_date=datetime.datetime.now(),
             )
 
@@ -181,11 +186,7 @@ class SQLDataSource(object):
 class DataSourceManager(models.Manager):
     def cached(self):
         """Return all datasources, caching the results."""
-        from django.db import connections
-        sources = cache.get(
-            SOURCES_CACHE_KEY.format(
-                database=connections["default"].settings_dict["NAME"])
-            )
+        sources = cache.get(SOURCES_CACHE_KEY)
         if sources is None:
             sources = list(self.all())
             cache.set(SOURCES_CACHE_KEY, sources)
@@ -215,6 +216,18 @@ class DataSource(models.Model):
             ["project", "dataset", "contenttype"],
             ["host", "name"],
             ]
+
+
+    def save(self, *args, **kwargs):
+        """Clear the cached datasources when a new one is saved."""
+        clear_cache = (self.pk is None)
+
+        super(DataSource, self).save(*args, **kwargs)
+
+        # Don't actually clear the cache until after the new DataSource is
+        # saved, to avoid a race condition where it gets re-populated too soon.
+        if clear_cache:
+            cache.delete(SOURCES_CACHE_KEY)
 
 
     @property
@@ -247,7 +260,7 @@ class DataSource(models.Model):
                 "default_db": self.name,
                 "procs": [
                     os.path.join(SQL_PATH, procs_file_name),
-                    #os.path.join(SQL_PATH, "sql.json"),
+                    os.path.join(SQL_PATH, "generic.json"),
                     ],
                 }
             }
@@ -261,7 +274,7 @@ class DataSource(models.Model):
         Create the database for this source, using given SQL schema file.
 
         If schema file is not given, defaults to
-        "template_schema/schema_<contenttype>.sql".
+        "template_schema/schema_<contenttype>.sql.tmpl".
 
         Assumes that the database server at ``self.host`` is accessible, and
         that ``DATAZILLA_DATABASE_USER`` (identified by
@@ -269,11 +282,19 @@ class DataSource(models.Model):
         create databases.
 
         """
+        if self.type.lower().startswith("mysql-"):
+            engine = self.type[len("mysql-"):]
+        elif self.type.lower() == "mysql":
+            engine = "InnoDB"
+        else:
+            raise NotImplementedError(
+                "Currently SQLDataSource supports only MySQL data sources.")
+
         if schema_file is None:
             schema_file = os.path.join(
                 SQL_PATH,
                 "template_schema",
-                "schema_{0}.sql".format(self.contenttype),
+                "schema_{0}.sql.tmpl".format(self.contenttype),
                 )
 
         conn = MySQLdb.connect(
@@ -288,15 +309,30 @@ class DataSource(models.Model):
         # MySQLdb provides no way to execute an entire SQL file in bulk, so we
         # have to shell out to the commandline client.
         with open(schema_file) as f:
-            args = [
-                "mysql",
-                "--host={0}".format(self.host),
-                "--user={0}".format(settings.DATAZILLA_DATABASE_USER),
-                ]
-            if settings.DATAZILLA_DATABASE_PASSWORD:
-                args.append(
-                    "--password={0}".format(
-                        settings.DATAZILLA_DATABASE_PASSWORD)
-                    )
-            args.append(self.name)
-            subprocess.check_call(args, stdin=f)
+            # set the engine to use
+            sql = f.read().format(engine=engine)
+
+        args = [
+            "mysql",
+            "--host={0}".format(self.host),
+            "--user={0}".format(settings.DATAZILLA_DATABASE_USER),
+            ]
+        if settings.DATAZILLA_DATABASE_PASSWORD:
+            args.append(
+                "--password={0}".format(
+                    settings.DATAZILLA_DATABASE_PASSWORD)
+                )
+        args.append(self.name)
+        proc = subprocess.Popen(
+            args,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            )
+        (output, _) = proc.communicate(sql)
+        if proc.returncode:
+            raise IOError(
+                "Unable to set up schema for datasource {0}: "
+                "mysql returned code {1}, output follows:\n\n{2}".format(
+                    self.key, proc.returncode, output)
+                )
