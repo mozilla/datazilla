@@ -10,6 +10,7 @@ access.
 """
 import datetime
 import time
+import json
 
 from django.conf import settings
 
@@ -414,7 +415,7 @@ class DatazillaModel(object):
 
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_summary_cache',
-            debug_show=settings.DEBUG,
+            debug_show=self.DEBUG,
             placeholders=placeholders,
             executemany=False,
             )
@@ -439,7 +440,7 @@ class DatazillaModel(object):
 
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_test_collection_map',
-            debug_show=settings.DEBUG,
+            debug_show=self.DEBUG,
             placeholders=placeholders)
 
 
@@ -454,16 +455,22 @@ class DatazillaModel(object):
 
         self.sources["objectstore"].dhub.execute(
             proc='objectstore.inserts.store_json',
-            debug_show=settings.DEBUG,
-            placeholders=[json_data],
-            executemany=False,
+            placeholders=[ json_data ],
+            debug_show=self.DEBUG
             )
 
 
     def retrieve_test_data(self, limit):
-        """Retrieve the JSON from the objectstore to be processed"""
-        proc = 'objectstore.selects.get_unprocessed'
+        """
+        Retrieve JSON blobs from the objectstore.
 
+        Does not claim rows for processing; should not be used for actually
+        processing JSON blobs into perftest schema.
+
+        Used only by the `transfer_data` management command.
+
+        """
+        proc = "objectstore.selects.get_unprocessed"
         json_blobs = self.sources["objectstore"].dhub.execute(
             proc=proc,
             placeholders=[ limit ],
@@ -473,27 +480,24 @@ class DatazillaModel(object):
 
         return json_blobs
 
-    def load_test_data(self, data, json_data):
-        """Process the JSON test data into the database."""
 
-        ##reference id data required by insert methods in ref_data##
+    def load_test_data(self, data):
+        """Process JSON test data into the perftest database."""
+
+        # reference id data required by insert methods in ref_data
         ref_data = dict()
 
-        ###
-        #Get/Set reference info, all inserts use an on duplicate key
-        #approach
-        ###
+        # Get/Set reference info, all inserts use an on duplicate key
+        # approach
         ref_data['test_id'] = self._get_test_id(data)
         ref_data['option_ids'] = self._get_option_ids(data)
         ref_data['operating_system_id'] = self._get_os_id(data)
         ref_data['product_id'] = self._get_product_id(data)
         ref_data['machine_id'] = self._get_machine_id(data)
 
-        ###
-        #Insert build and test_run data.  All other test data
-        #types require the build_id and test_run_id to meet foreign key
-        #constriants.
-        ###
+        # Insert build and test_run data.  All other test data
+        # types require the build_id and test_run_id to meet foreign key
+        # constriants.
         ref_data['build_id'] = self._set_build_data(data, ref_data)
         ref_data['test_run_id'] = self._set_test_run_data(data, ref_data)
 
@@ -501,11 +505,95 @@ class DatazillaModel(object):
         self._set_test_values(data, ref_data)
         self._set_test_aux_data(data, ref_data)
 
-        ###
-        #TODO: Once the object store is in place
-        #this function call should be removed.
-        ###
-        self._set_test_data(json_data, ref_data)
+        return ref_data['test_run_id']
+
+    def transfer_objects(self, start_id, limit):
+        """
+        Transfer objects from test_data table to objectstore.
+
+        TODO: This can go away once all projects have been migrated away from
+        using the old test_data table in the perftest schema to using the
+        objectstore.
+
+        """
+        proc = "perftest.selects.get_test_data"
+        data_objects = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            placeholders=[ int(start_id), int(limit) ],
+            debug_show=self.DEBUG,
+            return_type='tuple'
+            )
+
+        for data_object in data_objects:
+            json_data = data_object['data']
+            self.store_test_data( json_data )
+
+
+    def process_objects(self, loadlimit):
+        """Processes JSON blobs from the objectstore into perftest schema."""
+        rows = self.claim_objects(loadlimit)
+
+        for row in rows:
+            data = json.loads(row['json_blob'])
+            row_id = int(row['id'])
+
+            if self.verify_json(data):
+                test_run_id = self.load_test_data(data)
+                self.mark_object_complete(row_id, test_run_id)
+
+
+    def claim_objects(self, limit):
+        """
+        Claim & return up to ``limit`` unprocessed blobs from the objectstore.
+
+        Returns a tuple of dictionaries with "json_blob" and "id" keys.
+
+        May return more than ``limit`` rows if there are existing orphaned rows
+        that were claimed by an earlier connection with the same connection ID
+        but never completed.
+
+        """
+        proc_mark = 'objectstore.updates.mark_loading'
+        proc_get  = 'objectstore.selects.get_claimed'
+
+        # Note: this claims rows for processing. Failure to call load_test_data
+        # on this data will result in some json blobs being stuck in limbo
+        # until another worker comes along with the same connection ID.
+        self.sources["objectstore"].dhub.execute(
+            proc=proc_mark,
+            placeholders=[ limit ],
+            debug_show=self.DEBUG,
+            )
+
+        # Return all JSON blobs claimed by this connection ID (could possibly
+        # include orphaned rows from a previous run).
+        json_blobs = self.sources["objectstore"].dhub.execute(
+            proc=proc_get,
+            debug_show=self.DEBUG,
+            return_type='tuple'
+            )
+
+        return json_blobs
+
+
+    def mark_object_complete(self,object_id, test_run_id):
+        """ Call to database to mark the task completed """
+        proc_completed = "objectstore.updates.mark_complete"
+
+        self.sources["objectstore"].dhub.execute(
+            proc=proc_completed,
+            placeholders=[ test_run_id, object_id ],
+            debug_show=self.DEBUG
+            )
+
+
+    def verify_json(self, json_data):
+        """ Verify that json is valid for ingestion """
+        # TODO (stub)
+        # Need to implement some sort of verification json is well-formed
+        # to ensure load_test_data won't fail.
+        return True
+
 
     def _set_test_data(self, json_data, ref_data):
 

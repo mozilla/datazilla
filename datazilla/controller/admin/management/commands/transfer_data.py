@@ -53,6 +53,7 @@ class Command(BaseCommand):
 
 
         dm_source = DatazillaModel(source)
+
         data_iter = dm_source.get_all_test_data(start, records)
         sql_chunks = data_iter.sql_chunks
         dm_source.disconnect()
@@ -81,7 +82,7 @@ class Command(BaseCommand):
                     if options['show']:
                         self.stdout.write(data['data'] + "\n")
 
-                    dm_target.load_test_data(deserialized_data, data['data'])
+                    dm_target.load_test_data(deserialized_data)
             dm_target.disconnect()
 
 

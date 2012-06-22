@@ -47,6 +47,11 @@
       "host_type":"master_host"
    },
 
+   "insert_dummy_row":{
+       "sql":"INSERT INTO `test`.`DATA_SOURCES_TEST_DATA` (`go_id`,`term`,`category`) VALUES ('baloney','baloney','baloney');",
+       "host_type":"master_host"
+   },
+
    "create_table":{
       "sql":"CREATE TABLE IF NOT EXISTS `test`.`DATA_SOURCES_TEST_DATA` (
                `id` int(5) PRIMARY KEY NOT NULL AUTO_INCREMENT,
@@ -55,7 +60,7 @@
                `term` longtext NOT NULL,
                `category` tinytext NOT NULL,
                KEY `auto_pfamA` (`auto_pfamA`)
-            ) ENGINE=MyISAM DEFAULT CHARSET=utf8",
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
    "host_type":"master_host"
    },
 

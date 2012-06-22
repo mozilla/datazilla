@@ -1,16 +1,17 @@
 import unittest
 import sys
 import os
-import json
 
 from datasource.bases.BaseHub import BaseHub
 from datasource.DataHub import DataHub
+
+
 
 class TestDataHub(unittest.TestCase):
 
     test_data = []
 
-    ##Set path to data file##
+    # Set path to data file
     file_path = os.path.dirname(__file__)
 
     if file_path:
@@ -44,10 +45,11 @@ class TestDataHub(unittest.TestCase):
            test suite
         """
         tests = ['test_parse_data_sources',
-                 'test_db_existance',
+                 'test_db_existence',
                  'test_create_data_table',
                  'test_load_data',
-                 'test_drop_table' ]
+                 'test_drop_table',
+                 ]
 
         return unittest.TestSuite(map(TestDataHub, tests))
 
@@ -78,7 +80,7 @@ class TestDataHub(unittest.TestCase):
             msg = "The required data source, %s, was not found in %s" % (self.data_source, BaseHub.source_list_file)
             fail(msg)
 
-    def test_db_existance(self):
+    def test_db_existence(self):
 
         dh = DataHub.get(self.data_source)
         dbs = dh.get_databases()
