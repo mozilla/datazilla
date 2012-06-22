@@ -26,7 +26,19 @@ def pytest_sessionstart(session):
     session.django_db_config = session.django_runner.setup_databases()
 
     from datazilla.model import DatazillaModel
-    DatazillaModel.create("testproj")
+    dm = DatazillaModel.create("testproj")
+
+    # patch in additional test-only procs on the datasources
+    objstore = dm.sources["objectstore"]
+    del objstore.dhub.procs[objstore.datasource.key]
+    objstore.dhub.data_sources[objstore.datasource.key]["procs"].append(
+        os.path.join(
+            os.path.abspath(os.path.dirname(__file__)),
+            "objectstore_test.json",
+            )
+        )
+    objstore.dhub.load_procs(objstore.datasource.key)
+
 
 
 def pytest_sessionfinish(session):
@@ -131,5 +143,6 @@ def pytest_funcarg__dm(request):
     from datazilla.model import DatazillaModel
 
     dm = DatazillaModel("testproj")
+
     request.addfinalizer(partial(truncate, dm))
     return dm

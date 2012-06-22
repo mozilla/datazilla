@@ -1,3 +1,40 @@
+from ..blobs import perftest_json
+
+
+def test_claim_objects(dm):
+    """``claim_objects`` returns unclaimed rows up to a limit."""
+    blobs = [
+        perftest_json(testrun={"date": "1330454755"}),
+        perftest_json(testrun={"date": "1330454756"}),
+        perftest_json(testrun={"date": "1330454757"}),
+        ]
+
+    for blob in blobs:
+        dm.store_test_data(blob)
+
+    rows1 = dm.claim_objects(2)
+
+    # a separate worker with a separate connection
+    from datazilla.model import DatazillaModel
+    dm2 = DatazillaModel("testproj")
+
+    rows2 = dm2.claim_objects(2)
+
+    loading_rows = dm.sources["objectstore"].dhub.execute(
+        proc="objectstore_test.counts.loading",
+        )[0]["loading_count"]
+
+    assert len(rows1) == 2
+    # second worker asked for two rows but only got one that was left
+    assert len(rows2) == 1
+
+    # all three blobs were fetched by one of the workers
+    assert set([r["json_blob"] for r in rows1 + rows2]) == set(blobs)
+
+    # the blobs are all marked as "loading" in the database
+    assert loading_rows == 3
+
+
 def test_get_operating_systems(dm):
     dm.get_operating_systems()
 

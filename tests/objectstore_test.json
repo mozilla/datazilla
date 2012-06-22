@@ -1,0 +1,11 @@
+{
+    "counts": {
+        "loading": {
+            "sql": "SELECT COUNT(`id`) AS loading_count
+                    FROM   `objectstore`
+                    WHERE  processed_flag = 'loading'
+                   ",
+            "host": "master_host"
+        }
+    }
+}
