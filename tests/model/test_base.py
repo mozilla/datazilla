@@ -2,7 +2,7 @@ from ..blobs import perftest_json
 
 
 def test_claim_objects(dm):
-    """``claim_objects`` returns unclaimed rows up to a limit."""
+    """``claim_objects`` claims & returns unclaimed rows up to a limit."""
     blobs = [
         perftest_json(testrun={"date": "1330454755"}),
         perftest_json(testrun={"date": "1330454756"}),
@@ -21,8 +21,7 @@ def test_claim_objects(dm):
     rows2 = dm2.claim_objects(2)
 
     loading_rows = dm.sources["objectstore"].dhub.execute(
-        proc="objectstore_test.counts.loading",
-        )[0]["loading_count"]
+        proc="objectstore_test.counts.loading")[0]["loading_count"]
 
     assert len(rows1) == 2
     # second worker asked for two rows but only got one that was left
@@ -33,6 +32,21 @@ def test_claim_objects(dm):
 
     # the blobs are all marked as "loading" in the database
     assert loading_rows == 3
+
+
+def test_mark_object_complete(dm):
+    """Marks claimed row complete and records run id."""
+    dm.store_test_data(perftest_json())
+    row_id = dm.claim_objects(1)[0]["id"]
+    test_run_id = 7 # any arbitrary number; no cross-db constraint checks
+
+    dm.mark_object_complete(row_id, test_run_id)
+
+    row_data = dm.sources["objectstore"].dhub.execute(
+        proc="objectstore_test.selects.row", placeholders=[row_id])[0]
+
+    assert row_data["test_run_id"] == test_run_id
+    assert row_data["processed_flag"] == "complete"
 
 
 def test_get_operating_systems(dm):

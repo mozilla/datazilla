@@ -576,7 +576,7 @@ class DatazillaModel(object):
         return json_blobs
 
 
-    def mark_object_complete(self,object_id, test_run_id):
+    def mark_object_complete(self, object_id, test_run_id):
         """ Call to database to mark the task completed """
         proc_completed = "objectstore.updates.mark_complete"
 
