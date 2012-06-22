@@ -505,6 +505,7 @@ class DatazillaModel(object):
         self._set_test_values(data, ref_data)
         self._set_test_aux_data(data, ref_data)
 
+        return ref_data['test_run_id']
 
     def transfer_objects(self, start_id, limit):
         """
@@ -537,8 +538,8 @@ class DatazillaModel(object):
             row_id = int(json_blob['id'])
 
             if self.verify_json(data):
-                self.load_test_data(data)
-                self.mark_object_complete(row_id)
+                test_run_id = self.load_test_data(data)
+                self.mark_object_complete(row_id, test_run_id)
 
 
     def claim_objects(self, limit):
@@ -573,13 +574,13 @@ class DatazillaModel(object):
         return json_blobs
 
 
-    def mark_object_complete(self,object_id):
+    def mark_object_complete(self,object_id, test_run_id):
         """ Call to database to mark the task completed """
         proc_completed = "objectstore.updates.mark_complete"
 
         self.sources["objectstore"].dhub.execute(
             proc=proc_completed,
-            placeholders=[ object_id ],
+            placeholders=[ test_run_id, object_id ],
             debug_show=self.DEBUG
             )
 
