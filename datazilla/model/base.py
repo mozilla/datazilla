@@ -531,11 +531,11 @@ class DatazillaModel(object):
 
     def process_objects(self, loadlimit):
         """Processes JSON blobs from the objectstore into perftest schema."""
-        json_blobs = self.claim_objects(loadlimit)
+        rows = self.claim_objects(loadlimit)
 
-        for json_blob in json_blobs:
-            data = json.loads(json_blob['json_blob'])
-            row_id = int(json_blob['id'])
+        for row in rows:
+            data = json.loads(row['json_blob'])
+            row_id = int(row['id'])
 
             if self.verify_json(data):
                 test_run_id = self.load_test_data(data)
@@ -545,6 +545,8 @@ class DatazillaModel(object):
     def claim_objects(self, limit):
         """
         Claim & return up to ``limit`` unprocessed blobs from the objectstore.
+
+        Returns a tuple of dictionaries with "json_blob" and "id" keys.
 
         May return more than ``limit`` rows if there are existing orphaned rows
         that were claimed by an earlier connection with the same connection ID
