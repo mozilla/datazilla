@@ -14,13 +14,18 @@ DROP TABLE IF EXISTS `objectstore`;
 
 CREATE TABLE `objectstore` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
+  `test_run_id` int(11) NULL,
   `timestamp` timestamp NULL DEFAULT NULL,
   `processed_flag` enum('ready','loading','complete') DEFAULT 'ready',
   `error_flag` enum('N','Y') DEFAULT 'N',
   `error_msg` mediumtext,
   `json_blob` blob,
   `worker_id` int(11),
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `test_run_id_key` (`test_run_id`),
+  KEY `processed_flag_key` (`processed_flag`),
+  KEY `error_flag_key` (`error_flag`),
+  KEY `worker_id_key` (`worker_id`)
 ) ENGINE={engine} DEFAULT CHARSET=utf8;
 
 
