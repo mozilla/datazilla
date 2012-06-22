@@ -87,6 +87,24 @@ class PushLogModel(DatazillaModelBase):
         for src in self.sources.itervalues():
             src.disconnect()
 
+    @property
+    def hg_ds(self):
+        return self.sources["hgmozilla"]
+
+
+    def get_all_branches(self):
+
+        proc = 'hgmozilla.selects.get_all_branches'
+
+        data_iter = self.hg_ds.dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            )
+
+        return data_iter
+
+
 
 class PerformanceTestModel(DatazillaModelBase):
     """Public interface to all data access for a performance project."""

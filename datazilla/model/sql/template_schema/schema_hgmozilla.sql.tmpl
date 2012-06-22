@@ -20,6 +20,32 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Table structure for table `branches`
+--
+
+DROP TABLE IF EXISTS `branches`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `branches` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(45) NOT NULL,
+  `uri` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name_UNIQUE` (`name`)
+) ENGINE={engine} AUTO_INCREMENT=36 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `branches`
+--
+
+LOCK TABLES `branches` WRITE;
+/*!40000 ALTER TABLE `branches` DISABLE KEYS */;
+INSERT INTO `branches` VALUES (1,'Firefox','mozilla-central'),(2,'Try','try'),(3,'Mozilla-Aurora','releases/mozilla-aurora'),(4,'Mozilla-Beta','releases/mozilla-beta'),(5,'Mozilla-Release','releases/mozilla-release'),(6,'Mozilla-Esr10','releases/mozilla-esr10'),(7,'Accessibility','projects/accessibility'),(8,'Addon-SDK','projects/addon-sdk'),(9,'Build-System','projects/build-system'),(10,'Devtools','projects/devtools'),(11,'Fx-Team','integration/fx-team'),(12,'Ionmonkey','projects/ionmonkey'),(13,'JägerMonkey','projects/jaegermonkey'),(14,'Profiling','projects/profiling'),(15,'Services-Central','services/services-central'),(16,'UX','projects/ux'),(17,'Alder','projects/alder'),(18,'Ash','projects/ash'),(19,'Birch','projects/birch'),(20,'Cedar','projects/cedar'),(21,'Elm','projects/elm'),(22,'Holly','projects/holly'),(23,'Larch','projects/larch'),(24,'Maple','projects/maple'),(25,'Oak','projects/oak'),(26,'Pine','projects/pine'),(27,'Electrolysis','projects/electrolysis'),(28,'Graphics','projects/graphics'),(29,'Places','projects/places'),(30,'Thunderbird-Trunk','comm-central/rev'),(31,'Thunderbird-Try','try-comm-central/rev'),(32,'Thunderbird-Aurora','releases/comm-aurora'),(33,'Thunderbird-Beta','releases/comm-beta'),(34,'Thunderbird-Release','releases/comm-release'),(35,'Thunderbird-Esr10','releases/comm-esr10'),(36,'Mozilla-Inbound','integration/mozilla-inbound');
+/*!40000 ALTER TABLE `branches` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `files`
 --
 
@@ -34,7 +60,7 @@ CREATE TABLE `files` (
   UNIQUE KEY `uq_node_file` (`node_id`,`filespec`),
   KEY `fk_node_id` (`node_id`),
   CONSTRAINT `fk_node_id` FOREIGN KEY (`node_id`) REFERENCES `changesets` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE={engine} DEFAULT CHARSET=utf8;
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -49,30 +75,30 @@ CREATE TABLE `changesets` (
   `node` varchar(50) DEFAULT NULL,
   `author` varchar(100) DEFAULT NULL,
   `branch` varchar(45) DEFAULT NULL,
-  `desc` varchar(1000) DEFAULT NULL,
+  `desc` text DEFAULT NULL,
   `push_log_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_node` (`node`),
+  UNIQUE KEY `uq_node` (`node`, `push_log_id`),
   KEY `fk_push_log` (`push_log_id`),
   CONSTRAINT `fk_push_log` FOREIGN KEY (`push_log_id`) REFERENCES `push_log` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE={engine} DEFAULT CHARSET=utf8;
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `push_log`
 --
 
-DROP TABLE IF EXISTS `push_log`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `push_log` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `push_id` int(11) NOT NULL,
   `date` int(11) DEFAULT NULL,
-  `user` varchar(100) DEFAULT NULL,
+  `user` varchar(100) COLLATE utf8_bin DEFAULT NULL,
+  `branch_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_push` (`push_id`)
-) ENGINE={engine} DEFAULT CHARSET=utf8;
+  UNIQUE KEY `uq_push` (`push_id`),
+  KEY `branch` (`branch_id`),
+  CONSTRAINT `branch` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

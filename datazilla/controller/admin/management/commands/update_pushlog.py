@@ -29,13 +29,6 @@ class Command(BaseCommand):
                     default=None,
                     help="The host name for the repo (e.g. hg.mozilla.org)"),
 
-        make_option("--uri",
-                    action="store",
-                    dest="uri",
-                    default="integration/mozilla-inbound/json-pushes",
-                    help="(optional) The URI for fetching the pushlogs from " +
-                    "the given repo_host."),
-
         make_option("--enddate",
                     action="store",
                     dest="enddate",
@@ -51,22 +44,63 @@ class Command(BaseCommand):
         )
 
 
+    def println(self, val):
+        self.stdout.write("{0}\n".format(str(val)))
+
+
     def handle(self, *args, **options):
         """ Store pushlog data in the database. """
 
         repo_host = options.get("repo_host")
-        uri = options.get("uri")
         enddate = options.get("enddate")
         numdays = int(options.get("numdays"))
 
         if not repo_host:
-            self.stdout.write("You must supply a host name for the repo pushlogs " +
-                              "to store: --repo_host hostname\n")
+            self.println("You must supply a host name for the repo pushlogs " +
+                         "to store: --repo_host hostname")
             return
 
         if not numdays:
-            self.stdout.write("You must supply the number of days data.\n")
+            self.println("You must supply the number of days data.")
             return
+
+        # parameters sent to the requests for pushlog data
+        params = self.get_params(enddate, numdays)
+
+        plm = PushLogModel()
+
+        #####
+        # Loop through all branches for all pushlogs
+
+        # fetch the list of known branches.
+
+        for branch in plm.get_all_branches():
+            self.println("Branch: pushlogs for {0}".format(branch["name"]))
+
+            uri = "{0}/json-pushes".format(branch["uri"])
+
+            url = "https://{0}/{1}?{2}".format(
+                repo_host,
+                uri,
+                urllib.urlencode(params),
+                )
+
+            if settings.DEBUG:
+                self.println("URL: {0}".format(url))
+
+            # fetch the JSON content from the constructed URL.
+            res = urllib.urlopen(url)
+
+            json_data = res.read()
+            pushlog_list = json.loads(json_data)
+
+            self.insert_pushlog(plm.hg_ds, branch["id"], pushlog_list)
+
+        plm.disconnect()
+
+
+    def get_params(self, enddate, numdays):
+        """figure out the params to send to the pushlog queries."""
 
         if enddate:
             #create a proper datetime.date for calculation of startdate
@@ -75,100 +109,101 @@ class Command(BaseCommand):
         else:
             _enddate = datetime.date.today()
 
-        # calculate the startdate
+        # calculate the startdate and enddate
 
         _startdate = _enddate - datetime.timedelta(days=numdays)
 
         params = {
             "full": 1,
             "startdate": _startdate.strftime("%m/%d/%y"),
-        }
+            }
         # enddate is optional.  the endpoint will just presume today,
         # if not given.
         if enddate:
             params.update({"enddate": enddate})
 
-        url = "https://{0}/{1}?{2}".format(
-            repo_host,
-            uri,
-            urllib.urlencode(params)
-        )
+        return params
 
-        # fetch the JSON content from the constructed URL.
-        res = urllib.urlopen(url)
 
-        json_data = res.read()
-        data = json.loads(json_data)
+    def insert_pushlog(self, ds, branch_id, pushlog_list):
+        """Loop through all the pushlogs and insert them."""
 
-        plm = PushLogModel()
-        ds = plm.sources["hgmozilla"]
-
-        # one pushlog
-        for pushlog_json_id, pushlog in data.items():
+        for pushlog_json_id, pushlog in pushlog_list.items():
             # make sure the push_log_id isn't confused with a previous iteration
+            self.println("    Pushlog {0}".format(pushlog_json_id))
 
             placeholders = [
                 pushlog_json_id,
                 pushlog["date"],
                 pushlog["user"],
+                branch_id,
                 ]
             try:
-                push_log_id = self._insert_data_and_get_id(
+                pushlog_id = self._insert_data_and_get_id(
                     ds,
                     "set_push_log",
                     placeholders=placeholders,
                     )
 
                 # process the nodes of the pushlog
-                # TODO: should this table be called "changesets" instead?
-                for cs in pushlog["changesets"]:
-                    placeholders = [
-                        cs["node"],
-                        cs["author"],
-                        cs["branch"],
-                        cs["desc"],
-                        push_log_id,
-                        ]
-
-                    try:
-                        node_id = self._insert_data_and_get_id(
-                            ds,
-                            "set_node",
-                            placeholders=placeholders,
-                            )
-
-                        # process the files of nodes
-                        for file in cs["files"]:
-                            placeholders = [
-                                node_id,
-                                file,
-                                ]
-                            try:
-                                self._insert_data(
-                                    ds,
-                                    "set_file",
-                                    placeholders=placeholders,
-                                    )
-                            except IntegrityError, e:
-                                self.stdout.write("Skip dup- pushlog: {0}, node: {1}, file: {2}".format(
-                                    pushlog_json_id,
-                                    cs["node"],
-                                    file,
-                                ))
-
-                    except IntegrityError, e:
-                        self.stdout.write("Skip dup- pushlog: {0}, node: {1}".format(
-                            pushlog_json_id,
-                            cs["node"],
-                            ))
-
+                self.insert_changesets(ds, pushlog_id, pushlog["changesets"])
 
             except IntegrityError:
-                self.stdout.write("Skip dup- pushlog: {0}".format(
+                self.println("<><><>Skip dup- pushlog: {0}".format(
                     pushlog_json_id,
                 ))
 
-        ds.disconnect()
+
+    def insert_changesets(self, ds, pushlog_id, changeset_list):
+        """Loop through all the changesets in a pushlog, and insert them."""
+
+        for cs in changeset_list:
+            self.println("        Changeset {0}".format(cs["node"]))
+            placeholders = [
+                cs["node"],
+                cs["author"],
+                cs["branch"],
+                cs["desc"],
+                pushlog_id,
+                ]
+
+            try:
+                changeset_id = self._insert_data_and_get_id(
+                    ds,
+                    "set_node",
+                    placeholders=placeholders,
+                    )
+
+                # process the files of nodes
+                self.insert_files(ds, changeset_id, cs["files"])
+
+            except IntegrityError:
+                self.println("<><><>Skip changeset dup- pushlog: {0}, node: {1}".format(
+                    pushlog_id,
+                    cs["node"],
+                    ))
+
+
+    def insert_files(self, ds, changeset_id, file_list):
+        """Insert all the files in the changeset"""
+
+        for file in file_list:
+            placeholders = [
+                changeset_id,
+                file,
+                ]
+            try:
+                self._insert_data(
+                    ds,
+                    "set_file",
+                    placeholders=placeholders,
+                    )
+            except IntegrityError:
+                self.println("<><><>Skip dup- node: {1}, file: {2}".format(
+                    pushlog_json_id,
+                    node_id,
+                    file,
+                    ))
 
 
     def _insert_data(self, ds, statement, placeholders, executemany=False):

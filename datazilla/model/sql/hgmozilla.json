@@ -1,8 +1,8 @@
 {
     "inserts":{
         "set_push_log":{
-            "sql":"INSERT INTO `push_log` (`push_id`, `date`, `user`)
-                   VALUES (?, ?, ?)",
+            "sql":"INSERT INTO `push_log` (`push_id`, `date`, `user`, `branch_id`)
+                   VALUES (?, ?, ?, ?)",
             "host":"master_host"
         },
         "set_node":{
@@ -19,6 +19,10 @@
     "selects":{
         "get_last_insert_id":{
             "sql":"SELECT LAST_INSERT_ID() AS 'id'",
+            "host":"master_host"
+        },
+        "get_all_branches":{
+            "sql":"SELECT id, name, uri FROM branches",
             "host":"master_host"
         }
     }

@@ -17,7 +17,7 @@ class Command(BaseCommand):
         make_option('--type',
                     action='store',
                     dest='type',
-                    default=None,
+                    default="MySQL-InnoDB",
                     help='The database type (e.g. "MySQL-InnoDB") '
                          'for the database'),)
 
