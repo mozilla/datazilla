@@ -53,7 +53,7 @@
         "mark_complete":{
 
             "sql":"UPDATE   `objectstore`
-                   SET      `processed_flag` = 'complete'
+                   SET      `processed_flag` = 'complete', `test_run_id` = ?
                    WHERE    `processed_flag` = 'loading'
                    AND      `id` = ?
                    AND      `worker_id` = CONNECTION_ID()
