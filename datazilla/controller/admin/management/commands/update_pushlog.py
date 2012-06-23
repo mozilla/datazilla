@@ -75,7 +75,9 @@ class Command(BaseCommand):
         # fetch the list of known branches.
 
         for branch in plm.get_all_branches():
-            self.println("Branch: pushlogs for {0}".format(branch["name"]))
+            self.println(u"Branch: pushlogs for {0}".format(
+                unicode(branch["name"])).encode("UTF-8")
+                )
 
             uri = "{0}/json-pushes".format(branch["uri"])
 
@@ -149,7 +151,7 @@ class Command(BaseCommand):
                 self.insert_changesets(ds, pushlog_id, pushlog["changesets"])
 
             except IntegrityError:
-                self.println("<><><>Skip dup- pushlog: {0}".format(
+                self.println("--Skip dup- pushlog: {0}".format(
                     pushlog_json_id,
                 ))
 
@@ -168,41 +170,16 @@ class Command(BaseCommand):
                 ]
 
             try:
-                changeset_id = self._insert_data_and_get_id(
+                self._insert_data_and_get_id(
                     ds,
                     "set_node",
                     placeholders=placeholders,
                     )
 
-                # process the files of nodes
-                self.insert_files(ds, changeset_id, cs["files"])
-
             except IntegrityError:
-                self.println("<><><>Skip changeset dup- pushlog: {0}, node: {1}".format(
+                self.println("--Skip changeset dup- pushlog: {0}, node: {1}".format(
                     pushlog_id,
                     cs["node"],
-                    ))
-
-
-    def insert_files(self, ds, changeset_id, file_list):
-        """Insert all the files in the changeset"""
-
-        for file in file_list:
-            placeholders = [
-                changeset_id,
-                file,
-                ]
-            try:
-                self._insert_data(
-                    ds,
-                    "set_file",
-                    placeholders=placeholders,
-                    )
-            except IntegrityError:
-                self.println("<><><>Skip dup- node: {1}, file: {2}".format(
-                    pushlog_json_id,
-                    node_id,
-                    file,
                     ))
 
 

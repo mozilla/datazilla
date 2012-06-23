@@ -9,11 +9,6 @@
             "sql":"INSERT INTO `changesets` (`node`, `author`, `branch`, `desc`, `push_log_id`)
                    VALUES (?,?,?,?,?)",
             "host":"master_host"
-        },
-        "set_file":{
-            "sql":"INSERT INTO `files` (`node_id`, `filespec`)
-                   VALUES (?,?)",
-            "host":"master_host"
         }
     },
     "selects":{
