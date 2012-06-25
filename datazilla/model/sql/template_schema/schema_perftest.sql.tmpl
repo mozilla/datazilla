@@ -355,8 +355,10 @@ CREATE TABLE `test_aux_data` (
   `aux_data_id` int(11) NOT NULL,
   `numeric_data` double DEFAULT NULL,
   `string_data` varchar(50) COLLATE utf8_bin DEFAULT NULL,
+  `status` tinyint(4) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`),
   KEY `test_run_id_key` (`test_run_id`),
+  KEY `status_key` (`status`),
   KEY `fk_aux_data` (`aux_data_id`),
   CONSTRAINT `fk_test_aux_data_test_run` FOREIGN KEY (`test_run_id`) REFERENCES `test_run` (`id`),
   CONSTRAINT `fk_aux_data` FOREIGN KEY (`aux_data_id`) REFERENCES `aux_data` (`id`)
@@ -418,33 +420,6 @@ CREATE TABLE `test_collection_map` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `test_data`
---
-
-DROP TABLE IF EXISTS `test_data`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-
-/******************
-test_data - Description
-
-Test data holds the JSON blob submitted by the worker bot that 
-runs the tests.  This table is essentially a key/value object 
-store and should really not be in the RDBS but should be placed 
-in an object store.  The JSON structures stored here are expanded 
-into the rest of the schema.
-******************/
-CREATE TABLE `test_data` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `test_run_id` int(11) NOT NULL,
-  `data` mediumtext COLLATE utf8_bin NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `test_run_id_key` (`test_run_id`),
-  CONSTRAINT `fk_test_data_test_run` FOREIGN KEY (`test_run_id`) REFERENCES `test_run` (`id`)
-) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
 -- Table structure for table `test_metric`
 --
 
@@ -495,9 +470,11 @@ CREATE TABLE `test_option_values` (
   `test_run_id` int(11) NOT NULL,
   `option_id` int(11) NOT NULL,
   `value` varchar(25) COLLATE utf8_bin DEFAULT NULL,
+  `status` tinyint(4) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`),
   KEY `test_run_id_key` (`test_run_id`),
   KEY `option_id_key` (`option_id`),
+  KEY `status_key` (`status`),
   CONSTRAINT `fk_test_option_values_option` FOREIGN KEY (`option_id`) REFERENCES `option` (`id`),
   CONSTRAINT `fk_test_option_values_test_run` FOREIGN KEY (`test_run_id`) REFERENCES `test_run` (`id`)
 ) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
@@ -559,9 +536,11 @@ CREATE TABLE `test_value` (
   `page_id` int(11) DEFAULT NULL,
   `value_id` int(11) NOT NULL,
   `value` double NOT NULL,
+  `status` tinyint(4) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`),
   KEY `test_run_id_key` (`test_run_id`),
   KEY `page_id_key` (`page_id`),
+  KEY `status_key` (`status`),
   CONSTRAINT `fk_test_value_test_run` FOREIGN KEY (`test_run_id`) REFERENCES `test_run` (`id`),
   CONSTRAINT `fk_test_value_page` FOREIGN KEY (`page_id`) REFERENCES `pages` (`id`)
 ) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
