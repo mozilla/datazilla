@@ -84,6 +84,15 @@ def set_test_data(request, project=""):
 
     """
 
+    #####
+    #This conditional provides backwords compatibility with
+    #the talos production environment.  It should
+    #be removed after the production environment
+    #is uniformaly using the new url format.
+    ####
+    if project == 'views':
+        project = 'talos'
+
     # default to bad request if the JSON is malformed or not present
     status = 400
 
@@ -119,7 +128,8 @@ def set_test_data(request, project=""):
 
 def dataview(request, project="", method=""):
 
-    proc_path = "graphs.views."
+    proc_path = "perftest.views."
+
     ##Full proc name including base path in json file##
     full_proc_path = "%s%s" % (proc_path, method)
 
