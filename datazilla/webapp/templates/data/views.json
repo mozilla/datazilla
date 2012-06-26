@@ -17,12 +17,6 @@
                          { "dview":"test_values", "parent":"test_chart" },
                          { "dview":"page_values", "parent":"test_value_summary" } ]
       },
-      { "name":"developer_delight",
-          "read_name":"Developer's Delight",
-          "collection":[ { "dview":"test_chart", "parent":"" },
-                         { "dview":"test_value_summary", "parent":"test_chart" },
-                         { "dview":"page_values", "parent":"test_value_summary" } ]
-      },
       { "name":"test_explorer",
         "read_name":"Test Table Explorer",
         "collection":[ { "dview":"test_run", "parent":"" },
@@ -92,7 +86,6 @@
         "data_adapter":"crashes",
         "charts":[ { "name":"table", "read_name":"Table", "default":"1" } ]
       },
-
       { "name":"test_value",
         "read_name":"Test Values",
         "signals":{ "test_run_id":"1" },
@@ -100,14 +93,6 @@
         "data_adapter":"crashes",
         "charts":[ { "name":"table", "read_name":"Table", "default":"1" } ]
       },
-      { "name":"test_value",
-        "read_name":"Test Values",
-        "signals":{ "test_run_id":"1" },
-        "control_panel":"named_fields.html",
-        "data_adapter":"crashes",
-        "charts":[ { "name":"table", "read_name":"Table", "default":"1" } ]
-      },
-
       { "name":"test_option_values",
         "read_name":"Test Options",
         "signals":{ "test_run_id":"1" },
@@ -115,7 +100,6 @@
         "data_adapter":"crashes",
         "charts":[ { "name":"table", "read_name":"Table", "default":"1" } ]
       },
-
       { "name":"test_aux_data",
         "read_name":"Auxillary Data",
         "signals":{ "test_run_id":"1" },
