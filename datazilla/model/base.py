@@ -450,12 +450,14 @@ class DatazillaModel(object):
             src.disconnect()
 
 
-    def store_test_data(self, json_data):
+    def store_test_data(self, json_data, error_flag, error_msg):
         """Write the JSON to the objectstore to be queued for processing."""
+
+        date_loaded = int( time.time() )
 
         self.sources["objectstore"].dhub.execute(
             proc='objectstore.inserts.store_json',
-            placeholders=[ json_data ],
+            placeholders=[ date_loaded, json_data, error_flag, error_msg ],
             debug_show=self.DEBUG
             )
 
