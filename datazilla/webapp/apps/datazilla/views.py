@@ -103,20 +103,31 @@ def set_test_data(request, project=""):
 
     unquoted_json_data = urllib.unquote(json_data)
 
+    error_flag = 'N'
+    error_msg = None
+
     try:
         json.loads( unquoted_json_data )
     except ValueError as e:
-        result = {"status": "Malformed JSON", "message": e.message}
+        error_flag = 'Y'
+        error_msg = e.message
+        result = {"status": "Malformed JSON", "message": error_msg}
 
     try:
         dm = DatazillaModel(project)
-        dm.store_test_data( unquoted_json_data )
+        dm.store_test_data( unquoted_json_data, error_flag, error_msg )
         dm.disconnect()
 
         status = 200
-        result = {
-            "status": "well-formed JSON stored",
-            "size": str(len(unquoted_json_data)),
+
+        ###
+        #If the error_flag is yes the previous result structure
+        #containing the error message will be returned
+        ###
+        if error_flag == 'N':
+            result = {
+                "status": "well-formed JSON stored",
+                "size": str(len(unquoted_json_data)),
             }
 
     except Exception as e:
