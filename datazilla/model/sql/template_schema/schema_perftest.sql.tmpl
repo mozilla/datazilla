@@ -503,11 +503,13 @@ CREATE TABLE `test_run` (
   `build_id` int(11) NOT NULL,
   `revision` varchar(16) NOT NULL,
   `date_run` int(11) NOT NULL,
+  `status` tinyint(4) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`),
   KEY `test_id_key` (`test_id`),
   KEY `build_id_key` (`build_id`),
   KEY `date_run_key` (`date_run`),
   KEY `changeset_key` (`revision`),
+  KEY `status_key` (`status`),
   CONSTRAINT `fk_test_run_build` FOREIGN KEY (`build_id`) REFERENCES `build` (`id`),
   CONSTRAINT `fk_test_run_test` FOREIGN KEY (`test_id`) REFERENCES `test` (`id`)
 ) ENGINE={engine} DEFAULT CHARSET=utf8;
