@@ -19,7 +19,7 @@ CREATE TABLE `objectstore` (
   `processed_flag` enum('ready','loading','complete') DEFAULT 'ready',
   `error_flag` enum('N','Y') DEFAULT 'N',
   `error_msg` mediumtext,
-  `json_blob` blob,
+  `json_blob` mediumblob,
   `worker_id` int(11),
   PRIMARY KEY (`id`),
   KEY `test_run_id_key` (`test_run_id`),
