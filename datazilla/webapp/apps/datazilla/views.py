@@ -112,27 +112,21 @@ def set_test_data(request, project=""):
         error_flag = 'Y'
         error_msg = e.message
         result = {"status": "Malformed JSON", "message": error_msg}
+    else:
+        result = {
+            "status": "well-formed JSON stored",
+            "size": str(len(unquoted_json_data)),
+        }
 
     try:
         dm = DatazillaModel(project)
         dm.store_test_data( unquoted_json_data, error_flag, error_msg )
         dm.disconnect()
-
-        status = 200
-
-        ###
-        #If the error_flag is yes the previous result structure
-        #containing the error message will be returned
-        ###
-        if error_flag == 'N':
-            result = {
-                "status": "well-formed JSON stored",
-                "size": str(len(unquoted_json_data)),
-            }
-
     except Exception as e:
         status = 500
         result = {"status":"Unknown error", "message": e.message}
+    else:
+        status = 200
 
     return HttpResponse(json.dumps(result), mimetype=APP_JS, status=status)
 
