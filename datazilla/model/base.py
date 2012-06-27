@@ -4,8 +4,7 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 #####
 """
-``DatazillaModel`` (and subclasses) are the public interface for all data
-access.
+``DatazillaModel`` and subclasses are the public API for all data access.
 
 """
 import datetime
@@ -16,6 +15,11 @@ from django.conf import settings
 
 
 from . import utils
+
+
+
+class TestDataError(ValueError):
+    pass
 
 
 
@@ -41,9 +45,9 @@ class DatazillaModel(object):
 
     @classmethod
     def get_datasource_class(cls):
-        if settings.USE_APP_ENGINE:
-            from .appengine.model import CloudSQLDataSource
-            return CloudSQLDataSource
+        if settings.USE_APP_ENGINE:                         # pragma: no cover
+            from .appengine.model import CloudSQLDataSource # pragma: no cover
+            return CloudSQLDataSource                       # pragma: no cover
         else:
             from .sql.models import SQLDataSource
             return SQLDataSource
@@ -493,7 +497,7 @@ class DatazillaModel(object):
 
         # Get/Set reference info, all inserts use an on duplicate key
         # approach
-        ref_data['test_id'] = self._get_test_id(data)
+        ref_data['test_id'] = self._get_or_create_test_id(data)
         ref_data['option_ids'] = self._get_option_ids(data)
         ref_data['operating_system_id'] = self._get_os_id(data)
         ref_data['product_id'] = self._get_product_id(data)
@@ -764,7 +768,6 @@ class DatazillaModel(object):
         return test_run_id
 
     def _insert_data(self, statement, placeholders, executemany=False):
-
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.' + statement,
             debug_show=self.DEBUG,
@@ -774,16 +777,18 @@ class DatazillaModel(object):
 
 
     def _insert_data_and_get_id(self, statement, placeholders):
-
+        """Execute given insert statement, returning inserted ID."""
         self._insert_data(statement, placeholders)
+        return self._get_last_insert_id()
 
-        id_iter = self.sources["perftest"].dhub.execute(
+
+    def _get_last_insert_id(self):
+        """Return last-inserted ID."""
+        return self.sources["perftest"].dhub.execute(
             proc='generic.selects.get_last_insert_id',
             debug_show=self.DEBUG,
             return_type='iter',
-            )
-
-        return id_iter.get_column_data('id')
+            ).get_column_data('id')
 
 
     def _get_machine_id(self, data):
@@ -816,39 +821,43 @@ class DatazillaModel(object):
             return machine_id
 
 
-    def _get_test_id(self, data):
-        test_id = 0
+    def _get_or_create_test_id(self, data):
+        """
+        Given a full test-data structure, returns the test id.
+
+        Creates it if necessary. Raises ``TestDataError`` on bad data.
+
+        """
         try:
-            #TODO: version should be set in the data structure
-            #      provided.  This currently hard codes it to 1
-            #      for all tests
-            ###
-            version = 1
-
-            if 'suite_version' in data['testrun']:
-                version = int(data['testrun']['suite_version'])
-
-            ##Insert the test name and version on duplicate key update##
-            insert_proc = 'perftest.inserts.set_test_ref_data'
-            self.sources["perftest"].dhub.execute(
-                proc=insert_proc,
-                placeholders=[ data['testrun']['suite'], version ],
-                debug_show=self.DEBUG)
-
-            ##Get the test name id##
-            select_proc = 'perftest.selects.get_test_id'
-            id_iter = self.sources["perftest"].dhub.execute(
-                proc=select_proc,
-                placeholders=[ data['testrun']['suite'], version ],
-                debug_show=self.DEBUG,
-                return_type='iter')
-
-            test_id = id_iter.get_column_data('id')
-
+            testrun = data['testrun']
         except KeyError:
-            raise
-        else:
-            return test_id
+            raise TestDataError("Missing 'testrun' key.")
+
+        try:
+            name = testrun["suite"]
+        except KeyError:
+            raise TestDataError("Testrun missing 'suite' key.")
+
+        try:
+            # TODO: version should be required; currently defaults to 1
+            version = int(testrun.get('suite_version', 1))
+        except ValueError:
+            raise TestDataError("Testrun 'suite_version' is not an integer.")
+
+        # Insert the test name and version on duplicate key update
+        self.sources['perftest'].dhub.execute(
+            proc='perftest.inserts.set_test_ref_data',
+            placeholders=[name, version],
+            debug_show=self.DEBUG)
+
+        # Get the test name id
+        id_iter = self.sources['perftest'].dhub.execute(
+            proc='perftest.selects.get_test_id',
+            placeholders=[name, version],
+            debug_show=self.DEBUG,
+            return_type='iter')
+
+        return id_iter.get_column_data('id')
 
 
     def _get_os_id(self, data):

@@ -1,4 +1,11 @@
+import pytest
+
 from ..blobs import perftest_json
+
+
+def test_unicode(dm):
+    """Unicode representation of a ``DatazillaModel`` is the project name."""
+    assert unicode(dm) == u"testproj"
 
 
 def test_claim_objects(dm):
@@ -48,6 +55,51 @@ def test_mark_object_complete(dm):
     assert row_data["test_run_id"] == test_run_id
     assert row_data["processed_flag"] == "complete"
 
+
+def test_get_or_create_test_id(dm):
+    """Returns test id for the given test-run suite (creating it if needed)."""
+    data = {'testrun': {'suite': 'talos'}}
+
+    first_id = dm._get_or_create_test_id(data)
+
+    inserted_id = dm._get_last_insert_id()
+
+    # second call with same data returns existing id
+    second_id = dm._get_or_create_test_id(data)
+
+    assert second_id == first_id == inserted_id
+
+
+def test_get_or_create_test_id_no_testrun(dm):
+    """Raises TestDataError if there is no 'testrun' key in data."""
+    from datazilla.model.base import TestDataError
+    with pytest.raises(TestDataError) as e:
+        dm._get_or_create_test_id({})
+
+    assert str(e.value) == "Missing 'testrun' key."
+
+
+def test_get_or_create_test_id_no_suite_name(dm):
+    """Raises TestDataError if there is no 'suite' key in data['testrun']."""
+    from datazilla.model.base import TestDataError
+    with pytest.raises(TestDataError) as e:
+        dm._get_or_create_test_id({'testrun': {}})
+
+    assert str(e.value) == "Testrun missing 'suite' key."
+
+
+def test_get_or_create_test_id_bad_version(dm):
+    """Raises TestDataError if the 'suite_version' key is not an integer."""
+    from datazilla.model.base import TestDataError
+    with pytest.raises(TestDataError) as e:
+        dm._get_or_create_test_id(
+            {'testrun': {'suite': 'talos', 'suite_version': 'foo'}})
+
+    assert str(e.value) == "Testrun 'suite_version' is not an integer."
+
+
+
+# TODO fill in the following tests:
 
 def test_get_operating_systems(dm):
     dm.get_operating_systems()
