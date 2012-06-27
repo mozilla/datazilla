@@ -1,6 +1,6 @@
 import pytest
 
-from ..blobs import perftest_json
+from ..sample_data import perftest_json, perftest_data
 
 
 def test_unicode(dm):
@@ -245,6 +245,74 @@ def test_get_or_create_machine_id_no_name(dm):
 
     assert str(e.value) == "Test machine missing 'name' key."
 
+
+def test_set_build_data(dm):
+    """Inserts data into the build table."""
+    data = perftest_data()
+
+    os_id = dm._get_or_create_os_id(data)
+    product_id = dm._get_or_create_product_id(data)
+    machine_id = dm._get_or_create_machine_id(data)
+
+    build_id = dm._set_build_data(data, os_id, product_id, machine_id)
+
+    row_data = dm.sources["perftest"].dhub.execute(
+        proc="perftest_test.selects.build", placeholders=[build_id])[0]
+
+    assert row_data["test_build_id"] == data["test_build"]["id"]
+    assert row_data["operating_system_id"] == os_id
+    assert row_data["product_id"] == product_id
+    assert row_data["machine_id"] == machine_id
+    assert row_data["processor"] == data["test_machine"]["platform"]
+    assert row_data["revision"] == data["test_build"]["revision"]
+
+
+def test_set_build_data_no_test_machine(dm):
+    """Raises TestDataError if there is no 'test_machine' key in data."""
+    with pytest.raises(dm.TestDataError) as e:
+        dm._set_build_data(
+            {"test_build": {"id": "12345", "revision": "deadbeef"}},
+             None, None, None,
+             )
+
+    assert str(e.value) == "Missing 'test_machine' key."
+
+
+def test_set_build_data_no_test_build(dm):
+    """Raises TestDataError if there is no 'test_build' key in data."""
+    with pytest.raises(dm.TestDataError) as e:
+        dm._set_build_data(
+            {"test_machine": {"platform": "arm"}}, None, None, None)
+
+    assert str(e.value) == "Missing 'test_build' key."
+
+
+def test_set_build_data_no_platform(dm):
+    """Raises TestDataError if 'test_machine' is missing 'platform' key."""
+    with pytest.raises(dm.TestDataError) as e:
+        dm._set_build_data(
+            {
+                "test_build": {"id": "12345", "revision": "deadbeef"},
+                "test_machine": {},
+                },
+             None, None, None,
+             )
+
+    assert str(e.value) == "Test machine missing 'platform' key."
+
+
+def test_set_build_data_no_build_id(dm):
+    """Raises TestDataError if 'test_machine' is missing 'platform' key."""
+    with pytest.raises(dm.TestDataError) as e:
+        dm._set_build_data(
+            {
+                "test_build": {"revision": "deadbeef"},
+                "test_machine": {"platform": "arm"},
+                },
+             None, None, None,
+             )
+
+    assert str(e.value) == "Test build missing 'id' key."
 
 
 

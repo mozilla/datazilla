@@ -21,6 +21,7 @@ from . import utils
 class DatazillaModel(object):
     """Public interface to all data access for a project."""
 
+
     class TestDataError(ValueError):
         pass
 
@@ -491,28 +492,22 @@ class DatazillaModel(object):
     def load_test_data(self, data):
         """Process JSON test data into the perftest database."""
 
-        # reference id data required by insert methods in ref_data
-        ref_data = dict()
+        # Get/Set reference info, all inserts use ON DUPLICATE KEY
+        test_id = self._get_or_create_test_id(data)
+        option_ids = self._get_or_create_option_ids(data)
+        os_id = self._get_or_create_os_id(data)
+        product_id = self._get_or_create_product_id(data)
+        machine_id = self._get_or_create_machine_id(data)
 
-        # Get/Set reference info, all inserts use an on duplicate key
-        # approach
-        ref_data['test_id'] = self._get_or_create_test_id(data)
-        ref_data['option_ids'] = self._get_or_create_option_ids(data)
-        ref_data['operating_system_id'] = self._get_or_create_os_id(data)
-        ref_data['product_id'] = self._get_or_create_product_id(data)
-        ref_data['machine_id'] = self._get_or_create_machine_id(data)
+        # Insert build and test_run data.
+        build_id = self._set_build_data(data, os_id, product_id, machine_id)
+        test_run_id = self._set_test_run_data(data, test_id, build_id)
 
-        # Insert build and test_run data.  All other test data
-        # types require the build_id and test_run_id to meet foreign key
-        # constriants.
-        ref_data['build_id'] = self._set_build_data(data, ref_data)
-        ref_data['test_run_id'] = self._set_test_run_data(data, ref_data)
+        self._set_option_data(data, option_ids, test_run_id)
+        self._set_test_values(data, test_id, test_run_id)
+        self._set_test_aux_data(data, test_id, test_run_id)
 
-        self._set_option_data(data, ref_data)
-        self._set_test_values(data, ref_data)
-        self._set_test_aux_data(data, ref_data)
-
-        return ref_data['test_run_id']
+        return test_run_id
 
     def transfer_objects(self, start_id, limit):
         """
@@ -602,18 +597,12 @@ class DatazillaModel(object):
         return True
 
 
-    def _set_test_data(self, json_data, ref_data):
-
-        self._insert_data('set_test_data',
-                          [ref_data['test_run_id'], json_data])
-
-
-    def _set_test_aux_data(self, data, ref_data):
+    def _set_test_aux_data(self, data, test_id, test_run_id):
 
         if 'results_aux' in data:
 
             for aux_data in data['results_aux']:
-                aux_data_id = self._get_aux_id(aux_data, ref_data)
+                aux_data_id = self._get_aux_id(aux_data, test_id)
                 aux_values = data['results_aux'][aux_data]
 
                 placeholders = []
@@ -626,7 +615,7 @@ class DatazillaModel(object):
                     else:
                         string_data = aux_values[index]
 
-                    placeholders.append( (ref_data['test_run_id'],
+                    placeholders.append( (test_run_id,
                                           index + 1,
                                           aux_data_id,
                                           numeric_data,
@@ -637,18 +626,18 @@ class DatazillaModel(object):
                                   True)
 
 
-    def _set_test_values(self, data, ref_data):
+    def _set_test_values(self, data, test_id, test_run_id):
 
         for page in data['results']:
 
-            page_id = self._get_page_id(page, ref_data)
+            page_id = self._get_page_id(page, test_id)
 
             values = data['results'][page]
 
             placeholders = []
             for index in range(0, len(values)):
                 value = values[index]
-                placeholders.append( (ref_data['test_run_id'],
+                placeholders.append( (test_run_id,
                                       index + 1,
                                       page_id,
                                       ######
@@ -663,7 +652,7 @@ class DatazillaModel(object):
                               True)
 
 
-    def _get_aux_id(self, aux_data, ref_data):
+    def _get_aux_id(self, aux_data, test_id):
 
         aux_id = 0
         try:
@@ -671,14 +660,14 @@ class DatazillaModel(object):
             insert_proc = 'perftest.inserts.set_aux_ref_data'
             self.sources["perftest"].dhub.execute(
                 proc=insert_proc,
-                placeholders=[ ref_data['test_id'], aux_data ],
+                placeholders=[ test_id, aux_data ],
                 debug_show=self.DEBUG)
 
             ##Get the aux data id##
             select_proc = 'perftest.selects.get_aux_data_id'
             id_iter = self.sources["perftest"].dhub.execute(
                 proc=select_proc,
-                placeholders=[ ref_data['test_id'], aux_data ],
+                placeholders=[ test_id, aux_data ],
                 debug_show=self.DEBUG,
                 return_type='iter')
 
@@ -690,7 +679,7 @@ class DatazillaModel(object):
             return aux_id
 
 
-    def _get_page_id(self, page, ref_data):
+    def _get_page_id(self, page, test_id):
 
         page_id = 0
         try:
@@ -698,14 +687,14 @@ class DatazillaModel(object):
             insert_proc = 'perftest.inserts.set_pages_ref_data'
             self.sources["perftest"].dhub.execute(
                 proc=insert_proc,
-                placeholders=[ ref_data['test_id'], page ],
+                placeholders=[ test_id, page ],
                 debug_show=self.DEBUG)
 
             ##Get the page id##
             select_proc = 'perftest.selects.get_page_id'
             id_iter = self.sources["perftest"].dhub.execute(
                 proc=select_proc,
-                placeholders=[ ref_data['test_id'], page ],
+                placeholders=[ test_id, page ],
                 debug_show=self.DEBUG,
                 return_type='iter')
 
@@ -717,17 +706,17 @@ class DatazillaModel(object):
             return page_id
 
 
-    def _set_option_data(self, data, ref_data):
+    def _set_option_data(self, data, option_ids, test_run_id):
 
         if 'options' in data['testrun']:
             for option in data['testrun']['options']:
 
-                id = ref_data['option_ids'][option]
+                option_ids[option]
 
                 value = data['testrun']['options'][option]
 
                 placeholders = [
-                    ref_data['test_run_id'],
+                    test_run_id,
                     id,
                     value,
                     ]
@@ -736,33 +725,61 @@ class DatazillaModel(object):
                                     placeholders)
 
 
-    def _set_build_data(self, data, ref_data):
+    def _set_build_data(self, data, os_id, product_id, machine_id):
+        """Inserts build data into the db and returns build ID."""
+        try:
+            machine = data['test_machine']
+        except KeyError:
+            raise self.TestDataError("Missing 'test_machine' key.")
 
-        build_id = self._insert_data_and_get_id('set_build_data',
-                                       [ ref_data['operating_system_id'],
-                                         ref_data['product_id'],
-                                         ref_data['machine_id'],
-                                         data['test_build']['id'],
-                                         data['test_machine']['platform'],
-                                         data['test_build']['revision'],
-                                         #####
-                                         #TODO: Need to get the
-                                         # build_type into the json
-                                         #####
-                                         'debug',
-                                         ##Need to get the build_date into the json##
-                                         int(time.time()) ] )
+        try:
+            platform = machine['platform']
+        except KeyError:
+            raise self.TestDataError("Test machine missing 'platform' key.")
+
+        try:
+            build = data['test_build']
+        except KeyError:
+            raise self.TestDataError("Missing 'test_build' key.")
+
+        try:
+            test_build_id = build['id']
+            revision = build['revision']
+        except KeyError as e:
+            raise self.TestDataError("Test build missing {0} key.".format(e))
+
+        build_id = self._insert_data_and_get_id(
+            'set_build_data',
+            [
+                os_id,
+                product_id,
+                machine_id,
+                test_build_id,
+                platform,
+                revision,
+                # TODO: Need to get the build type into the json
+                'opt',
+                # TODO: need to get the build date into the json
+                int(time.time()),
+                ]
+            )
 
         return build_id
 
 
-    def _set_test_run_data(self, data, ref_data):
+    def _set_test_run_data(self, data, test_id, build_id):
+        """Inserts testrun data into the db and returns test_run id."""
 
-        test_run_id = self._insert_data_and_get_id('set_test_run_data',
-                                         [ ref_data['test_id'],
-                                         ref_data['build_id'],
-                                         data['test_build']['revision'],
-                                         data['testrun']['date'] ])
+        test_run_id = self._insert_data_and_get_id(
+            'set_test_run_data',
+            [
+                test_id,
+                build_id,
+                # denormalization; avoid join to build table to get revision
+                data['test_build']['revision'],
+                data['testrun']['date']
+                ]
+            )
 
         return test_run_id
 

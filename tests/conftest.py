@@ -39,6 +39,16 @@ def pytest_sessionstart(session):
         )
     objstore.dhub.load_procs(objstore.datasource.key)
 
+    perftest = dm.sources["perftest"]
+    del perftest.dhub.procs[perftest.datasource.key]
+    perftest.dhub.data_sources[perftest.datasource.key]["procs"].append(
+        os.path.join(
+            os.path.abspath(os.path.dirname(__file__)),
+            "perftest_test.json",
+            )
+        )
+    perftest.dhub.load_procs(perftest.datasource.key)
+
 
 
 def pytest_sessionfinish(session):

@@ -34,7 +34,7 @@ def test_machine(**kwargs):
 
     defaults.update(kwargs)
 
-    return {"test_machine": defaults}
+    return defaults
 
 
 
@@ -54,7 +54,7 @@ def testrun_options(**kwargs):
 
     defaults.update(kwargs)
 
-    return {"options": defaults}
+    return defaults
 
 
 
@@ -68,7 +68,7 @@ def testrun(**kwargs):
 
     defaults.update(kwargs)
 
-    return {"testrun": defaults}
+    return defaults
 
 
 def test_build(**kwargs):
@@ -83,7 +83,7 @@ def test_build(**kwargs):
 
     defaults.update(kwargs)
 
-    return {"test_build": defaults}
+    return defaults
 
 
 def results(results=None):

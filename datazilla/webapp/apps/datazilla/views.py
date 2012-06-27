@@ -118,7 +118,8 @@ def set_test_data(request, project=""):
 
     try:
         dm = DatazillaModel(project)
-        dm.store_test_data( unquoted_json_data, error)
+        dm.store_test_data(
+            unquoted_json_data, "Malformed JSON: {0}".format(error))
         dm.disconnect()
     except Exception as e:
         status = 500

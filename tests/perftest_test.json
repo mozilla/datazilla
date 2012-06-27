@@ -1,0 +1,8 @@
+{
+    "selects": {
+        "build": {
+            "sql": "SELECT * FROM `build` WHERE id = ?",
+            "host": "master_host"
+        }
+    }
+}
