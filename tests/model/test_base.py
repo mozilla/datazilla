@@ -338,6 +338,40 @@ def test_set_build_data_no_build_id(dm):
     assert str(e.value) == "Missing data: ['test_build']['id']."
 
 
+def test_set_test_run_data(dm):
+    """Inserts data into the test_run table."""
+    data = TestData(perftest_data())
+
+    test_id = dm._get_or_create_test_id(data)
+    os_id = dm._get_or_create_os_id(data)
+    product_id = dm._get_or_create_product_id(data)
+    machine_id = dm._get_or_create_machine_id(data)
+
+    build_id = dm._set_build_data(data, os_id, product_id, machine_id)
+
+    test_run_id = dm._set_test_run_data(data, test_id, build_id)
+
+    row_data = dm.sources["perftest"].dhub.execute(
+        proc="perftest_test.selects.test_run", placeholders=[test_run_id])[0]
+
+    assert row_data["test_id"] == test_id
+    assert row_data["build_id"] == build_id
+    assert row_data["revision"] == data["test_build"]["revision"]
+    assert row_data["date_run"] == int(data["testrun"]["date"])
+
+
+def test_set_test_run_data_bad_date(dm):
+    """Raises TestDataError if the testrun 'date' key is not an integer."""
+    with pytest.raises(TestDataError) as e:
+        dm._set_test_run_data(
+            TestData({'testrun': {'date': 'foo'}}),
+            None, None,
+            )
+
+    expected = "Bad value: ['testrun']['date'] is not an integer."
+    assert str(e.value) == expected
+
+
 
 # TODO fill in the following tests:
 

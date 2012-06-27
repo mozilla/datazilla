@@ -751,6 +751,12 @@ class DatazillaModel(object):
     def _set_test_run_data(self, data, test_id, build_id):
         """Inserts testrun data into the db and returns test_run id."""
 
+        try:
+            run_date = int(data['testrun']['date'])
+        except ValueError:
+            raise TestDataError(
+                "Bad value: ['testrun']['date'] is not an integer.")
+
         test_run_id = self._insert_data_and_get_id(
             'set_test_run_data',
             [
@@ -758,7 +764,7 @@ class DatazillaModel(object):
                 build_id,
                 # denormalization; avoid join to build table to get revision
                 data['test_build']['revision'],
-                data['testrun']['date']
+                run_date,
                 ]
             )
 

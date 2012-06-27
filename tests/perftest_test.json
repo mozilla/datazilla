@@ -3,6 +3,10 @@
         "build": {
             "sql": "SELECT * FROM `build` WHERE id = ?",
             "host": "master_host"
+        },
+        "test_run": {
+            "sql": "SELECT * FROM `test_run` WHERE id = ?",
+            "host": "master_host"
         }
     }
 }
