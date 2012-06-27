@@ -15,11 +15,11 @@ DROP TABLE IF EXISTS `objectstore`;
 CREATE TABLE `objectstore` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `test_run_id` int(11) NULL,
-  `timestamp` timestamp NULL DEFAULT NULL,
+  `date_loaded` int(11) NOT NULL,
   `processed_flag` enum('ready','loading','complete') DEFAULT 'ready',
   `error_flag` enum('N','Y') DEFAULT 'N',
   `error_msg` mediumtext,
-  `json_blob` blob,
+  `json_blob` mediumblob,
   `worker_id` int(11),
   PRIMARY KEY (`id`),
   KEY `test_run_id_key` (`test_run_id`),

@@ -2,9 +2,11 @@
     "inserts":{
         "store_json":{
 
-            "sql":"INSERT INTO  `objectstore` (`timestamp`,
-                                               `json_blob`)
-                   VALUES       (NOW(), ?)
+            "sql":"INSERT INTO  `objectstore` (`date_loaded`,
+                                               `json_blob`,
+                                               `error_flag`,
+                                               `error_msg`)
+                   VALUES       (?, ?, ?, ?)
                   ",
 
             "host":"master_host"
@@ -17,8 +19,8 @@
             "sql":"SELECT   `json_blob`, `id`
                    FROM     `objectstore`
                    WHERE    `worker_id` = CONNECTION_ID()
-                   AND      processed_flag = 'loading'
-                  ",
+                   AND      `processed_flag` = 'loading'
+                   AND      `error_flag` = 'N'",
 
             "host":"master_host"
         },
@@ -27,9 +29,9 @@
 
             "sql":"SELECT   `json_blob`, `id`
                    FROM     `objectstore`
-                   WHERE    processed_flag = 'ready'
-                   LIMIT ?
-                  ",
+                   WHERE    `processed_flag` = 'ready'
+                   AND      `error_flag` = 'N'
+                   LIMIT ?",
 
             "host":"master_host"
         }
@@ -43,6 +45,7 @@
                    SET    `processed_flag` = 'loading',
                           `worker_id` = CONNECTION_ID()
                    WHERE  `processed_flag` = 'ready'
+                   AND    `error_flag` = 'N'
                    LIMIT ?
                   ",
 
