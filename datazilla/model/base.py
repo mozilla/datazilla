@@ -22,10 +22,6 @@ class DatazillaModel(object):
     """Public interface to all data access for a project."""
 
 
-    class TestDataError(ValueError):
-        pass
-
-
     CONTENT_TYPES = ["perftest", "objectstore"]
 
     def __init__(self, project):
@@ -492,6 +488,9 @@ class DatazillaModel(object):
     def load_test_data(self, data):
         """Process JSON test data into the perftest database."""
 
+        # Wrap data in a TestData instance for consistent access.
+        data = TestData(data)
+
         # Get/Set reference info, all inserts use ON DUPLICATE KEY
         test_id = self._get_or_create_test_id(data)
         option_ids = self._get_or_create_option_ids(data)
@@ -536,7 +535,7 @@ class DatazillaModel(object):
         rows = self.claim_objects(loadlimit)
 
         for row in rows:
-            data = json.loads(row['json_blob'])
+            data = TestData.from_json(row['json_blob'])
             row_id = int(row['id'])
 
             if self.verify_json(data):
@@ -727,26 +726,8 @@ class DatazillaModel(object):
 
     def _set_build_data(self, data, os_id, product_id, machine_id):
         """Inserts build data into the db and returns build ID."""
-        try:
-            machine = data['test_machine']
-        except KeyError:
-            raise self.TestDataError("Missing 'test_machine' key.")
-
-        try:
-            platform = machine['platform']
-        except KeyError:
-            raise self.TestDataError("Test machine missing 'platform' key.")
-
-        try:
-            build = data['test_build']
-        except KeyError:
-            raise self.TestDataError("Missing 'test_build' key.")
-
-        try:
-            test_build_id = build['id']
-            revision = build['revision']
-        except KeyError as e:
-            raise self.TestDataError("Test build missing {0} key.".format(e))
+        machine = data['test_machine']
+        build = data['test_build']
 
         build_id = self._insert_data_and_get_id(
             'set_build_data',
@@ -754,9 +735,9 @@ class DatazillaModel(object):
                 os_id,
                 product_id,
                 machine_id,
-                test_build_id,
-                platform,
-                revision,
+                build['id'],
+                machine['platform'],
+                build['revision'],
                 # TODO: Need to get the build type into the json
                 'opt',
                 # TODO: need to get the build date into the json
@@ -809,31 +790,23 @@ class DatazillaModel(object):
 
     def _get_or_create_machine_id(self, data):
         """
-        Given a full test-data structure, returns the test id from the db.
+        Given a TestData instance, returns the test id from the db.
 
         Creates it if necessary. Raises ``TestDataError`` on bad data.
 
         """
-        try:
-            machine = data['test_machine']
-        except KeyError:
-            raise self.TestDataError("Missing 'test_machine' key.")
-
-        try:
-            name = machine['name']
-        except KeyError:
-            raise self.TestDataError("Test machine missing 'name' key.")
+        machine = data['test_machine']
 
         # Insert the the machine name and timestamp on duplicate key update
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_machine_ref_data',
-            placeholders=[ name, int(time.time()) ],
+            placeholders=[machine['name'], int(time.time())],
             debug_show=self.DEBUG)
 
         # Get the machine id
         id_iter = self.sources["perftest"].dhub.execute(
             proc='perftest.selects.get_machine_id',
-            placeholders=[ name ],
+            placeholders=[machine['name']],
             debug_show=self.DEBUG,
             return_type='iter')
 
@@ -842,38 +815,30 @@ class DatazillaModel(object):
 
     def _get_or_create_test_id(self, data):
         """
-        Given a full test-data structure, returns the test id from the db.
+        Given a TestData instance, returns the test id from the db.
 
         Creates it if necessary. Raises ``TestDataError`` on bad data.
 
         """
-        try:
-            testrun = data['testrun']
-        except KeyError:
-            raise self.TestDataError("Missing 'testrun' key.")
-
-        try:
-            name = testrun["suite"]
-        except KeyError:
-            raise self.TestDataError("Testrun missing 'suite' key.")
+        testrun = data['testrun']
 
         try:
             # TODO: version should be required; currently defaults to 1
             version = int(testrun.get('suite_version', 1))
         except ValueError:
-            raise self.TestDataError(
-                "Testrun 'suite_version' is not an integer.")
+            raise TestDataError(
+                "Bad value: ['testrun']['suite_version'] is not an integer.")
 
         # Insert the test name and version on duplicate key update
         self.sources['perftest'].dhub.execute(
             proc='perftest.inserts.set_test_ref_data',
-            placeholders=[name, version],
+            placeholders=[testrun['suite'], version],
             debug_show=self.DEBUG)
 
         # Get the test name id
         id_iter = self.sources['perftest'].dhub.execute(
             proc='perftest.selects.get_test_id',
-            placeholders=[name, version],
+            placeholders=[testrun['suite'], version],
             debug_show=self.DEBUG,
             return_type='iter')
 
@@ -887,27 +852,20 @@ class DatazillaModel(object):
         Creates it if necessary. Raises ``TestDataError`` on bad data.
 
         """
-        try:
-            machine = data['test_machine']
-        except KeyError:
-            raise self.TestDataError("Missing 'test_machine' key.")
-
-        try:
-            os_name = machine['os']
-            os_version = machine['osversion']
-        except KeyError as e:
-            raise self.TestDataError("Test machine missing {0} key.".format(e))
+        machine = data['test_machine']
+        os_name = machine['os']
+        os_version = machine['osversion']
 
         # Insert the operating system name and version on duplicate key update
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_os_ref_data',
-            placeholders=[ os_name, os_version ],
+            placeholders=[os_name, os_version],
             debug_show=self.DEBUG)
 
         # Get the operating system name id
         id_iter = self.sources["perftest"].dhub.execute(
             proc='perftest.selects.get_os_id',
-            placeholders=[ os_name, os_version ],
+            placeholders=[os_name, os_version],
             debug_show=self.DEBUG,
             return_type='iter')
 
@@ -923,11 +881,7 @@ class DatazillaModel(object):
         """
         option_ids = dict()
 
-        try:
-            testrun = data['testrun']
-        except KeyError:
-            raise self.TestDataError("Missing 'testrun' key.")
-
+        testrun = data['testrun']
         options = testrun.get('options', [])
 
         # Test for a list explicitly because strings are iterable, but we don't
@@ -935,7 +889,8 @@ class DatazillaModel(object):
         # string.  No need to support other sequence types, a list is the only
         # sequence type returned from json.loads.
         if not isinstance(options, list):
-            raise self.TestDataError("Testrun 'options' is not a list.")
+            raise TestDataError(
+                "Bad value: ['testrun']['options'] is not a list.")
 
         for option in options:
 
@@ -964,17 +919,11 @@ class DatazillaModel(object):
         Creates it if necessary. Raises ``TestDataError`` on bad data.
 
         """
-        try:
-            build = data['test_build']
-        except KeyError:
-            raise self.TestDataError("Missing 'test_build' key.")
+        build = data['test_build']
 
-        try:
-            product = build['name']
-            branch = build['branch']
-            version = build['version']
-        except KeyError as e:
-            raise self.TestDataError("Test build missing {0} key.".format(e))
+        product = build['name']
+        branch = build['branch']
+        version = build['version']
 
         # Insert the product, branch, and version on duplicate key update
         self.sources["perftest"].dhub.execute(
@@ -1001,3 +950,61 @@ class DatazillaModel(object):
                 unique_key += str(data[key])
             data_dict[ unique_key ] = data['id']
         return data_dict
+
+
+
+class TestDataError(ValueError):
+    pass
+
+
+
+class TestData(object):
+    """
+    Encapsulates data access from incoming test data structure.
+
+    All missing-data errors raise ``TestDataError`` with a useful
+    message. Unlike regular nested dictionaries, ``TestData`` keeps track of
+    context, so errors contain not only the name of the immediately-missing
+    key, but the full parent-key context as well.
+
+    """
+    def __init__(self, data, context=None):
+        """Initialize ``TestData`` with a data dict and a context list."""
+        self.data = data
+        self.context = context or []
+
+
+    @classmethod
+    def from_json(cls, json_blob):
+        """Create ``TestData`` from a JSON string."""
+        try:
+            data = json.loads(json_blob)
+        except ValueError as e:
+            raise TestDataError("Malformed JSON: ".format(e))
+
+        return cls(data)
+
+
+    def __getitem__(self, name):
+        """Get a data value, raising ``TestDataError`` if missing."""
+        full_context = list(self.context) + [name]
+
+        try:
+            value = self.data[name]
+        except KeyError:
+            raise TestDataError("Missing data: {0}.".format(
+                    "".join(["['{0}']".format(c) for c in full_context])))
+
+        # Provide the same behavior recursively to nested dictionaries.
+        if isinstance(value, dict):
+            value = self.__class__(value, full_context)
+
+        return value
+
+
+    def get(self, name, default):
+        """Get a non-required value, or the given default if missing."""
+        try:
+            return self[name]
+        except TestDataError:
+            return default

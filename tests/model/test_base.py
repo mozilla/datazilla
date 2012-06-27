@@ -1,5 +1,7 @@
 import pytest
 
+from datazilla.model.base import TestDataError, TestData
+
 from ..sample_data import perftest_json, perftest_data
 
 
@@ -58,7 +60,7 @@ def test_mark_object_complete(dm):
 
 def test_get_or_create_test_id(dm):
     """Returns test id for the given test-run suite (creating it if needed)."""
-    data = {'testrun': {'suite': 'talos'}}
+    data = TestData({'testrun': {'suite': 'talos'}})
 
     first_id = dm._get_or_create_test_id(data)
 
@@ -72,32 +74,33 @@ def test_get_or_create_test_id(dm):
 
 def test_get_or_create_test_id_no_testrun(dm):
     """Raises TestDataError if there is no 'testrun' key in data."""
-    with pytest.raises(dm.TestDataError) as e:
-        dm._get_or_create_test_id({})
+    with pytest.raises(TestDataError) as e:
+        dm._get_or_create_test_id(TestData({}))
 
-    assert str(e.value) == "Missing 'testrun' key."
+    assert str(e.value) == "Missing data: ['testrun']."
 
 
 def test_get_or_create_test_id_no_suite_name(dm):
     """Raises TestDataError if there is no 'suite' key in data['testrun']."""
-    with pytest.raises(dm.TestDataError) as e:
-        dm._get_or_create_test_id({'testrun': {}})
+    with pytest.raises(TestDataError) as e:
+        dm._get_or_create_test_id(TestData({'testrun': {}}))
 
-    assert str(e.value) == "Testrun missing 'suite' key."
+    assert str(e.value) == "Missing data: ['testrun']['suite']."
 
 
 def test_get_or_create_test_id_bad_version(dm):
     """Raises TestDataError if the 'suite_version' key is not an integer."""
-    with pytest.raises(dm.TestDataError) as e:
+    with pytest.raises(TestDataError) as e:
         dm._get_or_create_test_id(
-            {'testrun': {'suite': 'talos', 'suite_version': 'foo'}})
+            TestData({'testrun': {'suite': 'talos', 'suite_version': 'foo'}}))
 
-    assert str(e.value) == "Testrun 'suite_version' is not an integer."
+    expected = "Bad value: ['testrun']['suite_version'] is not an integer."
+    assert str(e.value) == expected
 
 
 def test_get_or_create_option_ids(dm):
     """Returns dictionary of option IDs from db (creating if needed)."""
-    data = {'testrun': {'options': ['option1', 'option2']}}
+    data = TestData({'testrun': {'options': ['option1', 'option2']}})
 
     first_ids = dm._get_or_create_option_ids(data)
 
@@ -112,23 +115,24 @@ def test_get_or_create_option_ids(dm):
 
 def test_get_or_create_option_ids_no_testrun(dm):
     """Raises TestDataError if there is no 'testrun' key in data."""
-    with pytest.raises(dm.TestDataError) as e:
-        dm._get_or_create_option_ids({})
+    with pytest.raises(TestDataError) as e:
+        dm._get_or_create_option_ids(TestData({}))
 
-    assert str(e.value) == "Missing 'testrun' key."
+    assert str(e.value) == "Missing data: ['testrun']."
 
 
 def test_get_or_create_option_ids_bad_options(dm):
     """Raises TestDataError if the 'options' key is not a list."""
-    with pytest.raises(dm.TestDataError) as e:
-        dm._get_or_create_option_ids({'testrun': {'options': 'foo'}})
+    with pytest.raises(TestDataError) as e:
+        dm._get_or_create_option_ids(TestData({'testrun': {'options': 'foo'}}))
 
-    assert str(e.value) == "Testrun 'options' is not a list."
+    assert str(e.value) == "Bad value: ['testrun']['options'] is not a list."
 
 
 def test_get_or_create_os_id(dm):
     """Returns OS id for the given test-machine (creating it if needed)."""
-    data = {'test_machine': {'os': 'linux', 'osversion': 'Ubuntu 11.10'}}
+    data = TestData(
+        {'test_machine': {'os': 'linux', 'osversion': 'Ubuntu 11.10'}})
 
     first_id = dm._get_or_create_os_id(data)
 
@@ -142,34 +146,38 @@ def test_get_or_create_os_id(dm):
 
 def test_get_or_create_os_id_no_test_machine(dm):
     """Raises TestDataError if there is no 'test_machine' key in data."""
-    with pytest.raises(dm.TestDataError) as e:
-        dm._get_or_create_os_id({})
+    with pytest.raises(TestDataError) as e:
+        dm._get_or_create_os_id(TestData({}))
 
-    assert str(e.value) == "Missing 'test_machine' key."
+    assert str(e.value) == "Missing data: ['test_machine']."
 
 
 def test_get_or_create_os_id_no_os(dm):
     """Raises TestDataError if there is no 'os' key in data['test_machine']."""
-    with pytest.raises(dm.TestDataError) as e:
-        dm._get_or_create_os_id({'test_machine': {'osversion': '7'}})
+    with pytest.raises(TestDataError) as e:
+        dm._get_or_create_os_id(TestData({'test_machine': {'osversion': '7'}}))
 
-    assert str(e.value) == "Test machine missing 'os' key."
+    assert str(e.value) == "Missing data: ['test_machine']['os']."
 
 
 def test_get_or_create_os_id_no_osversion(dm):
     """Raises TestDataError if 'osversion' missing from 'test_machine'."""
-    with pytest.raises(dm.TestDataError) as e:
-        dm._get_or_create_os_id({'test_machine': {'os': 'linux'}})
+    with pytest.raises(TestDataError) as e:
+        dm._get_or_create_os_id(TestData({'test_machine': {'os': 'linux'}}))
 
-    assert str(e.value) == "Test machine missing 'osversion' key."
+    assert str(e.value) == "Missing data: ['test_machine']['osversion']."
 
 
 def test_get_or_create_product_id(dm):
     """Returns product id for the given build (creating it if needed)."""
-    data = {
-        'test_build': {
-            'name': 'Firefox', 'branch': 'Mozilla-Aurora', 'version': '14.0a2'}
-        }
+    data = TestData(
+        {
+            'test_build': {
+                'name': 'Firefox',
+                'branch': 'Mozilla-Aurora',
+                'version': '14.0a2'}
+            }
+        )
 
     first_id = dm._get_or_create_product_id(data)
 
@@ -183,42 +191,53 @@ def test_get_or_create_product_id(dm):
 
 def test_get_or_create_product_id_no_test_build(dm):
     """Raises TestDataError if there is no 'test_build' key in data."""
-    with pytest.raises(dm.TestDataError) as e:
-        dm._get_or_create_product_id({})
+    with pytest.raises(TestDataError) as e:
+        dm._get_or_create_product_id(TestData({}))
 
-    assert str(e.value) == "Missing 'test_build' key."
+    assert str(e.value) == "Missing data: ['test_build']."
 
 
 def test_get_or_create_product_id_no_name(dm):
     """Raises TestDataError if there is no 'name' key in data['test_build']."""
-    with pytest.raises(dm.TestDataError) as e:
+    with pytest.raises(TestDataError) as e:
         dm._get_or_create_product_id(
-            {'test_build': {'branch': 'Mozilla-Aurora', 'version': '14.0a2'}})
+            TestData(
+                {
+                    'test_build': {
+                        'branch': 'Mozilla-Aurora',
+                        'version': '14.0a2',
+                        },
+                    }
+                )
+            )
 
-    assert str(e.value) == "Test build missing 'name' key."
+    assert str(e.value) == "Missing data: ['test_build']['name']."
 
 
 def test_get_or_create_product_id_no_branch(dm):
     """Raises TestDataError if there is no 'branch' in data['test_build']."""
-    with pytest.raises(dm.TestDataError) as e:
+    with pytest.raises(TestDataError) as e:
         dm._get_or_create_product_id(
-            {'test_build': {'name': 'Firefox', 'version': '14.0a2'}})
+            TestData({'test_build': {'name': 'Firefox', 'version': '14.0a2'}}))
 
-    assert str(e.value) == "Test build missing 'branch' key."
+    assert str(e.value) == "Missing data: ['test_build']['branch']."
 
 
 def test_get_or_create_product_id_no_version(dm):
     """Raises TestDataError if there is no 'version' in data['test_build']."""
-    with pytest.raises(dm.TestDataError) as e:
+    with pytest.raises(TestDataError) as e:
         dm._get_or_create_product_id(
-            {'test_build': {'name': 'Firefox', 'branch': 'Mozilla-Aurora'}})
+            TestData(
+                {'test_build': {'name': 'Firefox', 'branch': 'Mozilla-Aurora'}}
+                )
+            )
 
-    assert str(e.value) == "Test build missing 'version' key."
+    assert str(e.value) == "Missing data: ['test_build']['version']."
 
 
 def test_get_or_create_machine_id(dm):
     """Returns machine id for the given test data (creating it if needed)."""
-    data = {'test_machine': {'name': 'qm-pxp01'}}
+    data = TestData({'test_machine': {'name': 'qm-pxp01'}})
 
     first_id = dm._get_or_create_machine_id(data)
 
@@ -232,23 +251,23 @@ def test_get_or_create_machine_id(dm):
 
 def test_get_or_create_machine_id_no_test_machine(dm):
     """Raises TestDataError if there is no 'test_machine' key in data."""
-    with pytest.raises(dm.TestDataError) as e:
-        dm._get_or_create_machine_id({})
+    with pytest.raises(TestDataError) as e:
+        dm._get_or_create_machine_id(TestData({}))
 
-    assert str(e.value) == "Missing 'test_machine' key."
+    assert str(e.value) == "Missing data: ['test_machine']."
 
 
 def test_get_or_create_machine_id_no_name(dm):
     """Raises TestDataError if there is no 'name' in data['test_machine']."""
-    with pytest.raises(dm.TestDataError) as e:
-        dm._get_or_create_machine_id({'test_machine': {}})
+    with pytest.raises(TestDataError) as e:
+        dm._get_or_create_machine_id(TestData({'test_machine': {}}))
 
-    assert str(e.value) == "Test machine missing 'name' key."
+    assert str(e.value) == "Missing data: ['test_machine']['name']."
 
 
 def test_set_build_data(dm):
     """Inserts data into the build table."""
-    data = perftest_data()
+    data = TestData(perftest_data())
 
     os_id = dm._get_or_create_os_id(data)
     product_id = dm._get_or_create_product_id(data)
@@ -269,50 +288,54 @@ def test_set_build_data(dm):
 
 def test_set_build_data_no_test_machine(dm):
     """Raises TestDataError if there is no 'test_machine' key in data."""
-    with pytest.raises(dm.TestDataError) as e:
+    with pytest.raises(TestDataError) as e:
         dm._set_build_data(
-            {"test_build": {"id": "12345", "revision": "deadbeef"}},
-             None, None, None,
-             )
+            TestData({"test_build": {"id": "12345", "revision": "deadbeef"}}),
+            None, None, None,
+            )
 
-    assert str(e.value) == "Missing 'test_machine' key."
+    assert str(e.value) == "Missing data: ['test_machine']."
 
 
 def test_set_build_data_no_test_build(dm):
     """Raises TestDataError if there is no 'test_build' key in data."""
-    with pytest.raises(dm.TestDataError) as e:
+    with pytest.raises(TestDataError) as e:
         dm._set_build_data(
-            {"test_machine": {"platform": "arm"}}, None, None, None)
+            TestData({"test_machine": {"platform": "arm"}}), None, None, None)
 
-    assert str(e.value) == "Missing 'test_build' key."
+    assert str(e.value) ==  "Missing data: ['test_build']."
 
 
 def test_set_build_data_no_platform(dm):
     """Raises TestDataError if 'test_machine' is missing 'platform' key."""
-    with pytest.raises(dm.TestDataError) as e:
+    with pytest.raises(TestDataError) as e:
         dm._set_build_data(
-            {
-                "test_build": {"id": "12345", "revision": "deadbeef"},
-                "test_machine": {},
-                },
+            TestData(
+                {
+                    "test_build": {"id": "12345", "revision": "deadbeef"},
+                    "test_machine": {},
+                    }
+                ),
              None, None, None,
              )
 
-    assert str(e.value) == "Test machine missing 'platform' key."
+    assert str(e.value) == "Missing data: ['test_machine']['platform']."
 
 
 def test_set_build_data_no_build_id(dm):
     """Raises TestDataError if 'test_machine' is missing 'platform' key."""
-    with pytest.raises(dm.TestDataError) as e:
+    with pytest.raises(TestDataError) as e:
         dm._set_build_data(
-            {
-                "test_build": {"revision": "deadbeef"},
-                "test_machine": {"platform": "arm"},
-                },
+            TestData(
+                {
+                    "test_build": {"revision": "deadbeef"},
+                    "test_machine": {"platform": "arm"},
+                    }
+                ),
              None, None, None,
              )
 
-    assert str(e.value) == "Test build missing 'id' key."
+    assert str(e.value) == "Missing data: ['test_build']['id']."
 
 
 
