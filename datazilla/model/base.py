@@ -500,7 +500,7 @@ class DatazillaModel(object):
         ref_data['option_ids'] = self._get_or_create_option_ids(data)
         ref_data['operating_system_id'] = self._get_or_create_os_id(data)
         ref_data['product_id'] = self._get_or_create_product_id(data)
-        ref_data['machine_id'] = self._get_machine_id(data)
+        ref_data['machine_id'] = self._get_or_create_machine_id(data)
 
         # Insert build and test_run data.  All other test data
         # types require the build_id and test_run_id to meet foreign key
@@ -790,39 +790,42 @@ class DatazillaModel(object):
             ).get_column_data('id')
 
 
-    def _get_machine_id(self, data):
+    def _get_or_create_machine_id(self, data):
+        """
+        Given a full test-data structure, returns the test id from the db.
 
-        machine_id = 0
+        Creates it if necessary. Raises ``TestDataError`` on bad data.
+
+        """
         try:
-            name = data['test_machine']['name']
-
-            ##Insert the the machine name and timestamp on duplicate key update##
-            insert_proc = 'perftest.inserts.set_machine_ref_data'
-            self.sources["perftest"].dhub.execute(
-                proc=insert_proc,
-                placeholders=[ name, int(time.time()) ],
-                debug_show=self.DEBUG)
-
-            ##Get the machine id##
-            select_proc = 'perftest.selects.get_machine_id'
-            id_iter = self.sources["perftest"].dhub.execute(
-                proc=select_proc,
-                placeholders=[ name ],
-                debug_show=self.DEBUG,
-                return_type='iter')
-
-            machine_id = id_iter.get_column_data('id')
-
+            machine = data['test_machine']
         except KeyError:
-            raise
+            raise self.TestDataError("Missing 'test_machine' key.")
 
-        else:
-            return machine_id
+        try:
+            name = machine['name']
+        except KeyError:
+            raise self.TestDataError("Test machine missing 'name' key.")
+
+        # Insert the the machine name and timestamp on duplicate key update
+        self.sources["perftest"].dhub.execute(
+            proc='perftest.inserts.set_machine_ref_data',
+            placeholders=[ name, int(time.time()) ],
+            debug_show=self.DEBUG)
+
+        # Get the machine id
+        id_iter = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_machine_id',
+            placeholders=[ name ],
+            debug_show=self.DEBUG,
+            return_type='iter')
+
+        return id_iter.get_column_data('id')
 
 
     def _get_or_create_test_id(self, data):
         """
-        Given a full test-data structure, returns the test id.
+        Given a full test-data structure, returns the test id from the db.
 
         Creates it if necessary. Raises ``TestDataError`` on bad data.
 

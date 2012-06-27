@@ -216,6 +216,36 @@ def test_get_or_create_product_id_no_version(dm):
     assert str(e.value) == "Test build missing 'version' key."
 
 
+def test_get_or_create_machine_id(dm):
+    """Returns machine id for the given test data (creating it if needed)."""
+    data = {'test_machine': {'name': 'qm-pxp01'}}
+
+    first_id = dm._get_or_create_machine_id(data)
+
+    inserted_id = dm._get_last_insert_id()
+
+    # second call with same data returns existing id
+    second_id = dm._get_or_create_machine_id(data)
+
+    assert second_id == first_id == inserted_id
+
+
+def test_get_or_create_machine_id_no_test_machine(dm):
+    """Raises TestDataError if there is no 'test_machine' key in data."""
+    with pytest.raises(dm.TestDataError) as e:
+        dm._get_or_create_machine_id({})
+
+    assert str(e.value) == "Missing 'test_machine' key."
+
+
+def test_get_or_create_machine_id_no_name(dm):
+    """Raises TestDataError if there is no 'name' in data['test_machine']."""
+    with pytest.raises(dm.TestDataError) as e:
+        dm._get_or_create_machine_id({'test_machine': {}})
+
+    assert str(e.value) == "Test machine missing 'name' key."
+
+
 
 
 # TODO fill in the following tests:
