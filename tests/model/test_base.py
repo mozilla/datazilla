@@ -126,6 +126,44 @@ def test_get_or_create_option_ids_bad_options(dm):
     assert str(e.value) == "Testrun 'options' is not a list."
 
 
+def test_get_or_create_os_id(dm):
+    """Returns OS id for the given test-machine (creating it if needed)."""
+    data = {'test_machine': {'os': 'linux', 'osversion': 'Ubuntu 11.10'}}
+
+    first_id = dm._get_or_create_os_id(data)
+
+    inserted_id = dm._get_last_insert_id()
+
+    # second call with same data returns existing id
+    second_id = dm._get_or_create_os_id(data)
+
+    assert second_id == first_id == inserted_id
+
+
+def test_get_or_create_os_id_no_test_machine(dm):
+    """Raises TestDataError if there is no 'test_machine' key in data."""
+    with pytest.raises(dm.TestDataError) as e:
+        dm._get_or_create_os_id({})
+
+    assert str(e.value) == "Missing 'test_machine' key."
+
+
+def test_get_or_create_os_id_no_os(dm):
+    """Raises TestDataError if there is no 'os' key in data['test_machine']."""
+    with pytest.raises(dm.TestDataError) as e:
+        dm._get_or_create_os_id({'test_machine': {'osversion': '7'}})
+
+    assert str(e.value) == "Test machine missing 'os' key."
+
+
+def test_get_or_create_os_id_no_osversion(dm):
+    """Raises TestDataError if 'osversion' missing from 'test_machine'."""
+    with pytest.raises(dm.TestDataError) as e:
+        dm._get_or_create_os_id({'test_machine': {'os': 'linux'}})
+
+    assert str(e.value) == "Test machine missing 'osversion' key."
+
+
 
 # TODO fill in the following tests:
 

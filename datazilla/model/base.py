@@ -498,7 +498,7 @@ class DatazillaModel(object):
         # approach
         ref_data['test_id'] = self._get_or_create_test_id(data)
         ref_data['option_ids'] = self._get_or_create_option_ids(data)
-        ref_data['operating_system_id'] = self._get_os_id(data)
+        ref_data['operating_system_id'] = self._get_or_create_os_id(data)
         ref_data['product_id'] = self._get_product_id(data)
         ref_data['machine_id'] = self._get_machine_id(data)
 
@@ -860,35 +860,38 @@ class DatazillaModel(object):
         return id_iter.get_column_data('id')
 
 
-    def _get_os_id(self, data):
+    def _get_or_create_os_id(self, data):
+        """
+        Given a full test-data structure, returns the OS id from the database.
 
-        os_id = 0
+        Creates it if necessary. Raises ``TestDataError`` on bad data.
+
+        """
         try:
-            os_name = data['test_machine']['os']
-            os_version = data['test_machine']['osversion']
-
-            ##Insert the operating system name and version on duplicate key update##
-            insert_proc = 'perftest.inserts.set_os_ref_data'
-            self.sources["perftest"].dhub.execute(
-                proc=insert_proc,
-                placeholders=[ os_name, os_version ],
-                debug_show=self.DEBUG)
-
-            ##Get the operating system name id##
-            select_proc = 'perftest.selects.get_os_id'
-            id_iter = self.sources["perftest"].dhub.execute(
-                proc=select_proc,
-                placeholders=[ os_name, os_version ],
-                debug_show=self.DEBUG,
-                return_type='iter')
-
-            os_id = id_iter.get_column_data('id')
-
+            machine = data['test_machine']
         except KeyError:
-            raise
+            raise self.TestDataError("Missing 'test_machine' key.")
 
-        else:
-            return os_id
+        try:
+            os_name = machine['os']
+            os_version = machine['osversion']
+        except KeyError as e:
+            raise self.TestDataError("Test machine missing {0} key.".format(e))
+
+        # Insert the operating system name and version on duplicate key update
+        self.sources["perftest"].dhub.execute(
+            proc='perftest.inserts.set_os_ref_data',
+            placeholders=[ os_name, os_version ],
+            debug_show=self.DEBUG)
+
+        # Get the operating system name id
+        id_iter = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_os_id',
+            placeholders=[ os_name, os_version ],
+            debug_show=self.DEBUG,
+            return_type='iter')
+
+        return id_iter.get_column_data('id')
 
 
     def _get_or_create_option_ids(self, data):
