@@ -159,7 +159,7 @@ def dataview(request, project="", method=""):
             if 'fields' in DATAVIEW_ADAPTERS[method]:
                 fields = []
                 for f in DATAVIEW_ADAPTERS[method]['fields']:
-                    if f in request.GET[f]:
+                    if f in request.GET:
                         fields.append( int( request.GET[f] ) )
 
                 if len(fields) == len(DATAVIEW_ADAPTERS[method]['fields']):
