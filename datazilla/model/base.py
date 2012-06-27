@@ -499,7 +499,7 @@ class DatazillaModel(object):
         ref_data['test_id'] = self._get_or_create_test_id(data)
         ref_data['option_ids'] = self._get_or_create_option_ids(data)
         ref_data['operating_system_id'] = self._get_or_create_os_id(data)
-        ref_data['product_id'] = self._get_product_id(data)
+        ref_data['product_id'] = self._get_or_create_product_id(data)
         ref_data['machine_id'] = self._get_machine_id(data)
 
         # Insert build and test_run data.  All other test data
@@ -937,36 +937,39 @@ class DatazillaModel(object):
         return option_ids
 
 
-    def _get_product_id(self, data):
+    def _get_or_create_product_id(self, data):
+        """
+        Given a full test-data structure, returns product id from the database.
 
-        product_id = 0
+        Creates it if necessary. Raises ``TestDataError`` on bad data.
+
+        """
+        try:
+            build = data['test_build']
+        except KeyError:
+            raise self.TestDataError("Missing 'test_build' key.")
 
         try:
-            product = data['test_build']['name']
-            branch = data['test_build']['branch']
-            version = data['test_build']['version']
+            product = build['name']
+            branch = build['branch']
+            version = build['version']
+        except KeyError as e:
+            raise self.TestDataError("Test build missing {0} key.".format(e))
 
-            ##Insert the product, branch, and version on duplicate key update##
-            insert_proc = 'perftest.inserts.set_product_ref_data'
-            self.sources["perftest"].dhub.execute(
-                proc=insert_proc,
-                placeholders=[ product, branch, version ],
-                debug_show=self.DEBUG)
+        # Insert the product, branch, and version on duplicate key update
+        self.sources["perftest"].dhub.execute(
+            proc='perftest.inserts.set_product_ref_data',
+            placeholders=[ product, branch, version ],
+            debug_show=self.DEBUG)
 
-            ##Get the product id##
-            select_proc = 'perftest.selects.get_product_id'
-            id_iter = self.sources["perftest"].dhub.execute(
-                proc=select_proc,
-                placeholders=[ product, branch, version ],
-                debug_show=self.DEBUG,
-                return_type='iter')
+        # Get the product id
+        id_iter = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_product_id',
+            placeholders=[ product, branch, version ],
+            debug_show=self.DEBUG,
+            return_type='iter')
 
-            product_id = id_iter.get_column_data('id')
-
-        except KeyError:
-            raise
-        else:
-            return product_id
+        return id_iter.get_column_data('id')
 
 
     def _get_unique_key_dict(self, data_tuple, key_strings):

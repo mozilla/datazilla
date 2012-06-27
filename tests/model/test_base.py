@@ -164,6 +164,59 @@ def test_get_or_create_os_id_no_osversion(dm):
     assert str(e.value) == "Test machine missing 'osversion' key."
 
 
+def test_get_or_create_product_id(dm):
+    """Returns product id for the given build (creating it if needed)."""
+    data = {
+        'test_build': {
+            'name': 'Firefox', 'branch': 'Mozilla-Aurora', 'version': '14.0a2'}
+        }
+
+    first_id = dm._get_or_create_product_id(data)
+
+    inserted_id = dm._get_last_insert_id()
+
+    # second call with same data returns existing id
+    second_id = dm._get_or_create_product_id(data)
+
+    assert second_id == first_id == inserted_id
+
+
+def test_get_or_create_product_id_no_test_build(dm):
+    """Raises TestDataError if there is no 'test_build' key in data."""
+    with pytest.raises(dm.TestDataError) as e:
+        dm._get_or_create_product_id({})
+
+    assert str(e.value) == "Missing 'test_build' key."
+
+
+def test_get_or_create_product_id_no_name(dm):
+    """Raises TestDataError if there is no 'name' key in data['test_build']."""
+    with pytest.raises(dm.TestDataError) as e:
+        dm._get_or_create_product_id(
+            {'test_build': {'branch': 'Mozilla-Aurora', 'version': '14.0a2'}})
+
+    assert str(e.value) == "Test build missing 'name' key."
+
+
+def test_get_or_create_product_id_no_branch(dm):
+    """Raises TestDataError if there is no 'branch' in data['test_build']."""
+    with pytest.raises(dm.TestDataError) as e:
+        dm._get_or_create_product_id(
+            {'test_build': {'name': 'Firefox', 'version': '14.0a2'}})
+
+    assert str(e.value) == "Test build missing 'branch' key."
+
+
+def test_get_or_create_product_id_no_version(dm):
+    """Raises TestDataError if there is no 'version' in data['test_build']."""
+    with pytest.raises(dm.TestDataError) as e:
+        dm._get_or_create_product_id(
+            {'test_build': {'name': 'Firefox', 'branch': 'Mozilla-Aurora'}})
+
+    assert str(e.value) == "Test build missing 'version' key."
+
+
+
 
 # TODO fill in the following tests:
 
