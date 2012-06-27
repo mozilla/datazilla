@@ -18,13 +18,12 @@ from . import utils
 
 
 
-class TestDataError(ValueError):
-    pass
-
-
-
 class DatazillaModel(object):
     """Public interface to all data access for a project."""
+
+    class TestDataError(ValueError):
+        pass
+
 
     CONTENT_TYPES = ["perftest", "objectstore"]
 
@@ -498,7 +497,7 @@ class DatazillaModel(object):
         # Get/Set reference info, all inserts use an on duplicate key
         # approach
         ref_data['test_id'] = self._get_or_create_test_id(data)
-        ref_data['option_ids'] = self._get_option_ids(data)
+        ref_data['option_ids'] = self._get_or_create_option_ids(data)
         ref_data['operating_system_id'] = self._get_os_id(data)
         ref_data['product_id'] = self._get_product_id(data)
         ref_data['machine_id'] = self._get_machine_id(data)
@@ -831,18 +830,19 @@ class DatazillaModel(object):
         try:
             testrun = data['testrun']
         except KeyError:
-            raise TestDataError("Missing 'testrun' key.")
+            raise self.TestDataError("Missing 'testrun' key.")
 
         try:
             name = testrun["suite"]
         except KeyError:
-            raise TestDataError("Testrun missing 'suite' key.")
+            raise self.TestDataError("Testrun missing 'suite' key.")
 
         try:
             # TODO: version should be required; currently defaults to 1
             version = int(testrun.get('suite_version', 1))
         except ValueError:
-            raise TestDataError("Testrun 'suite_version' is not an integer.")
+            raise self.TestDataError(
+                "Testrun 'suite_version' is not an integer.")
 
         # Insert the test name and version on duplicate key update
         self.sources['perftest'].dhub.execute(
@@ -891,33 +891,47 @@ class DatazillaModel(object):
             return os_id
 
 
-    def _get_option_ids(self, data):
+    def _get_or_create_option_ids(self, data):
+        """
+        Given test-data structure, returns a dict of {option_name: id}.
+
+        Creates options if necessary. Raises ``TestDataError`` on bad data.
+
+        """
         option_ids = dict()
+
         try:
-            if 'options' in data['testrun']:
-                for option in data['testrun']['options']:
-
-                    ##Insert the option name on duplicate key update##
-                    insert_proc = 'perftest.inserts.set_option_ref_data'
-                    self.sources["perftest"].dhub.execute(
-                        proc=insert_proc,
-                        placeholders=[ option ],
-                        debug_show=self.DEBUG)
-
-                    ##Get the option id##
-                    select_proc = 'perftest.selects.get_option_id'
-                    id_iter = self.sources["perftest"].dhub.execute(
-                        proc=select_proc,
-                        placeholders=[ option ],
-                        debug_show=self.DEBUG,
-                        return_type='iter')
-
-                    option_ids[option] = id_iter.get_column_data('id')
-
+            testrun = data['testrun']
         except KeyError:
-            raise
-        else:
-            return option_ids
+            raise self.TestDataError("Missing 'testrun' key.")
+
+        options = testrun.get('options', [])
+
+        # Test for a list explicitly because strings are iterable, but we don't
+        # want to accidentally create an option for every character in a
+        # string.  No need to support other sequence types, a list is the only
+        # sequence type returned from json.loads.
+        if not isinstance(options, list):
+            raise self.TestDataError("Testrun 'options' is not a list.")
+
+        for option in options:
+
+            # Insert the option name on duplicate key update
+            self.sources["perftest"].dhub.execute(
+                proc='perftest.inserts.set_option_ref_data',
+                placeholders=[ option ],
+                debug_show=self.DEBUG)
+
+            # Get the option id
+            id_iter = self.sources["perftest"].dhub.execute(
+                proc='perftest.selects.get_option_id',
+                placeholders=[ option ],
+                debug_show=self.DEBUG,
+                return_type='iter')
+
+            option_ids[option] = id_iter.get_column_data('id')
+
+        return option_ids
 
 
     def _get_product_id(self, data):

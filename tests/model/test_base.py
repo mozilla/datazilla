@@ -72,8 +72,7 @@ def test_get_or_create_test_id(dm):
 
 def test_get_or_create_test_id_no_testrun(dm):
     """Raises TestDataError if there is no 'testrun' key in data."""
-    from datazilla.model.base import TestDataError
-    with pytest.raises(TestDataError) as e:
+    with pytest.raises(dm.TestDataError) as e:
         dm._get_or_create_test_id({})
 
     assert str(e.value) == "Missing 'testrun' key."
@@ -81,8 +80,7 @@ def test_get_or_create_test_id_no_testrun(dm):
 
 def test_get_or_create_test_id_no_suite_name(dm):
     """Raises TestDataError if there is no 'suite' key in data['testrun']."""
-    from datazilla.model.base import TestDataError
-    with pytest.raises(TestDataError) as e:
+    with pytest.raises(dm.TestDataError) as e:
         dm._get_or_create_test_id({'testrun': {}})
 
     assert str(e.value) == "Testrun missing 'suite' key."
@@ -90,12 +88,42 @@ def test_get_or_create_test_id_no_suite_name(dm):
 
 def test_get_or_create_test_id_bad_version(dm):
     """Raises TestDataError if the 'suite_version' key is not an integer."""
-    from datazilla.model.base import TestDataError
-    with pytest.raises(TestDataError) as e:
+    with pytest.raises(dm.TestDataError) as e:
         dm._get_or_create_test_id(
             {'testrun': {'suite': 'talos', 'suite_version': 'foo'}})
 
     assert str(e.value) == "Testrun 'suite_version' is not an integer."
+
+
+def test_get_or_create_option_ids(dm):
+    """Returns dictionary of option IDs from db (creating if needed)."""
+    data = {'testrun': {'options': ['option1', 'option2']}}
+
+    first_ids = dm._get_or_create_option_ids(data)
+
+    # second call returns same id for same options
+    data['testrun']['options'].append('option3')
+    second_ids = dm._get_or_create_option_ids(data)
+
+    assert first_ids['option1'] == second_ids['option1']
+    assert first_ids['option2'] == second_ids['option2']
+    assert set(second_ids.keys()) == set(['option1', 'option2', 'option3'])
+
+
+def test_get_or_create_option_ids_no_testrun(dm):
+    """Raises TestDataError if there is no 'testrun' key in data."""
+    with pytest.raises(dm.TestDataError) as e:
+        dm._get_or_create_option_ids({})
+
+    assert str(e.value) == "Missing 'testrun' key."
+
+
+def test_get_or_create_option_ids_bad_options(dm):
+    """Raises TestDataError if the 'options' key is not a list."""
+    with pytest.raises(dm.TestDataError) as e:
+        dm._get_or_create_option_ids({'testrun': {'options': 'foo'}})
+
+    assert str(e.value) == "Testrun 'options' is not a list."
 
 
 
