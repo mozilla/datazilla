@@ -138,6 +138,8 @@ class TestDataHub(unittest.TestCase):
             msg = "The table, %s, was not dropped in %s." % (self.table_name, self.db)
             self.fail(msg)
 
+
+
 def main():
     ##Load test data one time##
     TestDataHub.load_data()

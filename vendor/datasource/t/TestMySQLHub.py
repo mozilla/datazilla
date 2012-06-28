@@ -75,6 +75,7 @@ class TestMySQLHub(unittest.TestCase):
                  'test_nocommit',
                  'test_rollback',
                  'test_drop_table',
+                 'test_exception_on_debug'
                  ]
 
         return unittest.TestSuite(map(TestMySQLHub, tests))
@@ -698,7 +699,7 @@ class TestMySQLHub(unittest.TestCase):
             proc="sql.ds_selects.get_row_count",
             nocommit=True,
             replace=['auto_pfamA', self.table_name],
-            return_type='iter',        
+            return_type='iter',
             ).get_column_data('rowcount')
 
         dh_read.disconnect()
@@ -719,6 +720,19 @@ class TestMySQLHub(unittest.TestCase):
         if self.table_name in table_set:
             msg = "The table, %s, was not dropped in %s." % (self.table_name, self.db)
             self.fail(msg)
+
+
+    def test_exception_on_debug(self):
+        from MySQLdb import ProgrammingError
+
+        try:
+            self.dh.execute(
+                sql="SELECT giant_nebula FROM universe",
+                debug_show=True,
+                )
+            self.fail("expect an exception.")
+        except ProgrammingError:
+            self.assertTrue(True, "expect an exception.")
 
 
     def __callback_test(self, row):
