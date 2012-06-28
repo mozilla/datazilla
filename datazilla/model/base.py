@@ -537,6 +537,12 @@ class DatazillaModel(object):
                 test_run_id = self.load_test_data(data)
             except TestDataError as e:
                 self.mark_object_error(row_id, str(e))
+            except Exception as e:
+                self.mark_object_error(
+                    row_id,
+                    u"Unknown error: {0}: {1}".format(
+                        e.__class__.__name__, unicode(e))
+                    )
             else:
                 self.mark_object_complete(row_id, test_run_id)
 

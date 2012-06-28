@@ -520,6 +520,27 @@ def test_process_objects_invalid_json(dm):
     assert row_data['processed_flag'] == 'ready'
 
 
+def test_process_objects_unknown_error(dm, monkeypatch):
+    dm.store_test_data("{}")
+    row_id = dm._get_last_insert_id("objectstore")
+
+    # force an unexpected error to occur
+    def raise_error(*args, **kwargs):
+        raise ValueError("Something blew up!")
+    monkeypatch.setattr(dm, "load_test_data", raise_error)
+
+    dm.process_objects(1)
+
+    row_data = dm.sources["objectstore"].dhub.execute(
+        proc="objectstore_test.selects.row", placeholders=[row_id])[0]
+
+    expected_error_msg = "Unknown error: ValueError: Something blew up!"
+
+    assert row_data['error_flag'] == 'Y'
+    assert row_data['error_msg'] == expected_error_msg
+    assert row_data['processed_flag'] == 'ready'
+
+
 
 # TODO fill in the following tests:
 
