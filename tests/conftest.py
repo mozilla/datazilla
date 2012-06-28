@@ -25,6 +25,8 @@ def pytest_sessionstart(session):
     # this sets up a clean test-only database
     session.django_db_config = session.django_runner.setup_databases()
 
+    increment_cache_key_prefix()
+
     from datazilla.model import DatazillaModel
     dm = DatazillaModel.create("testproj")
 
@@ -93,16 +95,7 @@ def pytest_runtest_setup(item):
     transaction.managed(True)
     disable_transaction_methods()
 
-    # this effectively clears the cache to make tests deterministic
-    from django.core.cache import cache
-    cache.key_prefix = ""
-    prefix_counter_cache_key = "datazilla-tests-key-prefix-counter"
-    try:
-        key_prefix_counter = cache.incr(prefix_counter_cache_key)
-    except ValueError:
-        key_prefix_counter = 0
-        cache.set(prefix_counter_cache_key, key_prefix_counter)
-    cache.key_prefix = "t{0}".format(key_prefix_counter)
+    increment_cache_key_prefix()
 
 
 
@@ -140,6 +133,20 @@ def truncate(dm):
             cur.execute("TRUNCATE TABLE {0}".format(table))
         cur.execute("SET FOREIGN_KEY_CHECKS = 1")
         conn.close()
+
+
+def increment_cache_key_prefix():
+    """Increment a cache prefix to effectively clear the cache."""
+    from django.core.cache import cache
+    cache.key_prefix = ""
+    prefix_counter_cache_key = "datazilla-tests-key-prefix-counter"
+    try:
+        key_prefix_counter = cache.incr(prefix_counter_cache_key)
+    except ValueError:
+        key_prefix_counter = 0
+        cache.set(prefix_counter_cache_key, key_prefix_counter)
+    cache.key_prefix = "t{0}".format(key_prefix_counter)
+
 
 
 
