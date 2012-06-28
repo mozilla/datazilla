@@ -515,8 +515,10 @@ def test_process_objects_invalid_json(dm):
     row_data = dm.sources["objectstore"].dhub.execute(
         proc="objectstore_test.selects.row", placeholders=[row_id])[0]
 
+    expected_error = "Malformed JSON: No JSON object could be decoded"
+
     assert row_data['error_flag'] == 'Y'
-    assert row_data['error_msg'].startswith("Malformed JSON: No JSON object")
+    assert row_data['error_msg'] == expected_error
     assert row_data['processed_flag'] == 'ready'
 
 
