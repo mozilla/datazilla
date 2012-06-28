@@ -158,12 +158,8 @@ def dataview(request, project="", method=""):
             if 'fields' in DATAVIEW_ADAPTERS[method]:
                 fields = []
                 for f in DATAVIEW_ADAPTERS[method]['fields']:
-                    if f in request.POST:
-                        fields.append(
-                            pt_dhub.escape_string(request.POST[f]))
-
-                    elif f in request.GET:
-                        fields.append(pt_dhub.escape_string(request.GET[f]))
+                    if f in request.GET:
+                        fields.append( int( request.GET[f] ) )
 
                 if len(fields) == len(DATAVIEW_ADAPTERS[method]['fields']):
                     json = pt_dhub.execute(proc=full_proc_path,
