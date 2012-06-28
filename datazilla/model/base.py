@@ -602,7 +602,7 @@ class DatazillaModel(object):
     def _set_test_aux_data(self, data, test_id, test_run_id):
         """Insert test aux data to db for given test_id and test_run_id."""
         for aux_data, aux_values in data.get('results_aux', {}).items():
-            aux_data_id = self._get_aux_id(aux_data, test_id)
+            aux_data_id = self._get_or_create_aux_id(aux_data, test_id)
 
             placeholders = []
             for index, value in enumerate(aux_values, 1):
@@ -632,7 +632,7 @@ class DatazillaModel(object):
         """Insert test values to database for given test_id and test_run_id."""
         for page, values in data['results'].items():
 
-            page_id = self._get_page_id(page, test_id)
+            page_id = self._get_or_create_page_id(page, test_id)
 
             placeholders = []
             for index, value in enumerate(values, 1):
@@ -651,7 +651,7 @@ class DatazillaModel(object):
                 'set_test_values', placeholders, executemany=True)
 
 
-    def _get_aux_id(self, aux_data, test_id):
+    def _get_or_create_aux_id(self, aux_data, test_id):
         """Given aux name and test id, return aux id, creating if needed."""
         # Insert the test id and aux data on duplicate key update
         self.sources["perftest"].dhub.execute(
@@ -671,7 +671,7 @@ class DatazillaModel(object):
         return id_iter.get_column_data('id')
 
 
-    def _get_page_id(self, page, test_id):
+    def _get_or_create_page_id(self, page, test_id):
         """Given page name and test id, return page id, creating if needed."""
         # Insert the test id and page name on duplicate key update
         self.sources["perftest"].dhub.execute(
