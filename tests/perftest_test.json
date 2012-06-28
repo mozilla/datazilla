@@ -8,6 +8,10 @@
             "sql": "SELECT * FROM `test_run` WHERE id = ?",
             "host": "master_host"
         },
+        "test_runs": {
+            "sql": "SELECT * FROM `test_run`",
+            "host": "master_host"
+        },
         "option_value": {
             "sql": "SELECT `test_option_values`.`value`
                     FROM `test_option_values`, `option`

@@ -531,11 +531,13 @@ class DatazillaModel(object):
         rows = self.claim_objects(loadlimit)
 
         for row in rows:
-            data = TestData.from_json(row['json_blob'])
             row_id = int(row['id'])
-
-            if self.verify_json(data):
+            try:
+                data = TestData.from_json(row['json_blob'])
                 test_run_id = self.load_test_data(data)
+            except TestDataError as e:
+                self.mark_object_error(row_id, str(e))
+            else:
                 self.mark_object_complete(row_id, test_run_id)
 
 
@@ -575,21 +577,20 @@ class DatazillaModel(object):
 
     def mark_object_complete(self, object_id, test_run_id):
         """ Call to database to mark the task completed """
-        proc_completed = "objectstore.updates.mark_complete"
-
         self.sources["objectstore"].dhub.execute(
-            proc=proc_completed,
-            placeholders=[ test_run_id, object_id ],
+            proc="objectstore.updates.mark_complete",
+            placeholders=[test_run_id, object_id],
             debug_show=self.DEBUG
             )
 
 
-    def verify_json(self, json_data):
-        """ Verify that json is valid for ingestion """
-        # TODO (stub)
-        # Need to implement some sort of verification json is well-formed
-        # to ensure load_test_data won't fail.
-        return True
+    def mark_object_error(self, object_id, error):
+        """ Call to database to mark the task completed """
+        self.sources["objectstore"].dhub.execute(
+            proc="objectstore.updates.mark_error",
+            placeholders=[error, object_id],
+            debug_show=self.DEBUG
+            )
 
 
     def _set_test_aux_data(self, data, test_id, test_run_id):
@@ -762,9 +763,9 @@ class DatazillaModel(object):
         return self._get_last_insert_id()
 
 
-    def _get_last_insert_id(self):
+    def _get_last_insert_id(self, source="perftest"):
         """Return last-inserted ID."""
-        return self.sources["perftest"].dhub.execute(
+        return self.sources[source].dhub.execute(
             proc='generic.selects.get_last_insert_id',
             debug_show=self.DEBUG,
             return_type='iter',
@@ -936,7 +937,7 @@ class TestData(dict):
         try:
             data = json.loads(json_blob)
         except ValueError as e:
-            raise TestDataError("Malformed JSON: ".format(e))
+            raise TestDataError("Malformed JSON: {0}".format(e))
 
         return cls(data)
 

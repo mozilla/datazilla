@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from datazilla.model.base import TestDataError, TestData
@@ -457,8 +459,6 @@ def test_load_test_data(dm):
     data = TestData(perftest_data())
     test_run_id = dm.load_test_data(data)
 
-    # We just spot-check here, since all the methods that do the heavy lifting
-    # are individually tested.
     test_run_data = dm.sources["perftest"].dhub.execute(
         proc="perftest_test.selects.test_run", placeholders=[test_run_id])[0]
 
@@ -468,10 +468,56 @@ def test_load_test_data(dm):
         )
     distinct_pages = set([r['page_id'] for r in value_rows])
 
-
+    # We just spot-check here, since all the methods that do the heavy lifting
+    # are individually tested.
     assert test_run_data["revision"] == data["test_build"]["revision"]
     assert test_run_data["date_run"] == int(data["testrun"]["date"])
     assert len(distinct_pages) == len(data["results"])
+
+
+def test_process_objects(dm):
+    """Claims and processes a chunk of unprocessed JSON test data blobs."""
+    # Load some rows into the objectstore
+    blobs = [
+        perftest_json(testrun={"date": "1330454755"}),
+        perftest_json(testrun={"date": "1330454756"}),
+        perftest_json(testrun={"date": "1330454757"}),
+        ]
+
+    for blob in blobs:
+        dm.store_test_data(blob)
+
+    # just process two rows
+    dm.process_objects(2)
+
+    test_run_rows = dm.sources["perftest"].dhub.execute(
+        proc="perftest_test.selects.test_runs")
+    date_set = set([r['date_run'] for r in test_run_rows])
+    expected_dates = set([1330454755, 1330454756, 1330454757])
+
+    complete_count = dm.sources["objectstore"].dhub.execute(
+        proc="objectstore_test.counts.complete")[0]["complete_count"]
+    loading_count = dm.sources["objectstore"].dhub.execute(
+        proc="objectstore_test.counts.loading")[0]["loading_count"]
+
+    assert complete_count == 2
+    assert loading_count == 0
+    assert date_set.issubset(expected_dates)
+    assert len(date_set) == 2
+
+
+def test_process_objects_invalid_json(dm):
+    dm.store_test_data("invalid json")
+    row_id = dm._get_last_insert_id("objectstore")
+
+    dm.process_objects(1)
+
+    row_data = dm.sources["objectstore"].dhub.execute(
+        proc="objectstore_test.selects.row", placeholders=[row_id])[0]
+
+    assert row_data['error_flag'] == 'Y'
+    assert row_data['error_msg'].startswith("Malformed JSON: No JSON object")
+    assert row_data['processed_flag'] == 'ready'
 
 
 
