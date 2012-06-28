@@ -486,10 +486,7 @@ class DatazillaModel(object):
 
 
     def load_test_data(self, data):
-        """Process JSON test data into the perftest database."""
-
-        # Wrap data in a TestData instance for consistent access.
-        data = TestData(data)
+        """Load TestData instance into perftest db, return test_run_id."""
 
         # Get/Set reference info, all inserts use ON DUPLICATE KEY
         test_id = self._get_or_create_test_id(data)

@@ -444,11 +444,34 @@ def test_set_test_aux_data(dm):
             for r in test_aux_rows
             ]
         )
+    aux_data_ids = set([r['aux_data_id'] for r in test_aux_rows])
 
 
     assert aux_row['name'] == 'foo'
     assert enumerated_values == set([(1, 1, ""), (2, 2, ""), (3, 0, "three")])
-    assert set([r['aux_data_id'] for r in test_aux_rows]) == set([aux_row['id']])
+    assert aux_data_ids == set([aux_row['id']])
+
+
+def test_load_test_data(dm):
+    """Loads a TestData instance into db and returns test_run_id."""
+    data = TestData(perftest_data())
+    test_run_id = dm.load_test_data(data)
+
+    # We just spot-check here, since all the methods that do the heavy lifting
+    # are individually tested.
+    test_run_data = dm.sources["perftest"].dhub.execute(
+        proc="perftest_test.selects.test_run", placeholders=[test_run_id])[0]
+
+    value_rows = dm.sources["perftest"].dhub.execute(
+        proc="perftest_test.selects.test_values",
+        placeholders=[test_run_id],
+        )
+    distinct_pages = set([r['page_id'] for r in value_rows])
+
+
+    assert test_run_data["revision"] == data["test_build"]["revision"]
+    assert test_run_data["date_run"] == int(data["testrun"]["date"])
+    assert len(distinct_pages) == len(data["results"])
 
 
 
