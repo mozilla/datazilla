@@ -4,8 +4,7 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 #####
 """
-``DatazillaModel`` (and subclasses) are the public interface for all data
-access.
+``DatazillaModel`` and subclasses are the public API for all data access.
 
 """
 import datetime
@@ -21,6 +20,7 @@ from . import utils
 
 class DatazillaModel(object):
     """Public interface to all data access for a project."""
+
 
     CONTENT_TYPES = ["perftest", "objectstore"]
 
@@ -41,9 +41,9 @@ class DatazillaModel(object):
 
     @classmethod
     def get_datasource_class(cls):
-        if settings.USE_APP_ENGINE:
-            from .appengine.model import CloudSQLDataSource
-            return CloudSQLDataSource
+        if settings.USE_APP_ENGINE:                         # pragma: no cover
+            from .appengine.model import CloudSQLDataSource # pragma: no cover
+            return CloudSQLDataSource                       # pragma: no cover
         else:
             from .sql.models import SQLDataSource
             return SQLDataSource
@@ -450,10 +450,12 @@ class DatazillaModel(object):
             src.disconnect()
 
 
-    def store_test_data(self, json_data, error_flag, error_msg):
+    def store_test_data(self, json_data, error=None):
         """Write the JSON to the objectstore to be queued for processing."""
 
         date_loaded = int( time.time() )
+        error_flag = "N" if error is None else "Y"
+        error_msg = error or ""
 
         self.sources["objectstore"].dhub.execute(
             proc='objectstore.inserts.store_json',
@@ -484,30 +486,23 @@ class DatazillaModel(object):
 
 
     def load_test_data(self, data):
-        """Process JSON test data into the perftest database."""
+        """Load TestData instance into perftest db, return test_run_id."""
 
-        # reference id data required by insert methods in ref_data
-        ref_data = dict()
+        # Get/Set reference info, all inserts use ON DUPLICATE KEY
+        test_id = self._get_or_create_test_id(data)
+        os_id = self._get_or_create_os_id(data)
+        product_id = self._get_or_create_product_id(data)
+        machine_id = self._get_or_create_machine_id(data)
 
-        # Get/Set reference info, all inserts use an on duplicate key
-        # approach
-        ref_data['test_id'] = self._get_test_id(data)
-        ref_data['option_ids'] = self._get_option_ids(data)
-        ref_data['operating_system_id'] = self._get_os_id(data)
-        ref_data['product_id'] = self._get_product_id(data)
-        ref_data['machine_id'] = self._get_machine_id(data)
+        # Insert build and test_run data.
+        build_id = self._set_build_data(data, os_id, product_id, machine_id)
+        test_run_id = self._set_test_run_data(data, test_id, build_id)
 
-        # Insert build and test_run data.  All other test data
-        # types require the build_id and test_run_id to meet foreign key
-        # constriants.
-        ref_data['build_id'] = self._set_build_data(data, ref_data)
-        ref_data['test_run_id'] = self._set_test_run_data(data, ref_data)
+        self._set_option_data(data, test_run_id)
+        self._set_test_values(data, test_id, test_run_id)
+        self._set_test_aux_data(data, test_id, test_run_id)
 
-        self._set_option_data(data, ref_data)
-        self._set_test_values(data, ref_data)
-        self._set_test_aux_data(data, ref_data)
-
-        return ref_data['test_run_id']
+        return test_run_id
 
     def transfer_objects(self, start_id, limit):
         """
@@ -536,11 +531,19 @@ class DatazillaModel(object):
         rows = self.claim_objects(loadlimit)
 
         for row in rows:
-            data = json.loads(row['json_blob'])
             row_id = int(row['id'])
-
-            if self.verify_json(data):
+            try:
+                data = TestData.from_json(row['json_blob'])
                 test_run_id = self.load_test_data(data)
+            except TestDataError as e:
+                self.mark_object_error(row_id, str(e))
+            except Exception as e:
+                self.mark_object_error(
+                    row_id,
+                    u"Unknown error: {0}: {1}".format(
+                        e.__class__.__name__, unicode(e))
+                    )
+            else:
                 self.mark_object_complete(row_id, test_run_id)
 
 
@@ -578,191 +581,180 @@ class DatazillaModel(object):
         return json_blobs
 
 
-    def mark_object_complete(self,object_id, test_run_id):
+    def mark_object_complete(self, object_id, test_run_id):
         """ Call to database to mark the task completed """
-        proc_completed = "objectstore.updates.mark_complete"
-
         self.sources["objectstore"].dhub.execute(
-            proc=proc_completed,
-            placeholders=[ test_run_id, object_id ],
+            proc="objectstore.updates.mark_complete",
+            placeholders=[test_run_id, object_id],
             debug_show=self.DEBUG
             )
 
 
-    def verify_json(self, json_data):
-        """ Verify that json is valid for ingestion """
-        # TODO (stub)
-        # Need to implement some sort of verification json is well-formed
-        # to ensure load_test_data won't fail.
-        return True
+    def mark_object_error(self, object_id, error):
+        """ Call to database to mark the task completed """
+        self.sources["objectstore"].dhub.execute(
+            proc="objectstore.updates.mark_error",
+            placeholders=[error, object_id],
+            debug_show=self.DEBUG
+            )
 
 
-    def _set_test_data(self, json_data, ref_data):
-
-        self._insert_data('set_test_data',
-                          [ref_data['test_run_id'], json_data])
-
-
-    def _set_test_aux_data(self, data, ref_data):
-
-        if 'results_aux' in data:
-
-            for aux_data in data['results_aux']:
-                aux_data_id = self._get_aux_id(aux_data, ref_data)
-                aux_values = data['results_aux'][aux_data]
-
-                placeholders = []
-                for index in range(0, len(aux_values)):
-
-                    string_data = ""
-                    numeric_data = 0
-                    if utils.is_number(aux_values[index]):
-                        numeric_data = aux_values[index]
-                    else:
-                        string_data = aux_values[index]
-
-                    placeholders.append( (ref_data['test_run_id'],
-                                          index + 1,
-                                          aux_data_id,
-                                          numeric_data,
-                                          string_data))
-
-                self._insert_data('set_aux_values',
-                                  placeholders,
-                                  True)
-
-
-    def _set_test_values(self, data, ref_data):
-
-        for page in data['results']:
-
-            page_id = self._get_page_id(page, ref_data)
-
-            values = data['results'][page]
+    def _set_test_aux_data(self, data, test_id, test_run_id):
+        """Insert test aux data to db for given test_id and test_run_id."""
+        for aux_data, aux_values in data.get('results_aux', {}).items():
+            aux_data_id = self._get_or_create_aux_id(aux_data, test_id)
 
             placeholders = []
-            for index in range(0, len(values)):
-                value = values[index]
-                placeholders.append( (ref_data['test_run_id'],
-                                      index + 1,
-                                      page_id,
-                                      ######
-                                      #TODO: Need to get the value
-                                      #id into the json
-                                      ######
-                                      1,
-                                      value))
+            for index, value in enumerate(aux_values, 1):
 
-            self._insert_data('set_test_values',
-                              placeholders,
-                              True)
+                string_data = ""
+                numeric_data = 0
+                if utils.is_number(value):
+                    numeric_data = value
+                else:
+                    string_data = value
 
+                placeholders.append(
+                    (
+                        test_run_id,
+                        index,
+                        aux_data_id,
+                        numeric_data,
+                        string_data,
+                        )
+                    )
 
-    def _get_aux_id(self, aux_data, ref_data):
-
-        aux_id = 0
-        try:
-            ##Insert the test id and aux data on duplicate key update##
-            insert_proc = 'perftest.inserts.set_aux_ref_data'
-            self.sources["perftest"].dhub.execute(
-                proc=insert_proc,
-                placeholders=[ ref_data['test_id'], aux_data ],
-                debug_show=self.DEBUG)
-
-            ##Get the aux data id##
-            select_proc = 'perftest.selects.get_aux_data_id'
-            id_iter = self.sources["perftest"].dhub.execute(
-                proc=select_proc,
-                placeholders=[ ref_data['test_id'], aux_data ],
-                debug_show=self.DEBUG,
-                return_type='iter')
-
-            aux_id = id_iter.get_column_data('id')
-
-        except KeyError:
-            raise
-        else:
-            return aux_id
+            self._insert_data(
+                'set_aux_values', placeholders, executemany=True)
 
 
-    def _get_page_id(self, page, ref_data):
+    def _set_test_values(self, data, test_id, test_run_id):
+        """Insert test values to database for given test_id and test_run_id."""
+        for page, values in data['results'].items():
 
-        page_id = 0
-        try:
-            ##Insert the test id and page name on duplicate key update##
-            insert_proc = 'perftest.inserts.set_pages_ref_data'
-            self.sources["perftest"].dhub.execute(
-                proc=insert_proc,
-                placeholders=[ ref_data['test_id'], page ],
-                debug_show=self.DEBUG)
+            page_id = self._get_or_create_page_id(page, test_id)
 
-            ##Get the page id##
-            select_proc = 'perftest.selects.get_page_id'
-            id_iter = self.sources["perftest"].dhub.execute(
-                proc=select_proc,
-                placeholders=[ ref_data['test_id'], page ],
-                debug_show=self.DEBUG,
-                return_type='iter')
+            placeholders = []
+            for index, value in enumerate(values, 1):
+                placeholders.append(
+                    (
+                        test_run_id,
+                        index,
+                        page_id,
+                        # TODO: Need to get the value id into the json
+                        1,
+                        value,
+                        )
+                    )
 
-            page_id = id_iter.get_column_data('id')
-
-        except KeyError:
-            raise
-        else:
-            return page_id
+            self._insert_data(
+                'set_test_values', placeholders, executemany=True)
 
 
-    def _set_option_data(self, data, ref_data):
+    def _get_or_create_aux_id(self, aux_data, test_id):
+        """Given aux name and test id, return aux id, creating if needed."""
+        # Insert the test id and aux data on duplicate key update
+        self.sources["perftest"].dhub.execute(
+            proc='perftest.inserts.set_aux_ref_data',
+            placeholders=[test_id, aux_data],
+            debug_show=self.DEBUG,
+            )
 
-        if 'options' in data['testrun']:
-            for option in data['testrun']['options']:
+        # Get the aux data id
+        id_iter = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_aux_data_id',
+            placeholders=[test_id, aux_data],
+            debug_show=self.DEBUG,
+            return_type='iter',
+            )
 
-                id = ref_data['option_ids'][option]
-
-                value = data['testrun']['options'][option]
-
-                placeholders = [
-                    ref_data['test_run_id'],
-                    id,
-                    value,
-                    ]
-
-                self._insert_data( 'set_test_option_values',
-                                    placeholders)
+        return id_iter.get_column_data('id')
 
 
-    def _set_build_data(self, data, ref_data):
+    def _get_or_create_page_id(self, page, test_id):
+        """Given page name and test id, return page id, creating if needed."""
+        # Insert the test id and page name on duplicate key update
+        self.sources["perftest"].dhub.execute(
+            proc='perftest.inserts.set_pages_ref_data',
+            placeholders=[test_id, page],
+            debug_show=self.DEBUG,
+            )
 
-        build_id = self._insert_data_and_get_id('set_build_data',
-                                       [ ref_data['operating_system_id'],
-                                         ref_data['product_id'],
-                                         ref_data['machine_id'],
-                                         data['test_build']['id'],
-                                         data['test_machine']['platform'],
-                                         data['test_build']['revision'],
-                                         #####
-                                         #TODO: Need to get the
-                                         # build_type into the json
-                                         #####
-                                         'debug',
-                                         ##Need to get the build_date into the json##
-                                         int(time.time()) ] )
+        # Get the page id
+        id_iter = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_page_id',
+            placeholders=[test_id, page],
+            debug_show=self.DEBUG,
+            return_type='iter',
+            )
+
+        return id_iter.get_column_data('id')
+
+
+    def _set_option_data(self, data, test_run_id):
+        """Insert option data for given test run id."""
+
+        testrun = data['testrun']
+
+        placeholders = []
+        for option, value in testrun.get('options', {}).items():
+
+            option_id = self._get_or_create_option_id(option)
+
+            placeholders.append([test_run_id, option_id, value])
+
+        self._insert_data(
+            'set_test_option_values', placeholders, executemany=True)
+
+
+    def _set_build_data(self, data, os_id, product_id, machine_id):
+        """Inserts build data into the db and returns build ID."""
+        machine = data['test_machine']
+        build = data['test_build']
+
+        build_id = self._insert_data_and_get_id(
+            'set_build_data',
+            [
+                os_id,
+                product_id,
+                machine_id,
+                build['id'],
+                machine['platform'],
+                build['revision'],
+                # TODO: Need to get the build type into the json
+                'opt',
+                # TODO: need to get the build date into the json
+                int(time.time()),
+                ]
+            )
 
         return build_id
 
 
-    def _set_test_run_data(self, data, ref_data):
+    def _set_test_run_data(self, data, test_id, build_id):
+        """Inserts testrun data into the db and returns test_run id."""
 
-        test_run_id = self._insert_data_and_get_id('set_test_run_data',
-                                         [ ref_data['test_id'],
-                                         ref_data['build_id'],
-                                         data['test_build']['revision'],
-                                         data['testrun']['date'] ])
+        try:
+            run_date = int(data['testrun']['date'])
+        except ValueError:
+            raise TestDataError(
+                "Bad value: ['testrun']['date'] is not an integer.")
+
+        test_run_id = self._insert_data_and_get_id(
+            'set_test_run_data',
+            [
+                test_id,
+                build_id,
+                # denormalization; avoid join to build table to get revision
+                data['test_build']['revision'],
+                run_date,
+                ]
+            )
 
         return test_run_id
 
-    def _insert_data(self, statement, placeholders, executemany=False):
 
+    def _insert_data(self, statement, placeholders, executemany=False):
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.' + statement,
             debug_show=self.DEBUG,
@@ -772,173 +764,144 @@ class DatazillaModel(object):
 
 
     def _insert_data_and_get_id(self, statement, placeholders):
-
+        """Execute given insert statement, returning inserted ID."""
         self._insert_data(statement, placeholders)
+        return self._get_last_insert_id()
 
-        id_iter = self.sources["perftest"].dhub.execute(
+
+    def _get_last_insert_id(self, source="perftest"):
+        """Return last-inserted ID."""
+        return self.sources[source].dhub.execute(
             proc='generic.selects.get_last_insert_id',
             debug_show=self.DEBUG,
             return_type='iter',
-            )
+            ).get_column_data('id')
+
+
+    def _get_or_create_machine_id(self, data):
+        """
+        Given a TestData instance, returns the test id from the db.
+
+        Creates it if necessary. Raises ``TestDataError`` on bad data.
+
+        """
+        machine = data['test_machine']
+
+        # Insert the the machine name and timestamp on duplicate key update
+        self.sources["perftest"].dhub.execute(
+            proc='perftest.inserts.set_machine_ref_data',
+            placeholders=[machine['name'], int(time.time())],
+            debug_show=self.DEBUG)
+
+        # Get the machine id
+        id_iter = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_machine_id',
+            placeholders=[machine['name']],
+            debug_show=self.DEBUG,
+            return_type='iter')
 
         return id_iter.get_column_data('id')
 
 
-    def _get_machine_id(self, data):
+    def _get_or_create_test_id(self, data):
+        """
+        Given a TestData instance, returns the test id from the db.
 
-        machine_id = 0
-        try:
-            name = data['test_machine']['name']
+        Creates it if necessary. Raises ``TestDataError`` on bad data.
 
-            ##Insert the the machine name and timestamp on duplicate key update##
-            insert_proc = 'perftest.inserts.set_machine_ref_data'
-            self.sources["perftest"].dhub.execute(
-                proc=insert_proc,
-                placeholders=[ name, int(time.time()) ],
-                debug_show=self.DEBUG)
-
-            ##Get the machine id##
-            select_proc = 'perftest.selects.get_machine_id'
-            id_iter = self.sources["perftest"].dhub.execute(
-                proc=select_proc,
-                placeholders=[ name ],
-                debug_show=self.DEBUG,
-                return_type='iter')
-
-            machine_id = id_iter.get_column_data('id')
-
-        except KeyError:
-            raise
-
-        else:
-            return machine_id
-
-
-    def _get_test_id(self, data):
-        test_id = 0
-        try:
-            #TODO: version should be set in the data structure
-            #      provided.  This currently hard codes it to 1
-            #      for all tests
-            ###
-            version = 1
-
-            if 'suite_version' in data['testrun']:
-                version = int(data['testrun']['suite_version'])
-
-            ##Insert the test name and version on duplicate key update##
-            insert_proc = 'perftest.inserts.set_test_ref_data'
-            self.sources["perftest"].dhub.execute(
-                proc=insert_proc,
-                placeholders=[ data['testrun']['suite'], version ],
-                debug_show=self.DEBUG)
-
-            ##Get the test name id##
-            select_proc = 'perftest.selects.get_test_id'
-            id_iter = self.sources["perftest"].dhub.execute(
-                proc=select_proc,
-                placeholders=[ data['testrun']['suite'], version ],
-                debug_show=self.DEBUG,
-                return_type='iter')
-
-            test_id = id_iter.get_column_data('id')
-
-        except KeyError:
-            raise
-        else:
-            return test_id
-
-
-    def _get_os_id(self, data):
-
-        os_id = 0
-        try:
-            os_name = data['test_machine']['os']
-            os_version = data['test_machine']['osversion']
-
-            ##Insert the operating system name and version on duplicate key update##
-            insert_proc = 'perftest.inserts.set_os_ref_data'
-            self.sources["perftest"].dhub.execute(
-                proc=insert_proc,
-                placeholders=[ os_name, os_version ],
-                debug_show=self.DEBUG)
-
-            ##Get the operating system name id##
-            select_proc = 'perftest.selects.get_os_id'
-            id_iter = self.sources["perftest"].dhub.execute(
-                proc=select_proc,
-                placeholders=[ os_name, os_version ],
-                debug_show=self.DEBUG,
-                return_type='iter')
-
-            os_id = id_iter.get_column_data('id')
-
-        except KeyError:
-            raise
-
-        else:
-            return os_id
-
-
-    def _get_option_ids(self, data):
-        option_ids = dict()
-        try:
-            if 'options' in data['testrun']:
-                for option in data['testrun']['options']:
-
-                    ##Insert the option name on duplicate key update##
-                    insert_proc = 'perftest.inserts.set_option_ref_data'
-                    self.sources["perftest"].dhub.execute(
-                        proc=insert_proc,
-                        placeholders=[ option ],
-                        debug_show=self.DEBUG)
-
-                    ##Get the option id##
-                    select_proc = 'perftest.selects.get_option_id'
-                    id_iter = self.sources["perftest"].dhub.execute(
-                        proc=select_proc,
-                        placeholders=[ option ],
-                        debug_show=self.DEBUG,
-                        return_type='iter')
-
-                    option_ids[option] = id_iter.get_column_data('id')
-
-        except KeyError:
-            raise
-        else:
-            return option_ids
-
-
-    def _get_product_id(self, data):
-
-        product_id = 0
+        """
+        testrun = data['testrun']
 
         try:
-            product = data['test_build']['name']
-            branch = data['test_build']['branch']
-            version = data['test_build']['version']
+            # TODO: version should be required; currently defaults to 1
+            version = int(testrun.get('suite_version', 1))
+        except ValueError:
+            raise TestDataError(
+                "Bad value: ['testrun']['suite_version'] is not an integer.")
 
-            ##Insert the product, branch, and version on duplicate key update##
-            insert_proc = 'perftest.inserts.set_product_ref_data'
-            self.sources["perftest"].dhub.execute(
-                proc=insert_proc,
-                placeholders=[ product, branch, version ],
-                debug_show=self.DEBUG)
+        # Insert the test name and version on duplicate key update
+        self.sources['perftest'].dhub.execute(
+            proc='perftest.inserts.set_test_ref_data',
+            placeholders=[testrun['suite'], version],
+            debug_show=self.DEBUG)
 
-            ##Get the product id##
-            select_proc = 'perftest.selects.get_product_id'
-            id_iter = self.sources["perftest"].dhub.execute(
-                proc=select_proc,
-                placeholders=[ product, branch, version ],
-                debug_show=self.DEBUG,
-                return_type='iter')
+        # Get the test name id
+        id_iter = self.sources['perftest'].dhub.execute(
+            proc='perftest.selects.get_test_id',
+            placeholders=[testrun['suite'], version],
+            debug_show=self.DEBUG,
+            return_type='iter')
 
-            product_id = id_iter.get_column_data('id')
+        return id_iter.get_column_data('id')
 
-        except KeyError:
-            raise
-        else:
-            return product_id
+
+    def _get_or_create_os_id(self, data):
+        """
+        Given a full test-data structure, returns the OS id from the database.
+
+        Creates it if necessary. Raises ``TestDataError`` on bad data.
+
+        """
+        machine = data['test_machine']
+        os_name = machine['os']
+        os_version = machine['osversion']
+
+        # Insert the operating system name and version on duplicate key update
+        self.sources["perftest"].dhub.execute(
+            proc='perftest.inserts.set_os_ref_data',
+            placeholders=[os_name, os_version],
+            debug_show=self.DEBUG)
+
+        # Get the operating system name id
+        id_iter = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_os_id',
+            placeholders=[os_name, os_version],
+            debug_show=self.DEBUG,
+            return_type='iter')
+
+        return id_iter.get_column_data('id')
+
+
+    def _get_or_create_option_id(self, option):
+        """Return option id for given option name, creating it if needed."""
+        # Insert the option name on duplicate key update
+        self.sources["perftest"].dhub.execute(
+            proc='perftest.inserts.set_option_ref_data',
+            placeholders=[ option ],
+            debug_show=self.DEBUG)
+
+        # Get the option id
+        id_iter = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_option_id',
+            placeholders=[ option ],
+            debug_show=self.DEBUG,
+            return_type='iter')
+
+        return id_iter.get_column_data('id')
+
+
+    def _get_or_create_product_id(self, data):
+        """Return product id for given TestData, creating product if needed."""
+        build = data['test_build']
+
+        product = build['name']
+        branch = build['branch']
+        version = build['version']
+
+        # Insert the product, branch, and version on duplicate key update
+        self.sources["perftest"].dhub.execute(
+            proc='perftest.inserts.set_product_ref_data',
+            placeholders=[ product, branch, version ],
+            debug_show=self.DEBUG)
+
+        # Get the product id
+        id_iter = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_product_id',
+            placeholders=[ product, branch, version ],
+            debug_show=self.DEBUG,
+            return_type='iter')
+
+        return id_iter.get_column_data('id')
 
 
     def _get_unique_key_dict(self, data_tuple, key_strings):
@@ -950,3 +913,53 @@ class DatazillaModel(object):
                 unique_key += str(data[key])
             data_dict[ unique_key ] = data['id']
         return data_dict
+
+
+
+class TestDataError(ValueError):
+    pass
+
+
+
+class TestData(dict):
+    """
+    Encapsulates data access from incoming test data structure.
+
+    All missing-data errors raise ``TestDataError`` with a useful
+    message. Unlike regular nested dictionaries, ``TestData`` keeps track of
+    context, so errors contain not only the name of the immediately-missing
+    key, but the full parent-key context as well.
+
+    """
+    def __init__(self, data, context=None):
+        """Initialize ``TestData`` with a data dict and a context list."""
+        self.context = context or []
+        super(TestData, self).__init__(data)
+
+
+    @classmethod
+    def from_json(cls, json_blob):
+        """Create ``TestData`` from a JSON string."""
+        try:
+            data = json.loads(json_blob)
+        except ValueError as e:
+            raise TestDataError("Malformed JSON: {0}".format(e))
+
+        return cls(data)
+
+
+    def __getitem__(self, name):
+        """Get a data value, raising ``TestDataError`` if missing."""
+        full_context = list(self.context) + [name]
+
+        try:
+            value = super(TestData, self).__getitem__(name)
+        except KeyError:
+            raise TestDataError("Missing data: {0}.".format(
+                    "".join(["['{0}']".format(c) for c in full_context])))
+
+        # Provide the same behavior recursively to nested dictionaries.
+        if isinstance(value, dict):
+            value = self.__class__(value, full_context)
+
+        return value
