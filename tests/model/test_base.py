@@ -402,7 +402,7 @@ def test_set_test_values(dm):
 
     value_rows = dm.sources["perftest"].dhub.execute(
         proc="perftest_test.selects.test_values",
-        placeholders=[test_id],
+        placeholders=[test_run_id],
         )
     enumerated_values = set([(r['run_id'], r['value']) for r in value_rows])
 
@@ -410,6 +410,45 @@ def test_set_test_values(dm):
     assert page_row['url'] == 'example.com'
     assert enumerated_values == set([(1, 1), (2, 2), (3, 3)])
     assert set([r['page_id'] for r in value_rows]) == set([page_row['id']])
+
+
+def test_set_test_aux_data(dm):
+    """Inserts test auxiliary data in the db."""
+    data = TestData(perftest_data(results_aux={"foo": [1, 2, "three"]}))
+
+    # Create all the prerequisites for getting a test_run_id
+    test_id = dm._get_or_create_test_id(data)
+    os_id = dm._get_or_create_os_id(data)
+    product_id = dm._get_or_create_product_id(data)
+    machine_id = dm._get_or_create_machine_id(data)
+
+    build_id = dm._set_build_data(data, os_id, product_id, machine_id)
+
+    test_run_id = dm._set_test_run_data(data, test_id, build_id)
+
+    # Try to set the aux data
+    dm._set_test_aux_data(data, test_id, test_run_id)
+
+    aux_row = dm.sources["perftest"].dhub.execute(
+        proc="perftest_test.selects.aux_data",
+        placeholders=[test_id],
+        )[0]
+
+    test_aux_rows = dm.sources["perftest"].dhub.execute(
+        proc="perftest_test.selects.test_aux",
+        placeholders=[test_run_id],
+        )
+    enumerated_values = set(
+        [
+            (r['run_id'], r['numeric_data'], r['string_data'])
+            for r in test_aux_rows
+            ]
+        )
+
+
+    assert aux_row['name'] == 'foo'
+    assert enumerated_values == set([(1, 1, ""), (2, 2, ""), (3, 0, "three")])
+    assert set([r['aux_data_id'] for r in test_aux_rows]) == set([aux_row['id']])
 
 
 

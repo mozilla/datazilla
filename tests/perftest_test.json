@@ -23,6 +23,14 @@
         "pages": {
             "sql": "SELECT * FROM `pages` WHERE `test_id` = ?",
             "host": "master_host"
+        },
+        "test_aux": {
+            "sql": "SELECT * FROM `test_aux_data` WHERE `test_run_id` = ?",
+            "host": "master_host"
+        },
+        "aux_data": {
+            "sql": "SELECT * FROM `aux_data` WHERE `test_id` = ?",
+            "host": "master_host"
         }
     }
 }
