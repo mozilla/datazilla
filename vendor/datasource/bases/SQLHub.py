@@ -286,11 +286,7 @@ class SQLHub(RDBSHub):
                 self.__cursor_execute(sql, kwargs, cursor)
 
             t = Timer(timewrapper)
-            tmsg = ""
-            try:
-                tmsg = t.timeit(1)
-            except:
-                t.print_exc()
+            tmsg = t.timeit(1)
 
             self.show_debug(db,
                            self.conf[host_type]['host'],

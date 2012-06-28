@@ -64,6 +64,22 @@
 
             "host":"master_host"
 
+        },
+
+        "mark_error":{
+
+            "sql":"UPDATE   `objectstore`
+                   SET      `processed_flag` = 'ready',
+                            `worker_id` = NULL,
+                            `error_flag` = 'Y',
+                            `error_msg` = ?
+                   WHERE    `processed_flag` = 'loading'
+                   AND      `id` = ?
+                   AND      `worker_id` = CONNECTION_ID()
+                  ",
+
+            "host":"master_host"
+
         }
     }
 }

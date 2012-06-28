@@ -69,12 +69,14 @@ class MySQL(SQLHub):
                 self.connection[host_type]['con_obj'] = MySQLdb.connect( host=self.conf[host_type]['host'],
                                                                           user=self.conf[host_type]['user'],
                                                                           passwd=self.conf[host_type].get('passwd', ''),
+                                                                          charset="utf8",
                                                                           cursorclass=MySQLdb.cursors.DictCursor,
                                                                           db=db)
             else:
                 self.connection[host_type]['con_obj'] = MySQLdb.connect( host=self.conf[host_type]['host'],
                                                                           user=self.conf[host_type]['user'],
                                                                           passwd=self.conf[host_type].get('passwd', ''),
+                                                                          charset="utf8",
                                                                           cursorclass = MySQLdb.cursors.DictCursor)
 
             self.connection[host_type]['con_obj'].autocommit(False)
