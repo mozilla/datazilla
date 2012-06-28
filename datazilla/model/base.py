@@ -493,7 +493,6 @@ class DatazillaModel(object):
 
         # Get/Set reference info, all inserts use ON DUPLICATE KEY
         test_id = self._get_or_create_test_id(data)
-        option_ids = self._get_or_create_option_ids(data)
         os_id = self._get_or_create_os_id(data)
         product_id = self._get_or_create_product_id(data)
         machine_id = self._get_or_create_machine_id(data)
@@ -502,7 +501,7 @@ class DatazillaModel(object):
         build_id = self._set_build_data(data, os_id, product_id, machine_id)
         test_run_id = self._set_test_run_data(data, test_id, build_id)
 
-        self._set_option_data(data, option_ids, test_run_id)
+        self._set_option_data(data, test_run_id)
         self._set_test_values(data, test_id, test_run_id)
         self._set_test_aux_data(data, test_id, test_run_id)
 
@@ -597,131 +596,111 @@ class DatazillaModel(object):
 
 
     def _set_test_aux_data(self, data, test_id, test_run_id):
+        """Insert test aux data to db for given test_id and test_run_id."""
+        for aux_data, aux_values in data.get('results_aux', {}).items():
+            aux_data_id = self._get_aux_id(aux_data, test_id)
 
-        if 'results_aux' in data:
+            placeholders = []
+            for index, value in enumerate(aux_values, 1):
 
-            for aux_data in data['results_aux']:
-                aux_data_id = self._get_aux_id(aux_data, test_id)
-                aux_values = data['results_aux'][aux_data]
+                string_data = ""
+                numeric_data = 0
+                if utils.is_number(value):
+                    numeric_data = value
+                else:
+                    string_data = value
 
-                placeholders = []
-                for index in range(0, len(aux_values)):
+                placeholders.append(
+                    (
+                        test_run_id,
+                        index,
+                        aux_data_id,
+                        numeric_data,
+                        string_data,
+                        )
+                    )
 
-                    string_data = ""
-                    numeric_data = 0
-                    if utils.is_number(aux_values[index]):
-                        numeric_data = aux_values[index]
-                    else:
-                        string_data = aux_values[index]
-
-                    placeholders.append( (test_run_id,
-                                          index + 1,
-                                          aux_data_id,
-                                          numeric_data,
-                                          string_data))
-
-                self._insert_data('set_aux_values',
-                                  placeholders,
-                                  True)
+            self._insert_data(
+                'set_aux_values', placeholders, executemany=True)
 
 
     def _set_test_values(self, data, test_id, test_run_id):
-
-        for page in data['results']:
+        """Insert test values to database for given test_id and test_run_id."""
+        for page, values in data['results'].items():
 
             page_id = self._get_page_id(page, test_id)
 
-            values = data['results'][page]
-
             placeholders = []
-            for index in range(0, len(values)):
-                value = values[index]
-                placeholders.append( (test_run_id,
-                                      index + 1,
-                                      page_id,
-                                      ######
-                                      #TODO: Need to get the value
-                                      #id into the json
-                                      ######
-                                      1,
-                                      value))
+            for index, value in enumerate(values, 1):
+                placeholders.append(
+                    (
+                        test_run_id,
+                        index,
+                        page_id,
+                        # TODO: Need to get the value id into the json
+                        1,
+                        value,
+                        )
+                    )
 
-            self._insert_data('set_test_values',
-                              placeholders,
-                              True)
+            self._insert_data(
+                'set_test_values', placeholders, executemany=True)
 
 
     def _get_aux_id(self, aux_data, test_id):
+        """Given aux name and test id, return aux id, creating if needed."""
+        # Insert the test id and aux data on duplicate key update
+        self.sources["perftest"].dhub.execute(
+            proc='perftest.inserts.set_aux_ref_data',
+            placeholders=[test_id, aux_data],
+            debug_show=self.DEBUG,
+            )
 
-        aux_id = 0
-        try:
-            ##Insert the test id and aux data on duplicate key update##
-            insert_proc = 'perftest.inserts.set_aux_ref_data'
-            self.sources["perftest"].dhub.execute(
-                proc=insert_proc,
-                placeholders=[ test_id, aux_data ],
-                debug_show=self.DEBUG)
+        # Get the aux data id
+        id_iter = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_aux_data_id',
+            placeholders=[test_id, aux_data],
+            debug_show=self.DEBUG,
+            return_type='iter',
+            )
 
-            ##Get the aux data id##
-            select_proc = 'perftest.selects.get_aux_data_id'
-            id_iter = self.sources["perftest"].dhub.execute(
-                proc=select_proc,
-                placeholders=[ test_id, aux_data ],
-                debug_show=self.DEBUG,
-                return_type='iter')
-
-            aux_id = id_iter.get_column_data('id')
-
-        except KeyError:
-            raise
-        else:
-            return aux_id
+        return id_iter.get_column_data('id')
 
 
     def _get_page_id(self, page, test_id):
+        """Given page name and test id, return page id, creating if needed."""
+        # Insert the test id and page name on duplicate key update
+        self.sources["perftest"].dhub.execute(
+            proc='perftest.inserts.set_pages_ref_data',
+            placeholders=[test_id, page],
+            debug_show=self.DEBUG,
+            )
 
-        page_id = 0
-        try:
-            ##Insert the test id and page name on duplicate key update##
-            insert_proc = 'perftest.inserts.set_pages_ref_data'
-            self.sources["perftest"].dhub.execute(
-                proc=insert_proc,
-                placeholders=[ test_id, page ],
-                debug_show=self.DEBUG)
+        # Get the page id
+        id_iter = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_page_id',
+            placeholders=[test_id, page],
+            debug_show=self.DEBUG,
+            return_type='iter',
+            )
 
-            ##Get the page id##
-            select_proc = 'perftest.selects.get_page_id'
-            id_iter = self.sources["perftest"].dhub.execute(
-                proc=select_proc,
-                placeholders=[ test_id, page ],
-                debug_show=self.DEBUG,
-                return_type='iter')
-
-            page_id = id_iter.get_column_data('id')
-
-        except KeyError:
-            raise
-        else:
-            return page_id
+        return id_iter.get_column_data('id')
 
 
-    def _set_option_data(self, data, option_ids, test_run_id):
+    def _set_option_data(self, data, test_run_id):
+        """Insert option data for given test run id."""
 
-        if 'options' in data['testrun']:
-            for option in data['testrun']['options']:
+        testrun = data['testrun']
 
-                option_ids[option]
+        placeholders = []
+        for option, value in testrun.get('options', {}).items():
 
-                value = data['testrun']['options'][option]
+            option_id = self._get_or_create_option_id(option)
 
-                placeholders = [
-                    test_run_id,
-                    id,
-                    value,
-                    ]
+            placeholders.append([test_run_id, option_id, value])
 
-                self._insert_data( 'set_test_option_values',
-                                    placeholders)
+        self._insert_data(
+            'set_test_option_values', placeholders, executemany=True)
 
 
     def _set_build_data(self, data, os_id, product_id, machine_id):
@@ -769,6 +748,7 @@ class DatazillaModel(object):
             )
 
         return test_run_id
+
 
     def _insert_data(self, statement, placeholders, executemany=False):
         self.sources["perftest"].dhub.execute(
@@ -878,53 +858,26 @@ class DatazillaModel(object):
         return id_iter.get_column_data('id')
 
 
-    def _get_or_create_option_ids(self, data):
-        """
-        Given test-data structure, returns a dict of {option_name: id}.
+    def _get_or_create_option_id(self, option):
+        """Return option id for given option name, creating it if needed."""
+        # Insert the option name on duplicate key update
+        self.sources["perftest"].dhub.execute(
+            proc='perftest.inserts.set_option_ref_data',
+            placeholders=[ option ],
+            debug_show=self.DEBUG)
 
-        Creates options if necessary. Raises ``TestDataError`` on bad data.
+        # Get the option id
+        id_iter = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_option_id',
+            placeholders=[ option ],
+            debug_show=self.DEBUG,
+            return_type='iter')
 
-        """
-        option_ids = dict()
-
-        testrun = data['testrun']
-        options = testrun.get('options', [])
-
-        # Test for a list explicitly because strings are iterable, but we don't
-        # want to accidentally create an option for every character in a
-        # string.  No need to support other sequence types, a list is the only
-        # sequence type returned from json.loads.
-        if not isinstance(options, list):
-            raise TestDataError(
-                "Bad value: ['testrun']['options'] is not a list.")
-
-        for option in options:
-
-            # Insert the option name on duplicate key update
-            self.sources["perftest"].dhub.execute(
-                proc='perftest.inserts.set_option_ref_data',
-                placeholders=[ option ],
-                debug_show=self.DEBUG)
-
-            # Get the option id
-            id_iter = self.sources["perftest"].dhub.execute(
-                proc='perftest.selects.get_option_id',
-                placeholders=[ option ],
-                debug_show=self.DEBUG,
-                return_type='iter')
-
-            option_ids[option] = id_iter.get_column_data('id')
-
-        return option_ids
+        return id_iter.get_column_data('id')
 
 
     def _get_or_create_product_id(self, data):
-        """
-        Given a full test-data structure, returns product id from the database.
-
-        Creates it if necessary. Raises ``TestDataError`` on bad data.
-
-        """
+        """Return product id for given TestData, creating product if needed."""
         build = data['test_build']
 
         product = build['name']
@@ -964,7 +917,7 @@ class TestDataError(ValueError):
 
 
 
-class TestData(object):
+class TestData(dict):
     """
     Encapsulates data access from incoming test data structure.
 
@@ -976,8 +929,8 @@ class TestData(object):
     """
     def __init__(self, data, context=None):
         """Initialize ``TestData`` with a data dict and a context list."""
-        self.data = data
         self.context = context or []
+        super(TestData, self).__init__(data)
 
 
     @classmethod
@@ -996,7 +949,7 @@ class TestData(object):
         full_context = list(self.context) + [name]
 
         try:
-            value = self.data[name]
+            value = super(TestData, self).__getitem__(name)
         except KeyError:
             raise TestDataError("Missing data: {0}.".format(
                     "".join(["['{0}']".format(c) for c in full_context])))
@@ -1006,11 +959,3 @@ class TestData(object):
             value = self.__class__(value, full_context)
 
         return value
-
-
-    def get(self, name, default):
-        """Get a non-required value, or the given default if missing."""
-        try:
-            return self[name]
-        except TestDataError:
-            return default

@@ -99,34 +99,15 @@ def test_get_or_create_test_id_bad_version(dm):
 
 
 def test_get_or_create_option_ids(dm):
-    """Returns dictionary of option IDs from db (creating if needed)."""
-    data = TestData({'testrun': {'options': ['option1', 'option2']}})
+    """Returns option ID from db for given option (creating if needed)."""
+    first_id = dm._get_or_create_option_id('option1')
 
-    first_ids = dm._get_or_create_option_ids(data)
+    inserted_id = dm._get_last_insert_id()
 
-    # second call returns same id for same options
-    data['testrun']['options'].append('option3')
-    second_ids = dm._get_or_create_option_ids(data)
+    # second call returns same id for same option
+    second_id = dm._get_or_create_option_id('option1')
 
-    assert first_ids['option1'] == second_ids['option1']
-    assert first_ids['option2'] == second_ids['option2']
-    assert set(second_ids.keys()) == set(['option1', 'option2', 'option3'])
-
-
-def test_get_or_create_option_ids_no_testrun(dm):
-    """Raises TestDataError if there is no 'testrun' key in data."""
-    with pytest.raises(TestDataError) as e:
-        dm._get_or_create_option_ids(TestData({}))
-
-    assert str(e.value) == "Missing data: ['testrun']."
-
-
-def test_get_or_create_option_ids_bad_options(dm):
-    """Raises TestDataError if the 'options' key is not a list."""
-    with pytest.raises(TestDataError) as e:
-        dm._get_or_create_option_ids(TestData({'testrun': {'options': 'foo'}}))
-
-    assert str(e.value) == "Bad value: ['testrun']['options'] is not a list."
+    assert first_id == second_id == inserted_id
 
 
 def test_get_or_create_os_id(dm):
@@ -370,6 +351,31 @@ def test_set_test_run_data_bad_date(dm):
 
     expected = "Bad value: ['testrun']['date'] is not an integer."
     assert str(e.value) == expected
+
+
+def test_set_option_data(dm):
+    """Inserts options in the db."""
+    data = TestData(perftest_data(testrun={'options': {'opt': 'val'}}))
+
+    # Create all the prerequisites for getting a test_run_id
+    test_id = dm._get_or_create_test_id(data)
+    os_id = dm._get_or_create_os_id(data)
+    product_id = dm._get_or_create_product_id(data)
+    machine_id = dm._get_or_create_machine_id(data)
+
+    build_id = dm._set_build_data(data, os_id, product_id, machine_id)
+
+    test_run_id = dm._set_test_run_data(data, test_id, build_id)
+
+    # Try to set the option data
+    dm._set_option_data(data, test_run_id)
+
+    row_data = dm.sources["perftest"].dhub.execute(
+        proc="perftest_test.selects.option_value",
+        placeholders=['opt', test_run_id],
+        )[0]
+
+    assert row_data['value'] == 'val'
 
 
 

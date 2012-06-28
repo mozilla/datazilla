@@ -7,6 +7,14 @@
         "test_run": {
             "sql": "SELECT * FROM `test_run` WHERE id = ?",
             "host": "master_host"
+        },
+        "option_value": {
+            "sql": "SELECT `test_option_values`.`value`
+                    FROM `test_option_values`, `option`
+                    WHERE `option`.`id` = `test_option_values`.`option_id`
+                    AND `option`.`name` = ?
+                    AND `test_option_values`.`test_run_id` = ?",
+            "host": "master_host"
         }
     }
 }
