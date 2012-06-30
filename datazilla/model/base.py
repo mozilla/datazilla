@@ -15,6 +15,7 @@ from django.conf import settings
 
 
 from . import utils
+from .sql.models import SQLDataSource
 
 
 
@@ -29,7 +30,7 @@ class DatazillaModel(object):
 
         self.sources = {}
         for ct in self.CONTENT_TYPES:
-            self.sources[ct] = self.get_datasource_class()(project, ct)
+            self.sources[ct] = SQLDataSource(project, ct)
 
         self.DEBUG = settings.DEBUG
 
@@ -37,16 +38,6 @@ class DatazillaModel(object):
     def __unicode__(self):
         """Unicode representation is project name."""
         return self.project
-
-
-    @classmethod
-    def get_datasource_class(cls):
-        if settings.USE_APP_ENGINE:                         # pragma: no cover
-            from .appengine.model import CloudSQLDataSource # pragma: no cover
-            return CloudSQLDataSource                       # pragma: no cover
-        else:
-            from .sql.models import SQLDataSource
-            return SQLDataSource
 
 
     @classmethod
@@ -71,7 +62,7 @@ class DatazillaModel(object):
         types = types or {}
 
         for ct in cls.CONTENT_TYPES:
-            cls.get_datasource_class().create(
+            SQLDataSource.create(
                 project, ct, host=hosts.get(ct), db_type=types.get(ct))
 
         return cls(project=project)
