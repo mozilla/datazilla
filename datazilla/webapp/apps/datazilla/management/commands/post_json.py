@@ -78,7 +78,7 @@ class Command(BaseCommand):
                               " to POST data to: --host host\n")
             return
 
-        if not file:
+        if not os.path.isfile(file):
             self.stdout.write("You must supply a JSON file" +
                               " to POST: --file JSON file\n")
             return
@@ -133,11 +133,18 @@ class Command(BaseCommand):
         header['Content-type'] = 'application/x-www-form-urlencoded'
         header['Accept'] = 'text/plain'
 
-        conn = httplib.HTTPConnection(host)
+        if debug:
 
-        conn.request("POST", uri, req.to_postdata(), headers)
-        response = conn.getresponse()
+            self.stdout.write(str(headers) + "\n")
+            self.stdout.write(req.to_postdata() + "\n")
 
-        self.stdout.write("status:%s\nreason:%s\nresponse:%s\n" %
-            (response.status, response.reason, response.read()))
+        else:
+
+            conn = httplib.HTTPConnection(host)
+
+            conn.request("POST", uri, req.to_postdata(), headers)
+            response = conn.getresponse()
+
+            self.stdout.write("status:%s\nreason:%s\nresponse:%s\n" %
+                (response.status, response.reason, response.read()))
 
