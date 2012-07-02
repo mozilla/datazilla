@@ -205,6 +205,8 @@ class DataSource(models.Model):
     host = models.CharField(max_length=128)
     name = models.CharField(max_length=128)
     type = models.CharField(max_length=25)
+    consumer_key = models.CharField(max_length=45)
+    consumer_secret = models.CharField(max_length=45)
     creation_date = models.DateTimeField()
 
     objects = DataSourceManager()
@@ -236,11 +238,20 @@ class DataSource(models.Model):
         return "{0} - {1} - {2}".format(
             self.project, self.contenttype, self.dataset)
 
-
     def __unicode__(self):
         """Unicode representation is the project's unique key."""
         return unicode(self.key)
 
+
+    def get_consumer_secret(self, key):
+        """
+        Return the oauth consumer secret if the key provided matches the
+        the consumer key.
+        """
+        consumer_secret = None
+        if self.consumer_key == key:
+            consumer_secret = self.consumer_secret
+        return consumer_secret
 
     def dhub(self, procs_file_name):
         """
