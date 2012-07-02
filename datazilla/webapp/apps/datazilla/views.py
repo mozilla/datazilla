@@ -3,6 +3,9 @@ import json
 import urllib
 import zlib
 
+import sys
+import oauth2 as oauth
+
 from django.shortcuts import render_to_response
 from django.conf import settings
 from django.core.cache import cache
@@ -12,6 +15,71 @@ from datazilla.model import DatazillaModel
 from datazilla.model import utils
 
 APP_JS = 'application/json'
+
+##Decorators##
+def oauth_required(func):
+    """
+    Decorator for views to ensure that the user is sending an OAuth signed
+    request.
+    """
+    def _verify_request(request, *args, **kwargs):
+
+        project = kwargs.get('project', None)
+        dm = DatazillaModel(project)
+
+        #Get the consumer key
+        key = request.REQUEST.get('oauth_consumer_key', None)
+
+        #Get the consumer secret stored with this key
+        ds = dm.sources['objectstore'].datasource
+        ds_consumer_secret = ds.get_consumer_secret(key)
+
+        #Set API Endpoint
+        fpath = request.get_full_path()
+        uri = request.build_absolute_uri(fpath)
+
+        try:
+
+            #Construct the OAuth request based on the django request object
+            req_obj = oauth.Request(request.method,
+                                    uri,
+                                    request.REQUEST,
+                                    '',
+                                    False)
+
+            server = oauth.Server()
+
+            #Get the consumer object
+            cons_obj = oauth.Consumer(key,
+                                      ds_consumer_secret)
+
+            #Set the signature method
+            server.add_signature_method(oauth.SignatureMethod_HMAC_SHA1())
+
+            #verify oauth django request and consumer object match
+            server.verify_request(req_obj, cons_obj, None)
+
+        except oauth.Error as e:
+
+            status = 500
+            result = {"status":"OAuth error in verify_request:%s",
+                      "message": e.message}
+            return HttpResponse(json.dumps(result),
+                                mimetype=APP_JS,
+                                status=status)
+
+        except Exception as e:
+
+            status = 500
+            result = {"status":"Unknown error", "message": e.message}
+            return HttpResponse(json.dumps(result),
+                                mimetype=APP_JS,
+                                status=status)
+
+        else:
+            return func(request, *args, **kwargs)
+
+    return _verify_request
 
 def graphs(request, project=""):
 
@@ -74,7 +142,7 @@ def get_help(request, project=""):
     data = {}
     return render_to_response('help/dataview.generic.help.html', data)
 
-
+@oauth_required
 def set_test_data(request, project=""):
     """
     Post a JSON blob of data for the specified project.
