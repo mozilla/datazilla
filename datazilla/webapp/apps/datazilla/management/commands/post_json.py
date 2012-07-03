@@ -98,6 +98,7 @@ class Command(BaseCommand):
             return
 
         ##Open the json file##
+        json_data = ""
         with open(file) as f:
             json_data = f.read()
 
@@ -108,7 +109,7 @@ class Command(BaseCommand):
             'oauth_nonce': oauth.generate_nonce(),
             'oauth_timestamp': int(time.time()),
             'user': project,
-            'data': urllib.quote(json_file)
+            'data': urllib.quote(json_data)
         }
 
         #There is no requirement for the token in two-legged

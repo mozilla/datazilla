@@ -6,6 +6,7 @@ datasource table.
 import datetime
 import os
 import subprocess
+import uuid
 
 from datasource.bases.BaseHub import BaseHub
 from datasource.hubs.MySQL import MySQL
@@ -165,6 +166,13 @@ class SQLDataSource(object):
         if db_type is None:
             db_type = "MySQL-InnoDB"
 
+        oauth_consumer_key = None
+        oauth_consumer_secret = None
+
+        if contenttype == 'objectstore':
+            oauth_consumer_key = uuid.uuid4()
+            oauth_consumer_secret = uuid.uuid3(oauth_consumer_key, project)
+
         ds = DataSource.objects.create(
             host=host,
             project=project,
@@ -172,6 +180,8 @@ class SQLDataSource(object):
             dataset=dataset,
             name=name,
             type=db_type,
+            oauth_consumer_key=oauth_consumer_key,
+            oauth_consumer_secret=oauth_consumer_secret,
             creation_date=datetime.datetime.now(),
             )
 
@@ -205,8 +215,8 @@ class DataSource(models.Model):
     host = models.CharField(max_length=128)
     name = models.CharField(max_length=128)
     type = models.CharField(max_length=25)
-    consumer_key = models.CharField(max_length=45)
-    consumer_secret = models.CharField(max_length=45)
+    oauth_consumer_key = models.CharField(max_length=45)
+    oauth_consumer_secret = models.CharField(max_length=45)
     creation_date = models.DateTimeField()
 
     objects = DataSourceManager()
@@ -248,10 +258,10 @@ class DataSource(models.Model):
         Return the oauth consumer secret if the key provided matches the
         the consumer key.
         """
-        consumer_secret = None
-        if self.consumer_key == key:
-            consumer_secret = self.consumer_secret
-        return consumer_secret
+        oauth_consumer_secret = None
+        if self.oauth_consumer_key == key:
+            oauth_consumer_secret = self.oauth_consumer_secret
+        return oauth_consumer_secret
 
     def dhub(self, procs_file_name):
         """
