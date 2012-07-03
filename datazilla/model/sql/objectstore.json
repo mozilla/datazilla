@@ -1,23 +1,86 @@
 {
-  "inserts":{
-      "store_json":{
+    "inserts":{
+        "store_json":{
 
-         "sql":"INSERT INTO `objectstore` (`timestamp`, `json_blob`) VALUES (NOW(), ?)",
+            "sql":"INSERT INTO  `objectstore` (`date_loaded`,
+                                               `json_blob`,
+                                               `error_flag`,
+                                               `error_msg`)
+                   VALUES       (?, ?, ?, ?)
+                  ",
 
-         "host":"master_host"
-      }
-  },
-  "selects":{
-      "get_unprocessed":{
+            "host":"master_host"
+        }
+    },
 
-         "sql":"SELECT `json_blob`,
-                        `id`
-                FROM `objectstore`
-                WHERE processed_flag = 'ready'",
+    "selects":{
+        "get_claimed":{
 
-         "host":"master_host"
+            "sql":"SELECT   `json_blob`, `id`
+                   FROM     `objectstore`
+                   WHERE    `worker_id` = CONNECTION_ID()
+                   AND      `processed_flag` = 'loading'
+                   AND      `error_flag` = 'N'",
 
-      }
-  }
+            "host":"master_host"
+        },
+
+        "get_unprocessed":{
+
+            "sql":"SELECT   `json_blob`, `id`
+                   FROM     `objectstore`
+                   WHERE    `processed_flag` = 'ready'
+                   AND      `error_flag` = 'N'
+                   LIMIT ?",
+
+            "host":"master_host"
+        }
+
+    },
+
+    "updates":{
+        "mark_loading":{
+
+            "sql":"UPDATE `objectstore`
+                   SET    `processed_flag` = 'loading',
+                          `worker_id` = CONNECTION_ID()
+                   WHERE  `processed_flag` = 'ready'
+                   AND    `error_flag` = 'N'
+                   LIMIT ?
+                  ",
+
+            "host":"master_host"
+
+        },
+
+        "mark_complete":{
+
+            "sql":"UPDATE   `objectstore`
+                   SET      `processed_flag` = 'complete', `test_run_id` = ?
+                   WHERE    `processed_flag` = 'loading'
+                   AND      `id` = ?
+                   AND      `worker_id` = CONNECTION_ID()
+                  ",
+
+            "host":"master_host"
+
+        },
+
+        "mark_error":{
+
+            "sql":"UPDATE   `objectstore`
+                   SET      `processed_flag` = 'ready',
+                            `worker_id` = NULL,
+                            `error_flag` = 'Y',
+                            `error_msg` = ?
+                   WHERE    `processed_flag` = 'loading'
+                   AND      `id` = ?
+                   AND      `worker_id` = CONNECTION_ID()
+                  ",
+
+            "host":"master_host"
+
+        }
+    }
 }
 

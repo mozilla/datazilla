@@ -1,9 +1,8 @@
-import os
 import json
 
 from optparse import make_option
-from django.core.management.base import BaseCommand, CommandError
-from datazilla.model import PerformanceTestModel
+from django.core.management.base import BaseCommand
+from datazilla.model import DatazillaModel
 
 class Command(BaseCommand):
 
@@ -82,7 +81,7 @@ class Command(BaseCommand):
                     if options['show']:
                         self.stdout.write(data['data'] + "\n")
 
-                    dm_target.load_test_data(deserialized_data, data['data'])
+                    dm_target.load_test_data(deserialized_data)
             dm_target.disconnect()
 
 

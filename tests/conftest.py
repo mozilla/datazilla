@@ -25,8 +25,32 @@ def pytest_sessionstart(session):
     # this sets up a clean test-only database
     session.django_db_config = session.django_runner.setup_databases()
 
+    increment_cache_key_prefix()
+
     from datazilla.model import PerformanceTestModel
-    PerformanceTestModel.create("testproj")
+    dm = PerformanceTestModel.create("testproj")
+
+    # patch in additional test-only procs on the datasources
+    objstore = dm.sources["objectstore"]
+    del objstore.dhub.procs[objstore.datasource.key]
+    objstore.dhub.data_sources[objstore.datasource.key]["procs"].append(
+        os.path.join(
+            os.path.abspath(os.path.dirname(__file__)),
+            "objectstore_test.json",
+            )
+        )
+    objstore.dhub.load_procs(objstore.datasource.key)
+
+    perftest = dm.sources["perftest"]
+    del perftest.dhub.procs[perftest.datasource.key]
+    perftest.dhub.data_sources[perftest.datasource.key]["procs"].append(
+        os.path.join(
+            os.path.abspath(os.path.dirname(__file__)),
+            "perftest_test.json",
+            )
+        )
+    perftest.dhub.load_procs(perftest.datasource.key)
+
 
 
 def pytest_sessionfinish(session):
@@ -71,16 +95,7 @@ def pytest_runtest_setup(item):
     transaction.managed(True)
     disable_transaction_methods()
 
-    # this effectively clears the cache to make tests deterministic
-    from django.core.cache import cache
-    cache.key_prefix = ""
-    prefix_counter_cache_key = "datazilla-tests-key-prefix-counter"
-    try:
-        key_prefix_counter = cache.incr(prefix_counter_cache_key)
-    except ValueError:
-        key_prefix_counter = 0
-        cache.set(prefix_counter_cache_key, key_prefix_counter)
-    cache.key_prefix = "t{0}".format(key_prefix_counter)
+    increment_cache_key_prefix()
 
 
 
@@ -120,6 +135,20 @@ def truncate(dm):
         conn.close()
 
 
+def increment_cache_key_prefix():
+    """Increment a cache prefix to effectively clear the cache."""
+    from django.core.cache import cache
+    cache.key_prefix = ""
+    prefix_counter_cache_key = "datazilla-tests-key-prefix-counter"
+    try:
+        key_prefix_counter = cache.incr(prefix_counter_cache_key)
+    except ValueError:
+        key_prefix_counter = 0
+        cache.set(prefix_counter_cache_key, key_prefix_counter)
+    cache.key_prefix = "t{0}".format(key_prefix_counter)
+
+
+
 
 def pytest_funcarg__dm(request):
     """
@@ -131,5 +160,6 @@ def pytest_funcarg__dm(request):
     from datazilla.model import PerformanceTestModel
 
     dm = PerformanceTestModel("testproj")
+
     request.addfinalizer(partial(truncate, dm))
     return dm

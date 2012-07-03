@@ -1,0 +1,40 @@
+{
+    "selects": {
+        "build": {
+            "sql": "SELECT * FROM `build` WHERE id = ?",
+            "host": "master_host"
+        },
+        "test_run": {
+            "sql": "SELECT * FROM `test_run` WHERE id = ?",
+            "host": "master_host"
+        },
+        "test_runs": {
+            "sql": "SELECT * FROM `test_run`",
+            "host": "master_host"
+        },
+        "option_value": {
+            "sql": "SELECT `test_option_values`.`value`
+                    FROM `test_option_values`, `option`
+                    WHERE `option`.`id` = `test_option_values`.`option_id`
+                    AND `option`.`name` = ?
+                    AND `test_option_values`.`test_run_id` = ?",
+            "host": "master_host"
+        },
+        "test_values": {
+            "sql": "SELECT * FROM `test_value` WHERE `test_run_id` = ?",
+            "host": "master_host"
+        },
+        "pages": {
+            "sql": "SELECT * FROM `pages` WHERE `test_id` = ?",
+            "host": "master_host"
+        },
+        "test_aux": {
+            "sql": "SELECT * FROM `test_aux_data` WHERE `test_run_id` = ?",
+            "host": "master_host"
+        },
+        "aux_data": {
+            "sql": "SELECT * FROM `aux_data` WHERE `test_id` = ?",
+            "host": "master_host"
+        }
+    }
+}

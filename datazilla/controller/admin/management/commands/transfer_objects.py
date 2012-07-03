@@ -2,13 +2,13 @@ import os
 
 from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
-from datazilla.model import PerformanceTestModel
+from datazilla.model import DatazillaModel
 
 class Command(BaseCommand):
 
     help = (
-            "Transfer json blobs from the key/value store, uncompacting"
-            "them appropriately to the appropriate database."
+            "Transfer objects from the old test_data store to the objectstore "
+            "for a project."
             )
 
     option_list = BaseCommand.option_list + (
@@ -18,17 +18,22 @@ class Command(BaseCommand):
                     default=False,
                     help='Source project to pull data from: talos, ' +
                          'b2g, stoneridge, test etc...'),
-        make_option('--loadlimit',
+        make_option('--limit',
                     action='store',
-                    dest='loadlimit',
+                    dest='limit',
                     default=1,
-                    help='Number of JSON blobs to fetch per '
-                         'single iteration of uncompacting'),
+                    help='Number of JSON blobs to fetch from test_data during '
+                         'this call.'),
+        make_option('--start',
+                    action='store',
+                    dest='start',
+                    default=1,
+                    help='ID of row to start transferring from'),
         make_option('--debug',
                     action='store_true',
                     dest='debug',
-                    default=None,
-                    help='Write json-encapsulated SQL query out for debugging'))
+                    default=False,
+                    help='Write SQL query out for debugging'))
 
 
     def handle(self, *args, **options):
@@ -36,11 +41,12 @@ class Command(BaseCommand):
         project   = options.get('project')
         debug     = options.get('debug')
 
-        loadlimit = int(options.get("loadlimit", 1))
+        limit = int(options.get("limit", 1))
+        start = int(options.get("start", 1))
 
         if not project:
             raise CommandError("Enter a valid project name")
 
         dm = DatazillaModel(project)
-        dm.process_objects(loadlimit)
+        dm.transfer_objects(start, limit)
         dm.disconnect()
