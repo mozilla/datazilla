@@ -49,8 +49,13 @@ def oauth_required(func):
         #Set the signature method
         server.add_signature_method(oauth.SignatureMethod_HMAC_SHA1())
 
-        #verify oauth django request and consumer object match
-        server.verify_request(req_obj, cons_obj, None)
+        try:
+            #verify oauth django request and consumer object match
+            server.verify_request(req_obj, cons_obj, None)
+        except oauth.Error, e:
+            status = 403
+            result = {"status":"Error in verify_request"}
+            return HttpResponse(json.dumps(result), mimetype=APP_JS, status=status)
 
         return func(request, *args, **kwargs)
 
