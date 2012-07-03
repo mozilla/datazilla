@@ -171,7 +171,7 @@ class SQLDataSource(object):
 
         if contenttype == 'objectstore':
             oauth_consumer_key = uuid.uuid4()
-            oauth_consumer_secret = uuid.uuid3(oauth_consumer_key, project)
+            oauth_consumer_secret = uuid.uuid4()
 
         ds = DataSource.objects.create(
             host=host,
@@ -215,8 +215,8 @@ class DataSource(models.Model):
     host = models.CharField(max_length=128)
     name = models.CharField(max_length=128)
     type = models.CharField(max_length=25)
-    oauth_consumer_key = models.CharField(max_length=45)
-    oauth_consumer_secret = models.CharField(max_length=45)
+    oauth_consumer_key = models.CharField(max_length=45, null=True)
+    oauth_consumer_secret = models.CharField(max_length=45, null=True)
     creation_date = models.DateTimeField()
 
     objects = DataSourceManager()
