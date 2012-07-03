@@ -3,6 +3,9 @@ import json
 import urllib
 import zlib
 
+import sys
+import oauth2 as oauth
+
 from django.shortcuts import render_to_response
 from django.conf import settings
 from django.core.cache import cache
@@ -12,6 +15,51 @@ from datazilla.model import DatazillaModel
 from datazilla.model import utils
 
 APP_JS = 'application/json'
+
+##Decorators##
+def oauth_required(func):
+    """
+    Decorator for views to ensure that the user is sending an OAuth signed
+    request.  View methods that use this method a project kwarg.
+    """
+    def _wrap_oauth(request, *args, **kwargs):
+
+        project = kwargs.get('project', None)
+        dm = DatazillaModel(project)
+
+        #Get the consumer key
+        key = request.REQUEST.get('oauth_consumer_key', None)
+
+        #Get the consumer secret stored with this key
+        ds_consumer_secret = dm.get_oauth_consumer_secret(key)
+
+        #Construct the OAuth request based on the django request object
+        req_obj = oauth.Request(request.method,
+                                request.build_absolute_uri(),
+                                request.REQUEST,
+                                '',
+                                False)
+
+        server = oauth.Server()
+
+        #Get the consumer object
+        cons_obj = oauth.Consumer(key,
+                                  ds_consumer_secret)
+
+        #Set the signature method
+        server.add_signature_method(oauth.SignatureMethod_HMAC_SHA1())
+
+        try:
+            #verify oauth django request and consumer object match
+            server.verify_request(req_obj, cons_obj, None)
+        except oauth.Error, e:
+            status = 403
+            result = {"status":"Error in verify_request"}
+            return HttpResponse(json.dumps(result), mimetype=APP_JS, status=status)
+
+        return func(request, *args, **kwargs)
+
+    return _wrap_oauth
 
 def graphs(request, project=""):
 
@@ -74,7 +122,7 @@ def get_help(request, project=""):
     data = {}
     return render_to_response('help/dataview.generic.help.html', data)
 
-
+@oauth_required
 def set_test_data(request, project=""):
     """
     Post a JSON blob of data for the specified project.

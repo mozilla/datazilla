@@ -181,4 +181,3 @@ if not USE_APP_ENGINE:
             "PORT"     : DATAZILLA_DATABASE_PORT,     # Set to empty string for default. Not used with sqlite3.
         }
     }
-

@@ -6,6 +6,7 @@ datasource table.
 import datetime
 import os
 import subprocess
+import uuid
 
 from datasource.bases.BaseHub import BaseHub
 from datasource.hubs.MySQL import MySQL
@@ -165,6 +166,13 @@ class SQLDataSource(object):
         if db_type is None:
             db_type = "MySQL-InnoDB"
 
+        oauth_consumer_key = None
+        oauth_consumer_secret = None
+
+        if contenttype == 'objectstore':
+            oauth_consumer_key = uuid.uuid4()
+            oauth_consumer_secret = uuid.uuid4()
+
         ds = DataSource.objects.create(
             host=host,
             project=project,
@@ -172,6 +180,8 @@ class SQLDataSource(object):
             dataset=dataset,
             name=name,
             type=db_type,
+            oauth_consumer_key=oauth_consumer_key,
+            oauth_consumer_secret=oauth_consumer_secret,
             creation_date=datetime.datetime.now(),
             )
 
@@ -205,6 +215,8 @@ class DataSource(models.Model):
     host = models.CharField(max_length=128)
     name = models.CharField(max_length=128)
     type = models.CharField(max_length=25)
+    oauth_consumer_key = models.CharField(max_length=45, null=True)
+    oauth_consumer_secret = models.CharField(max_length=45, null=True)
     creation_date = models.DateTimeField()
 
     objects = DataSourceManager()
@@ -236,11 +248,20 @@ class DataSource(models.Model):
         return "{0} - {1} - {2}".format(
             self.project, self.contenttype, self.dataset)
 
-
     def __unicode__(self):
         """Unicode representation is the project's unique key."""
         return unicode(self.key)
 
+
+    def get_oauth_consumer_secret(self, key):
+        """
+        Return the oauth consumer secret if the key provided matches the
+        the consumer key.
+        """
+        oauth_consumer_secret = None
+        if self.oauth_consumer_key == key:
+            oauth_consumer_secret = self.oauth_consumer_secret
+        return oauth_consumer_secret
 
     def dhub(self, procs_file_name):
         """
