@@ -21,8 +21,8 @@ class Command(BaseCommand):
                     action='store',
                     dest='project',
                     default=False,
-                    help='Source project to pull data from: talos, ' +
-                         'b2g, stoneridge, test etc...'),
+                    help=('Source project to pull data from: talos, '
+                          'b2g, stoneridge, test etc...')),
 
         make_option('--host',
                     action='store',
@@ -40,24 +40,24 @@ class Command(BaseCommand):
                     action='store',
                     dest='consumer_key',
                     default=settings.OAUTH_CONSUMER_KEY,
-                    help='Provide the OAuth consumer key for this ' +
-                         'project. This defaults to ' +
-                         'settings.OAUTH_CONSUMER_KEY.'),
+                    help=('Provide the OAuth consumer key for this '
+                          'project. This defaults to '
+                          'settings.OAUTH_CONSUMER_KEY.')),
 
         make_option('--secret',
                     action='store',
                     dest='consumer_secret',
                     default=settings.OAUTH_CONSUMER_SECRET,
-                    help='Provide the OAuth consumer secret for this ' +
-                         'project. This defaults to ' +
-                         'settings.OAUTH_CONSUMER_SECRET.'),
+                    help=('Provide the OAuth consumer secret for this '
+                          'project. This defaults to '
+                          'settings.OAUTH_CONSUMER_SECRET.')),
 
         make_option('--debug',
                     action='store_true',
                     dest='debug',
                     default=None,
-                    help='Write out HTTP header and post data to stdout ' +
-                         'without sending.'))
+                    help=('Write out HTTP header and post data to stdout '
+                          'without sending.')))
 
     def handle(self, *args, **options):
 
@@ -69,36 +69,37 @@ class Command(BaseCommand):
         debug               = options.get('debug')
 
         if not project:
-            self.stdout.write("You must supply a project name" +
-                              " to POST data to: --project project\n")
+            self.stdout.write(
+                "You must supply a project name to POST data to: "
+                "--project project\n")
             return
 
         if not host:
-            self.stdout.write("You must supply a host name" +
-                              " to POST data to: --host host\n")
+            self.stdout.write(
+                "You must supply a host name to POST data to: "
+                "--host host\n")
             return
 
         if not os.path.isfile(file):
-            self.stdout.write("You must supply a JSON file" +
-                              " to POST: --file JSON file\n")
+            self.stdout.write(
+                "You must supply a JSON file to POST: --file JSON file\n")
             return
 
         if not consumer_key:
-            self.stdout.write("You must supply the projects consumer key" +
-                              " to POST: --key key or" +
-                              " settings.OAUTH_CONSUMER_KEY\n")
+            self.stdout.write(
+                "You must supply the projects consumer key to POST: "
+                "--key key or settings.OAUTH_CONSUMER_KEY\n")
             return
 
         if not consumer_secret:
-            self.stdout.write("You must supply the projects consumer" +
-                              " secret to POST: --key key or" +
-                              " settings.OAUTH_CONSUMER_KEY\n")
+            self.stdout.write(
+                "You must supply the projects consumer secret to POST: "
+                "--key key or settings.OAUTH_CONSUMER_SECRET\n")
             return
 
         ##Open the json file##
-        f = open( file )
-        json_file = f.read()
-        f.close()
+        with open(file) as f:
+            json_data = f.read()
 
         uri = 'http://%s/%s/api/load_test' % (host, project)
 
@@ -117,8 +118,6 @@ class Command(BaseCommand):
 
         params['oauth_token'] = token.key
         params['oauth_consumer_key'] = consumer.key
-        headers = {"Content-type":"application/x-www-form-urlencoded",
-                   "Accept":"text/plain"}
 
         req = oauth.Request(method="POST", url=uri, parameters=params)
 
@@ -135,16 +134,17 @@ class Command(BaseCommand):
 
         if debug:
 
-            self.stdout.write(str(headers) + "\n")
+            self.stdout.write(str(header) + "\n")
             self.stdout.write(req.to_postdata() + "\n")
 
         else:
 
             conn = httplib.HTTPConnection(host)
 
-            conn.request("POST", uri, req.to_postdata(), headers)
+            conn.request("POST", uri, req.to_postdata(), header)
             response = conn.getresponse()
 
-            self.stdout.write("status:%s\nreason:%s\nresponse:%s\n" %
+            self.stdout.write(
+                "status:%s\nreason:%s\nresponse:%s\n" %
                 (response.status, response.reason, response.read()))
 

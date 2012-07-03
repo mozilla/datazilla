@@ -1,4 +1,5 @@
 setup.cfg
+setup.py
 oauth2/__init__.py
 oauth2/_version.py
 oauth2.egg-info/PKG-INFO

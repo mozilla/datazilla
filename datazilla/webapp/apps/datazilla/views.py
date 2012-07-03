@@ -20,9 +20,9 @@ APP_JS = 'application/json'
 def oauth_required(func):
     """
     Decorator for views to ensure that the user is sending an OAuth signed
-    request.
+    request.  View methods that use this method a project kwarg.
     """
-    def _verify_request(request, *args, **kwargs):
+    def _wrap_oauth(request, *args, **kwargs):
 
         project = kwargs.get('project', None)
         dm = DatazillaModel(project)
@@ -31,55 +31,30 @@ def oauth_required(func):
         key = request.REQUEST.get('oauth_consumer_key', None)
 
         #Get the consumer secret stored with this key
-        ds = dm.sources['objectstore'].datasource
-        ds_consumer_secret = ds.get_consumer_secret(key)
+        ds_consumer_secret = dm.get_oauth_consumer_secret(key)
 
-        #Set API Endpoint
-        fpath = request.get_full_path()
-        uri = request.build_absolute_uri(fpath)
+        #Construct the OAuth request based on the django request object
+        req_obj = oauth.Request(request.method,
+                                request.build_absolute_uri(),
+                                request.REQUEST,
+                                '',
+                                False)
 
-        try:
+        server = oauth.Server()
 
-            #Construct the OAuth request based on the django request object
-            req_obj = oauth.Request(request.method,
-                                    uri,
-                                    request.REQUEST,
-                                    '',
-                                    False)
+        #Get the consumer object
+        cons_obj = oauth.Consumer(key,
+                                  ds_consumer_secret)
 
-            server = oauth.Server()
+        #Set the signature method
+        server.add_signature_method(oauth.SignatureMethod_HMAC_SHA1())
 
-            #Get the consumer object
-            cons_obj = oauth.Consumer(key,
-                                      ds_consumer_secret)
+        #verify oauth django request and consumer object match
+        server.verify_request(req_obj, cons_obj, None)
 
-            #Set the signature method
-            server.add_signature_method(oauth.SignatureMethod_HMAC_SHA1())
+        return func(request, *args, **kwargs)
 
-            #verify oauth django request and consumer object match
-            server.verify_request(req_obj, cons_obj, None)
-
-        except oauth.Error as e:
-
-            status = 500
-            result = {"status":"OAuth error in verify_request:%s",
-                      "message": e.message}
-            return HttpResponse(json.dumps(result),
-                                mimetype=APP_JS,
-                                status=status)
-
-        except Exception as e:
-
-            status = 500
-            result = {"status":"Unknown error", "message": e.message}
-            return HttpResponse(json.dumps(result),
-                                mimetype=APP_JS,
-                                status=status)
-
-        else:
-            return func(request, *args, **kwargs)
-
-    return _verify_request
+    return _wrap_oauth
 
 def graphs(request, project=""):
 

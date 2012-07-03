@@ -76,6 +76,10 @@ class DatazillaModel(object):
 
         return cls(project=project)
 
+    def get_oauth_consumer_secret(self, key):
+        ds = self.sources['objectstore'].datasource
+        secret = ds.get_oauth_consumer_secret(key)
+        return secret
 
     def get_product_test_os_map(self):
 

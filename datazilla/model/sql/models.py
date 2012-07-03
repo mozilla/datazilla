@@ -243,7 +243,7 @@ class DataSource(models.Model):
         return unicode(self.key)
 
 
-    def get_consumer_secret(self, key):
+    def get_oauth_consumer_secret(self, key):
         """
         Return the oauth consumer secret if the key provided matches the
         the consumer key.
