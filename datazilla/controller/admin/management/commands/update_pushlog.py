@@ -81,5 +81,5 @@ class Command(BaseCommand):
                 summary["changesets_stored"],
                 summary["changesets_skipped"],
                 ))
-        plm.disconnect()
+        plm.hg_ds.disconnect()
 

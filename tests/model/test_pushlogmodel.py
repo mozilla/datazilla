@@ -98,7 +98,7 @@ def test_insert_branch_pushlogs_twice_skips(plm):
     assert plm.changeset_skipped_count == 7
 
 
-def xtest_insert_branch_pushlogs_dup_changeset(plm):
+def test_insert_branch_pushlogs_dup_changeset(plm):
     """
     Trying to insert a pushlog with a duplicate changeset causes just
     the changeset to be skipped
@@ -106,11 +106,9 @@ def xtest_insert_branch_pushlogs_dup_changeset(plm):
     """
 
     data = json.loads(pushlog_json())
-#    cs = data["23046"]["changesets"][0]
-#    dup = copy.deepcopy(cs)
-#    data["23046"]["changesets"].append(dup)
-#
-#    print data
+    cs = data["23046"]["changesets"][0]
+    dup = copy.deepcopy(cs)
+    data["23046"]["changesets"].append(dup)
 
     plm._insert_branch_pushlogs(1, data)
 
@@ -119,3 +117,11 @@ def xtest_insert_branch_pushlogs_dup_changeset(plm):
     assert plm.changeset_count == 7
     assert plm.pushlog_skipped_count == 0
     assert plm.changeset_skipped_count == 1
+
+
+def test_disconnect(plm):
+    """test that you cannot access the plm after disconnecting"""
+
+    plm.disconnect()
+    data = plm.get_branch_list()
+    print(data)
