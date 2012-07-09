@@ -129,8 +129,8 @@ def truncate(dm):
         cur = conn.cursor()
         cur.execute("SET FOREIGN_KEY_CHECKS = 0")
         cur.execute("SHOW TABLES")
-        for table, in cur.fetchmany():
-            cur.execute("TRUNCATE TABLE {0}".format(table))
+        for table, in cur.fetchall():
+            cur.execute("TRUNCATE TABLE `{0}`".format(table))
         cur.execute("SET FOREIGN_KEY_CHECKS = 1")
         conn.close()
 
