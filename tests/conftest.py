@@ -119,12 +119,14 @@ def pytest_runtest_teardown(item):
 
 
 
-def truncate(dm, skip_list=[]):
+def truncate(dm, skip_list=None):
     """
     Truncates all tables in all databases in given DatazillaModel.
 
     skip_list is a list of table names to skip truncation.
     """
+    skip_list = set(skip_list or [])
+
     from django.conf import settings
     import MySQLdb
     for sds in dm.sources.values():
@@ -138,11 +140,13 @@ def truncate(dm, skip_list=[]):
         cur.execute("SET FOREIGN_KEY_CHECKS = 0")
         cur.execute("SHOW TABLES")
 
-        for table, in cur.fetchmany():
-            sys.stdout.write("trying truncate: {0}\n".format(table))
-            if table not in skip_list:
-                sys.stdout.write("truncating: {0}\n".format(table))
-                cur.execute("TRUNCATE TABLE {0}".format(table))
+        for table, in cur.fetchall():
+            # if there is a skip_list, then skip any table with matching name
+            if table.lower() not in skip_list:
+                # needed to us backticks around table name, because if the
+                # table name is a keyword (like "option") then this will fail
+                cur.execute("TRUNCATE TABLE `{0}`".format(table))
+
         cur.execute("SET FOREIGN_KEY_CHECKS = 1")
         conn.close()
 
