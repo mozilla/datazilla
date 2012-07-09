@@ -1,11 +1,7 @@
-from MySQLdb import IntegrityError
 from optparse import make_option
 from django.core.management.base import BaseCommand
 from datazilla.model import PushLogModel
-import urllib
-import json
 import datetime
-from django.conf import settings
 
 
 
@@ -41,6 +37,13 @@ class Command(BaseCommand):
                     dest="numdays",
                     default=None,
                     help="Number of days worth of pushlogs to return."),
+
+        # probably mostly for testing purposes, but could be otherwise useful.
+        make_option("--branch",
+                   action="store",
+                   dest="branch",
+                   default=None,
+                   help="The branch to import pushlogs for (default to all)"),
         )
 
 
@@ -54,6 +57,8 @@ class Command(BaseCommand):
         repo_host = options.get("repo_host")
         enddate = options.get("enddate")
         numdays = int(options.get("numdays"))
+        branch = options.get("branch")
+        verbosity = int(options.get("verbosity"))
 
         if not repo_host:
             self.println("You must supply a host name for the repo pushlogs " +
@@ -64,146 +69,17 @@ class Command(BaseCommand):
             self.println("You must supply the number of days data.")
             return
 
-        # parameters sent to the requests for pushlog data
-        params = self.get_params(enddate, numdays)
+        plm = PushLogModel(out=self.stdout, verbosity=verbosity)
 
-        plm = PushLogModel()
-
-        #####
-        # Loop through all branches for all pushlogs
-
-        # fetch the list of known branches.
-
-        for branch in plm.get_all_branches():
-            self.println(u"Branch: pushlogs for {0}".format(
-                unicode(branch["name"])).encode("UTF-8")
-                )
-
-            uri = "{0}/json-pushes".format(branch["uri"])
-
-            url = "https://{0}/{1}?{2}".format(
-                repo_host,
-                uri,
-                urllib.urlencode(params),
-                )
-
-            if settings.DEBUG:
-                self.println("URL: {0}".format(url))
-
-            # fetch the JSON content from the constructed URL.
-            res = urllib.urlopen(url)
-
-            json_data = res.read()
-            pushlog_list = json.loads(json_data)
-
-            self.insert_pushlog(plm.hg_ds, branch["id"], pushlog_list)
-
-        plm.disconnect()
-
-
-    def get_params(self, enddate, numdays):
-        """figure out the params to send to the pushlog queries."""
-
-        if enddate:
-            #create a proper datetime.date for calculation of startdate
-            m, d, y = enddate.split("/")
-            _enddate = datetime.date(month=int(m), day=int(d), year=int(y))
-        else:
-            _enddate = datetime.date.today()
-
-        # calculate the startdate and enddate
-
-        _startdate = _enddate - datetime.timedelta(days=numdays)
-
-        params = {
-            "full": 1,
-            "startdate": _startdate.strftime("%m/%d/%y"),
-            }
-        # enddate is optional.  the endpoint will just presume today,
-        # if not given.
-        if enddate:
-            params.update({"enddate": enddate})
-
-        return params
-
-
-    def insert_pushlog(self, ds, branch_id, pushlog_list):
-        """Loop through all the pushlogs and insert them."""
-
-        for pushlog_json_id, pushlog in pushlog_list.items():
-            # make sure the push_log_id isn't confused with a previous iteration
-            self.println("    Pushlog {0}".format(pushlog_json_id))
-
-            placeholders = [
-                pushlog_json_id,
-                pushlog["date"],
-                pushlog["user"],
-                branch_id,
-                ]
-            try:
-                pushlog_id = self._insert_data_and_get_id(
-                    ds,
-                    "set_push_log",
-                    placeholders=placeholders,
-                    )
-
-                # process the nodes of the pushlog
-                self.insert_changesets(ds, pushlog_id, pushlog["changesets"])
-
-            except IntegrityError:
-                self.println("--Skip dup- pushlog: {0}".format(
-                    pushlog_json_id,
+        # store the pushlogs for the branch specified, or all branches
+        summary = plm.store_pushlogs(repo_host, numdays, enddate, branch)
+        self.println(("Branches: {0}\nPushlogs stored: {1}, skipped: {2}\n" +
+                      "Changesets stored: {3}, skipped: {4}").format(
+                summary["branches"],
+                summary["pushlogs_stored"],
+                summary["pushlogs_skipped"],
+                summary["changesets_stored"],
+                summary["changesets_skipped"],
                 ))
-
-
-    def insert_changesets(self, ds, pushlog_id, changeset_list):
-        """Loop through all the changesets in a pushlog, and insert them."""
-
-        for cs in changeset_list:
-            self.println("        Changeset {0}".format(cs["node"]))
-            placeholders = [
-                cs["node"],
-                cs["author"],
-                cs["branch"],
-                cs["desc"],
-                pushlog_id,
-                ]
-
-            try:
-                self._insert_data_and_get_id(
-                    ds,
-                    "set_node",
-                    placeholders=placeholders,
-                    )
-
-            except IntegrityError:
-                self.println("--Skip changeset dup- pushlog: {0}, node: {1}".format(
-                    pushlog_id,
-                    cs["node"],
-                    ))
-
-
-    def _insert_data(self, ds, statement, placeholders, executemany=False):
-
-        return ds.dhub.execute(
-            proc='hgmozilla.inserts.' + statement,
-            debug_show=settings.DEBUG,
-            placeholders=placeholders,
-            executemany=executemany,
-            return_type='iter',
-            )
-
-
-    def _insert_data_and_get_id(self, ds, statement, placeholders):
-
-        self._insert_data(ds, statement, placeholders)
-
-        id_iter = ds.dhub.execute(
-            proc='hgmozilla.selects.get_last_insert_id',
-            debug_show=settings.DEBUG,
-            return_type='iter',
-            )
-
-        return id_iter.get_column_data('id')
-
+        plm.disconnect()
 

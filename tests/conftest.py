@@ -1,5 +1,6 @@
 from functools import partial
 import os
+import sys
 
 from datazilla.vendor import add_vendor_lib
 
@@ -27,8 +28,9 @@ def pytest_sessionstart(session):
 
     increment_cache_key_prefix()
 
-    from datazilla.model import PerformanceTestModel
+    from datazilla.model import PerformanceTestModel, PushLogModel
     dm = PerformanceTestModel.create("testproj")
+    plm = PushLogModel.create(project="testpushlog")
 
     # patch in additional test-only procs on the datasources
     objstore = dm.sources["objectstore"]
@@ -58,10 +60,12 @@ def pytest_sessionfinish(session):
     print("\n")
 
     from django.conf import settings
-    from datazilla.model import PerformanceTestModel
+    from datazilla.model import PerformanceTestModel, PushLogModel
     import MySQLdb
 
-    for sds in PerformanceTestModel("testproj").sources.values():
+    source_list = PerformanceTestModel("testproj").sources.values()
+    source_list.extend(PushLogModel(project="testpushlog").sources.values())
+    for sds in source_list:
         conn = MySQLdb.connect(
             host=sds.datasource.host,
             user=settings.DATAZILLA_DATABASE_USER,
@@ -115,8 +119,12 @@ def pytest_runtest_teardown(item):
 
 
 
-def truncate(dm):
-    """Truncates all tables in all databases in given PerformanceTestModel."""
+def truncate(dm, skip_list=[]):
+    """
+    Truncates all tables in all databases in given DatazillaModel.
+
+    skip_list is a list of table names to skip truncation.
+    """
     from django.conf import settings
     import MySQLdb
     for sds in dm.sources.values():
@@ -129,8 +137,12 @@ def truncate(dm):
         cur = conn.cursor()
         cur.execute("SET FOREIGN_KEY_CHECKS = 0")
         cur.execute("SHOW TABLES")
+
         for table, in cur.fetchmany():
-            cur.execute("TRUNCATE TABLE {0}".format(table))
+            sys.stdout.write("trying truncate: {0}\n".format(table))
+            if table not in skip_list:
+                sys.stdout.write("truncating: {0}\n".format(table))
+                cur.execute("TRUNCATE TABLE {0}".format(table))
         cur.execute("SET FOREIGN_KEY_CHECKS = 1")
         conn.close()
 
@@ -148,8 +160,6 @@ def increment_cache_key_prefix():
     cache.key_prefix = "t{0}".format(key_prefix_counter)
 
 
-
-
 def pytest_funcarg__dm(request):
     """
     Gives a test access to a PerformanceTestModel instance.
@@ -163,3 +173,19 @@ def pytest_funcarg__dm(request):
 
     request.addfinalizer(partial(truncate, dm))
     return dm
+
+
+def pytest_funcarg__plm(request):
+    """
+    Gives a test access to a PushLogModel instance.
+
+    Truncates all project tables between tests in order to provide isolation.
+
+    """
+    from datazilla.model import PushLogModel
+    import sys
+
+    plm = PushLogModel("testpushlog", out=sys.stdout, verbosity=2)
+
+    request.addfinalizer(partial(truncate, plm, ["branches"]))
+    return plm

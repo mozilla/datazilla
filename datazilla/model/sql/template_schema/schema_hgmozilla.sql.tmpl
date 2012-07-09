@@ -55,8 +55,8 @@ DROP TABLE IF EXISTS `changesets`;
 CREATE TABLE `changesets` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `node` varchar(50) DEFAULT NULL,
-  `author` varchar(100) DEFAULT NULL,
-  `branch` varchar(45) DEFAULT NULL,
+  `author` varchar(255) DEFAULT NULL,
+  `branch` varchar(100) DEFAULT NULL,
   `desc` text DEFAULT NULL,
   `push_log_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
