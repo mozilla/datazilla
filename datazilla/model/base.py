@@ -49,6 +49,12 @@ class DatazillaModelBase(object):
         return self.project
 
 
+    def disconnect(self):
+        """Iterate over and disconnect all data sources."""
+        for src in self.sources.itervalues():
+            src.disconnect()
+
+
 
 class PushLogModel(DatazillaModelBase):
     """Public interface for all push logs"""
@@ -95,12 +101,6 @@ class PushLogModel(DatazillaModelBase):
                 cls.PROJECT, ct, host=host, db_type=type)
 
         return cls()
-
-
-    def disconnect(self):
-        """Iterate over and disconnect all data sources."""
-        for src in self.sources.itervalues():
-            src.disconnect()
 
 
     def reset_counts(self):

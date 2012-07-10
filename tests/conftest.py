@@ -30,7 +30,7 @@ def pytest_sessionstart(session):
 
     from datazilla.model import PerformanceTestModel, PushLogModel
     dm = PerformanceTestModel.create("testproj")
-    plm = PushLogModel.create(project="testpushlog")
+    PushLogModel.create(project="testpushlog")
 
     # patch in additional test-only procs on the datasources
     objstore = dm.sources["objectstore"]

@@ -12,6 +12,19 @@ def test_unicode(dm):
     assert unicode(dm) == u"testproj"
 
 
+def test_disconnect(dm):
+    """test that you model disconnects"""
+
+    # establish the connection to perftest.
+    dm._get_last_insert_id()
+    # establish the connection to objectstore
+    dm.retrieve_test_data(limit=1)
+
+    dm.disconnect()
+    for src in dm.sources.itervalues():
+        assert src.dhub.connection["master_host"]["con_obj"].open == False
+
+
 def test_claim_objects(dm):
     """``claim_objects`` claims & returns unclaimed rows up to a limit."""
     blobs = [

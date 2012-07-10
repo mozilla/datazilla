@@ -24,8 +24,22 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """ Create databases for a new project based on the args value. """
 
+        host = options.get("host")
+
+        if not host:
+            self.println("You must supply a host name for the pushlog " +
+                     "database: --host hostname")
+            return
+
         pl = PushLogModel.create(
-            host=options.get("host"),
+            host=host,
             type=options.get("type"),
             )
+        self.println("Pushlog database created on {0}".format(host))
         pl.disconnect()
+
+
+    def println(self, val):
+        self.stdout.write("{0}\n".format(str(val)))
+
+

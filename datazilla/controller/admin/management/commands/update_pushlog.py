@@ -56,9 +56,9 @@ class Command(BaseCommand):
 
         repo_host = options.get("repo_host")
         enddate = options.get("enddate")
-        numdays = int(options.get("numdays"))
+        numdays = options.get("numdays")
         branch = options.get("branch")
-        verbosity = int(options.get("verbosity"))
+        verbosity = options.get("verbosity")
 
         if not repo_host:
             self.println("You must supply a host name for the repo pushlogs " +
@@ -68,6 +68,12 @@ class Command(BaseCommand):
         if not numdays:
             self.println("You must supply the number of days data.")
             return
+        else:
+            try:
+                numdays = int(numdays)
+            except ValueError:
+                self.println("numdays must be an integer.")
+                return
 
         plm = PushLogModel(out=self.stdout, verbosity=verbosity)
 

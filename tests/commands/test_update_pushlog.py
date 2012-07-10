@@ -2,78 +2,75 @@
 Tests for management command to update pushlogs.
 
 """
-from contextlib import contextmanager
-from cStringIO import StringIO
-import json
-import os
-from tempfile import mkstemp
 
 from django.core.management import call_command
-
-#from mock import patch
-
+from datazilla.model.base import PushLogModel
 
 
 
-"""Tests for update_pushlog management command."""
-
-"""
-Will have to patch the pushlogmodel.get_all_branches method to return a
-small set (2 perhaps, maybe just 1) branch names.
-
-Then will have to patch the calls for pushlogs so it returns sample data.
-Then import them
-Then check the table.  May need a way to check the table.  PushLogModel will need some getters, perhaps.
-
-"""
-
-def call_command(*args):
-    """
-    Runs the management command and returns (stdout, stderr) output.
-
-    Also patch ``sys.exit`` so a ``CommandError`` doesn't cause an exit.
-
-    """
-    with patch("sys.stdout", StringIO()) as stdout:
-        with patch("sys.stderr", StringIO()) as stderr:
-            with patch("sys.exit"):
-                call_command("import", *args)
-
-    stdout.seek(0)
-    stderr.seek(0)
-    return (stdout.read(), stderr.read())
+def call_update_pushlog(*args, **kwargs):
+    call_command("update_pushlog", *args, **kwargs)
 
 
-@contextmanager
-def tempfile(self, contents):
-    """
-    Write given contents to a temporary file, yielding its path.
+def test_no_args(capsys):
+    """Shows need for a repo_host."""
+    call_update_pushlog()
 
-    Used as a context manager; automatically deletes the temporary file
-    when context manager exits.
+    exp = (
+        "You must supply a host name for the repo pushlogs to store: --repo_host hostname\n",
+        "",
+        )
 
-    """
-    (fd, path) = mkstemp()
-    fh = os.fdopen(fd, "w")
-    fh.write(contents)
-    fh.close()
-
-    try:
-        yield path
-    finally:
-        os.remove(path)
+    assert capsys.readouterr() == exp
 
 
-def xtest_no_args(self):
-    """Command shows usage."""
-    output = call_command()
-
-    self.assertEqual(
-        output,
-        (
-            "",
-            "Error: Usage: <product_name> <product_version> <filename>\n",
-            )
-    )
+def test_no_numdays(capsys):
+    """Shows need for numdays."""
 
 
+    call_update_pushlog(repo_host="foo_host")
+
+    exp = (
+        "You must supply the number of days data.\n",
+        "",
+        )
+
+    assert capsys.readouterr() == exp
+
+
+def test_bad_numdays(capsys):
+    """Shows numdays must be int."""
+
+
+    call_update_pushlog(repo_host="foo_host", numdays="rats")
+
+    exp = (
+        "numdays must be an integer.\n",
+        "",
+        )
+
+    assert capsys.readouterr() == exp
+
+
+def test_successful_store(capsys, monkeypatch):
+    """Successful storage of pushlog data."""
+
+    def mock_store_pushlogs(nothing, repo_host, numdays, enddate, branch):
+        return {
+            "branches": 1,
+            "pushlogs_stored": 3,
+            "changesets_stored": 7,
+            "pushlogs_skipped": 0,
+            "changesets_skipped": 0,
+            }
+    monkeypatch.setattr(PushLogModel, "store_pushlogs", mock_store_pushlogs)
+
+    call_update_pushlog(repo_host="foo_host", numdays="1")
+
+    exp = (
+        ("Branches: 1\nPushlogs stored: 3, skipped: 0\n" +
+         "Changesets stored: 7, skipped: 0\n"),
+        "",
+        )
+
+    assert capsys.readouterr() == exp
