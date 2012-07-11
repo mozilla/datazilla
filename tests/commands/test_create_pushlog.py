@@ -13,7 +13,7 @@ def call_create_pushlog(*args, **kwargs):
 
 
 def test_no_args(capsys):
-    """Shows need for a repo_host."""
+    """Shows need for a host."""
     call_create_pushlog()
 
     exp = (

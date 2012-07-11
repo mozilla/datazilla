@@ -1,12 +1,12 @@
 {
     "inserts":{
-        "set_push_log":{
-            "sql":"INSERT INTO `push_log` (`push_id`, `date`, `user`, `branch_id`)
+        "set_pushlog":{
+            "sql":"INSERT INTO `pushlogs` (`push_id`, `date`, `user`, `branch_id`)
                    VALUES (?, ?, ?, ?)",
             "host":"master_host"
         },
         "set_node":{
-            "sql":"INSERT INTO `changesets` (`node`, `author`, `branch`, `desc`, `push_log_id`)
+            "sql":"INSERT INTO `changesets` (`node`, `author`, `branch`, `desc`, `pushlog_id`)
                    VALUES (?,?,?,?,?)",
             "host":"master_host"
         }
@@ -18,6 +18,22 @@
         },
         "get_all_branches":{
             "sql":"SELECT id, name, uri FROM branches",
+            "host":"master_host"
+        },
+        "get_all_pushlogs":{
+            "sql":"SELECT * FROM pushlogs",
+            "host":"master_host"
+        },
+        "get_pushlog":{
+            "sql":"SELECT * FROM pushlogs where push_id = ?",
+            "host":"master_host"
+        },
+        "get_all_changesets":{
+            "sql":"SELECT * FROM changesets",
+            "host":"master_host"
+        },
+        "get_changesets":{
+            "sql":"SELECT * FROM changesets where pushlog_id = ?",
             "host":"master_host"
         }
     }

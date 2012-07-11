@@ -34,16 +34,6 @@ class DatazillaModelBase(object):
         self.DEBUG = settings.DEBUG
 
 
-    @classmethod
-    def get_datasource_class(cls):
-        if settings.USE_APP_ENGINE:
-            from .appengine.model import CloudSQLDataSource
-            return CloudSQLDataSource
-        else:
-            from .sql.models import SQLDataSource
-            return SQLDataSource
-
-
     def __unicode__(self):
         """Unicode representation is project name."""
         return self.project
@@ -97,7 +87,7 @@ class PushLogModel(DatazillaModelBase):
             cls.PROJECT=project
 
         for ct in cls.CONTENT_TYPES:
-            cls.get_datasource_class().create(
+            SQLDataSource.create(
                 cls.PROJECT, ct, host=host, db_type=type)
 
         return cls()
@@ -141,6 +131,47 @@ class PushLogModel(DatazillaModelBase):
                 return
 
         return branch_list
+
+
+    def get_all_pushlogs(self):
+
+        proc = 'hgmozilla.selects.get_all_pushlogs'
+
+        data_iter = self.hg_ds.dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            )
+
+        return data_iter
+
+
+    def get_all_changesets(self):
+
+        proc = 'hgmozilla.selects.get_all_changesets'
+
+        data_iter = self.hg_ds.dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            )
+
+        return data_iter
+
+
+    def get_changesets(self, pushlog_id):
+
+        placeholders = [pushlog_id]
+        proc = 'hgmozilla.selects.get_changesets'
+
+        data_iter = self.hg_ds.dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            placeholders=placeholders,
+            )
+
+        return data_iter
 
 
     def get_params(self, numdays, enddate=None):
@@ -228,7 +259,7 @@ class PushLogModel(DatazillaModelBase):
         """Loop through all the pushlogs and insert them."""
 
         for pushlog_json_id, pushlog in pushlog_dict.items():
-            # make sure the push_log_id isn't confused with a previous iteration
+            # make sure the pushlog_id isn't confused with a previous iteration
             self.println("    Pushlog {0}".format(pushlog_json_id), 1)
 
             placeholders = [
@@ -239,7 +270,7 @@ class PushLogModel(DatazillaModelBase):
                 ]
             try:
                 pushlog_id = self._insert_data_and_get_id(
-                    "set_push_log",
+                    "set_pushlog",
                     placeholders=placeholders,
                     )
 

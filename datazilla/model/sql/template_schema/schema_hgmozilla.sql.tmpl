@@ -58,19 +58,19 @@ CREATE TABLE `changesets` (
   `author` varchar(255) DEFAULT NULL,
   `branch` varchar(100) DEFAULT NULL,
   `desc` text DEFAULT NULL,
-  `push_log_id` int(11) DEFAULT NULL,
+  `pushlog_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_node` (`node`, `push_log_id`),
-  KEY `fk_push_log` (`push_log_id`),
-  CONSTRAINT `fk_push_log` FOREIGN KEY (`push_log_id`) REFERENCES `push_log` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  UNIQUE KEY `uq_node` (`node`, `pushlog_id`),
+  KEY `fk_pushlogs` (`pushlog_id`),
+  CONSTRAINT `fk_pushlogs` FOREIGN KEY (`pushlog_id`) REFERENCES `pushlogs` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `push_log`
+-- Table structure for table `pushlogs`
 --
 
-CREATE TABLE `push_log` (
+CREATE TABLE `pushlogs` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `push_id` int(11) NOT NULL,
   `date` int(11) DEFAULT NULL,

@@ -9,24 +9,33 @@ from ..sample_pushlog import pushlog_json, pushlog_json_file
 
 
 def test_branches(plm):
+    """
+    Test get_branch_list to return all branches.
+
+    Opted to not check each value and specific count in case we change the
+    number of branches in the future.
+    """
     branches = plm.get_branch_list()
 
     assert len(branches) > 0
 
 
 def test_single_branch(plm):
+    """Test get_branch_list with a branch that exists."""
     branches = plm.get_branch_list("Firefox")
 
     assert len(branches) == 1
 
 
 def test_single_branch_not_found(plm):
+    """Test the get_branch_list method with non-existent branch."""
     branches = plm.get_branch_list("Cortexiphan")
 
     assert branches == None
 
 
 def test_get_params(plm):
+    """Test the get_params method."""
     params = plm.get_params(4, enddate="06/10/2012")
 
     exp_params = {
@@ -63,9 +72,37 @@ def test_get_params_no_enddate(plm):
     datetime.date = originaldate
 
 
-def test_insert_branch_pushlogs(plm):
+def test_get_all_changesets(plm):
+    """Ensure that get_all_changesets returns all the changesets from all pushes"""
+    branch_id = 1
     data = json.loads(pushlog_json())
-    plm._insert_branch_pushlogs(1, data)
+    plm._insert_branch_pushlogs(branch_id, data)
+
+    #verify that the data that was inserted matches the JSON source data.
+    changesets = plm.get_all_changesets()
+    exp_changesets = []
+    for pl in data.values():
+        exp_changesets.extend(pl["changesets"])
+
+    assert len(exp_changesets) == len(changesets)
+    for cs in changesets:
+        exp_cs = [x for x in exp_changesets if x["node"] == str(cs["node"])][0]
+        for key in ["node", "author", "branch", "desc"]:
+            assert str(exp_cs[key]) == str(cs[key])
+
+
+
+def test_insert_branch_pushlogs_happy_path(plm):
+    """
+    Test insert_branch_pushlogs.
+
+    Verify counts on return status as well as all the data inserted into the
+    db.
+
+    """
+    branch_id = 1
+    data = json.loads(pushlog_json())
+    plm._insert_branch_pushlogs(branch_id, data)
 
     # branch count is incremented in store_pushlogs, not here, so exp 0
     assert plm.branch_count == 0
@@ -74,6 +111,26 @@ def test_insert_branch_pushlogs(plm):
     assert plm.changeset_count == 7
     assert plm.pushlog_skipped_count == 0
     assert plm.changeset_skipped_count == 0
+
+    #verify that the data that was inserted matches the JSON source data.
+    pushlogs = plm.get_all_pushlogs()
+    assert len(pushlogs) == len(data)
+
+    for pl in pushlogs:
+        exp_pl = data[str(pl["push_id"])]
+        for key in ["date", "user"]:
+            assert str(exp_pl[key]) == str(pl[key])
+        assert str(branch_id) == str(pl["branch_id"])
+
+        exp_changesets = exp_pl["changesets"]
+
+        changesets = plm.get_changesets(pushlog_id=pl["id"])
+        assert len(exp_changesets) == len(changesets)
+        for cs in changesets:
+            exp_cs = [x for x in exp_changesets if x["node"] == str(cs["node"])][0]
+            for key in ["node", "author", "branch", "desc"]:
+                assert str(exp_cs[key]) == str(cs[key])
+            assert pl["id"] == cs["pushlog_id"]
 
 
 def test_insert_branch_pushlogs_twice_skips(plm):
