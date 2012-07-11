@@ -17,3 +17,10 @@ def pushlog_json_file():
         os.path.abspath(os.path.dirname(__file__)),
         "pushlog_test.json",
         ))
+
+def pushlog_json_empty():
+    """Return a handle to an empty buffer"""
+    class Readable(object):
+        def read(self):
+            return ""
+    return Readable()

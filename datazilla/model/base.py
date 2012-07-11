@@ -241,10 +241,13 @@ class PushLogModel(DatazillaModelBase):
             res = urllib.urlopen(url)
 
             json_data = res.read()
-            pushlog_dict = json.loads(json_data)
+            if len(json_data) > 0:
+                pushlog_dict = json.loads(json_data)
 
-            self._insert_branch_pushlogs(br["id"], pushlog_dict)
-            self.branch_count = self.branch_count + 1
+                self._insert_branch_pushlogs(br["id"], pushlog_dict)
+                self.branch_count = self.branch_count + 1
+            else:
+                self.println("--Skip branch {0}: no push data in date range".format(branch))
 
         return {
             "branches": self.branch_count,

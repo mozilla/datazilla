@@ -3,9 +3,7 @@ import datetime
 import copy
 import urllib
 
-from datazilla.model.base import TestDataError, TestData
-
-from ..sample_pushlog import pushlog_json, pushlog_json_file
+from ..sample_pushlog import pushlog_json, pushlog_json_empty, pushlog_json_file
 
 
 def test_branches(plm):
@@ -171,7 +169,7 @@ def test_insert_branch_pushlogs_dup_changeset(plm):
     assert plm.changeset_skipped_count == 1
 
 
-def test_store_pushlogs(plm, monkeypatch):
+def test_store_pushlogs_happy_path(plm, monkeypatch):
     """
     Test store pushlog method.
 
@@ -188,6 +186,30 @@ def test_store_pushlogs(plm, monkeypatch):
         "branches": 1,
         "pushlogs_stored": 3,
         "changesets_stored": 7,
+        "pushlogs_skipped": 0,
+        "changesets_skipped": 0,
+        }
+
+    assert result == exp_result
+
+
+def test_store_pushlogs_no_data(plm, monkeypatch):
+    """
+    Test store pushlog method when no json is returned for the specified branch.
+
+    monkeypatch urllib to return our canned data.
+
+    """
+    def mock_urlopen(nuttin_honey):
+        return pushlog_json_empty()
+    monkeypatch.setattr(urllib, 'urlopen', mock_urlopen)
+
+    result = plm.store_pushlogs("test_host", 1, branch="Firefox")
+
+    exp_result = {
+        "branches": 0,
+        "pushlogs_stored": 0,
+        "changesets_stored": 0,
         "pushlogs_skipped": 0,
         "changesets_skipped": 0,
         }
