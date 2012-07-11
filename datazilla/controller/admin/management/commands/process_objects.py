@@ -41,6 +41,6 @@ class Command(BaseCommand):
         if not project:
             raise CommandError("Enter a valid project name")
 
-        dm = DatazillaModel(project)
+        dm = PerformanceTestModel(project)
         dm.process_objects(loadlimit)
         dm.disconnect()

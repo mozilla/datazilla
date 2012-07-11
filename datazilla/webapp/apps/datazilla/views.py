@@ -25,7 +25,7 @@ def oauth_required(func):
     def _wrap_oauth(request, *args, **kwargs):
 
         project = kwargs.get('project', None)
-        dm = DatazillaModel(project)
+        dm = PerformanceTestModel(project)
 
         #Get the consumer key
         key = request.REQUEST.get('oauth_consumer_key', None)
@@ -165,7 +165,7 @@ def set_test_data(request, project=""):
         }
 
     try:
-        dm = DatazillaModel(project)
+        dm = PerformanceTestModel(project)
         dm.store_test_data(unquoted_json_data, error)
         dm.disconnect()
     except Exception as e:

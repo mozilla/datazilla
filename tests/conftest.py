@@ -121,7 +121,7 @@ def pytest_runtest_teardown(item):
 
 def truncate(dm, skip_list=None):
     """
-    Truncates all tables in all databases in given DatazillaModel.
+    Truncates all tables in all databases in given DatazillaModelBase.
 
     skip_list is a list of table names to skip truncation.
     """

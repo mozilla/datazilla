@@ -2,7 +2,7 @@ import json
 
 from optparse import make_option
 from django.core.management.base import BaseCommand
-from datazilla.model import DatazillaModel
+from datazilla.model import PerformanceTestModel
 
 class Command(BaseCommand):
 
