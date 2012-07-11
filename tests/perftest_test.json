@@ -20,6 +20,13 @@
                     AND `test_option_values`.`test_run_id` = ?",
             "host": "master_host"
         },
+        "option_name":{
+            "sql": "SELECT `name`
+                    FROM `option`
+                    WHERE `name` = ?",
+
+            "host": "master_host"
+        },
         "test_values": {
             "sql": "SELECT * FROM `test_value` WHERE `test_run_id` = ?",
             "host": "master_host"

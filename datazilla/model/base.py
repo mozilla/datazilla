@@ -973,6 +973,20 @@ class PerformanceTestModel(DatazillaModelBase):
         placeholders = []
         for option, value in testrun.get('options', {}).items():
 
+            """
+            TODO: Add handling for inserting extensions in
+             a separate table.  Until we have handling, ignore
+             the extensions option to avoid generating a data
+             truncation error. An extension value will look like:
+
+             [ { "name":"extension_name1" },
+              { "name":"exension_name2" } ...etc ]
+
+             Reference: https://bugzilla.mozilla.org/show_bug.cgi?id=769479
+            """
+            if option == 'extensions':
+                continue
+
             option_id = self._get_or_create_option_id(option)
 
             placeholders.append([test_run_id, option_id, value])
