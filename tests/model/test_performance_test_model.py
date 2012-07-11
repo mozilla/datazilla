@@ -1,5 +1,3 @@
-import json
-
 import pytest
 
 from datazilla.model.base import TestDataError, TestData
