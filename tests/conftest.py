@@ -125,6 +125,8 @@ def truncate(dm, skip_list=None):
 
     skip_list is a list of table names to skip truncation.
     """
+    dm.disconnect()
+
     skip_list = set(skip_list or [])
 
     from django.conf import settings
