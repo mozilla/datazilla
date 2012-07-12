@@ -6,6 +6,12 @@ import urllib
 from ..sample_pushlog import pushlog_json, pushlog_json_empty, pushlog_json_file
 
 
+def get_branch_id(plm):
+    """Use the Firefox branch as our common test branch"""
+    branch = plm.get_branch_list("Firefox")
+    return branch[0]["id"]
+
+
 def test_branches(plm):
     """
     Test get_branch_list to return all branches.
@@ -72,7 +78,7 @@ def test_get_params_no_enddate(plm):
 
 def test_get_all_changesets(plm):
     """Ensure that get_all_changesets returns all the changesets from all pushes"""
-    branch_id = 1
+    branch_id = get_branch_id(plm)
     data = json.loads(pushlog_json())
     plm._insert_branch_pushlogs(branch_id, data)
 
@@ -98,7 +104,7 @@ def test_insert_branch_pushlogs_happy_path(plm):
     db.
 
     """
-    branch_id = 1
+    branch_id = get_branch_id(plm)
     data = json.loads(pushlog_json())
     plm._insert_branch_pushlogs(branch_id, data)
 
@@ -133,13 +139,14 @@ def test_insert_branch_pushlogs_happy_path(plm):
 
 def test_insert_branch_pushlogs_twice_skips(plm):
     """Trying to insert the same pushlog twice causes them to be skipped"""
+    branch_id = get_branch_id(plm)
     data = json.loads(pushlog_json())
-    plm._insert_branch_pushlogs(1, data)
+    plm._insert_branch_pushlogs(branch_id, data)
 
     assert plm.pushlog_count == 3
 
     plm.reset_counts()
-    plm._insert_branch_pushlogs(1, data)
+    plm._insert_branch_pushlogs(branch_id, data)
 
     assert plm.branch_count == 0
     assert plm.pushlog_count == 0
@@ -155,12 +162,13 @@ def test_insert_branch_pushlogs_dup_changeset(plm):
 
     """
 
+    branch_id = get_branch_id(plm)
     data = json.loads(pushlog_json())
     cs = data["23046"]["changesets"][0]
     dup = copy.deepcopy(cs)
     data["23046"]["changesets"].append(dup)
 
-    plm._insert_branch_pushlogs(1, data)
+    plm._insert_branch_pushlogs(branch_id, data)
 
     assert plm.branch_count == 0
     assert plm.pushlog_count == 3
