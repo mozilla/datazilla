@@ -1,7 +1,7 @@
 from optparse import make_option
 from django.core.management.base import BaseCommand
 from datazilla.model import PushLogModel
-import datetime
+from django.conf import settings
 
 
 

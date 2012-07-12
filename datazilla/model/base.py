@@ -239,15 +239,18 @@ class PushLogModel(DatazillaModelBase):
 
             # fetch the JSON content from the constructed URL.
             res = urllib.urlopen(url)
-
             json_data = res.read()
-            if len(json_data) > 0:
+            try:
                 pushlog_dict = json.loads(json_data)
 
                 self._insert_branch_pushlogs(br["id"], pushlog_dict)
                 self.branch_count = self.branch_count + 1
-            else:
-                self.println("--Skip branch {0}: no push data in date range".format(branch))
+
+            except ValueError as e:
+                self.println("--Skip branch {0}: push data not valid JSON: {1}".format(
+                    branch,
+                    json_data,
+                    ))
 
         return {
             "branches": self.branch_count,
@@ -347,7 +350,7 @@ class PushLogModel(DatazillaModelBase):
 
     def println(self, val, level=0):
         """Write to out (possibly stdout) if verbosity meets the level."""
-        if self.out and self.verbosity >= level:
+        if settings.DEBUG and self.out and self.verbosity >= level:
             self.out.write("{0}\n".format(str(val)))
 
 
