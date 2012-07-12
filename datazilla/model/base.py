@@ -50,15 +50,13 @@ class PushLogModel(DatazillaModelBase):
     """Public interface for all push logs"""
 
     CONTENT_TYPES = ["hgmozilla"]
-    PROJECT = "pushlog"
+    DEFAULT_PROJECT = "pushlog"
 
     # The "project" defaults to "pushlog" but you can pass in any
     # project name you like.
 
     def __init__(self, project=None, out=None, verbosity=0):
-        if project:
-            self.PROJECT=project
-        super(PushLogModel, self).__init__(self.PROJECT)
+        super(PushLogModel, self).__init__(project or self.DEFAULT_PROJECT)
         self.out = out
         self.verbosity=verbosity
         self.reset_counts()
@@ -83,12 +81,11 @@ class PushLogModel(DatazillaModelBase):
 
         """
 
-        if project:
-            cls.PROJECT=project
+        project = project or cls.DEFAULT_PROJECT
 
         for ct in cls.CONTENT_TYPES:
             SQLDataSource.create(
-                cls.PROJECT, ct, host=host, db_type=type)
+                 project, ct, host=host, db_type=type)
 
         return cls()
 

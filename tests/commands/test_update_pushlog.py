@@ -52,7 +52,7 @@ def test_bad_numdays(capsys):
     assert capsys.readouterr() == exp
 
 
-def test_successful_store(capsys, monkeypatch):
+def test_successful_store(plm, capsys, monkeypatch):
     """Successful storage of pushlog data."""
 
     def mock_store_pushlogs(nothing, repo_host, numdays, enddate, branch):
@@ -65,7 +65,7 @@ def test_successful_store(capsys, monkeypatch):
             }
     monkeypatch.setattr(PushLogModel, "store_pushlogs", mock_store_pushlogs)
 
-    call_update_pushlog(repo_host="foo_host", numdays="1")
+    call_update_pushlog(repo_host="foo_host", numdays="1", project=plm.project)
 
     exp = (
         ("Branches: 1\nPushlogs stored: 3, skipped: 0\n" +
