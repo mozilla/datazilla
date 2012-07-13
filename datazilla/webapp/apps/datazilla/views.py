@@ -29,6 +29,11 @@ def oauth_required(func):
         #Get the consumer key
         key = request.REQUEST.get('oauth_consumer_key', None)
 
+        if key is None:
+            result = {"status": "No OAuth credentials provided."}
+            return HttpResponse(
+                json.dumps(result), content_type=APP_JS, status=403)
+
         #Get the consumer secret stored with this key
         ds_consumer_secret = dm.get_oauth_consumer_secret(key)
 
@@ -42,8 +47,7 @@ def oauth_required(func):
         server = oauth.Server()
 
         #Get the consumer object
-        cons_obj = oauth.Consumer(key,
-                                  ds_consumer_secret)
+        cons_obj = oauth.Consumer(key, ds_consumer_secret)
 
         #Set the signature method
         server.add_signature_method(oauth.SignatureMethod_HMAC_SHA1())
@@ -54,7 +58,8 @@ def oauth_required(func):
         except oauth.Error:
             status = 403
             result = {"status":"Error in verify_request"}
-            return HttpResponse(json.dumps(result), mimetype=APP_JS, status=status)
+            return HttpResponse(
+                json.dumps(result), content_type=APP_JS, status=status)
 
         return func(request, *args, **kwargs)
 
