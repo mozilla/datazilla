@@ -13,7 +13,7 @@ def call_create_pushlog(*args, **kwargs):
 
 
 def test_no_args(capsys):
-    """Shows need for a host."""
+    """Shows need for a repo_host."""
     call_create_pushlog()
 
     exp = (
@@ -28,7 +28,7 @@ def test_successful_create(capsys, monkeypatch):
     """Successful create call on pushlog database."""
 
     @classmethod
-    def mock_create(justme, host, type):
+    def mock_create(justme, host, type, project):
         class MyFoo(object):
             def disconnect(self):
                 pass
@@ -36,6 +36,28 @@ def test_successful_create(capsys, monkeypatch):
     monkeypatch.setattr(PushLogModel, "create", mock_create)
 
     call_create_pushlog(host="foo_host")
+
+    exp = (
+        "Pushlog database created on foo_host\n",
+        "",
+        )
+
+    assert capsys.readouterr() == exp
+
+
+def test_successful_create_custom_project(capsys, monkeypatch):
+    """Successful create call on pushlog database."""
+
+    @classmethod
+    def mock_create(justme, host, type, project):
+        assert project == "foo_pushlog"
+        class MyFoo(object):
+            def disconnect(self):
+                pass
+        return MyFoo()
+    monkeypatch.setattr(PushLogModel, "create", mock_create)
+
+    call_create_pushlog(host="foo_host", project="foo_pushlog")
 
     exp = (
         "Pushlog database created on foo_host\n",

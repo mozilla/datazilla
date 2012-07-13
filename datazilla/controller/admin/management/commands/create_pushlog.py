@@ -20,12 +20,20 @@ class Command(BaseCommand):
                     dest='type',
                     default="MySQL-InnoDB",
                     help='The database type (e.g. "MySQL-InnoDB") '
-                         'for the database'),)
+                         'for the database'),
+        make_option("--project",
+                    action="store",
+                    dest="project",
+                    default=None,
+                    help=("The project name for the the pushlog database " +
+                          "storage (default to 'pushlog')")),
+        )
 
     def handle(self, *args, **options):
         """ Create databases for a new project based on the args value. """
 
         host = options.get("host")
+        project = options.get("project")
 
         if not host:
             self.println("You must supply a host name for the pushlog " +
@@ -33,6 +41,7 @@ class Command(BaseCommand):
             return
 
         pl = PushLogModel.create(
+            project=project,
             host=host,
             type=options.get("type"),
             )
