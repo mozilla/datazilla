@@ -1,8 +1,7 @@
 import os
 
 from optparse import make_option
-from django.core.management.base import BaseCommand, CommandError
-from datazilla.model import PerformanceTestModel
+from django.core.management.base import BaseCommand
 from django.conf import settings
 
 import oauth2 as oauth
@@ -102,7 +101,8 @@ class Command(BaseCommand):
         with open(file) as f:
             json_data = f.read()
 
-        uri = 'http://%s/%s/api/load_test' % (host, project)
+        path = '/%s/api/load_test' % (project)
+        uri = 'http://%s%s' % (host, path)
 
         params = {
             'oauth_version': "1.0",
@@ -142,7 +142,7 @@ class Command(BaseCommand):
 
             conn = httplib.HTTPConnection(host)
 
-            conn.request("POST", uri, req.to_postdata(), header)
+            conn.request("POST", path, req.to_postdata(), header)
             response = conn.getresponse()
 
             self.stdout.write(
