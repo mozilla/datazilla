@@ -7,7 +7,7 @@ Model
 The model layer found in /datazilla/model provides an interface for getting/setting data in a database. The datazilla model classes rely on a module called datasource. This module encapsulates SQL manipulation. All of the SQL used by the system is stored in a JSON file found in /datazilla/model/sql. There can be any number of SQL files stored in this format. The JSON structure allows SQL to be stored in named associative arrays that also contain the host type to be associated with each statement. Any command line script or web service method that requires data should use a derived model class to obtain it. ::
 
 
-    gm = DatazillaModel('graphs.json')
+    gm = PerformanceTestModel('graphs.json')
     products = gm.getProductTestOsMap()
 
 The ``gm.getProductTestOsMap()`` method looks like ::

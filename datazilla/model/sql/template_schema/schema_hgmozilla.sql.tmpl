@@ -1,0 +1,95 @@
+/* This file contains {engine} markers that must be replaced
+   before it is sent to MySQL.
+*/
+
+-- MySQL dump 10.13  Distrib 5.1.53, for apple-darwin10.3.0 (i386)
+--
+-- Host: s4n4.qa.phx1.mozilla.com    Database: repo
+-- ------------------------------------------------------
+-- Server version	5.1.61
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `branches`
+--
+
+DROP TABLE IF EXISTS `branches`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `branches` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(45) NOT NULL,
+  `uri` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name_UNIQUE` (`name`)
+) ENGINE={engine} AUTO_INCREMENT=36 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `branches`
+--
+
+LOCK TABLES `branches` WRITE;
+/*!40000 ALTER TABLE `branches` DISABLE KEYS */;
+INSERT INTO `branches` (`name`, `uri`) VALUES ('Firefox','mozilla-central'),('Try','try'),('Mozilla-Aurora','releases/mozilla-aurora'),('Mozilla-Beta','releases/mozilla-beta'),('Mozilla-Release','releases/mozilla-release'),('Mozilla-Esr10','releases/mozilla-esr10'),('Accessibility','projects/accessibility'),('Addon-SDK','projects/addon-sdk'),('Build-System','projects/build-system'),('Devtools','projects/devtools'),('Fx-Team','integration/fx-team'),('Ionmonkey','projects/ionmonkey'),('JägerMonkey','projects/jaegermonkey'),('Profiling','projects/profiling'),('Services-Central','services/services-central'),('UX','projects/ux'),('Alder','projects/alder'),('Ash','projects/ash'),('Birch','projects/birch'),('Cedar','projects/cedar'),('Elm','projects/elm'),('Holly','projects/holly'),('Larch','projects/larch'),('Maple','projects/maple'),('Oak','projects/oak'),('Pine','projects/pine'),('Electrolysis','projects/electrolysis'),('Graphics','projects/graphics'),('Places','projects/places'),('Mozilla-Inbound','integration/mozilla-inbound');
+/*!40000 ALTER TABLE `branches` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `changesets`
+--
+
+DROP TABLE IF EXISTS `changesets`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `changesets` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `node` varchar(50) DEFAULT NULL,
+  `author` varchar(255) DEFAULT NULL,
+  `branch` varchar(100) DEFAULT NULL,
+  `desc` text DEFAULT NULL,
+  `pushlog_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_node` (`node`, `pushlog_id`),
+  KEY `fk_pushlogs` (`pushlog_id`),
+  CONSTRAINT `fk_pushlogs` FOREIGN KEY (`pushlog_id`) REFERENCES `pushlogs` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `pushlogs`
+--
+
+CREATE TABLE `pushlogs` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `push_id` int(11) NOT NULL,
+  `date` int(11) DEFAULT NULL,
+  `user` varchar(100) COLLATE utf8_bin DEFAULT NULL,
+  `branch_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_push` (`push_id`),
+  KEY `branch` (`branch_id`),
+  CONSTRAINT `branch` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2012-06-14 12:36:34

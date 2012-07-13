@@ -2,7 +2,7 @@ import os
 
 from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
-from datazilla.model import DatazillaModel
+from datazilla.model import PerformanceTestModel
 from django.conf import settings
 
 import oauth2 as oauth

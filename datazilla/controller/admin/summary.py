@@ -6,14 +6,14 @@ import json
 import zlib
 import sys
 
-from datazilla.model import DatazillaModel, utils
+from datazilla.model import PerformanceTestModel, utils
 from django.core.cache import cache
 
 
 
 def cache_test_summaries(project):
 
-    dm = DatazillaModel(project)
+    dm = PerformanceTestModel(project)
     data_iter = dm.get_all_summary_cache()
 
     for d in data_iter:
@@ -36,7 +36,7 @@ def cache_test_summaries(project):
 
 def build_test_summaries(project):
 
-    dm = DatazillaModel(project)
+    dm = PerformanceTestModel(project)
 
     time_ranges = utils.get_time_ranges()
 

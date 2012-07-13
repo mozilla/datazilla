@@ -1,5 +1,3 @@
-import json
-
 import pytest
 
 from datazilla.model.base import TestDataError, TestData
@@ -8,8 +6,21 @@ from ..sample_data import perftest_json, perftest_data
 
 
 def test_unicode(dm):
-    """Unicode representation of a ``DatazillaModel`` is the project name."""
+    """Unicode representation of a ``PerformanceTestModel`` is the project name."""
     assert unicode(dm) == u"testproj"
+
+
+def test_disconnect(dm):
+    """test that you model disconnects"""
+
+    # establish the connection to perftest.
+    dm._get_last_insert_id()
+    # establish the connection to objectstore
+    dm.retrieve_test_data(limit=1)
+
+    dm.disconnect()
+    for src in dm.sources.itervalues():
+        assert src.dhub.connection["master_host"]["con_obj"].open == False
 
 
 def test_claim_objects(dm):
@@ -26,8 +37,8 @@ def test_claim_objects(dm):
     rows1 = dm.claim_objects(2)
 
     # a separate worker with a separate connection
-    from datazilla.model import DatazillaModel
-    dm2 = DatazillaModel("testproj")
+    from datazilla.model import PerformanceTestModel
+    dm2 = PerformanceTestModel("testproj")
 
     rows2 = dm2.claim_objects(2)
 

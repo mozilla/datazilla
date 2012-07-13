@@ -2,7 +2,7 @@ import os
 
 from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
-from datazilla.model import DatazillaModel
+from datazilla.model import PerformanceTestModel
 
 class Command(BaseCommand):
 
@@ -41,6 +41,6 @@ class Command(BaseCommand):
         if not project:
             raise CommandError("Enter a valid project name")
 
-        dm = DatazillaModel(project)
+        dm = PerformanceTestModel(project)
         dm.process_objects(loadlimit)
         dm.disconnect()

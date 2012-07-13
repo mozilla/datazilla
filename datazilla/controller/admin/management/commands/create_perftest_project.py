@@ -1,6 +1,6 @@
 from optparse import make_option
 from django.core.management.base import BaseCommand
-from datazilla.model import DatazillaModel
+from datazilla.model import PerformanceTestModel
 
 class Command(BaseCommand):
     """Management command to create all databases for a new project."""
@@ -61,6 +61,6 @@ class Command(BaseCommand):
             objectstore=options.get("objectstore_type"),
             )
 
-        dm = DatazillaModel.create(project, hosts=hosts, types=types)
+        dm = PerformanceTestModel.create(project, hosts=hosts, types=types)
 
         dm.disconnect()

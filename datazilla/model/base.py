@@ -4,12 +4,15 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 #####
 """
-``DatazillaModel`` and subclasses are the public API for all data access.
+``DatazillaModelBase`` (and subclasses) are the public interface for all data
+access.
 
 """
 import datetime
 import time
 import json
+import urllib
+from MySQLdb import IntegrityError
 
 from django.conf import settings
 
@@ -18,12 +21,8 @@ from . import utils
 from .sql.models import SQLDataSource
 
 
-
-class DatazillaModel(object):
-    """Public interface to all data access for a project."""
-
-
-    CONTENT_TYPES = ["perftest", "objectstore"]
+class DatazillaModelBase(object):
+    """Base model class for all Datazilla models"""
 
     def __init__(self, project):
         self.project = project
@@ -38,6 +37,326 @@ class DatazillaModel(object):
     def __unicode__(self):
         """Unicode representation is project name."""
         return self.project
+
+
+    def disconnect(self):
+        """Iterate over and disconnect all data sources."""
+        for src in self.sources.itervalues():
+            src.disconnect()
+
+
+
+class PushLogModel(DatazillaModelBase):
+    """Public interface for all push logs"""
+
+    CONTENT_TYPES = ["hgmozilla"]
+    DEFAULT_PROJECT = "pushlog"
+
+    # The "project" defaults to "pushlog" but you can pass in any
+    # project name you like.
+
+    def __init__(self, project=None, out=None, verbosity=0):
+        super(PushLogModel, self).__init__(project or self.DEFAULT_PROJECT)
+        self.out = out
+        self.verbosity=verbosity
+        self.reset_counts()
+
+
+    @classmethod
+    def create(cls, host=None, type=None, project=None):
+        """
+        Create all the datasource tables for this pushlog.
+
+        ``hosts`` is an optional dictionary mapping contenttype names to the
+        database server host on which the database for that contenttype should
+        be created. Not all contenttypes need to be represented; any that
+        aren't will use the default (``DATAZILLA_DATABASE_HOST``).
+
+        ``types`` is an optional dictionary mapping contenttype names to the
+        type of database that should be created. For MySQL/MariaDB databases,
+        use "MySQL-Engine", where "Engine" could be "InnoDB", "Aria", etc. Not
+        all contenttypes need to be represented; any that aren't will use the
+        default (``MySQL-InnoDB``).
+
+
+        """
+
+        project = project or cls.DEFAULT_PROJECT
+
+        for ct in cls.CONTENT_TYPES:
+            SQLDataSource.create(
+                 project, ct, host=host, db_type=type)
+
+        return cls()
+
+
+    def reset_counts(self):
+        self.branch_count = 0
+        self.pushlog_count = 0
+        self.changeset_count = 0
+        self.pushlog_skipped_count = 0
+        self.changeset_skipped_count = 0
+
+
+    @property
+    def hg_ds(self):
+        return self.sources["hgmozilla"]
+
+
+    def get_all_branches(self):
+
+        proc = 'hgmozilla.selects.get_all_branches'
+
+        data_iter = self.hg_ds.dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            )
+
+        return data_iter
+
+
+    def get_branch_list(self, branch=None):
+        # if a branch was specified, limit the list to only that branch
+        # TODO: make a separate select for this case, instead of all
+        branch_list = self.get_all_branches()
+
+        if branch:
+            branch_list=[x for x in branch_list if x["name"] == branch]
+            if len(branch_list) < 1:
+                self.println("Branch not found: {0}".format(branch))
+                return
+
+        return branch_list
+
+
+    def get_all_pushlogs(self):
+
+        proc = 'hgmozilla.selects.get_all_pushlogs'
+
+        data_iter = self.hg_ds.dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            )
+
+        return data_iter
+
+
+    def get_all_changesets(self):
+
+        proc = 'hgmozilla.selects.get_all_changesets'
+
+        data_iter = self.hg_ds.dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            )
+
+        return data_iter
+
+
+    def get_changesets(self, pushlog_id):
+
+        placeholders = [pushlog_id]
+        proc = 'hgmozilla.selects.get_changesets'
+
+        data_iter = self.hg_ds.dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            placeholders=placeholders,
+            )
+
+        return data_iter
+
+
+    def get_params(self, numdays, enddate=None):
+        """
+        Figure out the params to send to the pushlog queries.
+
+        If enddate is None, then use today as the enddate.
+        """
+
+        if enddate:
+            #create a proper datetime.date for calculation of startdate
+            m, d, y = enddate.split("/")
+            _enddate = datetime.date(month=int(m), day=int(d), year=int(y))
+        else:
+            _enddate = datetime.date.today()
+
+        # calculate the startdate and enddate
+
+        _startdate = _enddate - datetime.timedelta(days=numdays)
+
+        params = {
+            "full": 1,
+            "startdate": _startdate.strftime("%m/%d/%Y"),
+            }
+        # enddate is optional.  the endpoint will just presume today,
+        # if not given.
+        if enddate:
+            params.update({"enddate": enddate})
+
+        return params
+
+
+    def store_pushlogs(self, repo_host, numdays, enddate=None, branch=None):
+        """
+        Main entry point to store pushlogs for branches.
+
+        If branch is None, then store pushlogs for ALL branches that we
+        know about.
+
+        If enddate is None, then use today as the enddate.
+
+        """
+
+        # fetch the list of known branches.
+        branch_list = self.get_branch_list(branch)
+
+        # parameters sent to the requests for pushlog data
+        params = self.get_params(numdays, enddate)
+
+        for br in branch_list:
+            self.println(u"Branch: pushlogs for {0}".format(
+                unicode(br["name"])).encode("UTF-8"),
+                1
+            )
+
+            uri = "{0}/json-pushes".format(br["uri"])
+
+            url = "https://{0}/{1}?{2}".format(
+                repo_host,
+                uri,
+                urllib.urlencode(params),
+                )
+
+            self.println("URL: {0}".format(url), 1)
+
+            # fetch the JSON content from the constructed URL.
+            res = urllib.urlopen(url)
+            json_data = res.read()
+            try:
+                pushlog_dict = json.loads(json_data)
+
+                self._insert_branch_pushlogs(br["id"], pushlog_dict)
+                self.branch_count = self.branch_count + 1
+
+            except ValueError as e:
+                self.println("--Skip branch {0}: push data not valid JSON: {1}".format(
+                    branch,
+                    json_data,
+                    ))
+
+        return {
+            "branches": self.branch_count,
+            "pushlogs_stored": self.pushlog_count,
+            "changesets_stored": self.changeset_count,
+            "pushlogs_skipped": self.pushlog_skipped_count,
+            "changesets_skipped": self.changeset_skipped_count,
+        }
+
+
+    def _insert_branch_pushlogs(self, branch_id, pushlog_dict):
+        """Loop through all the pushlogs and insert them."""
+
+        for pushlog_json_id, pushlog in pushlog_dict.items():
+            # make sure the pushlog_id isn't confused with a previous iteration
+            self.println("    Pushlog {0}".format(pushlog_json_id), 1)
+
+            placeholders = [
+                pushlog_json_id,
+                pushlog["date"],
+                pushlog["user"],
+                branch_id,
+                ]
+            try:
+                pushlog_id = self._insert_data_and_get_id(
+                    "set_pushlog",
+                    placeholders=placeholders,
+                    )
+
+                # process the nodes of the pushlog
+                self._insert_pushlog_changesets(pushlog_id, pushlog["changesets"])
+                self.pushlog_count += 1
+
+            except IntegrityError as e:
+                self.println(e)
+                self.println("--Skip dup- pushlog: {0}".format(
+                    pushlog_json_id,
+                ), 1)
+                self.pushlog_skipped_count += 1
+                # if a pushlog is skipped, then all its changesets are
+                # also skipped as a result.
+                self.changeset_skipped_count += len(pushlog["changesets"])
+
+
+    def _insert_pushlog_changesets(self, pushlog_id, changeset_list):
+        """Loop through all the changesets in a pushlog, and insert them."""
+
+        for cs in changeset_list:
+            self.println("        Changeset {0}".format(cs["node"]), 2)
+            placeholders = [
+                cs["node"],
+                cs["author"],
+                cs["branch"],
+                cs["desc"],
+                pushlog_id,
+                ]
+
+            try:
+                self._insert_data_and_get_id(
+                    "set_node",
+                    placeholders=placeholders,
+                    )
+                self.changeset_count += 1
+
+            except IntegrityError:
+                self.println("--Skip changeset dup- pushlog: {0}, node: {1}".format(
+                    pushlog_id,
+                    cs["node"],
+                    ))
+                self.changeset_skipped_count += 1
+
+
+
+    def _insert_data(self, statement, placeholders, executemany=False):
+
+        return self.hg_ds.dhub.execute(
+            proc='hgmozilla.inserts.' + statement,
+            debug_show=settings.DEBUG,
+            placeholders=placeholders,
+            executemany=executemany,
+            return_type='iter',
+            )
+
+
+    def _insert_data_and_get_id(self, statement, placeholders):
+
+        self._insert_data(statement, placeholders)
+
+        id_iter = self.hg_ds.dhub.execute(
+            proc='hgmozilla.selects.get_last_insert_id',
+            debug_show=settings.DEBUG,
+            return_type='iter',
+            )
+
+        return id_iter.get_column_data('id')
+
+
+    def println(self, val, level=0):
+        """Write to out (possibly stdout) if verbosity meets the level."""
+        if settings.DEBUG and self.out and self.verbosity >= level:
+            self.out.write("{0}\n".format(str(val)))
+
+
+
+class PerformanceTestModel(DatazillaModelBase):
+    """Public interface to all data access for a performance project."""
+
+    # content types that every project will have
+    CONTENT_TYPES = ["perftest", "objectstore"]
 
 
     @classmethod
@@ -437,12 +756,6 @@ class DatazillaModel(object):
             proc='perftest.inserts.set_test_collection_map',
             debug_show=self.DEBUG,
             placeholders=placeholders)
-
-
-    def disconnect(self):
-        """Iterate over and disconnect all data sources."""
-        for src in self.sources.itervalues():
-            src.disconnect()
 
 
     def store_test_data(self, json_data, error=None):
