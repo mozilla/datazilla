@@ -205,14 +205,6 @@
          "host":"master_host"
 
       },
-      "set_test_data":{
-
-         "sql":"INSERT INTO `test_data` (`test_run_id`,
-                                         `data`)
-                VALUES (?,?)",
-
-         "host":"master_host"
-      },
       "set_summary_cache":{
 
          "sql":"INSERT INTO `summary_cache` (`item_id`, `item_data`, `value`, `date`)
@@ -238,24 +230,6 @@
       }
   },
   "selects":{
-      "get_all_test_data":{
-
-         "sql":"SELECT id, test_run_id, data
-                FROM test_data
-                WHERE id >= ?",
-
-         "host":"master_host"
-
-      },
-      "get_test_data":{
-
-         "sql":"SELECT id, test_run_id, data
-                FROM test_data
-                WHERE id >= ?
-                LIMIT ?",
-
-         "host":"master_host"
-      },
       "get_test_run_summary":{
 
          "sql":"SELECT tr.id AS 'test_run_id',
