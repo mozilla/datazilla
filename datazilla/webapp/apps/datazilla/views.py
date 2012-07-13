@@ -23,7 +23,6 @@ def oauth_required(func):
     request.  View methods that use this method a project kwarg.
     """
     def _wrap_oauth(request, *args, **kwargs):
-
         project = kwargs.get('project', None)
         dm = PerformanceTestModel(project)
 
@@ -52,7 +51,7 @@ def oauth_required(func):
         try:
             #verify oauth django request and consumer object match
             server.verify_request(req_obj, cons_obj, None)
-        except oauth.Error, e:
+        except oauth.Error:
             status = 403
             result = {"status":"Error in verify_request"}
             return HttpResponse(json.dumps(result), mimetype=APP_JS, status=status)
@@ -131,7 +130,6 @@ def set_test_data(request, project=""):
     later processing.
 
     """
-
     #####
     #This conditional provides backwords compatibility with
     #the talos production environment.  It should
