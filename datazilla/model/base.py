@@ -12,9 +12,11 @@ import datetime
 import time
 import json
 import urllib
+import zlib
 from MySQLdb import IntegrityError
 
 from django.conf import settings
+from django.core.cache import cache
 
 
 from . import utils
@@ -571,16 +573,38 @@ class PerformanceTestModel(DatazillaModelBase):
 
         return test_collection
 
-
     def get_test_reference_data(self):
 
-        reference_data = dict(operating_systems=self.get_operating_systems('id'),
-                             tests=self.get_tests('id'),
-                             products=self.get_products('id'),
-                             product_test_os_map=self.get_product_test_os_map(),
-                             test_collections=self.get_test_collections())
+        json_data = '{}'
+        cache_key = self.get_ref_data_cache_key()
+        compressed_json_data = cache.get(cache_key)
 
-        return reference_data
+        if not compressed_json_data:
+            self.cache_ref_data()
+            compressed_json_data = cache.get(cache_key)
+
+        json_data = zlib.decompress( compressed_json_data )
+
+        return json_data
+
+    def get_ref_data_cache_key(self):
+        return self.project + '_reference_data'
+
+    def cache_ref_data(self):
+        #retrieve ref data
+        ref_data = dict(
+            operating_systems=self.get_operating_systems('id'),
+            tests=self.get_tests('id'),
+            products=self.get_products('id'),
+            product_test_os_map=self.get_product_test_os_map(),
+            test_collections=self.get_test_collections())
+
+        json_data = json.dumps(ref_data)
+
+        cache_key = self.get_ref_data_cache_key()
+
+        #compress and cache reference data
+        cache.set(cache_key, zlib.compress( json_data ) )
 
 
     def get_test_run_summary(self,
