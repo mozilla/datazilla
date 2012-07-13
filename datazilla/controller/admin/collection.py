@@ -2,12 +2,12 @@
 Functions for populating test collections.
 
 """
-from datazilla.model import DatazillaModel
+from datazilla.model import PerformanceTestModel
 
 
 def load_test_collection(project):
 
-    dm = DatazillaModel(project)
+    dm = PerformanceTestModel(project)
 
     products = dm.get_products('id')
 

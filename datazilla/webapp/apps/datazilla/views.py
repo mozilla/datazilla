@@ -11,7 +11,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponse
 
-from datazilla.model import DatazillaModel
+from datazilla.model import PerformanceTestModel
 from datazilla.model import utils
 
 APP_JS = 'application/json'
@@ -25,7 +25,7 @@ def oauth_required(func):
     def _wrap_oauth(request, *args, **kwargs):
 
         project = kwargs.get('project', None)
-        dm = DatazillaModel(project)
+        dm = PerformanceTestModel(project)
 
         #Get the consumer key
         key = request.REQUEST.get('oauth_consumer_key', None)
@@ -92,7 +92,7 @@ def graphs(request, project=""):
         #reference data has not been cached:
         #serialize, compress, and cache
         ####
-        dm = DatazillaModel(project)
+        dm = PerformanceTestModel(project)
         ref_data = dm.get_test_reference_data()
         dm.disconnect()
 
@@ -165,7 +165,7 @@ def set_test_data(request, project=""):
         }
 
     try:
-        dm = DatazillaModel(project)
+        dm = PerformanceTestModel(project)
         dm.store_test_data(unquoted_json_data, error)
         dm.disconnect()
     except Exception as e:
@@ -193,7 +193,7 @@ def dataview(request, project="", method=""):
 
     json = ""
     if method in DATAVIEW_ADAPTERS:
-        dm = DatazillaModel(project)
+        dm = PerformanceTestModel(project)
         pt_dhub = dm.sources["perftest"].dhub
 
         if 'adapter' in DATAVIEW_ADAPTERS[method]:

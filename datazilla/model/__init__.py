@@ -1,1 +1,1 @@
-from .base import DatazillaModel
+from .base import PerformanceTestModel, PushLogModel
