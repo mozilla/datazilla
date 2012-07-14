@@ -126,7 +126,7 @@ class SQLDataSource(object):
 
     @classmethod
     def create(cls, project, contenttype,
-               host=None, name=None, db_type=None, schema_file=None):
+               host=None, name=None, db_type=None, schema_file=None, cron_batch=1):
         """
         Create and return a new datasource for given project/contenttype.
 
@@ -153,13 +153,14 @@ class SQLDataSource(object):
             name=name,
             db_type=db_type,
             schema_file=schema_file,
+            cron_batch=cron_batch,
             )
 
 
     @classmethod
     @transaction.commit_on_success
     def _create_dataset(cls, project, contenttype, dataset, host,
-                        name=None, db_type=None, schema_file=None):
+                        name=None, db_type=None, schema_file=None, cron_batch=1):
         """Create a new ``SQLDataSource`` and its corresponding database."""
         if name is None:
             name = "{0}_{1}_{2}".format(project, contenttype, dataset)
@@ -183,6 +184,7 @@ class SQLDataSource(object):
             oauth_consumer_key=oauth_consumer_key,
             oauth_consumer_secret=oauth_consumer_secret,
             creation_date=datetime.datetime.now(),
+            cron_batch=cron_batch,
             )
 
         ds.create_database(schema_file)
@@ -218,6 +220,7 @@ class DataSource(models.Model):
     oauth_consumer_key = models.CharField(max_length=45, null=True)
     oauth_consumer_secret = models.CharField(max_length=45, null=True)
     creation_date = models.DateTimeField()
+    cron_batch = models.IntegerField()
 
     objects = DataSourceManager()
 

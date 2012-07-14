@@ -360,7 +360,7 @@ class PerformanceTestModel(DatazillaModelBase):
 
 
     @classmethod
-    def create(cls, project, hosts=None, types=None):
+    def create(cls, project, hosts=None, types=None, cron_batch=1):
         """
         Create all the datasource tables for this project.
 
@@ -382,7 +382,12 @@ class PerformanceTestModel(DatazillaModelBase):
 
         for ct in cls.CONTENT_TYPES:
             SQLDataSource.create(
-                project, ct, host=hosts.get(ct), db_type=types.get(ct))
+                project,
+                ct,
+                host=hosts.get(ct),
+                db_type=types.get(ct),
+                cron_batch=cron_batch,
+                )
 
         return cls(project=project)
 
