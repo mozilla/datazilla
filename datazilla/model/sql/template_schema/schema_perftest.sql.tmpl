@@ -270,6 +270,7 @@ CREATE TABLE `product` (
   `product` varchar(50) COLLATE utf8_bin NOT NULL,
   `branch` varchar(128) COLLATE utf8_bin DEFAULT NULL,
   `version` varchar(16) COLLATE utf8_bin NOT NULL,
+  `default_product` TINYINT NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_branch` (`product`,`branch`,`version`)
 ) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
