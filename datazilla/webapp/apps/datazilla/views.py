@@ -23,12 +23,16 @@ def oauth_required(func):
     request.  View methods that use this method a project kwarg.
     """
     def _wrap_oauth(request, *args, **kwargs):
-
         project = kwargs.get('project', None)
         dm = PerformanceTestModel(project)
 
         #Get the consumer key
         key = request.REQUEST.get('oauth_consumer_key', None)
+
+        if key is None:
+            result = {"status": "No OAuth credentials provided."}
+            return HttpResponse(
+                json.dumps(result), content_type=APP_JS, status=403)
 
         #Get the consumer secret stored with this key
         ds_consumer_secret = dm.get_oauth_consumer_secret(key)
@@ -43,8 +47,7 @@ def oauth_required(func):
         server = oauth.Server()
 
         #Get the consumer object
-        cons_obj = oauth.Consumer(key,
-                                  ds_consumer_secret)
+        cons_obj = oauth.Consumer(key, ds_consumer_secret)
 
         #Set the signature method
         server.add_signature_method(oauth.SignatureMethod_HMAC_SHA1())
@@ -52,10 +55,11 @@ def oauth_required(func):
         try:
             #verify oauth django request and consumer object match
             server.verify_request(req_obj, cons_obj, None)
-        except oauth.Error, e:
+        except oauth.Error:
             status = 403
             result = {"status":"Error in verify_request"}
-            return HttpResponse(json.dumps(result), mimetype=APP_JS, status=status)
+            return HttpResponse(
+                json.dumps(result), content_type=APP_JS, status=status)
 
         return func(request, *args, **kwargs)
 
@@ -131,7 +135,6 @@ def set_test_data(request, project=""):
     later processing.
 
     """
-
     #####
     #This conditional provides backwords compatibility with
     #the talos production environment.  It should
