@@ -46,6 +46,8 @@ class DatazillaModelBase(object):
         for src in self.sources.itervalues():
             src.disconnect()
 
+    def get_project_cache_key(self, str_data):
+        return "{0}_{1}".format(self.project, str_data)
 
 
 class PushLogModel(DatazillaModelBase):
@@ -471,6 +473,21 @@ class PerformanceTestModel(DatazillaModelBase):
 
         return products
 
+    def get_default_product(self):
+
+        proc = 'perftest.selects.get_default_product'
+
+        default_product = self.sources["perftest"].dhub.execute(
+                proc=proc,
+                debug_show=self.DEBUG,
+                return_type='tuple'
+                )
+
+        product_data = {}
+        if default_product:
+            product_data = default_product[0]
+
+        return product_data
 
     def get_machines(self):
 
@@ -530,13 +547,15 @@ class PerformanceTestModel(DatazillaModelBase):
 
     def get_reference_data(self):
 
-        reference_data = dict( operating_systems=self.get_operating_systems(),
-                              tests=self.get_tests(),
-                              products=self.get_products(),
-                              machines=self.get_machines(),
-                              options=self.get_options(),
-                              pages=self.get_pages(),
-                              aux_data=self.get_aux_data())
+        reference_data = dict(
+            operating_systems=self.get_operating_systems(),
+            tests=self.get_tests(),
+            products=self.get_products(),
+            machines=self.get_machines(),
+            options=self.get_options(),
+            pages=self.get_pages(),
+            aux_data=self.get_aux_data(),
+            )
 
         return reference_data
 
@@ -573,10 +592,23 @@ class PerformanceTestModel(DatazillaModelBase):
 
         return test_collection
 
+    def get_test_collection_set(self):
+
+        proc = 'perftest.selects.get_test_collections'
+
+        test_collection_set = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            key_column='name',
+            return_type='set'
+            )
+
+        return test_collection_set
+
     def get_test_reference_data(self):
 
         json_data = '{}'
-        cache_key = self.get_ref_data_cache_key()
+        cache_key = self.get_project_cache_key('reference_data')
         compressed_json_data = cache.get(cache_key)
 
         if not compressed_json_data:
@@ -587,9 +619,6 @@ class PerformanceTestModel(DatazillaModelBase):
 
         return json_data
 
-    def get_ref_data_cache_key(self):
-        return self.project + '_reference_data'
-
     def cache_ref_data(self):
         #retrieve ref data
         ref_data = dict(
@@ -597,15 +626,21 @@ class PerformanceTestModel(DatazillaModelBase):
             tests=self.get_tests('id'),
             products=self.get_products('id'),
             product_test_os_map=self.get_product_test_os_map(),
-            test_collections=self.get_test_collections())
+            test_collections=self.get_test_collections(),
+            )
 
         json_data = json.dumps(ref_data)
 
-        cache_key = self.get_ref_data_cache_key()
+        cache_key = self.get_project_cache_key('reference_data')
 
         #compress and cache reference data
         cache.set(cache_key, zlib.compress( json_data ) )
 
+    def cache_default_project(self):
+
+        default_project = self.get_default_product()
+        cache_key = self.get_project_cache_key('default_project')
+        cache.set(cache_key, default_project)
 
     def get_test_run_summary(self,
                           start,
@@ -1168,7 +1203,10 @@ class PerformanceTestModel(DatazillaModelBase):
         # Insert the test name and version on duplicate key update
         self.sources['perftest'].dhub.execute(
             proc='perftest.inserts.set_test_ref_data',
-            placeholders=[testrun['suite'], version],
+            placeholders=[testrun['suite'],
+                          version,
+                          testrun['suite'],
+                          version],
             debug_show=self.DEBUG)
 
         # Get the test name id
