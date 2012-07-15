@@ -102,8 +102,14 @@
  "inserts":{
       "set_test_ref_data":{
 
-         "sql":"INSERT INTO `test` (`name`, `version`) VALUES (?, ?)
-                ON DUPLICATE KEY UPDATE `name`=`name`, `version`=`version`",
+         "sql":"INSERT INTO `test` (`name`, `version`)
+                SELECT ?, ?
+                FROM `test`
+                WHERE NOT EXISTS (
+                    SELECT `name`, `version`
+                    FROM `test`
+                    WHERE `name` = ? AND `version` = ?
+                ) LIMIT 1",
 
          "host":"master_host"
       },
@@ -410,7 +416,15 @@
       },
       "get_product_data":{
 
-         "sql":"SELECT `id`, `product`, `branch`, `version` FROM `product`",
+         "sql":"SELECT `id`, `product`, `branch`, `version`, `default_product` FROM `product`",
+
+         "host":"master_host"
+      },
+      "get_default_product":{
+
+         "sql":"SELECT `id`, `product`, `branch`, `version`, `default_product`
+                FROM `product`
+                WHERE `default_product` = 1",
 
          "host":"master_host"
       },
