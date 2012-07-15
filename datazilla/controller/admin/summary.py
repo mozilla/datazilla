@@ -15,15 +15,19 @@ def cache_test_summaries(project):
 
     ptm = PerformanceTestModel(project)
 
+    ###
     #New reference data could be found in the cached data
-    #summary structures, update the cache
+    #summary structures. Update the reference data cached 
+    #every time the sumary data is cached.
+    ###
     ptm.cache_ref_data()
+    ptm.cache_default_project()
 
     data_iter = ptm.get_all_summary_cache()
 
     for d in data_iter:
         for data in d:
-            key = utils.get_cache_key(
+            key = utils.get_summary_cache_key(
                 project,
                 data['item_id'],
                 data['item_data'],
