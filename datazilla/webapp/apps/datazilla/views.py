@@ -245,7 +245,11 @@ def _get_test_run_summary(project, method, request, dm):
 
     if not product_ids:
         ##Set default product_id##
-        product_ids = [12]
+        pck = dm.get_project_cache_key('default_project')
+        default_project = cache.get(pck)
+
+        if default_project:
+            product_ids = [ int(default_project['id']) ]
 
     json_data = '{}'
 
@@ -254,7 +258,7 @@ def _get_test_run_summary(project, method, request, dm):
         if len(product_ids) > 1:
             extend_list = { 'data':[], 'columns':[] }
             for id in product_ids:
-                key = utils.get_cache_key(project, str(id), time_key)
+                key = utils.get_summary_cache_key(project, str(id), time_key)
                 compressed_json_data = cache.get(key)
 
                 if compressed_json_data:
@@ -266,7 +270,7 @@ def _get_test_run_summary(project, method, request, dm):
             json_data = json.dumps(extend_list)
 
         else:
-            key = utils.get_cache_key(
+            key = utils.get_summary_cache_key(
                 project,
                 str(product_ids[0]),
                 time_key,
