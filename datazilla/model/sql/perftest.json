@@ -139,6 +139,14 @@
 
          "host":"master_host"
       },
+      "set_default_product":{
+
+         "sql":"UPDATE `product`
+               SET `default_product` = 1
+               WHERE `id` = ?",
+
+         "host":"master_host"
+      },
       "set_product_ref_data":{
          "sql":"INSERT INTO `product` (`product`, `branch`, `version`)
                 SELECT ?, ?, ?
