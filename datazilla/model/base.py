@@ -701,24 +701,6 @@ class PerformanceTestModel(DatazillaModelBase):
         return data_iter
 
 
-    def get_all_test_data(self, start, total):
-
-        proc = 'perftest.selects.get_all_test_data'
-
-        data_iter = self.sources["perftest"].dhub.execute(
-            proc=proc,
-            debug_show=self.DEBUG,
-            placeholders=[start],
-            chunk_size=20,
-            chunk_min=start,
-            chunk_source="test_data.id",
-            chunk_total=total,
-            return_type='tuple',
-            )
-
-        return data_iter
-
-
     def set_summary_cache(self, item_id, item_data, value):
 
         now_datetime = str( datetime.datetime.now() )
@@ -816,27 +798,6 @@ class PerformanceTestModel(DatazillaModelBase):
         self._set_test_aux_data(data, test_id, test_run_id)
 
         return test_run_id
-
-    def transfer_objects(self, start_id, limit):
-        """
-        Transfer objects from test_data table to objectstore.
-
-        TODO: This can go away once all projects have been migrated away from
-        using the old test_data table in the perftest schema to using the
-        objectstore.
-
-        """
-        proc = "perftest.selects.get_test_data"
-        data_objects = self.sources["perftest"].dhub.execute(
-            proc=proc,
-            placeholders=[ int(start_id), int(limit) ],
-            debug_show=self.DEBUG,
-            return_type='tuple'
-            )
-
-        for data_object in data_objects:
-            json_data = data_object['data']
-            self.store_test_data( json_data )
 
 
     def process_objects(self, loadlimit):
