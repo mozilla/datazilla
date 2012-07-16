@@ -545,21 +545,6 @@ class PerformanceTestModel(DatazillaModelBase):
         return aux_data_dict
 
 
-    def get_reference_data(self):
-
-        reference_data = dict(
-            operating_systems=self.get_operating_systems(),
-            tests=self.get_tests(),
-            products=self.get_products(),
-            machines=self.get_machines(),
-            options=self.get_options(),
-            pages=self.get_pages(),
-            aux_data=self.get_aux_data(),
-            )
-
-        return reference_data
-
-
     def get_test_collections(self):
 
         proc = 'perftest.selects.get_test_collections'
@@ -584,13 +569,15 @@ class PerformanceTestModel(DatazillaModelBase):
             product_id = data['product_id']
             os_id = data['operating_system_id']
 
-            test_collection[ id ]['data'].append({'test_id':data['test_id'],
-                                                 'name':data['name'],
-                                                 'product_id':product_id,
-                                                 'operating_system_id':os_id })
-
+            test_collection[ id ]['data'].append(
+                {'test_id':data['test_id'],
+                 'name':data['name'],
+                 'product_id':product_id,
+                 'operating_system_id':os_id }
+                 )
 
         return test_collection
+
 
     def get_test_collection_set(self):
 
@@ -605,21 +592,21 @@ class PerformanceTestModel(DatazillaModelBase):
 
         return test_collection_set
 
-    def get_test_reference_data(self):
+    def get_test_reference_data(self, cache_key_str='reference_data'):
 
         json_data = '{}'
-        cache_key = self.get_project_cache_key('reference_data')
+        cache_key = self.get_project_cache_key(cache_key_str)
         compressed_json_data = cache.get(cache_key)
 
         if not compressed_json_data:
-            self.cache_ref_data()
+            self.cache_ref_data(cache_key_str)
             compressed_json_data = cache.get(cache_key)
 
         json_data = zlib.decompress( compressed_json_data )
 
         return json_data
 
-    def cache_ref_data(self):
+    def cache_ref_data(self, cache_key_str='reference_data'):
         #retrieve ref data
         ref_data = dict(
             operating_systems=self.get_operating_systems('id'),
@@ -631,15 +618,15 @@ class PerformanceTestModel(DatazillaModelBase):
 
         json_data = json.dumps(ref_data)
 
-        cache_key = self.get_project_cache_key('reference_data')
+        cache_key = self.get_project_cache_key(cache_key_str)
 
         #compress and cache reference data
         cache.set(cache_key, zlib.compress( json_data ) )
 
-    def cache_default_project(self):
+    def cache_default_project(self, cache_key_str='default_project'):
 
         default_project = self.get_default_product()
-        cache_key = self.get_project_cache_key('default_project')
+        cache_key = self.get_project_cache_key(cache_key_str)
         cache.set(cache_key, default_project)
 
     def get_test_run_summary(self,
@@ -772,6 +759,16 @@ class PerformanceTestModel(DatazillaModelBase):
 
         return data_iter
 
+
+    def set_default_product(self, id):
+
+        proc = 'perftest.inserts.set_default_product'
+
+        default_product = self.sources["perftest"].dhub.execute(
+                proc=proc,
+                placeholders=[id],
+                debug_show=self.DEBUG,
+                )
 
     def set_summary_cache(self, item_id, item_data, value):
 
