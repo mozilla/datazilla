@@ -1017,7 +1017,7 @@ class PerformanceTestModel(DatazillaModelBase):
 
     def _get_or_create_aux_id(self, aux_data, test_id):
         """Given aux name and test id, return aux id, creating if needed."""
-        # Insert the test id and aux data on duplicate key update
+        # Insert the test id and aux data if it doesn't exist
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_aux_ref_data',
             placeholders=[
@@ -1042,7 +1042,7 @@ class PerformanceTestModel(DatazillaModelBase):
 
     def _get_or_create_page_id(self, page, test_id):
         """Given page name and test id, return page id, creating if needed."""
-        # Insert the test id and page name on duplicate key update
+        # Insert the test id and page name if it doesn't exist
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_pages_ref_data',
             placeholders=[
@@ -1175,7 +1175,7 @@ class PerformanceTestModel(DatazillaModelBase):
         """
         machine = data['test_machine']
 
-        # Insert the the machine name and timestamp on duplicate key update
+        # Insert the the machine name and timestamp if it doesn't exist
         date_added = int(time.time())
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_machine_ref_data',
@@ -1213,7 +1213,7 @@ class PerformanceTestModel(DatazillaModelBase):
             raise TestDataError(
                 "Bad value: ['testrun']['suite_version'] is not an integer.")
 
-        # Insert the test name and version on duplicate key update
+        # Insert the test name and version if it doesn't exist
         self.sources['perftest'].dhub.execute(
             proc='perftest.inserts.set_test_ref_data',
             placeholders=[
@@ -1246,7 +1246,7 @@ class PerformanceTestModel(DatazillaModelBase):
         os_name = machine['os']
         os_version = machine['osversion']
 
-        # Insert the operating system name and version on duplicate key update
+        # Insert the operating system name and version if it doesn't exist
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_os_ref_data',
             placeholders=[
@@ -1269,7 +1269,7 @@ class PerformanceTestModel(DatazillaModelBase):
 
     def _get_or_create_option_id(self, option):
         """Return option id for given option name, creating it if needed."""
-        # Insert the option name on duplicate key update
+        # Insert the option name if it doesn't exist
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_option_ref_data',
             placeholders=[ option, option],
@@ -1293,7 +1293,7 @@ class PerformanceTestModel(DatazillaModelBase):
         branch = build['branch']
         version = build['version']
 
-        # Insert the product, branch, and version on duplicate key update
+        # Insert the product, branch, and version if it doesn't exist
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_product_ref_data',
             placeholders=[
