@@ -1023,7 +1023,12 @@ class PerformanceTestModel(DatazillaModelBase):
         # Insert the test id and aux data on duplicate key update
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_aux_ref_data',
-            placeholders=[test_id, aux_data],
+            placeholders=[
+                test_id,
+                aux_data,
+                test_id,
+                aux_data
+                ],
             debug_show=self.DEBUG,
             )
 
@@ -1043,7 +1048,12 @@ class PerformanceTestModel(DatazillaModelBase):
         # Insert the test id and page name on duplicate key update
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_pages_ref_data',
-            placeholders=[test_id, page],
+            placeholders=[
+                test_id,
+                page,
+                test_id,
+                page
+                ],
             debug_show=self.DEBUG,
             )
 
@@ -1169,9 +1179,15 @@ class PerformanceTestModel(DatazillaModelBase):
         machine = data['test_machine']
 
         # Insert the the machine name and timestamp on duplicate key update
+        date_added = int(time.time())
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_machine_ref_data',
-            placeholders=[machine['name'], int(time.time())],
+            placeholders=[
+                machine['name'],
+                date_added,
+                machine['name'],
+                date_added
+                ],
             debug_show=self.DEBUG)
 
         # Get the machine id
@@ -1203,11 +1219,14 @@ class PerformanceTestModel(DatazillaModelBase):
         # Insert the test name and version on duplicate key update
         self.sources['perftest'].dhub.execute(
             proc='perftest.inserts.set_test_ref_data',
-            placeholders=[testrun['suite'],
-                          version,
-                          testrun['suite'],
-                          version],
-            debug_show=self.DEBUG)
+            placeholders=[
+                testrun['suite'],
+                version,
+                testrun['suite'],
+                version
+                ],
+            debug_show=self.DEBUG
+            )
 
         # Get the test name id
         id_iter = self.sources['perftest'].dhub.execute(
@@ -1233,7 +1252,12 @@ class PerformanceTestModel(DatazillaModelBase):
         # Insert the operating system name and version on duplicate key update
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_os_ref_data',
-            placeholders=[os_name, os_version],
+            placeholders=[
+                os_name,
+                os_version,
+                os_name,
+                os_version
+                ],
             debug_show=self.DEBUG)
 
         # Get the operating system name id
@@ -1251,7 +1275,7 @@ class PerformanceTestModel(DatazillaModelBase):
         # Insert the option name on duplicate key update
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_option_ref_data',
-            placeholders=[ option ],
+            placeholders=[ option, option],
             debug_show=self.DEBUG)
 
         # Get the option id
@@ -1275,7 +1299,14 @@ class PerformanceTestModel(DatazillaModelBase):
         # Insert the product, branch, and version on duplicate key update
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_product_ref_data',
-            placeholders=[ product, branch, version ],
+            placeholders=[
+                product,
+                branch,
+                version,
+                product,
+                branch,
+                version
+                ],
             debug_show=self.DEBUG)
 
         # Get the product id
