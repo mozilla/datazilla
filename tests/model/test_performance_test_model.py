@@ -609,7 +609,6 @@ def test_get_test_reference_data(dm):
     machine_id = dm._get_or_create_machine_id(data)
 
     build_id = dm._set_build_data(data, os_id, product_id, machine_id)
-    ##Insert page and aux reference data##
     test_run_id = dm._set_test_run_data(data, test_id, build_id)
 
     json_data = json.loads( dm.get_test_reference_data('testproj-refdata') )
