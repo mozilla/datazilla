@@ -74,6 +74,8 @@ def testrun(**kwargs):
 
 def test_build(**kwargs):
     """Return sample test_build data structure, with default values."""
+
+    #build id must be unique for different builds
     id = random.randint(10000000000000, 20000000000000)
 
     defaults = {
