@@ -245,7 +245,7 @@ def _get_test_run_summary(project, method, request, dm):
 
     if not product_ids:
         ##Set default product_id##
-        pck = dm.get_project_cache_key('default_project')
+        pck = dm.get_project_cache_key('default_product')
         default_project = cache.get(pck)
 
         if default_project:

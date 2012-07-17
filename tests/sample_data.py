@@ -7,7 +7,7 @@ import os
 
 
 def perftest_ref_data_json():
-    """Return a handle to the pushlog_test.json file."""
+    """Return reference data json structure"""
 
     file = os.path.join(
         os.path.abspath(os.path.dirname(__file__)),
