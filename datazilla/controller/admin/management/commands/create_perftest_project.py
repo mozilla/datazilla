@@ -1,6 +1,7 @@
 from optparse import make_option
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from datazilla.model import PerformanceTestModel
+from base import ProjectBatchCommandBase
 
 class Command(BaseCommand):
     """Management command to create all databases for a new project."""
@@ -44,10 +45,11 @@ class Command(BaseCommand):
         make_option("--cron_batch",
                     action="store",
                     dest="cron_batch",
-                    default=1,
-                    help="Which cron_batch this project should belong to. "
-                         "Determines the interval at which it is updated.  "
-                         "Default to 1."),
+                    default=None,
+                    help=("Which cron_batch this project should belong to. "
+                          "Choices are: (0}\n"
+                          "Default to none."
+                          ).format(str(ProjectBatchCommandBase.BATCH_NAMES))),
         )
 
     def handle(self, *args, **options):
@@ -57,9 +59,12 @@ class Command(BaseCommand):
         cron_batch = options.get("cron_batch")
 
         if not project:
-            self.stdout.write("You must supply a project name " +
-                              "to create: --project project\n")
-            return
+            raise CommandError(
+                "You must supply a project name to create: --project project\n")
+
+        if not cron_batch in ([None] + ProjectBatchCommandBase.BATCH_NAMES):
+            raise CommandError(
+                "cron_batch must be one of: small, medium or large")
 
         hosts = dict(
             perftest=options.get("perftest_host"),
@@ -71,6 +76,11 @@ class Command(BaseCommand):
             objectstore=options.get("objectstore_type"),
             )
 
-        dm = PerformanceTestModel.create(project, hosts=hosts, types=types, cron_batch=cron_batch)
+        dm = PerformanceTestModel.create(
+            project,
+            hosts=hosts,
+            types=types,
+            cron_batch=cron_batch,
+            )
 
         dm.disconnect()

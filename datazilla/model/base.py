@@ -360,7 +360,7 @@ class PerformanceTestModel(DatazillaModelBase):
 
 
     @classmethod
-    def create(cls, project, hosts=None, types=None, cron_batch=1):
+    def create(cls, project, hosts=None, types=None, cron_batch=None):
         """
         Create all the datasource tables for this project.
 
@@ -375,12 +375,23 @@ class PerformanceTestModel(DatazillaModelBase):
         all contenttypes need to be represented; any that aren't will use the
         default (``MySQL-InnoDB``).
 
+        ``cron_batch`` is which cron batch this project belongs to.  This will
+        determine how often the project is automatically processed by various
+        management commands.  None indicates it will not be automatically
+        processed.  Other possible values are: small, medium, or large
+        (generally depending on the size of the project, and how long a
+        management command may spend on the projects of that size.)
+        This only applies to the contenttype of "perftest".
 
         """
         hosts = hosts or {}
         types = types or {}
 
         for ct in cls.CONTENT_TYPES:
+            # cron_batch only applies to perftest sources.
+            if ct != "perftest":
+                cron_batch = None
+
             SQLDataSource.create(
                 project,
                 ct,
