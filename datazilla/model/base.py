@@ -593,7 +593,7 @@ class PerformanceTestModel(DatazillaModelBase):
         col_data = {
            'b.product_id': utils.get_id_string(product_ids),
 
-           'b.operating_system_id': utils.get_id_string(operating_system_ids),
+           'm.operating_system_id': utils.get_id_string(operating_system_ids),
 
            'tr.test_id': utils.get_id_string(test_ids)
         }
@@ -782,11 +782,16 @@ class PerformanceTestModel(DatazillaModelBase):
         test_id = self._get_or_create_test_id(data)
         os_id = self._get_or_create_os_id(data)
         product_id = self._get_or_create_product_id(data)
-        machine_id = self._get_or_create_machine_id(data)
+        machine_id = self._get_or_create_machine_id(data, os_id)
 
         # Insert build and test_run data.
-        build_id = self._set_build_data(data, os_id, product_id, machine_id)
-        test_run_id = self._set_test_run_data(data, test_id, build_id)
+        build_id = self._set_build_data(data, product_id)
+        test_run_id = self._set_test_run_data(
+            data,
+            test_id,
+            build_id,
+            machine_id
+            )
 
         self._set_option_data(data, test_run_id)
         self._set_test_values(data, test_id, test_run_id)
@@ -990,7 +995,7 @@ class PerformanceTestModel(DatazillaModelBase):
             'set_test_option_values', placeholders, executemany=True)
 
 
-    def _set_build_data(self, data, os_id, product_id, machine_id):
+    def _set_build_data(self, data, product_id):
         """Inserts build data into the db and returns build ID."""
         machine = data['test_machine']
         build = data['test_build']
@@ -998,9 +1003,7 @@ class PerformanceTestModel(DatazillaModelBase):
         build_id = self._insert_data_and_get_id(
             'set_build_data',
             [
-                os_id,
                 product_id,
-                machine_id,
                 build['id'],
                 machine['platform'],
                 build['revision'],
@@ -1008,13 +1011,14 @@ class PerformanceTestModel(DatazillaModelBase):
                 'opt',
                 # TODO: need to get the build date into the json
                 int(time.time()),
+                build['id']
                 ]
             )
 
         return build_id
 
 
-    def _set_test_run_data(self, data, test_id, build_id):
+    def _set_test_run_data(self, data, test_id, build_id, machine_id):
         """Inserts testrun data into the db and returns test_run id."""
 
         try:
@@ -1028,6 +1032,7 @@ class PerformanceTestModel(DatazillaModelBase):
             [
                 test_id,
                 build_id,
+                machine_id,
                 # denormalization; avoid join to build table to get revision
                 data['test_build']['revision'],
                 run_date,
@@ -1061,7 +1066,7 @@ class PerformanceTestModel(DatazillaModelBase):
             ).get_column_data('id')
 
 
-    def _get_or_create_machine_id(self, data):
+    def _get_or_create_machine_id(self, data, os_id):
         """
         Given a TestData instance, returns the test id from the db.
 
@@ -1073,13 +1078,13 @@ class PerformanceTestModel(DatazillaModelBase):
         # Insert the the machine name and timestamp on duplicate key update
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_machine_ref_data',
-            placeholders=[machine['name'], int(time.time())],
+            placeholders=[machine['name'], os_id, int(time.time())],
             debug_show=self.DEBUG)
 
         # Get the machine id
         id_iter = self.sources["perftest"].dhub.execute(
             proc='perftest.selects.get_machine_id',
-            placeholders=[machine['name']],
+            placeholders=[machine['name'], os_id],
             debug_show=self.DEBUG,
             return_type='iter')
 

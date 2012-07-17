@@ -231,14 +231,19 @@ def test_get_or_create_product_id_no_version(dm):
 
 def test_get_or_create_machine_id(dm):
     """Returns machine id for the given test data (creating it if needed)."""
+    os_data = TestData(
+        {'test_machine': {'os': 'linux', 'osversion': 'Ubuntu 11.10'}})
+
+    os_id = dm._get_or_create_os_id(os_data)
+
     data = TestData({'test_machine': {'name': 'qm-pxp01'}})
 
-    first_id = dm._get_or_create_machine_id(data)
+    first_id = dm._get_or_create_machine_id(data, os_id)
 
     inserted_id = dm._get_last_insert_id()
 
     # second call with same data returns existing id
-    second_id = dm._get_or_create_machine_id(data)
+    second_id = dm._get_or_create_machine_id(data, os_id)
 
     assert second_id == first_id == inserted_id
 
@@ -246,7 +251,7 @@ def test_get_or_create_machine_id(dm):
 def test_get_or_create_machine_id_no_test_machine(dm):
     """Raises TestDataError if there is no 'test_machine' key in data."""
     with pytest.raises(TestDataError) as e:
-        dm._get_or_create_machine_id(TestData({}))
+        dm._get_or_create_machine_id(TestData({}), None)
 
     assert str(e.value) == "Missing data: ['test_machine']."
 
@@ -254,7 +259,7 @@ def test_get_or_create_machine_id_no_test_machine(dm):
 def test_get_or_create_machine_id_no_name(dm):
     """Raises TestDataError if there is no 'name' in data['test_machine']."""
     with pytest.raises(TestDataError) as e:
-        dm._get_or_create_machine_id(TestData({'test_machine': {}}))
+        dm._get_or_create_machine_id(TestData({'test_machine': {}}), None)
 
     assert str(e.value) == "Missing data: ['test_machine']['name']."
 
@@ -265,17 +270,14 @@ def test_set_build_data(dm):
 
     os_id = dm._get_or_create_os_id(data)
     product_id = dm._get_or_create_product_id(data)
-    machine_id = dm._get_or_create_machine_id(data)
 
-    build_id = dm._set_build_data(data, os_id, product_id, machine_id)
+    build_id = dm._set_build_data(data, product_id)
 
     row_data = dm.sources["perftest"].dhub.execute(
         proc="perftest_test.selects.build", placeholders=[build_id])[0]
 
     assert row_data["test_build_id"] == data["test_build"]["id"]
-    assert row_data["operating_system_id"] == os_id
     assert row_data["product_id"] == product_id
-    assert row_data["machine_id"] == machine_id
     assert row_data["processor"] == data["test_machine"]["platform"]
     assert row_data["revision"] == data["test_build"]["revision"]
 
@@ -285,7 +287,7 @@ def test_set_build_data_no_test_machine(dm):
     with pytest.raises(TestDataError) as e:
         dm._set_build_data(
             TestData({"test_build": {"id": "12345", "revision": "deadbeef"}}),
-            None, None, None,
+            None
             )
 
     assert str(e.value) == "Missing data: ['test_machine']."
@@ -295,7 +297,7 @@ def test_set_build_data_no_test_build(dm):
     """Raises TestDataError if there is no 'test_build' key in data."""
     with pytest.raises(TestDataError) as e:
         dm._set_build_data(
-            TestData({"test_machine": {"platform": "arm"}}), None, None, None)
+            TestData({"test_machine": {"platform": "arm"}}), None)
 
     assert str(e.value) ==  "Missing data: ['test_build']."
 
@@ -310,7 +312,7 @@ def test_set_build_data_no_platform(dm):
                     "test_machine": {},
                     }
                 ),
-             None, None, None,
+             None
              )
 
     assert str(e.value) == "Missing data: ['test_machine']['platform']."
@@ -326,7 +328,7 @@ def test_set_build_data_no_build_id(dm):
                     "test_machine": {"platform": "arm"},
                     }
                 ),
-             None, None, None,
+             None
              )
 
     assert str(e.value) == "Missing data: ['test_build']['id']."
@@ -339,11 +341,11 @@ def test_set_test_run_data(dm):
     test_id = dm._get_or_create_test_id(data)
     os_id = dm._get_or_create_os_id(data)
     product_id = dm._get_or_create_product_id(data)
-    machine_id = dm._get_or_create_machine_id(data)
+    machine_id = dm._get_or_create_machine_id(data, os_id)
 
-    build_id = dm._set_build_data(data, os_id, product_id, machine_id)
+    build_id = dm._set_build_data(data, product_id)
 
-    test_run_id = dm._set_test_run_data(data, test_id, build_id)
+    test_run_id = dm._set_test_run_data(data, test_id, build_id, machine_id)
 
     row_data = dm.sources["perftest"].dhub.execute(
         proc="perftest_test.selects.test_run", placeholders=[test_run_id])[0]
@@ -359,7 +361,7 @@ def test_set_test_run_data_bad_date(dm):
     with pytest.raises(TestDataError) as e:
         dm._set_test_run_data(
             TestData({'testrun': {'date': 'foo'}}),
-            None, None,
+            None, None, None
             )
 
     expected = "Bad value: ['testrun']['date'] is not an integer."
@@ -374,11 +376,11 @@ def test_set_option_data(dm):
     test_id = dm._get_or_create_test_id(data)
     os_id = dm._get_or_create_os_id(data)
     product_id = dm._get_or_create_product_id(data)
-    machine_id = dm._get_or_create_machine_id(data)
+    machine_id = dm._get_or_create_machine_id(data, os_id)
 
-    build_id = dm._set_build_data(data, os_id, product_id, machine_id)
+    build_id = dm._set_build_data(data, product_id)
 
-    test_run_id = dm._set_test_run_data(data, test_id, build_id)
+    test_run_id = dm._set_test_run_data(data, test_id, build_id, machine_id)
 
     # Try to set the option data
     dm._set_option_data(data, test_run_id)
@@ -407,11 +409,11 @@ def test_set_extension_data(dm):
     test_id = dm._get_or_create_test_id(data)
     os_id = dm._get_or_create_os_id(data)
     product_id = dm._get_or_create_product_id(data)
-    machine_id = dm._get_or_create_machine_id(data)
+    machine_id = dm._get_or_create_machine_id(data, os_id)
 
-    build_id = dm._set_build_data(data, os_id, product_id, machine_id)
+    build_id = dm._set_build_data(data, product_id)
 
-    test_run_id = dm._set_test_run_data(data, test_id, build_id)
+    test_run_id = dm._set_test_run_data(data, test_id, build_id, machine_id)
 
     # Try to set the option data
     dm._set_option_data(data, test_run_id)
@@ -442,11 +444,11 @@ def test_set_test_values(dm):
     test_id = dm._get_or_create_test_id(data)
     os_id = dm._get_or_create_os_id(data)
     product_id = dm._get_or_create_product_id(data)
-    machine_id = dm._get_or_create_machine_id(data)
+    machine_id = dm._get_or_create_machine_id(data, os_id)
 
-    build_id = dm._set_build_data(data, os_id, product_id, machine_id)
+    build_id = dm._set_build_data(data, product_id)
 
-    test_run_id = dm._set_test_run_data(data, test_id, build_id)
+    test_run_id = dm._set_test_run_data(data, test_id, build_id, machine_id)
 
     # Try to set the test values
     dm._set_test_values(data, test_id, test_run_id)
@@ -476,11 +478,11 @@ def test_set_test_aux_data(dm):
     test_id = dm._get_or_create_test_id(data)
     os_id = dm._get_or_create_os_id(data)
     product_id = dm._get_or_create_product_id(data)
-    machine_id = dm._get_or_create_machine_id(data)
+    machine_id = dm._get_or_create_machine_id(data, os_id)
 
-    build_id = dm._set_build_data(data, os_id, product_id, machine_id)
+    build_id = dm._set_build_data(data, product_id)
 
-    test_run_id = dm._set_test_run_data(data, test_id, build_id)
+    test_run_id = dm._set_test_run_data(data, test_id, build_id, machine_id)
 
     # Try to set the aux data
     dm._set_test_aux_data(data, test_id, test_run_id)

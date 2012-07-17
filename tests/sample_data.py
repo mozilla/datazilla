@@ -3,6 +3,7 @@ Functions for flexible generation of sample input perftest JSON.
 
 """
 import json
+import random
 
 
 def perftest_json(**kwargs):
@@ -73,9 +74,11 @@ def testrun(**kwargs):
 
 def test_build(**kwargs):
     """Return sample test_build data structure, with default values."""
+    id = random.randint(10000000000000, 20000000000000)
+
     defaults = {
         "branch": "Mozilla-Aurora",
-        "id": "20120228122102",
+        "id": unicode(id),
         "name": "Firefox",
         "revision": "785345035a3b",
         "version": "14.0a2"

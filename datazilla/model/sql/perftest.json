@@ -20,9 +20,9 @@
                  FROM test_run AS tr
                  LEFT JOIN build AS b ON tr.build_id = b.id
                  LEFT JOIN test AS t ON tr.test_id = t.id
+                 LEFT JOIN machine AS m ON tr.machine_id = m.id
+                 LEFT JOIN operating_system AS os ON m.operating_system_id = os.id
                  LEFT JOIN product AS br ON b.product_id = br.id
-                 LEFT JOIN machine AS m ON b.machine_id = m.id
-                 LEFT JOIN operating_system AS os ON b.operating_system_id = os.id
                  ORDER BY tr.id DESC
                  LIMIT 1000",
 
@@ -48,10 +48,10 @@
                        os.version AS 'OS Version'
                  FROM test_run AS tr
                  LEFT JOIN build AS b ON tr.build_id = b.id
+                 LEFT JOIN machine AS m ON tr.machine_id = m.id
+                 LEFT JOIN operating_system AS os ON m.operating_system_id = os.id
                  LEFT JOIN test AS t ON tr.test_id = t.id
                  LEFT JOIN product AS br ON b.product_id = br.id
-                 LEFT JOIN machine AS m ON b.machine_id = m.id
-                 LEFT JOIN operating_system AS os ON b.operating_system_id = os.id
                  ORDER BY tr.id DESC
                  LIMIT 1000",
 
@@ -129,7 +129,7 @@
       },
       "set_machine_ref_data":{
 
-         "sql":"INSERT INTO `machine` (`name`, `date_added`) VALUES (?, ?)
+         "sql":"INSERT INTO `machine` (`name`, `operating_system_id`, `date_added`) VALUES (?, ?, ?)
                 ON DUPLICATE KEY UPDATE `name`=`name`",
 
          "host":"master_host"
@@ -150,15 +150,19 @@
       },
       "set_build_data":{
 
-         "sql":"INSERT INTO `build` (`operating_system_id`,
-                                     `product_id`,
-                                     `machine_id`,
+         "sql":"INSERT INTO `build` (`product_id`,
                                      `test_build_id`,
                                      `processor`,
                                      `revision`,
                                      `build_type`,
                                      `build_date`)
-                VALUES (?,?,?,?,?,?,?,?)",
+                SELECT ?, ?, ?, ?, ?, ?
+                FROM DUAL
+                WHERE NOT EXISTS (
+                    SELECT `test_build_id`
+                    FROM `build`
+                    WHERE `test_build_id` = ?
+                )",
 
          "host":"master_host"
       },
@@ -166,9 +170,10 @@
 
          "sql":"INSERT INTO `test_run` (`test_id`,
                                         `build_id`,
+                                        `machine_id`,
                                         `revision`,
                                         `date_run`)
-                VALUES (?,?,?,?)",
+                VALUES (?,?,?,?,?)",
 
          "host":"master_host"
 
@@ -237,16 +242,17 @@
                        tr.date_run,
                        b.product_id,
                        tr.test_id,
-                       b.operating_system_id,
+                       m.operating_system_id,
                        ROUND( AVG(tv.value), 2 ) AS avg,
                        ROUND( MIN(tv.value), 2 ) AS min,
                        ROUND( MAX(tv.value), 2 ) AS max,
                        ROUND( STDDEV(tv.value), 2 ) AS 'std'
                 FROM test_run AS tr
+                LEFT JOIN machine AS m ON tr.machine_id = m.id
                 LEFT JOIN test_value AS tv ON tr.id = tv.test_run_id
                 LEFT JOIN build AS b ON tr.build_id = b.id
                 WHERE (tr.date_run >= 'REP0' AND tr.date_run <= 'REP1') REP2
-                GROUP BY tr.id, tr.revision, b.product_id, tr.test_id, b.operating_system_id
+                GROUP BY tr.id, tr.revision, b.product_id, tr.test_id, m.operating_system_id
                 ORDER BY tr.date_run, tr.test_id ASC",
 
           "host":"master_host"
@@ -260,15 +266,16 @@
                        tr.date_run,
                        b.product_id,
                        tr.test_id,
-                       b.operating_system_id,
+                       m.operating_system_id,
                        ROUND( AVG(tv.value), 2 ) AS avg,
                        ROUND( MIN(tv.value), 2 ) AS min,
                        ROUND( MAX(tv.value), 2 ) AS max,
                        ROUND( STDDEV(tv.value), 2 ) AS 'std'
                 FROM test_run AS tr
+                LEFT JOIN machine AS m ON tr.machine_id = m.id
                 LEFT JOIN test_value AS tv ON tr.id = tv.test_run_id
                 LEFT JOIN build AS b ON tr.build_id = b.id
-                GROUP BY tr.id, tr.revision, b.product_id, tr.test_id, b.operating_system_id
+                GROUP BY tr.id, tr.revision, b.product_id, tr.test_id, m.operating_system_id
                 ORDER BY date_run ASC",
 
           "host":"master_host"
@@ -283,7 +290,7 @@
                         tr.date_run,
                         b.product_id,
                         tr.test_id,
-                        b.operating_system_id,
+                        m.operating_system_id,
                         p.url,
                         v.name AS value_name,
                         tv.value
@@ -291,6 +298,7 @@
                LEFT JOIN pages AS p ON tv.page_id = p.id
                LEFT JOIN value AS v ON tv.value_id = v.id
                LEFT JOIN test_run AS tr ON tv.test_run_id = tr.id
+               LEFT JOIN machine AS m ON tr.machine_id = m.id
                LEFT JOIN build AS b ON tr.build_id = b.id
                WHERE tv.test_run_id = ?
                ORDER BY p.url, tv.value ASC",
@@ -308,7 +316,7 @@
                         tr.date_run,
                         b.product_id,
                         tr.test_id,
-                        b.operating_system_id,
+                        m.operating_system_id,
                         p.url,
                         ROUND( AVG(tv.value), 2 ) AS avg,
                         ROUND( MIN(tv.value), 2 ) AS min,
@@ -318,6 +326,7 @@
                LEFT JOIN pages AS p ON tv.page_id = p.id
                LEFT JOIN value AS v ON tv.value_id = v.id
                LEFT JOIN test_run AS tr ON tv.test_run_id = tr.id
+               LEFT JOIN machine AS m ON tr.machine_id = m.id
                LEFT JOIN build AS b ON tr.build_id = b.id
                WHERE tv.test_run_id = ?
                GROUP BY tv.page_id
@@ -336,7 +345,7 @@
                         tr.date_run,
                         b.product_id,
                         tr.test_id,
-                        b.operating_system_id,
+                        m.operating_system_id,
                         p.url,
                         v.name AS value_name,
                         tv.value
@@ -344,6 +353,7 @@
                LEFT JOIN pages AS p ON tv.page_id = p.id
                LEFT JOIN value AS v ON tv.value_id = v.id
                LEFT JOIN test_run AS tr ON tv.test_run_id = tr.id
+               LEFT JOIN machine AS m ON tr.machine_id = m.id
                LEFT JOIN build AS b ON tr.build_id = b.id
                WHERE tv.test_run_id = ? AND tv.page_id = ?
                ORDER BY p.url, tv.run_id ASC",
@@ -353,13 +363,14 @@
       },
       "get_product_test_os_map":{
 
-         "sql":"SELECT b.product_id, tr.test_id, b.operating_system_id
+         "sql":"SELECT b.product_id, tr.test_id, m.operating_system_id
                 FROM test_run AS tr
+                LEFT JOIN machine AS m ON tr.machine_id = m.id
                 LEFT JOIN build AS b ON tr.build_id = b.id
                 WHERE b.product_id IN (
                   SELECT product_id
                   FROM product )
-               GROUP BY b.product_id, tr.test_id, b.operating_system_id",
+               GROUP BY b.product_id, tr.test_id, m.operating_system_id",
 
           "host":"master_host"
       },
@@ -479,7 +490,7 @@
 
         "sql":"SELECT `id`
                FROM `machine`
-               WHERE `name` = ?",
+               WHERE `name` = ? AND `operating_system_id` = ?",
 
         "host":"master_host"
       },
