@@ -21,16 +21,6 @@ class ProjectCommandBase(NoArgsCommand):
         )
 
 
-    def handle_one_project(self, project, options):
-        """"""
-        raise NotImplementedError
-
-
-    def handle_noargs(self, **options):
-        project = options.get("project")
-        self.handle_one_project(project, options)
-
-
 
 class ProjectBatchCommandBase(ProjectCommandBase):
     BATCH_NAMES = ["small", "medium", "large"]
@@ -109,3 +99,8 @@ class ProjectBatchCommandBase(ProjectCommandBase):
                 len(projects),
                 str(duration),
                 ))
+
+
+    def handle_one_project(self, project, options):
+        """"""
+        raise NotImplementedError

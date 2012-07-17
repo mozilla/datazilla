@@ -3,22 +3,14 @@ from optparse import make_option
 
 from datazilla.controller.admin import collection
 from django.core.management.base import NoArgsCommand, CommandError
+from base import ProjectCommandBase
 
 
 
-class Command(NoArgsCommand):
+class Command(ProjectCommandBase):
     help = "Populate test collections."
 
     option_list = NoArgsCommand.option_list + (
-        make_option(
-            '-p',
-            '--project',
-            action='store',
-            dest='project',
-            default=False,
-            type='string',
-            help="Set the project to run on: talos, b2g, schema, test etc....",
-            ),
 
         make_option(
             '-l',

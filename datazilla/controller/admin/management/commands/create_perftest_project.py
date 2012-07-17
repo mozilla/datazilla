@@ -1,20 +1,21 @@
 from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
 from datazilla.model import PerformanceTestModel
-from base import ProjectBatchCommandBase
+from base import ProjectCommandBase, ProjectBatchCommandBase
 
-class Command(BaseCommand):
-    """Management command to create all databases for a new project."""
+class Command(ProjectCommandBase):
+    """
+    Management command to create all databases for a new project.
+
+    This extends ProjectCommandBase rather than ProjectBatchCommandBase
+    because the latter handles not just the cron_batch param, but also
+    looping.  This mgmt command is not about looping, it's about a single
+    project, and about adding that project to a single cron_batch.
+    """
 
     help = "Create all databases for a new project."
 
-    option_list = BaseCommand.option_list + (
-        make_option("--project",
-                    action="store",
-                    dest="project",
-                    default=None,
-                    help="Project identifier: talos, " +
-                         "b2g, stoneridge, test etc..."),
+    option_list = ProjectCommandBase.option_list + (
 
         make_option("--perftest_host",
                     action="store",
@@ -52,8 +53,8 @@ class Command(BaseCommand):
                           ).format(str(ProjectBatchCommandBase.BATCH_NAMES))),
         )
 
-    def handle(self, *args, **options):
-        """ Create databases for a new project based on the args value. """
+    def handle_noargs(self, **options):
+        """ Create databases for a new project based on the options value. """
 
         project = options.get("project")
         cron_batch = options.get("cron_batch")
