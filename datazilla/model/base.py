@@ -599,8 +599,7 @@ class PerformanceTestModel(DatazillaModelBase):
         compressed_json_data = cache.get(cache_key)
 
         if not compressed_json_data:
-            self.cache_ref_data(cache_key_str)
-            compressed_json_data = cache.get(cache_key)
+            compressed_json_data = self.cache_ref_data(cache_key_str)
 
         json_data = zlib.decompress( compressed_json_data )
 
@@ -621,7 +620,11 @@ class PerformanceTestModel(DatazillaModelBase):
         cache_key = self.get_project_cache_key(cache_key_str)
 
         #compress and cache reference data
-        cache.set(cache_key, zlib.compress( json_data ) )
+        compressed_json_data = zlib.compress( json_data )
+
+        cache.set(cache_key, compressed_json_data)
+
+        return compressed_json_data
 
     def cache_default_project(self, cache_key_str='default_project'):
 
