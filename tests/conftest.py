@@ -189,7 +189,6 @@ def pytest_funcarg__plm(request):
 
     """
     from datazilla.model import PushLogModel
-    import sys
 
     plm = PushLogModel("testpushlog", out=sys.stdout, verbosity=2)
 

@@ -3,7 +3,6 @@ import json
 import urllib
 import zlib
 
-import sys
 import oauth2 as oauth
 
 from django.shortcuts import render_to_response
