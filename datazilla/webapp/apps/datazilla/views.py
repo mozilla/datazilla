@@ -24,6 +24,15 @@ def oauth_required(func):
     """
     def _wrap_oauth(request, *args, **kwargs):
         project = kwargs.get('project', None)
+
+        ###
+        # Until the production environment for talos can make use of
+        # OAuth or use API/Keys we need to bypass OAuth to injest data.
+        # This needs to be removed as soon as talos can support OAuth.
+        ###
+        if project == 'talos':
+            return func(request, *args, **kwargs)
+
         dm = PerformanceTestModel(project)
 
         #Get the consumer key
