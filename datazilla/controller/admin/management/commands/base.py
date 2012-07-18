@@ -21,6 +21,16 @@ class ProjectCommandBase(NoArgsCommand):
         )
 
 
+    def _get_required_project(self, options):
+        """Return the project option if it exists, raise error if not."""
+        project = options.get("project")
+        if not project:
+            raise CommandError(
+                "You must supply a project name to create: --project project"
+                )
+        return project
+
+
 
 class ProjectBatchCommandBase(ProjectCommandBase):
     # the valid cron_batch values.  Could also be Null, however.
@@ -35,7 +45,8 @@ class ProjectBatchCommandBase(ProjectCommandBase):
             choices=BATCH_NAMES,
             help=(
                 "Process all projects with this cron batch name.  Can be used "
-                "multiple times.  Can not be used with --project command"
+                "multiple times.  Can not be used with --project command.  "
+                "Choices are: {0}".format(", ".join(BATCH_NAMES))
                 )),
 
         make_option(

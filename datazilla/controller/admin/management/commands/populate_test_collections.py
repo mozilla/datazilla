@@ -2,7 +2,7 @@ from optparse import make_option
 
 
 from datazilla.controller.admin import collection
-from django.core.management.base import NoArgsCommand, CommandError
+from django.core.management.base import NoArgsCommand
 from base import ProjectCommandBase
 
 
@@ -28,9 +28,7 @@ class Command(ProjectCommandBase):
 
 
     def handle_noargs(self, **options):
-        project = options.get("project")
-        if not project:
-            raise CommandError("No project argument provided.")
+        project = self._get_required_project(options)
 
         if options.get("load"):
             collection.load_test_collection(project)

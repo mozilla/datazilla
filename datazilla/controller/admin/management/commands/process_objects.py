@@ -1,7 +1,5 @@
 from optparse import make_option
 
-from django.core.management.base import CommandError
-
 from datazilla.model import PerformanceTestModel
 from base import ProjectBatchCommandBase
 
@@ -36,9 +34,6 @@ class Command(ProjectBatchCommandBase):
         self.stdout.write("Processing project {0}\n".format(project))
 
         loadlimit = int(options.get("loadlimit", 1))
-
-        if not project:
-            raise CommandError("Enter a valid project name")
 
         dm = PerformanceTestModel(project)
         dm.process_objects(loadlimit)
