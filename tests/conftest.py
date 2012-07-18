@@ -107,15 +107,20 @@ def pytest_runtest_teardown(item):
     """
     Per-test teardown.
 
-    Rolls back the Django ORM transaction.
+    Rolls back the Django ORM transaction and truncates tables in the
+    "testproj" PerformanceTestModel.
 
     """
     from django.test.testcases import restore_transaction_methods
     from django.db import transaction
+    from datazilla.model import PerformanceTestModel
 
     restore_transaction_methods()
     transaction.rollback()
     transaction.leave_transaction_management()
+
+    ptm = PerformanceTestModel("testproj")
+    truncate(ptm)
 
 
 
@@ -170,15 +175,10 @@ def pytest_funcarg__dm(request):
     """
     Gives a test access to a PerformanceTestModel instance.
 
-    Truncates all project tables between tests in order to provide isolation.
-
     """
     from datazilla.model import PerformanceTestModel
 
-    dm = PerformanceTestModel("testproj")
-
-    request.addfinalizer(partial(truncate, dm))
-    return dm
+    return PerformanceTestModel("testproj")
 
 
 def pytest_funcarg__plm(request):
