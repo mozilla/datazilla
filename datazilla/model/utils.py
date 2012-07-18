@@ -39,7 +39,7 @@ def get_id_list(id_string):
         return []
 
 
-def get_cache_key(project, item_id, item_data):
+def get_summary_cache_key(project, item_id, item_data):
     """Return a cache key for given project, item id, and data."""
     return "_".join(map(str, [project, item_id, item_data]))
 

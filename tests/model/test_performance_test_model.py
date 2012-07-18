@@ -1,8 +1,9 @@
 import pytest
+import json
 
 from datazilla.model.base import TestDataError, TestData
 
-from ..sample_data import perftest_json, perftest_data
+from ..sample_data import perftest_json, perftest_data, perftest_ref_data_json
 
 
 def test_unicode(dm):
@@ -379,7 +380,6 @@ def test_set_option_data(dm):
     machine_id = dm._get_or_create_machine_id(data, os_id)
 
     build_id = dm._set_build_data(data, product_id)
-
     test_run_id = dm._set_test_run_data(data, test_id, build_id, machine_id)
 
     # Try to set the option data
@@ -599,6 +599,48 @@ def test_process_objects_unknown_error(dm, monkeypatch):
     assert row_data['processed_flag'] == 'ready'
 
 
+def test_get_test_reference_data(dm):
+
+    data = TestData(perftest_data())
+
+    ##Insert reference data from perftest_data##
+    test_id = dm._get_or_create_test_id(data)
+    os_id = dm._get_or_create_os_id(data)
+    product_id = dm._get_or_create_product_id(data)
+    machine_id = dm._get_or_create_machine_id(data, os_id)
+
+    build_id = dm._set_build_data(data, product_id)
+    test_run_id = dm._set_test_run_data(data, test_id, build_id, machine_id)
+
+    json_data = json.loads( dm.get_test_reference_data('testproj-refdata') )
+
+    ##Retrieve reference data structure built from perttest_data##
+    ref_data_json = json.loads( perftest_ref_data_json() )
+
+    assert json_data == ref_data_json
+
+
+def test_get_default_product(dm):
+
+    data = TestData(
+        {
+            'test_build': {
+                'name': 'Firefox',
+                'branch': 'Mozilla-Aurora',
+                'version': '14.0a2'}
+            }
+        )
+
+    id = dm._get_or_create_product_id(data)
+
+    dm.set_default_product(id)
+
+    default_product = dm.get_default_product()
+
+    assert default_product['product'] == 'Firefox'
+    assert default_product['branch'] == 'Mozilla-Aurora'
+    assert default_product['version'] == '14.0a2'
+
 
 # TODO fill in the following tests:
 
@@ -630,16 +672,10 @@ def test_get_aux_data(dm):
     dm.get_aux_data()
 
 
-def test_get_ref(dm):
-    dm.get_reference_data()
-
-
 def test_get_test_collections(dm):
     dm.get_test_collections()
 
 
-def test_get_test_reference_data(dm):
-    dm.get_test_reference_data()
 
 
 def test_get_product_test_os_map(dm):
