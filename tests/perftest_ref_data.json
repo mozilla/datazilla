@@ -1,0 +1,1 @@
+{"tests": {"1": {"version": 1, "id": 1, "name": "Talos tp5r"}}, "operating_systems": {"1": {"version": "Ubuntu 11.10", "id": 1, "name": "linux"}}, "products": {"1": {"default_product": 0, "product": "Firefox", "version": "14.0a2", "id": 1, "branch": "Mozilla-Aurora"}}, "product_test_os_map": [{"test_id": 1, "product_id": 1, "operating_system_id": 1}], "test_collections": {}}

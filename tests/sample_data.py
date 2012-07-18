@@ -3,6 +3,22 @@ Functions for flexible generation of sample input perftest JSON.
 
 """
 import json
+import os
+
+
+def perftest_ref_data_json():
+    """Return reference data json structure"""
+
+    file = os.path.join(
+        os.path.abspath(os.path.dirname(__file__)),
+        "perftest_ref_data.json",
+        )
+
+    json_data = ""
+    with open(file) as f:
+        json_data = f.read()
+
+    return json_data
 
 
 def perftest_json(**kwargs):
