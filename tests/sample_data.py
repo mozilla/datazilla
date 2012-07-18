@@ -71,11 +71,19 @@ def testrun(**kwargs):
     return defaults
 
 
+test_build_id = 20120228122102
+
+
 def test_build(**kwargs):
     """Return sample test_build data structure, with default values."""
+    global test_build_id
+
+    #build id must be unique for different builds
+    test_build_id += 1
+
     defaults = {
         "branch": "Mozilla-Aurora",
-        "id": "20120228122102",
+        "id": unicode(test_build_id),
         "name": "Firefox",
         "revision": "785345035a3b",
         "version": "14.0a2"
