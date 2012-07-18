@@ -1,5 +1,5 @@
 from optparse import make_option
-import datetime
+from abc import abstractmethod
 
 from django.core.management.base import NoArgsCommand, CommandError
 from datazilla.model.sql.models import DataSource
@@ -23,19 +23,19 @@ class ProjectCommandBase(NoArgsCommand):
 
 
 class ProjectBatchCommandBase(ProjectCommandBase):
+    # the valid cron_batch values.  Could also be Null, however.
     BATCH_NAMES = ["small", "medium", "large"]
 
     option_list = ProjectCommandBase.option_list + (
 
         make_option(
             '--cron_batch',
-            action='store',
-            dest='cron_batch',
-            default=False,
-            type='string',
+            action='append',
+            dest='cron_batches',
+            choices=BATCH_NAMES,
             help=(
-                "Process all projects with this cron batch name.  " +
-                "Can not be used with --project command"
+                "Process all projects with this cron batch name.  Can be used "
+                "multiple times.  Can not be used with --project command"
                 )),
 
         make_option(
@@ -52,55 +52,46 @@ class ProjectBatchCommandBase(ProjectCommandBase):
 
 
     def handle_noargs(self, **options):
+        """Handle working on a single project or looping over several."""
+
         project = options.get("project")
-        cron_batch = options.get("cron_batch")
+        cron_batches = options.get("cron_batches")
 
         if options.get("view_batches"):
             # print out each batch that is in use, and the projects
             # that belong to it
-            batches = DataSource.objects.values_list(
-                "cron_batch", flat=True).distinct()
-            for batch in batches:
-                projnames = DataSource.objects.filter(
-                    cron_batch=batch).values_list("project", flat=True)
-                self.stdout.write("{0}: {1}\n".format(batch, ", ".join(projnames)))
+            batches = DataSource.get_projects_by_cron_batch()
+            for batch, projects in batches.iteritems():
+                self.stdout.write("{0}: {1}\n".format(batch, projects))
             return
 
-        if not (project or cron_batch):
+        if not (project or cron_batches):
             raise CommandError(
-                "Must provide either a project or cron_batch value."
+                "You must provide either a project or cron_batch value."
             )
 
-        if project and cron_batch:
+        if project and cron_batches:
             raise CommandError(
                 "You must provide either project or cron_batch, but not both.")
 
-        if not cron_batch in ([None] + self.BATCH_NAMES):
-            raise CommandError(
-                "cron_batch must be one of: {0}".format(self.BATCH_NAMES))
-
-        if cron_batch:
-            projects = [x.project for x in DataSource.objects.filter(
+        if cron_batches:
+            projects = DataSource.objects.filter(
+                cron_batch__in=cron_batches,
                 contenttype="perftest",
-                cron_batch=cron_batch,
-                )]
+                ).values_list("project", flat=True)
         else:
             projects = [project]
 
-        start = datetime.datetime.now()
+        self.stdout.write("Starting for projects: {0}\n".format(", ".join(projects)))
+
         for p in projects:
-            self.handle_one_project(p, options)
+            self._handle_one_project(p, options)
 
-        finish = datetime.datetime.now()
-
-        duration = finish - start
         self.stdout.write(
-            "Completed for {0} project(s).  Duration: {1}\n".format(
+            "Completed for {0} project(s).\n".format(
                 len(projects),
-                str(duration),
                 ))
 
 
-    def handle_one_project(self, project, options):
-        """"""
-        raise NotImplementedError
+    @abstractmethod
+    def _handle_one_project(self, project, options): pass

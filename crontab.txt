@@ -7,5 +7,5 @@ PYTHONPATH=/usr/local/datazilla
 */2 * * * * /usr/bin/python /usr/local/datazilla/datazilla/controller/admin/populate_summary_cache.py --cron_batch small
 0,30 * * * * /usr/bin/python /usr/local/datazilla/datazilla/controller/admin/populate_summary_cache.py --cron_batch large
 
-* * * * * /usr/bin/python /usr/local/datazilla/manage.py process_objects --cron_batch small --loadlimit 25
-* * * * * /usr/bin/python /usr/local/datazilla/manage.py process_objects --cron_batch large --loadlimit 25
+# run twice every minute
+* * * * * /usr/bin/python /usr/local/datazilla/manage.py process_objects --cron_batch small --cron_batch large --loadlimit 25 && /usr/bin/python /usr/local/datazilla/manage.py process_objects --cron_batch small --cron_batch large --loadlimit 25

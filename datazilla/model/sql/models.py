@@ -266,6 +266,7 @@ class DataSource(models.Model):
             oauth_consumer_secret = self.oauth_consumer_secret
         return oauth_consumer_secret
 
+
     def dhub(self, procs_file_name):
         """
         Return a configured ``DataHub`` using the given SQL procs file.
@@ -360,3 +361,20 @@ class DataSource(models.Model):
                 "mysql returned code {1}, output follows:\n\n{2}".format(
                     self.key, proc.returncode, output)
                 )
+
+    @classmethod
+    def get_projects_by_cron_batch(cls):
+        """Return a dictionary of each cron_batch and the projects it contains"""
+
+        batch_names = cls.objects.values_list(
+            "cron_batch", flat=True).distinct()
+
+        batches = {}
+        for batch in batch_names:
+            projnames = cls.objects.filter(
+                cron_batch=batch,
+                contenttype="perftest",
+                ).values_list("project", flat=True)
+            batches[batch] = ", ".join(projnames)
+
+        return batches
