@@ -3,6 +3,22 @@ Functions for flexible generation of sample input perftest JSON.
 
 """
 import json
+import os
+
+
+def perftest_ref_data_json():
+    """Return reference data json structure"""
+
+    file = os.path.join(
+        os.path.abspath(os.path.dirname(__file__)),
+        "perftest_ref_data.json",
+        )
+
+    json_data = ""
+    with open(file) as f:
+        json_data = f.read()
+
+    return json_data
 
 
 def perftest_json(**kwargs):
@@ -71,11 +87,19 @@ def testrun(**kwargs):
     return defaults
 
 
+test_build_id = 20120228122102
+
+
 def test_build(**kwargs):
     """Return sample test_build data structure, with default values."""
+    global test_build_id
+
+    #build id must be unique for different builds
+    test_build_id += 1
+
     defaults = {
         "branch": "Mozilla-Aurora",
-        "id": "20120228122102",
+        "id": unicode(test_build_id),
         "name": "Firefox",
         "revision": "785345035a3b",
         "version": "14.0a2"

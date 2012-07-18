@@ -24,6 +24,15 @@ def oauth_required(func):
     """
     def _wrap_oauth(request, *args, **kwargs):
         project = kwargs.get('project', None)
+
+        ###
+        # Until the production environment for talos can make use of
+        # OAuth or use API/Keys we need to bypass OAuth to injest data.
+        # This needs to be removed as soon as talos can support OAuth.
+        ###
+        if project == 'talos':
+            return func(request, *args, **kwargs)
+
         dm = PerformanceTestModel(project)
 
         #Get the consumer key
@@ -80,31 +89,11 @@ def graphs(request, project=""):
     ###
     #Get reference data
     ###
-    cache_key = str(project) + '_reference_data'
-    json_data = '{}'
-    compressed_json_data = cache.get(cache_key)
+    ptm = PerformanceTestModel(project)
+    json_data = ptm.get_test_reference_data()
+    ptm.disconnect()
 
     time_key = 'days_30'
-
-    ##reference data found in the cache: decompress##
-    if compressed_json_data:
-
-        json_data = zlib.decompress( compressed_json_data )
-
-    else:
-        ####
-        #reference data has not been cached:
-        #serialize, compress, and cache
-        ####
-        dm = PerformanceTestModel(project)
-        ref_data = dm.get_test_reference_data()
-        dm.disconnect()
-
-        ref_data['time_ranges'] = time_ranges
-
-        json_data = json.dumps(ref_data)
-
-        cache.set(str(project) + '_reference_data', zlib.compress( json_data ) )
 
     data = { 'time_key':time_key,
              'reference_json':json_data,
@@ -268,7 +257,11 @@ def _get_test_run_summary(project, method, request, dm):
 
     if not product_ids:
         ##Set default product_id##
-        product_ids = [12]
+        pck = dm.get_project_cache_key('default_product')
+        default_project = cache.get(pck)
+
+        if default_project:
+            product_ids = [ int(default_project['id']) ]
 
     json_data = '{}'
 
@@ -277,7 +270,7 @@ def _get_test_run_summary(project, method, request, dm):
         if len(product_ids) > 1:
             extend_list = { 'data':[], 'columns':[] }
             for id in product_ids:
-                key = utils.get_cache_key(project, str(id), time_key)
+                key = utils.get_summary_cache_key(project, str(id), time_key)
                 compressed_json_data = cache.get(key)
 
                 if compressed_json_data:
@@ -289,7 +282,7 @@ def _get_test_run_summary(project, method, request, dm):
             json_data = json.dumps(extend_list)
 
         else:
-            key = utils.get_cache_key(
+            key = utils.get_summary_cache_key(
                 project,
                 str(product_ids[0]),
                 time_key,

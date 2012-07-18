@@ -69,23 +69,18 @@ builds.
 ****************/
 CREATE TABLE `build` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `operating_system_id` int(11) NOT NULL,
   `product_id` int(11) NOT NULL,
-  `machine_id` int(11) NOT NULL,
   `test_build_id` varchar(16) NOT NULL,
   `processor` varchar(25) NOT NULL,
   `revision` varchar(16) NOT NULL,
   `build_type` varchar(25) NOT NULL,
   `build_date` int(11) NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `machine_id_key` (`machine_id`),
   KEY `build_type_key` (`build_type`),
   KEY `build_date_key` (`build_date`),
-  KEY `operating_system_id_key` (`operating_system_id`),
   KEY `changeset_key` (`revision`),
   KEY `fk_build_product` (`product_id`),
-  CONSTRAINT `fk_build_machine` FOREIGN KEY (`machine_id`) REFERENCES `machine` (`id`),
-  CONSTRAINT `fk_build_operating_system` FOREIGN KEY (`operating_system_id`) REFERENCES `operating_system` (`id`),
+  UNIQUE KEY `unique_build` (`test_build_id`),
   CONSTRAINT `fk_build_product` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`)
 ) ENGINE={engine} DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -111,11 +106,13 @@ CREATE TABLE `machine` (
   `is_throttling` tinyint(3) NOT NULL DEFAULT '0',
   `cpu_speed` varchar(255) COLLATE utf8_bin DEFAULT NULL,
   `name` varchar(255) COLLATE utf8_bin NOT NULL,
+  `operating_system_id` int(11) NOT NULL,
   `is_active` tinyint(3) NOT NULL DEFAULT '0',
   `date_added` int(11) NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`),
-  UNIQUE KEY `unique_machine` (`name`)
+  KEY `operating_system_id_key` (`operating_system_id`),
+  CONSTRAINT `fk_machine_operating_system` FOREIGN KEY (`operating_system_id`) REFERENCES `operating_system` (`id`),
+  UNIQUE KEY `unique_machine` (`name`, `operating_system_id`)
 ) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -270,6 +267,7 @@ CREATE TABLE `product` (
   `product` varchar(50) COLLATE utf8_bin NOT NULL,
   `branch` varchar(128) COLLATE utf8_bin DEFAULT NULL,
   `version` varchar(16) COLLATE utf8_bin NOT NULL,
+  `default_product` TINYINT NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_branch` (`product`,`branch`,`version`)
 ) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
@@ -501,15 +499,18 @@ CREATE TABLE `test_run` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `test_id` int(11) NOT NULL,
   `build_id` int(11) NOT NULL,
+  `machine_id` int(11) NOT NULL,
   `revision` varchar(16) NOT NULL,
   `date_run` int(11) NOT NULL,
   `status` tinyint(4) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`),
   KEY `test_id_key` (`test_id`),
   KEY `build_id_key` (`build_id`),
+  KEY `machine_id_key` (`machine_id`),
   KEY `date_run_key` (`date_run`),
   KEY `changeset_key` (`revision`),
   KEY `status_key` (`status`),
+  CONSTRAINT `fk_test_run_machine` FOREIGN KEY (`machine_id`) REFERENCES `machine` (`id`),
   CONSTRAINT `fk_test_run_build` FOREIGN KEY (`build_id`) REFERENCES `build` (`id`),
   CONSTRAINT `fk_test_run_test` FOREIGN KEY (`test_id`) REFERENCES `test` (`id`)
 ) ENGINE={engine} DEFAULT CHARSET=utf8;

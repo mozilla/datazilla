@@ -13,12 +13,21 @@ from django.core.cache import cache
 
 def cache_test_summaries(project):
 
-    dm = PerformanceTestModel(project)
-    data_iter = dm.get_all_summary_cache()
+    ptm = PerformanceTestModel(project)
+
+    ###
+    #New reference data could be found in the cached data
+    #summary structures. Update the reference data cached 
+    #every time the sumary data is cached.
+    ###
+    ptm.cache_ref_data()
+    ptm.cache_default_project()
+
+    data_iter = ptm.get_all_summary_cache()
 
     for d in data_iter:
         for data in d:
-            key = utils.get_cache_key(
+            key = utils.get_summary_cache_key(
                 project,
                 data['item_id'],
                 data['item_data'],
@@ -30,23 +39,23 @@ def cache_test_summaries(project):
                         ( str(data['item_id']), data['item_data'] )
                 sys.stderr.write(msg)
 
-    dm.disconnect()
+    ptm.disconnect()
 
 
 
 def build_test_summaries(project):
 
-    dm = PerformanceTestModel(project)
+    ptm = PerformanceTestModel(project)
 
     time_ranges = utils.get_time_ranges()
 
-    products = dm.get_products()
+    products = ptm.get_products()
 
     for product_name in products:
 
         for tr in ['days_7', 'days_30']:
 
-            table = dm.get_test_run_summary(str( time_ranges[tr]['start']),
+            table = ptm.get_test_run_summary(str( time_ranges[tr]['start']),
                                          str( time_ranges[tr]['stop']),
                                          [ products[ product_name ] ],
                                          [],
@@ -54,6 +63,6 @@ def build_test_summaries(project):
 
             json_data = json.dumps( table )
 
-            dm.set_summary_cache( products[ product_name ], tr, json_data )
+            ptm.set_summary_cache( products[ product_name ], tr, json_data )
 
-    dm.disconnect()
+    ptm.disconnect()
