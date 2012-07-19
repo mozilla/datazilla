@@ -269,7 +269,6 @@ def test_set_build_data(dm):
     """Inserts data into the build table."""
     data = TestData(perftest_data())
 
-    os_id = dm._get_or_create_os_id(data)
     product_id = dm._get_or_create_product_id(data)
 
     build_id = dm._set_build_data(data, product_id)
@@ -281,6 +280,24 @@ def test_set_build_data(dm):
     assert row_data["product_id"] == product_id
     assert row_data["processor"] == data["test_machine"]["platform"]
     assert row_data["revision"] == data["test_build"]["revision"]
+
+
+def test_set_existing_build_data(dm):
+    """Returns build ID even if build already exists."""
+    data = TestData(perftest_data())
+
+    product_id = dm._get_or_create_product_id(data)
+
+    first_build_id = dm._set_build_data(data, product_id)
+
+    # perform another insert so that last_insert_id changes
+    # second call to perftest_data() will have a new build ID
+    dm._set_build_data(TestData(perftest_data()), product_id)
+
+    # using the original data, so should return first build id
+    build_id = dm._set_build_data(data, product_id)
+
+    assert build_id == first_build_id
 
 
 def test_set_build_data_no_test_machine(dm):
