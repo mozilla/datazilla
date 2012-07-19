@@ -35,8 +35,18 @@ class ProjectCommandBase(NoArgsCommand):
 
 
 class ProjectBatchCommandBase(ProjectCommandBase):
+    """
+    Base class for executing a management command against a batch
+    of projects.
+
+    Concurrency locking:
+    To set a custom lock-file for a command, assign a value to
+    self.lock_file.  Otherwise, it will use DEFAULT_LOCK_FILE.
+    """
+
     # the valid cron_batch values.  Could also be Null, however.
     BATCH_NAMES = ["small", "medium", "large"]
+    DEFAULT_LOCK_FILE = "cron_batch"
 
     option_list = ProjectCommandBase.option_list + (
 
@@ -97,7 +107,7 @@ class ProjectBatchCommandBase(ProjectCommandBase):
         else:
             projects = [project]
 
-        lock = FileLock("foo")
+        lock = FileLock(self.lock_file or self.DEFAULT_LOCK_FILE)
         try:
             # lock so that only one process of this command can happen at a time
             lock.acquire(timeout=0)
