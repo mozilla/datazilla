@@ -12,9 +12,11 @@ import datetime
 import time
 import json
 import urllib
+import zlib
 from MySQLdb import IntegrityError
 
 from django.conf import settings
+from django.core.cache import cache
 
 
 from . import utils
@@ -44,6 +46,8 @@ class DatazillaModelBase(object):
         for src in self.sources.itervalues():
             src.disconnect()
 
+    def get_project_cache_key(self, str_data):
+        return "{0}_{1}".format(self.project, str_data)
 
 
 class PushLogModel(DatazillaModelBase):
@@ -469,6 +473,21 @@ class PerformanceTestModel(DatazillaModelBase):
 
         return products
 
+    def get_default_product(self):
+
+        proc = 'perftest.selects.get_default_product'
+
+        default_product = self.sources["perftest"].dhub.execute(
+                proc=proc,
+                debug_show=self.DEBUG,
+                return_type='tuple'
+                )
+
+        product_data = {}
+        if default_product:
+            product_data = default_product[0]
+
+        return product_data
 
     def get_machines(self):
 
@@ -526,19 +545,6 @@ class PerformanceTestModel(DatazillaModelBase):
         return aux_data_dict
 
 
-    def get_reference_data(self):
-
-        reference_data = dict( operating_systems=self.get_operating_systems(),
-                              tests=self.get_tests(),
-                              products=self.get_products(),
-                              machines=self.get_machines(),
-                              options=self.get_options(),
-                              pages=self.get_pages(),
-                              aux_data=self.get_aux_data())
-
-        return reference_data
-
-
     def get_test_collections(self):
 
         proc = 'perftest.selects.get_test_collections'
@@ -563,25 +569,68 @@ class PerformanceTestModel(DatazillaModelBase):
             product_id = data['product_id']
             os_id = data['operating_system_id']
 
-            test_collection[ id ]['data'].append({'test_id':data['test_id'],
-                                                 'name':data['name'],
-                                                 'product_id':product_id,
-                                                 'operating_system_id':os_id })
-
+            test_collection[ id ]['data'].append(
+                {'test_id':data['test_id'],
+                 'name':data['name'],
+                 'product_id':product_id,
+                 'operating_system_id':os_id }
+                 )
 
         return test_collection
 
 
-    def get_test_reference_data(self):
+    def get_test_collection_set(self):
 
-        reference_data = dict(operating_systems=self.get_operating_systems('id'),
-                             tests=self.get_tests('id'),
-                             products=self.get_products('id'),
-                             product_test_os_map=self.get_product_test_os_map(),
-                             test_collections=self.get_test_collections())
+        proc = 'perftest.selects.get_test_collections'
 
-        return reference_data
+        test_collection_set = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            key_column='name',
+            return_type='set'
+            )
 
+        return test_collection_set
+
+    def get_test_reference_data(self, cache_key_str='reference_data'):
+
+        json_data = '{}'
+        cache_key = self.get_project_cache_key(cache_key_str)
+        compressed_json_data = cache.get(cache_key)
+
+        if not compressed_json_data:
+            compressed_json_data = self.cache_ref_data(cache_key_str)
+
+        json_data = zlib.decompress( compressed_json_data )
+
+        return json_data
+
+    def cache_ref_data(self, cache_key_str='reference_data'):
+        #retrieve ref data
+        ref_data = dict(
+            operating_systems=self.get_operating_systems('id'),
+            tests=self.get_tests('id'),
+            products=self.get_products('id'),
+            product_test_os_map=self.get_product_test_os_map(),
+            test_collections=self.get_test_collections(),
+            )
+
+        json_data = json.dumps(ref_data)
+
+        cache_key = self.get_project_cache_key(cache_key_str)
+
+        #compress and cache reference data
+        compressed_json_data = zlib.compress( json_data )
+
+        cache.set(cache_key, compressed_json_data)
+
+        return compressed_json_data
+
+    def cache_default_project(self, cache_key_str='default_project'):
+
+        default_project = self.get_default_product()
+        cache_key = self.get_project_cache_key(cache_key_str)
+        cache.set(cache_key, default_project)
 
     def get_test_run_summary(self,
                           start,
@@ -695,6 +744,16 @@ class PerformanceTestModel(DatazillaModelBase):
 
         return data_iter
 
+
+    def set_default_product(self, id):
+
+        proc = 'perftest.inserts.set_default_product'
+
+        default_product = self.sources["perftest"].dhub.execute(
+                proc=proc,
+                placeholders=[id],
+                debug_show=self.DEBUG,
+                )
 
     def set_summary_cache(self, item_id, item_data, value):
 
@@ -927,10 +986,15 @@ class PerformanceTestModel(DatazillaModelBase):
 
     def _get_or_create_aux_id(self, aux_data, test_id):
         """Given aux name and test id, return aux id, creating if needed."""
-        # Insert the test id and aux data on duplicate key update
+        # Insert the test id and aux data if it doesn't exist
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_aux_ref_data',
-            placeholders=[test_id, aux_data],
+            placeholders=[
+                test_id,
+                aux_data,
+                test_id,
+                aux_data
+                ],
             debug_show=self.DEBUG,
             )
 
@@ -947,10 +1011,15 @@ class PerformanceTestModel(DatazillaModelBase):
 
     def _get_or_create_page_id(self, page, test_id):
         """Given page name and test id, return page id, creating if needed."""
-        # Insert the test id and page name on duplicate key update
+        # Insert the test id and page name if it doesn't exist
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_pages_ref_data',
-            placeholders=[test_id, page],
+            placeholders=[
+                test_id,
+                page,
+                test_id,
+                page
+                ],
             debug_show=self.DEBUG,
             )
 
@@ -1000,9 +1069,9 @@ class PerformanceTestModel(DatazillaModelBase):
         machine = data['test_machine']
         build = data['test_build']
 
-        build_id = self._insert_data_and_get_id(
-            'set_build_data',
-            [
+        self.sources["perftest"].dhub.execute(
+            proc='perftest.inserts.set_build_data',
+            placeholders=[
                 product_id,
                 build['id'],
                 machine['platform'],
@@ -1012,10 +1081,18 @@ class PerformanceTestModel(DatazillaModelBase):
                 # TODO: need to get the build date into the json
                 int(time.time()),
                 build['id']
-                ]
+                ],
+            debug_show=self.DEBUG
             )
 
-        return build_id
+        # Get the build id
+        id_iter = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_build_id',
+            placeholders=[build['id']],
+            debug_show=self.DEBUG,
+            return_type='iter')
+
+        return id_iter.get_column_data('id')
 
 
     def _set_test_run_data(self, data, test_id, build_id, machine_id):
@@ -1075,10 +1152,18 @@ class PerformanceTestModel(DatazillaModelBase):
         """
         machine = data['test_machine']
 
-        # Insert the the machine name and timestamp on duplicate key update
+        # Insert the the machine name and timestamp if it doesn't exist
+        date_added = int(time.time())
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_machine_ref_data',
-            placeholders=[machine['name'], os_id, int(time.time())],
+            placeholders=[
+                machine['name'],
+                os_id,
+                date_added,
+                machine['name'],
+                os_id
+                ],
+
             debug_show=self.DEBUG)
 
         # Get the machine id
@@ -1107,11 +1192,17 @@ class PerformanceTestModel(DatazillaModelBase):
             raise TestDataError(
                 "Bad value: ['testrun']['suite_version'] is not an integer.")
 
-        # Insert the test name and version on duplicate key update
+        # Insert the test name and version if it doesn't exist
         self.sources['perftest'].dhub.execute(
             proc='perftest.inserts.set_test_ref_data',
-            placeholders=[testrun['suite'], version],
-            debug_show=self.DEBUG)
+            placeholders=[
+                testrun['suite'],
+                version,
+                testrun['suite'],
+                version
+                ],
+            debug_show=self.DEBUG
+            )
 
         # Get the test name id
         id_iter = self.sources['perftest'].dhub.execute(
@@ -1134,10 +1225,15 @@ class PerformanceTestModel(DatazillaModelBase):
         os_name = machine['os']
         os_version = machine['osversion']
 
-        # Insert the operating system name and version on duplicate key update
+        # Insert the operating system name and version if it doesn't exist
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_os_ref_data',
-            placeholders=[os_name, os_version],
+            placeholders=[
+                os_name,
+                os_version,
+                os_name,
+                os_version
+                ],
             debug_show=self.DEBUG)
 
         # Get the operating system name id
@@ -1152,10 +1248,10 @@ class PerformanceTestModel(DatazillaModelBase):
 
     def _get_or_create_option_id(self, option):
         """Return option id for given option name, creating it if needed."""
-        # Insert the option name on duplicate key update
+        # Insert the option name if it doesn't exist
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_option_ref_data',
-            placeholders=[ option ],
+            placeholders=[ option, option],
             debug_show=self.DEBUG)
 
         # Get the option id
@@ -1176,10 +1272,17 @@ class PerformanceTestModel(DatazillaModelBase):
         branch = build['branch']
         version = build['version']
 
-        # Insert the product, branch, and version on duplicate key update
+        # Insert the product, branch, and version if it doesn't exist
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_product_ref_data',
-            placeholders=[ product, branch, version ],
+            placeholders=[
+                product,
+                branch,
+                version,
+                product,
+                branch,
+                version
+                ],
             debug_show=self.DEBUG)
 
         # Get the product id

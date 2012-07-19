@@ -102,49 +102,99 @@
  "inserts":{
       "set_test_ref_data":{
 
-         "sql":"INSERT INTO `test` (`name`, `version`) VALUES (?, ?)
-                ON DUPLICATE KEY UPDATE `name`=`name`, `version`=`version`",
+         "sql":"INSERT INTO `test` (`name`, `version`)
+                SELECT ?, ?
+                FROM DUAL
+                WHERE NOT EXISTS (
+                    SELECT `name`, `version`
+                    FROM `test`
+                    WHERE `name` = ? AND `version` = ?
+                )",
 
          "host":"master_host"
       },
       "set_os_ref_data":{
 
-         "sql":"INSERT INTO operating_system ( `name`, `version` ) VALUES (?, ?)
-                ON DUPLICATE KEY UPDATE `name`=`name`, `version`=`version`",
+         "sql":"INSERT INTO `operating_system` ( `name`, `version` )
+                SELECT ?, ?
+                FROM DUAL
+                WHERE NOT EXISTS (
+                    SELECT `name`, `version`
+                    FROM `operating_system`
+                    WHERE `name` = ? AND `version` = ?
+                )",
 
          "host":"master_host"
       },
       "set_aux_ref_data":{
 
-         "sql":"INSERT INTO `aux_data` (`test_id`, `name`) VALUES (?, ?)
-                ON DUPLICATE KEY UPDATE `test_id`=`test_id`, `name`=`name`",
+         "sql":"INSERT INTO `aux_data` (`test_id`, `name`)
+                SELECT ?, ?
+                FROM DUAL
+                WHERE NOT EXISTS (
+                    SELECT `test_id`, `name`
+                    FROM `aux_data`
+                    WHERE `test_id` = ? AND `name` = ?
+                )",
+
+         "host":"master_host"
+      },
+      "set_default_product":{
+
+         "sql":"UPDATE `product`
+               SET `default_product` = 1
+               WHERE `id` = ?",
 
          "host":"master_host"
       },
       "set_product_ref_data":{
-         "sql":"INSERT INTO `product` (`product`, `branch`, `version`) VALUES (?, ?, ?)
-                ON DUPLICATE KEY UPDATE `product`=`product`, `branch`=`branch`, `version`=`version`",
+         "sql":"INSERT INTO `product` (`product`, `branch`, `version`)
+                SELECT ?, ?, ?
+                FROM DUAL
+                WHERE NOT EXISTS (
+                    SELECT `product`, `branch`, `version`
+                    FROM `product`
+                    WHERE `product` = ? AND `branch` = ? AND `version` = ?
+                )",
 
          "host":"master_host"
       },
       "set_machine_ref_data":{
 
-         "sql":"INSERT INTO `machine` (`name`, `operating_system_id`, `date_added`) VALUES (?, ?, ?)
-                ON DUPLICATE KEY UPDATE `name`=`name`",
+         "sql":"INSERT INTO `machine` (`name`, `operating_system_id`, `date_added`)
+                SELECT ?, ?, ?
+                FROM DUAL
+                WHERE NOT EXISTS (
+                    SELECT `name`, `operating_system_id`
+                    FROM `machine`
+                    WHERE `name` = ? AND `operating_system_id` = ?
+                )",
 
          "host":"master_host"
       },
       "set_option_ref_data":{
 
-         "sql":"INSERT INTO `option` (`name`) VALUES (?)
-                ON DUPLICATE KEY UPDATE `name`=`name`",
+         "sql":"INSERT INTO `option` (`name`)
+                SELECT ?
+                FROM DUAL
+                WHERE NOT EXISTS (
+                    SELECT `name`
+                    FROM `option`
+                    WHERE `name` = ?
+                )",
 
          "host":"master_host"
       },
       "set_pages_ref_data":{
 
-         "sql":"INSERT INTO `pages` (`test_id`, `url`) VALUES (?, ?)
-                ON DUPLICATE KEY UPDATE `test_id`=`test_id`, `url`=`url`",
+         "sql":"INSERT INTO `pages` (`test_id`, `url`)
+                SELECT ?, ?
+                FROM DUAL
+                WHERE NOT EXISTS (
+                    SELECT `test_id`, `url`
+                    FROM `pages`
+                    WHERE `test_id` = ? AND `url` = ?
+                )",
 
          "host":"master_host"
       },
@@ -395,7 +445,15 @@
       },
       "get_product_data":{
 
-         "sql":"SELECT `id`, `product`, `branch`, `version` FROM `product`",
+         "sql":"SELECT `id`, `product`, `branch`, `version`, `default_product` FROM `product`",
+
+         "host":"master_host"
+      },
+      "get_default_product":{
+
+         "sql":"SELECT `id`, `product`, `branch`, `version`, `default_product`
+                FROM `product`
+                WHERE `default_product` = 1",
 
          "host":"master_host"
       },
@@ -453,6 +511,14 @@
                 ORDER BY tc.name",
 
          "host":"master_host"
+      },
+      "get_build_id":{
+
+        "sql":"SELECT `id`
+               FROM `build`
+               WHERE `test_build_id` = ?",
+
+        "host":"master_host"
       },
       "get_test_id":{
 
