@@ -10,7 +10,7 @@ def pytest_sessionstart(session):
     """
     Set up the test environment.
 
-    Sets DJANGO_SETTINGS_MODULE, adds the vendor lib, and sets up a test
+    Set DJANGO_SETTINGS_MODULE, adds the vendor lib, and sets up a test
     database.
 
     """
@@ -84,12 +84,12 @@ def pytest_runtest_setup(item):
     """
     Per-test setup.
 
-    Starts a transaction and disables transaction methods for the duration of
-    the test. The transaction will be rolled back after the test. This prevents
-    any database changes made to Django ORM models from persisting between
-    tests, providing test isolation.
+    Start a transaction and disable transaction methods for the duration of the
+    test. The transaction will be rolled back after the test. This prevents any
+    database changes made to Django ORM models from persisting between tests,
+    providing test isolation.
 
-    Also clears the cache (by incrementing the key prefix).
+    Also clear the cache (by incrementing the key prefix).
 
     """
     from django.test.testcases import disable_transaction_methods
@@ -107,7 +107,7 @@ def pytest_runtest_teardown(item):
     """
     Per-test teardown.
 
-    Rolls back the Django ORM transaction and truncates tables in the
+    Roll back the Django ORM transaction and truncates tables in the
     "testproj" PerformanceTestModel.
 
     """
@@ -126,7 +126,7 @@ def pytest_runtest_teardown(item):
 
 def truncate(dm, skip_list=None):
     """
-    Truncates all tables in all databases in given DatazillaModelBase.
+    Truncate all tables in all databases in given DatazillaModelBase.
 
     skip_list is a list of table names to skip truncation.
     """
@@ -173,7 +173,7 @@ def increment_cache_key_prefix():
 
 def pytest_funcarg__dm(request):
     """
-    Gives a test access to a PerformanceTestModel instance.
+    Give a test access to a PerformanceTestModel instance.
 
     """
     from datazilla.model import PerformanceTestModel
@@ -183,9 +183,9 @@ def pytest_funcarg__dm(request):
 
 def pytest_funcarg__plm(request):
     """
-    Gives a test access to a PushLogModel instance.
+    Give a test access to a PushLogModel instance.
 
-    Truncates all project tables between tests in order to provide isolation.
+    Truncate all project tables between tests in order to provide isolation.
 
     """
     from datazilla.model import PushLogModel
