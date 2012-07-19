@@ -4,7 +4,6 @@ Tests for management command to populate the summary cache.
 """
 
 from django.core.management import call_command
-from django.core.management.base import CommandError
 from datazilla.controller.admin import summary
 from datazilla.model.sql.models import DataSource
 
@@ -96,7 +95,7 @@ def test_build_and_cache(monkeypatch):
 
 
 def test_single_batch_success(capsys, monkeypatch):
-
+    """Test that you can populate summary cache with a single batch"""
     # create a set of projects
     create_project("foo", "medium")
     create_project("bar", "medium")
@@ -126,7 +125,8 @@ def test_single_batch_success(capsys, monkeypatch):
 
 
 def test_multiple_batches_success(capsys, monkeypatch):
-    # create a set of projects
+    """test that you can populate the summary cache with multiple batches."""
+
     create_project("foo", "medium")
     create_project("bar", "medium")
     create_project("baz", "large")
@@ -164,7 +164,7 @@ def test_multiple_batches_success(capsys, monkeypatch):
 
 
 def test_view_batches(capsys):
-    # create a set of projects
+    # view projects that exist in each batch
     create_project("foo", "medium")
     create_project("bar", "medium")
     create_project("baz", "large")
@@ -176,8 +176,9 @@ def test_view_batches(capsys):
 
     exp = (
         u"None: noo\n"
-        u"small: testproj, foo, bar\n"
-        u"large: baz\n",
+        u"large: baz\n"
+        u"medium: foo, bar\n"
+        u"small: testproj\n",
         ""
         )
 

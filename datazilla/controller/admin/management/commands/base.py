@@ -72,8 +72,10 @@ class ProjectBatchCommandBase(ProjectCommandBase):
             # print out each batch that is in use, and the projects
             # that belong to it
             batches = DataSource.get_projects_by_cron_batch()
-            for batch, projects in batches.iteritems():
-                self.stdout.write("{0}: {1}\n".format(batch, projects))
+            bkeys = batches.keys()
+            bkeys.sort()
+            for key in bkeys:
+                self.stdout.write("{0}: {1}\n".format(key, batches[key]))
             return
 
         if not (project or cron_batches):
