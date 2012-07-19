@@ -12,6 +12,7 @@ from django.http import HttpResponse
 
 from datazilla.model import PerformanceTestModel
 from datazilla.model import utils
+from datazilla.model import DatasetNotFoundError
 
 APP_JS = 'application/json'
 
@@ -42,8 +43,13 @@ def oauth_required(func):
             return HttpResponse(
                 json.dumps(result), content_type=APP_JS, status=403)
 
-        #Get the consumer secret stored with this key
-        ds_consumer_secret = dm.get_oauth_consumer_secret(key)
+        try:
+            #Get the consumer secret stored with this key
+            ds_consumer_secret = dm.get_oauth_consumer_secret(key)
+        except DatasetNotFoundError:
+            result = {"status": "Unknown project '%s'" % project}
+            return HttpResponse(
+                json.dumps(result), content_type=APP_JS, status=404)
 
         #Construct the OAuth request based on the django request object
         req_obj = oauth.Request(request.method,

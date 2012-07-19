@@ -88,3 +88,10 @@ class TestSetTestData(object):
 
         assert response.json["status"] == "Unknown error"
         assert response.json["message"] == "boom!"
+
+
+    def test_bad_project(self, client, dm):
+        dm.project = "doesnotexist"
+        response = client.oauth_post(dm, {}, status=404)
+
+        assert response.json["status"] == "Unknown project 'doesnotexist'"
