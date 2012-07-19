@@ -1,7 +1,9 @@
 from optparse import make_option
 from abc import abstractmethod
+from lockfile import FileLock, AlreadyLocked
 
 from django.core.management.base import NoArgsCommand, CommandError
+
 from datazilla.model.sql.models import DataSource
 
 
@@ -95,15 +97,25 @@ class ProjectBatchCommandBase(ProjectCommandBase):
         else:
             projects = [project]
 
-        self.stdout.write("Starting for projects: {0}\n".format(", ".join(projects)))
+        lock = FileLock(".")
+        try:
+            # lock so that only one process of this command can happen at a time
+            lock.acquire(timeout=0)
+            
+            self.stdout.write("Starting for projects: {0}\n".format(", ".join(projects)))
 
-        for p in projects:
-            self._handle_one_project(p, options)
+            for p in projects:
+                self._handle_one_project(p, options)
 
-        self.stdout.write(
-            "Completed for {0} project(s).\n".format(
-                len(projects),
-                ))
+            self.stdout.write(
+                "Completed for {0} project(s).\n".format(
+                    len(projects),
+                    ))
+
+            # stop locking
+            lock.release()
+        except AlreadyLocked:
+            self.stdout.write("This command is already running.  Skipping.\n")
 
 
     @abstractmethod

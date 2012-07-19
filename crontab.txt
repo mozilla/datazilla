@@ -9,3 +9,5 @@ PYTHONPATH=/usr/local/datazilla
 
 # run twice every minute
 * * * * * /usr/bin/python /usr/local/datazilla/manage.py process_objects --cron_batch small --cron_batch large --loadlimit 25 && /usr/bin/python /usr/local/datazilla/manage.py process_objects --cron_batch small --cron_batch large --loadlimit 25
+
+* * * * * /usr/bin/python /usr/local/datazilla/manage.py update_pushlog --repo_host=hg.mozilla.org --numdays=1
