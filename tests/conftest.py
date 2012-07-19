@@ -29,7 +29,7 @@ def pytest_sessionstart(session):
     increment_cache_key_prefix()
 
     from datazilla.model import PerformanceTestModel, PushLogModel
-    dm = PerformanceTestModel.create("testproj")
+    dm = PerformanceTestModel.create("testproj", cron_batch="small")
     PushLogModel.create(project="testpushlog")
 
     # patch in additional test-only procs on the datasources

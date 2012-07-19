@@ -121,6 +121,7 @@ class SQLDataSource(object):
             host=self.datasource.host,
             db_type=self.datasource.type,
             schema_file=schema_file,
+            cron_batch=self.datasource.cron_batch,
             )
 
 

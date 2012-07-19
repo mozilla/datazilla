@@ -98,8 +98,8 @@ def test_build_and_cache(monkeypatch):
 def test_single_batch_success(capsys, monkeypatch):
 
     # create a set of projects
-    create_project("foo", "small")
-    create_project("bar", "small")
+    create_project("foo", "medium")
+    create_project("bar", "medium")
 
     # intercept the call for each project
     calls = []
@@ -108,7 +108,7 @@ def test_single_batch_success(capsys, monkeypatch):
     monkeypatch.setattr(summary, "cache_test_summaries", mock_cache)
 
     try:
-        call_populate_summary_cache(cache=True, cron_batches=["small"])
+        call_populate_summary_cache(cache=True, cron_batches=["medium"])
     except SystemExit:
         assert False, capsys.readouterr()
 
@@ -127,8 +127,8 @@ def test_single_batch_success(capsys, monkeypatch):
 
 def test_multiple_batches_success(capsys, monkeypatch):
     # create a set of projects
-    create_project("foo", "small")
-    create_project("bar", "small")
+    create_project("foo", "medium")
+    create_project("bar", "medium")
     create_project("baz", "large")
 
     # intercept the call for each project
@@ -140,7 +140,7 @@ def test_multiple_batches_success(capsys, monkeypatch):
     try:
         call_populate_summary_cache(
             cache=True,
-            cron_batches=["small", "large"],
+            cron_batches=["medium", "large"],
             )
     except SystemExit:
         assert False, capsys.readouterr()
@@ -165,8 +165,8 @@ def test_multiple_batches_success(capsys, monkeypatch):
 
 def test_view_batches(capsys):
     # create a set of projects
-    create_project("foo", "small")
-    create_project("bar", "small")
+    create_project("foo", "medium")
+    create_project("bar", "medium")
     create_project("baz", "large")
     create_project("noo", None)
 
@@ -175,8 +175,8 @@ def test_view_batches(capsys):
         )
 
     exp = (
-        u"None: testproj, noo\n"
-        u"small: foo, bar\n"
+        u"None: noo\n"
+        u"small: testproj, foo, bar\n"
         u"large: baz\n",
         ""
         )
@@ -187,7 +187,7 @@ def test_view_batches(capsys):
 def test_both_project_and_cron_branch_defined(capsys):
     """Shows project and cron_batch cannot both be defined."""
     try:
-        call_populate_summary_cache(project="foo", cron_batches=["small"])
+        call_populate_summary_cache(project="foo", cron_batches=["medium"])
         raise Exception("Should have gotten a SystemExit")
 
     except SystemExit:
