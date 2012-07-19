@@ -29,7 +29,7 @@ def oauth_required(func):
         # OAuth or use API/Keys we need to bypass OAuth to injest data.
         # This needs to be removed as soon as talos can support OAuth.
         ###
-        if project == 'talos':
+        if project in ['talos', 'views']:
             return func(request, *args, **kwargs)
 
         dm = PerformanceTestModel(project)
@@ -137,33 +137,34 @@ def set_test_data(request, project=""):
 
     try:
         json_data = request.POST['data']
-    except KeyError as e:
-        result = {"status":"No POST data found", "message": e.message}
-
-    unquoted_json_data = urllib.unquote(json_data)
-
-    error = None
-
-    try:
-        json.loads( unquoted_json_data )
-    except ValueError as e:
-        error = "Malformed JSON: {0}".format(e.message)
-        result = {"status": "Malformed JSON", "message": error}
+    except KeyError:
+        result = {"status":"No POST data found"}
     else:
-        result = {
-            "status": "well-formed JSON stored",
-            "size": len(unquoted_json_data),
-        }
+        unquoted_json_data = urllib.unquote(json_data)
 
-    try:
-        dm = PerformanceTestModel(project)
-        dm.store_test_data(unquoted_json_data, error)
-        dm.disconnect()
-    except Exception as e:
-        status = 500
-        result = {"status":"Unknown error", "message": e.message}
-    else:
-        status = 200
+        error = None
+
+        try:
+            json.loads( unquoted_json_data )
+        except ValueError as e:
+            error = "Malformed JSON: {0}".format(e.message)
+            result = {"status": "Malformed JSON", "message": error}
+        else:
+            result = {
+                "status": "well-formed JSON stored",
+                "size": len(unquoted_json_data),
+            }
+
+        try:
+            dm = PerformanceTestModel(project)
+            dm.store_test_data(unquoted_json_data, error)
+            dm.disconnect()
+        except Exception as e:
+            status = 500
+            result = {"status": "Unknown error", "message": str(e)}
+        else:
+            if not error:
+                status = 200
 
     return HttpResponse(json.dumps(result), mimetype=APP_JS, status=status)
 

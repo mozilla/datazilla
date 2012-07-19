@@ -5,7 +5,7 @@ import urllib
 import oauth2 as oauth
 
 
-def oauth_signed(ptm, path, data):
+def oauth_signed(ptm, path, data=None):
     """Return params dict for OAuth-signed form-encoded POST request."""
     ds = ptm.sources["objectstore"].datasource
     uri = "http://localhost:80%s" % path
@@ -18,8 +18,12 @@ def oauth_signed(ptm, path, data):
         'oauth_nonce': oauth.generate_nonce(),
         'oauth_timestamp': int(time.time()),
         'user': user,
-        'data': urllib.quote(json.dumps(data)),
     }
+
+    if data is not None:
+        if isinstance(data, dict):
+            data = urllib.quote(json.dumps(data))
+        params['data'] = data
 
     #There is no requirement for the token in two-legged
     #OAuth but we still need the token object.

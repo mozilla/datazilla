@@ -24,7 +24,8 @@ class TestClient(TestApp):
         return DjangoWsgiFix(WSGIHandler())
 
 
-    def oauth_post(self, ptm, path, data, **kwargs):
+    def oauth_post(self, ptm, data=None, **kwargs):
         """Post data to url using OAuth creds from given PerfTestModel."""
+        path = "/%s/api/load_test" % ptm.project
         signed_data = oauth_signed(ptm, path, data)
         return self.post(path, signed_data, **kwargs)
