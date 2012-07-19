@@ -97,11 +97,11 @@ class ProjectBatchCommandBase(ProjectCommandBase):
         else:
             projects = [project]
 
-        lock = FileLock(".")
+        lock = FileLock("foo")
         try:
             # lock so that only one process of this command can happen at a time
             lock.acquire(timeout=0)
-            
+
             self.stdout.write("Starting for projects: {0}\n".format(", ".join(projects)))
 
             for p in projects:
@@ -112,10 +112,13 @@ class ProjectBatchCommandBase(ProjectCommandBase):
                     len(projects),
                     ))
 
-            # stop locking
-            lock.release()
         except AlreadyLocked:
             self.stdout.write("This command is already running.  Skipping.\n")
+
+        finally:
+            # stop locking
+            lock.release()
+
 
 
     @abstractmethod
