@@ -1069,9 +1069,9 @@ class PerformanceTestModel(DatazillaModelBase):
         machine = data['test_machine']
         build = data['test_build']
 
-        build_id = self._insert_data_and_get_id(
-            'set_build_data',
-            [
+        self.sources["perftest"].dhub.execute(
+            proc='perftest.inserts.set_build_data',
+            placeholders=[
                 product_id,
                 build['id'],
                 machine['platform'],
@@ -1081,10 +1081,18 @@ class PerformanceTestModel(DatazillaModelBase):
                 # TODO: need to get the build date into the json
                 int(time.time()),
                 build['id']
-                ]
+                ],
+            debug_show=self.DEBUG
             )
 
-        return build_id
+        # Get the build id
+        id_iter = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_build_id',
+            placeholders=[build['id']],
+            debug_show=self.DEBUG,
+            return_type='iter')
+
+        return id_iter.get_column_data('id')
 
 
     def _set_test_run_data(self, data, test_id, build_id, machine_id):
