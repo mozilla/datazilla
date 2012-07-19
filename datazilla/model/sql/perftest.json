@@ -512,6 +512,14 @@
 
          "host":"master_host"
       },
+      "get_build_id":{
+
+        "sql":"SELECT `id`
+               FROM `build`
+               WHERE `test_build_id` = ?",
+
+        "host":"master_host"
+      },
       "get_test_id":{
 
         "sql":"SELECT `id`
