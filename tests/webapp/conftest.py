@@ -5,10 +5,7 @@ Test config for webapp tests.
 
 
 def pytest_funcarg__client(request):
-    """
-    Give a test access to a WebTest client.
-
-    """
+    """Give a test access to a WebTest client for integration-testing views."""
     from django.conf import settings
 
     from tests.webapp.client import TestClient

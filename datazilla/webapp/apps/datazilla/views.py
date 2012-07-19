@@ -65,7 +65,7 @@ def oauth_required(func):
             server.verify_request(req_obj, cons_obj, None)
         except oauth.Error:
             status = 403
-            result = {"status":"Error in verify_request"}
+            result = {"status": "Oauth verification error."}
             return HttpResponse(
                 json.dumps(result), content_type=APP_JS, status=status)
 
@@ -152,7 +152,7 @@ def set_test_data(request, project=""):
     else:
         result = {
             "status": "well-formed JSON stored",
-            "size": str(len(unquoted_json_data)),
+            "size": len(unquoted_json_data),
         }
 
     try:
