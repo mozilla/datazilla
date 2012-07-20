@@ -303,7 +303,7 @@
                 LEFT JOIN build AS b ON tr.build_id = b.id
                 WHERE (tr.date_run >= 'REP0' AND tr.date_run <= 'REP1') REP2
                 GROUP BY tr.id, tr.revision, b.product_id, tr.test_id, m.operating_system_id
-                ORDER BY tr.date_run, tr.test_id ASC",
+                ORDER BY tr.date_run ASC",
 
           "host":"master_host"
 
@@ -326,7 +326,7 @@
                 LEFT JOIN test_value AS tv ON tr.id = tv.test_run_id
                 LEFT JOIN build AS b ON tr.build_id = b.id
                 GROUP BY tr.id, tr.revision, b.product_id, tr.test_id, m.operating_system_id
-                ORDER BY date_run ASC",
+                ORDER BY tr.date_run ASC",
 
           "host":"master_host"
 
