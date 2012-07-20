@@ -16,6 +16,10 @@
         }
     },
     "selects": {
+        "all": {
+            "sql": "SELECT * FROM `objectstore`",
+            "host": "master_host"
+        },
         "row": {
             "sql": "SELECT * FROM `objectstore` WHERE id = ?",
             "host": "master_host"
