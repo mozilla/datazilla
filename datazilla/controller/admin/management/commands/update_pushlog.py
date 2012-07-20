@@ -56,7 +56,10 @@ class Command(BaseCommand):
                           "storage (default to 'pushlog')")),
         )
 
-    lock_file = "update_pushlog.lock"
+
+    @property
+    def lock_file_name(self):
+        return "update_pushlog"
 
 
     def println(self, val):
@@ -87,28 +90,29 @@ class Command(BaseCommand):
             except ValueError:
                 self.println("numdays must be an integer.")
                 return
-        lock = FileLock("update_pushlog")
+
+        lock = FileLock(self.lock_file_name)
         try:
             lock.acquire(timeout=0)
+            try:
+                plm = PushLogModel(project=project, out=self.stdout, verbosity=verbosity)
 
+                # store the pushlogs for the branch specified, or all branches
+                summary = plm.store_pushlogs(repo_host, numdays, enddate, branch)
+                self.println(("Branches: {0}\nPushlogs stored: {1}, skipped: {2}\n" +
+                              "Changesets stored: {3}, skipped: {4}").format(
+                        summary["branches"],
+                        summary["pushlogs_stored"],
+                        summary["pushlogs_skipped"],
+                        summary["changesets_stored"],
+                        summary["changesets_skipped"],
+                        ))
+                plm.disconnect()
 
-            plm = PushLogModel(project=project, out=self.stdout, verbosity=verbosity)
-
-            # store the pushlogs for the branch specified, or all branches
-            summary = plm.store_pushlogs(repo_host, numdays, enddate, branch)
-            self.println(("Branches: {0}\nPushlogs stored: {1}, skipped: {2}\n" +
-                          "Changesets stored: {3}, skipped: {4}").format(
-                    summary["branches"],
-                    summary["pushlogs_stored"],
-                    summary["pushlogs_skipped"],
-                    summary["changesets_stored"],
-                    summary["changesets_skipped"],
-                    ))
-            plm.disconnect()
+            finally:
+                lock.release()
 
         except AlreadyLocked:
             self.println("This command is already being run elsewhere.  Please try again later.")
 
-        finally:
-            lock.release()
 

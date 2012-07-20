@@ -107,28 +107,30 @@ class ProjectBatchCommandBase(ProjectCommandBase):
         else:
             projects = [project]
 
-        lock = FileLock(self.lock_file or self.DEFAULT_LOCK_FILE)
+        lock = FileLock(self.lock_file_name)
         try:
-            # lock so that only one process of this command can happen at a time
             lock.acquire(timeout=0)
+            try:
+                self.stdout.write("Starting for projects: {0}\n".format(", ".join(projects)))
 
-            self.stdout.write("Starting for projects: {0}\n".format(", ".join(projects)))
+                for p in projects:
+                    self._handle_one_project(p, options)
 
-            for p in projects:
-                self._handle_one_project(p, options)
-
-            self.stdout.write(
-                "Completed for {0} project(s).\n".format(
-                    len(projects),
-                    ))
+                self.stdout.write(
+                    "Completed for {0} project(s).\n".format(
+                        len(projects),
+                        ))
+            finally:
+                lock.release()
 
         except AlreadyLocked:
-            self.stdout.write("This command is already running.  Skipping.\n")
+            self.stdout.write("This command is already being run elsewhere.  Please try again later.\n")
 
-        finally:
-            # stop locking
-            lock.release()
 
+
+    @property
+    def lock_file_name(self):
+        return self.DEFAULT_LOCK_FILE
 
 
     @abstractmethod

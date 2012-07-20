@@ -30,6 +30,11 @@ class Command(ProjectBatchCommandBase):
         )
 
 
+    @property
+    def lock_file_name(self):
+        return "process_objects.lock"
+
+
     def _handle_one_project(self, project, options):
         self.stdout.write("Processing project {0}\n".format(project))
 
