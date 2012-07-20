@@ -262,12 +262,17 @@ def _get_test_run_summary(project, method, request, dm):
         time_key = request.GET['tkey']
 
     if not product_ids:
-        ##Set default product_id##
-        pck = dm.get_project_cache_key('default_product')
-        default_project = cache.get(pck)
 
-        if default_project:
-            product_ids = [ int(default_project['id']) ]
+        ##Default to id 1
+        product_ids = [1]
+
+        ##Set default product_id
+        pck = dm.get_project_cache_key('default_product')
+        default_product = cache.get(pck)
+
+        ##If we have one use it
+        if default_product:
+            product_ids = [ int(default_product['id']) ]
 
     json_data = '{}'
 
