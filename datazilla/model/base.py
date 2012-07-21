@@ -406,6 +406,25 @@ class PerformanceTestModel(DatazillaModelBase):
 
         return cls(project=project)
 
+
+    @classmethod
+    def get_cron_batch_projects(cls, cron_batches):
+        """
+        Fetch a list of projects matching ``cron_batches``.
+
+        ``cron_batches`` can be a list of cron_batch names.
+        """
+        return SQLDataSource.get_cron_batch_projects(cron_batches)
+
+
+    @classmethod
+    def get_projects_by_cron_batch(cls):
+        """
+        Return a dict of all the cron_batch values and which projects ar in them.
+        """
+        return SQLDataSource.get_projects_by_cron_batch()
+
+
     def get_oauth_consumer_secret(self, key):
         ds = self.sources['objectstore'].datasource
         secret = ds.get_oauth_consumer_secret(key)
@@ -489,6 +508,7 @@ class PerformanceTestModel(DatazillaModelBase):
 
         return products
 
+
     def get_default_product(self):
 
         proc = 'perftest.selects.get_default_product'
@@ -504,6 +524,7 @@ class PerformanceTestModel(DatazillaModelBase):
             product_data = default_product[0]
 
         return product_data
+
 
     def get_machines(self):
 

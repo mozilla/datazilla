@@ -21,7 +21,7 @@ def test_no_args(capsys):
     except SystemExit:
         exp = (
             "",
-            "Error: You must supply a project name to create: --project project\n",
+            "Error: You must provide either a project or cron_batch value.\n",
             )
 
         assert capsys.readouterr() == exp

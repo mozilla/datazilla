@@ -16,6 +16,7 @@ class Command(BaseCommand):
 
 
     """
+    LOCK_FILE = "update_pushlog"
 
     help = "Update the repo pushlog table."
 
@@ -57,11 +58,6 @@ class Command(BaseCommand):
         )
 
 
-    @property
-    def lock_file_name(self):
-        return "update_pushlog"
-
-
     def println(self, val):
         self.stdout.write("{0}\n".format(str(val)))
 
@@ -91,7 +87,7 @@ class Command(BaseCommand):
                 self.println("numdays must be an integer.")
                 return
 
-        lock = FileLock(self.lock_file_name)
+        lock = FileLock(self.LOCK_FILE)
         try:
             lock.acquire(timeout=0)
             try:

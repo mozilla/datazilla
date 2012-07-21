@@ -4,6 +4,7 @@ from datazilla.model import PerformanceTestModel
 from base import ProjectBatchCommandBase
 
 class Command(ProjectBatchCommandBase):
+    LOCK_FILE = "process_objects"
 
     help = (
             "Transfer json blobs from the key/value store, uncompacting"
@@ -30,12 +31,7 @@ class Command(ProjectBatchCommandBase):
         )
 
 
-    @property
-    def lock_file_name(self):
-        return "process_objects.lock"
-
-
-    def _handle_one_project(self, project, options):
+    def handle_one_project(self, project, options):
         self.stdout.write("Processing project {0}\n".format(project))
 
         loadlimit = int(options.get("loadlimit", 1))

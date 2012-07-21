@@ -2,15 +2,14 @@ from optparse import make_option
 
 
 from datazilla.controller.admin import collection
-from django.core.management.base import NoArgsCommand
-from base import ProjectCommandBase
+from base import ProjectBatchCommandBase
 
 
 
-class Command(ProjectCommandBase):
+class Command(ProjectBatchCommandBase):
     help = "Populate test collections."
 
-    option_list = NoArgsCommand.option_list + (
+    option_list = ProjectBatchCommandBase.option_list + (
 
         make_option(
             '-l',
@@ -27,8 +26,8 @@ class Command(ProjectCommandBase):
         )
 
 
-    def handle_noargs(self, **options):
-        project = self._get_required_project(options)
+    def handle_one_project(self, project, options):
+        self.stdout.write("Processing project {0}\n".format(project))
 
         if options.get("load"):
             collection.load_test_collection(project)

@@ -21,7 +21,7 @@ def test_no_args(capsys):
     except SystemExit:
         exp = (
             "",
-            "Error: You must supply a project name to create: --project project\n",
+            "Error: You must supply a project name: --project project\n",
             )
 
         assert capsys.readouterr() == exp

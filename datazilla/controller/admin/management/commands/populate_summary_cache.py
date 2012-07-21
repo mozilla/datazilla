@@ -15,6 +15,8 @@ from base import ProjectBatchCommandBase
 
 
 class Command(ProjectBatchCommandBase):
+    LOCK_FILE = "populate_summary_cache"
+
     help = "Populate the summary cache for a project."
 
     option_list = ProjectBatchCommandBase.option_list + (
@@ -42,12 +44,7 @@ class Command(ProjectBatchCommandBase):
         )
 
 
-    @property
-    def lock_file_name(self):
-        return "populate_summary_cache"
-
-
-    def _handle_one_project(self, project, options):
+    def handle_one_project(self, project, options):
         self.stdout.write("Processing project {0}\n".format(project))
 
         if options.get("build"):

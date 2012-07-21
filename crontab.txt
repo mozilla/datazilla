@@ -1,13 +1,14 @@
-# This is an example crontab
+# This is a sample crontab
 
-PYTHONPATH=/usr/local/datazilla
+*/2 * * * * /usr/bin/python /usr/local/datazilla/manage.py populate_summary_cache.py --cron_batch small
+*/10 * * * * /usr/bin/python /usr/local/datazilla/manage.py populate_summary_cache.py --cron_batch medium
+0,30 * * * * /usr/bin/python /usr/local/datazilla/manage.py populate_summary_cache.py --cron_batch large
 
-#* * * * * /usr/bin/python /usr/local/datazilla/datazilla/controller/admin/test.py
-
-*/2 * * * * /usr/bin/python /usr/local/datazilla/datazilla/controller/admin/populate_summary_cache.py --cron_batch small
-0,30 * * * * /usr/bin/python /usr/local/datazilla/datazilla/controller/admin/populate_summary_cache.py --cron_batch large
+*/2 * * * * /usr/bin/python /usr/local/datazilla/manage.py populate_test_collections.py --cron_batch small
+*/10 * * * * /usr/bin/python /usr/local/datazilla/manage.py populate_test_collections.py --cron_batch medium
+0,30 * * * * /usr/bin/python /usr/local/datazilla/manage.py populate_test_collections.py --cron_batch large
 
 # run twice every minute
-* * * * * /usr/bin/python /usr/local/datazilla/manage.py process_objects --cron_batch small --cron_batch large --loadlimit 25 && /usr/bin/python /usr/local/datazilla/manage.py process_objects --cron_batch small --cron_batch large --loadlimit 25
+* * * * * /usr/bin/python /usr/local/datazilla/manage.py process_objects --cron_batch small --cron_batch medium --cron_batch large --loadlimit 25 && /usr/bin/python /usr/local/datazilla/manage.py process_objects --cron_batch small --cron_batch large --loadlimit 25
 
 * * * * * /usr/bin/python /usr/local/datazilla/manage.py update_pushlog --repo_host=hg.mozilla.org --numdays=1

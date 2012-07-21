@@ -1,6 +1,6 @@
 from optparse import make_option
-from django.core.management.base import BaseCommand, CommandError
 from datazilla.model import PerformanceTestModel
+from datazilla.model.sql.models import CRON_BATCH_NAMES
 from base import ProjectCommandBase, ProjectBatchCommandBase
 
 class Command(ProjectCommandBase):
@@ -46,10 +46,10 @@ class Command(ProjectCommandBase):
         make_option("--cron_batch",
                     action="store",
                     dest="cron_batch",
-                    choices=ProjectBatchCommandBase.BATCH_NAMES,
+                    choices=CRON_BATCH_NAMES,
                     help=("Add this new project to this cron_batch. "
                         "Choices are: {0}.  Default to None."
-                        ).format(", ".join(ProjectBatchCommandBase.BATCH_NAMES))),
+                        ).format(", ".join(CRON_BATCH_NAMES))),
         )
 
     def handle_noargs(self, **options):

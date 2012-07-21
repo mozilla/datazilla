@@ -4,8 +4,8 @@ from lockfile import FileLock, AlreadyLocked
 
 from django.core.management.base import NoArgsCommand, CommandError
 
-from datazilla.model.sql.models import DataSource
-
+from datazilla.model.sql.models import CRON_BATCH_NAMES
+from datazilla.model.base import PerformanceTestModel
 
 
 class ProjectCommandBase(NoArgsCommand):
@@ -28,7 +28,7 @@ class ProjectCommandBase(NoArgsCommand):
         project = options.get("project")
         if not project:
             raise CommandError(
-                "You must supply a project name to create: --project project"
+                "You must supply a project name: --project project"
                 )
         return project
 
@@ -44,9 +44,7 @@ class ProjectBatchCommandBase(ProjectCommandBase):
     self.lock_file.  Otherwise, it will use DEFAULT_LOCK_FILE.
     """
 
-    # the valid cron_batch values.  Could also be Null, however.
-    BATCH_NAMES = ["small", "medium", "large"]
-    DEFAULT_LOCK_FILE = "cron_batch"
+    LOCK_FILE = "cron_batch"
 
     option_list = ProjectCommandBase.option_list + (
 
@@ -54,11 +52,15 @@ class ProjectBatchCommandBase(ProjectCommandBase):
             '--cron_batch',
             action='append',
             dest='cron_batches',
-            choices=BATCH_NAMES,
+            choices=CRON_BATCH_NAMES,
             help=(
                 "Process all projects with this cron batch name.  Can be used "
                 "multiple times.  Can not be used with --project command.  "
-                "Choices are: {0}".format(", ".join(BATCH_NAMES))
+                "This value indicates the size of the project and may determine "
+                "how much time between intervals should be set.  Larger "
+                "projects will likely have a longer time interval between " \
+                "execution as cron jobs."
+                "Choices are: {0}".format(", ".join(CRON_BATCH_NAMES))
                 )),
 
         make_option(
@@ -81,12 +83,14 @@ class ProjectBatchCommandBase(ProjectCommandBase):
         cron_batches = options.get("cron_batches")
 
         if options.get("view_batches"):
+            if project or cron_batches:
+                raise CommandError(
+                    "view_batches can not be used with project or cron_batch"
+                )
             # print out each batch that is in use, and the projects
             # that belong to it
-            batches = DataSource.get_projects_by_cron_batch()
-            bkeys = batches.keys()
-            bkeys.sort()
-            for key in bkeys:
+            batches = PerformanceTestModel.get_projects_by_cron_batch()
+            for key in sorted(batches.keys()):
                 self.stdout.write("{0}: {1}\n".format(key, batches[key]))
             return
 
@@ -100,38 +104,29 @@ class ProjectBatchCommandBase(ProjectCommandBase):
                 "You must provide either project or cron_batch, but not both.")
 
         if cron_batches:
-            projects = DataSource.objects.filter(
-                cron_batch__in=cron_batches,
-                contenttype="perftest",
-                ).values_list("project", flat=True)
+            projects = PerformanceTestModel.get_cron_batch_projects(cron_batches)
         else:
             projects = [project]
 
-        lock = FileLock(self.lock_file_name)
+        lock = FileLock(self.LOCK_FILE)
         try:
             lock.acquire(timeout=0)
             try:
-                self.stdout.write("Starting for projects: {0}\n".format(", ".join(projects)))
+                self.stdout.write(
+                    "Starting for projects: {0}\n".format(", ".join(projects)))
 
                 for p in projects:
-                    self._handle_one_project(p, options)
+                    self.handle_one_project(p, options)
 
                 self.stdout.write(
-                    "Completed for {0} project(s).\n".format(
-                        len(projects),
-                        ))
+                    "Completed for {0} project(s).\n".format(len(projects)))
             finally:
                 lock.release()
 
         except AlreadyLocked:
-            self.stdout.write("This command is already being run elsewhere.  Please try again later.\n")
-
-
-
-    @property
-    def lock_file_name(self):
-        return self.DEFAULT_LOCK_FILE
+            self.stdout.write("This command is already being run elsewhere.  "
+            "Please try again later.\n")
 
 
     @abstractmethod
-    def _handle_one_project(self, project, options): pass
+    def handle_one_project(self, project, options): pass

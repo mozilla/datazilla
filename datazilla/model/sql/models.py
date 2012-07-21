@@ -16,11 +16,23 @@ from django.db import models, transaction
 import MySQLdb
 
 
+
 # the cache key is specific to the database name we're pulling the data from
 SOURCES_CACHE_KEY = "datazilla-datasources"
 
 SQL_PATH = os.path.dirname(os.path.abspath(__file__))
 
+# the valid cron_batch values.  Null is also ok.  These names are meant to
+# represent how large the project is and whether it's expected to take a long
+# time to process in a cron job.  So giving a project a cron_batch of "large"
+# indicates that some management commands called by cron_jobs may take a long
+# time and could be given a longer time interval between them.
+CRON_BATCH_NAMES = ["small", "medium", "large"]
+CRON_BATCH_CHOICES = (
+    ("small", "small"),
+    ("medium", "medium"),
+    ("large", "large"),
+    )
 
 
 class DatasetNotFoundError(ValueError):
@@ -75,6 +87,38 @@ class SQLDataSource(object):
         if self._dhub is None:
             self._dhub = self.datasource.dhub(self.procs_file_name)
         return self._dhub
+
+
+    @classmethod
+    def get_cron_batch_projects(cls, cron_batches):
+        """
+        Fetch a list of projects matching ``cron_batches``.
+
+        ``cron_batches`` is a list of cron_batch names or
+        a single cron_batch name.
+        """
+        return DataSource.objects.filter(
+            cron_batch__in=cron_batches,
+            contenttype="perftest",
+            ).values_list("project", flat=True)
+
+
+    @classmethod
+    def get_projects_by_cron_batch(cls):
+        """Return a dictionary of each cron_batch and the projects it contains"""
+
+        batch_names = DataSource.objects.values_list(
+            "cron_batch", flat=True).distinct()
+
+        batches = {}
+        for batch in batch_names:
+            projnames = DataSource.objects.filter(
+                cron_batch=batch,
+                contenttype="perftest",
+                ).values_list("project", flat=True)
+            batches[batch] = ", ".join(projnames)
+
+        return batches
 
 
     def _get_datasource(self):
@@ -211,6 +255,13 @@ class DataSource(models.Model):
     """
     A dataset for a source of data for a single project / contenttype.
 
+    ``cron_batch`` can be None, or any value in CRON_BATCH_VALUES.  These
+    names are meant to represent how large the project is and whether it's
+    expected to take a long time to process in a cron job.  So giving a project
+    a cron_batch of "large" indicates that some management commands called by
+    cron_jobs may take a long time and could be given a longer time interval
+    between them to let them finish.
+
     """
     project = models.CharField(max_length=25)
     dataset = models.IntegerField()
@@ -218,10 +269,19 @@ class DataSource(models.Model):
     host = models.CharField(max_length=128)
     name = models.CharField(max_length=128)
     type = models.CharField(max_length=25)
-    oauth_consumer_key = models.CharField(max_length=45, null=True)
-    oauth_consumer_secret = models.CharField(max_length=45, null=True)
+    oauth_consumer_key = models.CharField(max_length=45, null=True, blank=True)
+    oauth_consumer_secret = models.CharField(
+        max_length=45,
+        null=True,
+        blank=True,
+        )
     creation_date = models.DateTimeField()
-    cron_batch = models.CharField(max_length=45, null=True)
+    cron_batch = models.CharField(
+        max_length=45,
+        null=True,
+        blank=True,
+        choices=CRON_BATCH_CHOICES,
+        )
 
     objects = DataSourceManager()
 
@@ -237,6 +297,8 @@ class DataSource(models.Model):
     def save(self, *args, **kwargs):
         """Clear the cached datasources when a new one is saved."""
         clear_cache = (self.pk is None)
+
+        self.full_clean()
 
         super(DataSource, self).save(*args, **kwargs)
 
@@ -362,20 +424,3 @@ class DataSource(models.Model):
                 "mysql returned code {1}, output follows:\n\n{2}".format(
                     self.key, proc.returncode, output)
                 )
-
-    @classmethod
-    def get_projects_by_cron_batch(cls):
-        """Return a dictionary of each cron_batch and the projects it contains"""
-
-        batch_names = cls.objects.values_list(
-            "cron_batch", flat=True).distinct()
-
-        batches = {}
-        for batch in batch_names:
-            projnames = cls.objects.filter(
-                cron_batch=batch,
-                contenttype="perftest",
-                ).values_list("project", flat=True)
-            batches[batch] = ", ".join(projnames)
-
-        return batches
