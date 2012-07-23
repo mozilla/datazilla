@@ -1,12 +1,12 @@
 # This is a sample crontab
 
-*/2 * * * * /usr/bin/python /usr/local/datazilla/manage.py populate_summary_cache.py --cron_batch small
-*/10 * * * * /usr/bin/python /usr/local/datazilla/manage.py populate_summary_cache.py --cron_batch medium
-0,30 * * * * /usr/bin/python /usr/local/datazilla/manage.py populate_summary_cache.py --cron_batch large
+*/2 * * * * /usr/bin/python /usr/local/datazilla/manage.py populate_summary_cache --build --cache --cron_batch small
+*/10 * * * * /usr/bin/python /usr/local/datazilla/manage.py populate_summary_cache --build --cache --cron_batch medium
+0,30 * * * * /usr/bin/python /usr/local/datazilla/manage.py populate_summary_cache --build --cache --cron_batch large
 
-*/2 * * * * /usr/bin/python /usr/local/datazilla/manage.py populate_test_collections.py --cron_batch small
-*/10 * * * * /usr/bin/python /usr/local/datazilla/manage.py populate_test_collections.py --cron_batch medium
-0,30 * * * * /usr/bin/python /usr/local/datazilla/manage.py populate_test_collections.py --cron_batch large
+*/2 * * * * /usr/bin/python /usr/local/datazilla/manage.py populate_test_collections --cron_batch small
+*/10 * * * * /usr/bin/python /usr/local/datazilla/manage.py populate_test_collections --cron_batch medium
+0,30 * * * * /usr/bin/python /usr/local/datazilla/manage.py populate_test_collections --cron_batch large
 
 # run twice every minute
 * * * * * /usr/bin/python /usr/local/datazilla/manage.py process_objects --cron_batch small --cron_batch medium --cron_batch large --loadlimit 25 && /usr/bin/python /usr/local/datazilla/manage.py process_objects --cron_batch small --cron_batch large --loadlimit 25

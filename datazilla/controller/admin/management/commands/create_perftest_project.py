@@ -48,14 +48,17 @@ class Command(ProjectCommandBase):
                     dest="cron_batch",
                     choices=CRON_BATCH_NAMES,
                     help=("Add this new project to this cron_batch. "
-                        "Choices are: {0}.  Default to None."
-                        ).format(", ".join(CRON_BATCH_NAMES))),
+                          "This value indicates the size of the project and may determine "
+                          "how much time between intervals should be set.  Larger "
+                          "projects will likely have a longer time interval between "
+                          "execution as cron jobs."
+                          "Choices are: {0}.  Default to None."
+                          ).format(", ".join(CRON_BATCH_NAMES))),
         )
 
-    def handle_noargs(self, **options):
+    def handle_project(self, project, **options):
         """ Create databases for a new project based on the options value. """
 
-        project = self._get_required_project(options)
         cron_batch = options.get("cron_batch")
 
         hosts = dict(

@@ -23,14 +23,18 @@ class ProjectCommandBase(NoArgsCommand):
         )
 
 
-    def _get_required_project(self, options):
-        """Return the project option if it exists, raise error if not."""
+    def handle_noargs(self, **options):
+        """Verify project argument is set."""
         project = options.get("project")
         if not project:
             raise CommandError(
                 "You must supply a project name: --project project"
                 )
-        return project
+        self.handle_project(project, options)
+
+
+    @abstractmethod
+    def handle_project(self, project, **options): pass
 
 
 
@@ -58,7 +62,7 @@ class ProjectBatchCommandBase(ProjectCommandBase):
                 "multiple times.  Can not be used with --project command.  "
                 "This value indicates the size of the project and may determine "
                 "how much time between intervals should be set.  Larger "
-                "projects will likely have a longer time interval between " \
+                "projects will likely have a longer time interval between "
                 "execution as cron jobs."
                 "Choices are: {0}".format(", ".join(CRON_BATCH_NAMES))
                 )),
@@ -116,7 +120,7 @@ class ProjectBatchCommandBase(ProjectCommandBase):
                     "Starting for projects: {0}\n".format(", ".join(projects)))
 
                 for p in projects:
-                    self.handle_one_project(p, options)
+                    self.handle_project(p, options)
 
                 self.stdout.write(
                     "Completed for {0} project(s).\n".format(len(projects)))
@@ -129,4 +133,4 @@ class ProjectBatchCommandBase(ProjectCommandBase):
 
 
     @abstractmethod
-    def handle_one_project(self, project, options): pass
+    def handle_project(self, project, options): pass

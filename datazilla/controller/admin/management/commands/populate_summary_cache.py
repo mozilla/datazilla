@@ -44,7 +44,7 @@ class Command(ProjectBatchCommandBase):
         )
 
 
-    def handle_one_project(self, project, options):
+    def handle_project(self, project, options):
         self.stdout.write("Processing project {0}\n".format(project))
 
         if options.get("build"):
