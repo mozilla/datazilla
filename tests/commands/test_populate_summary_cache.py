@@ -2,6 +2,7 @@
 Tests for management command to populate the summary cache.
 
 """
+import pytest
 
 from django.core.management import call_command
 from datazilla.controller.admin import summary
@@ -29,20 +30,18 @@ def create_project(name, cron_batch):
 
 def test_no_args(capsys):
     """Shows need for a project or cron_batch."""
-    try:
+    with pytest.raises(SystemExit):
         call_populate_summary_cache()
-        raise Exception("Should have gotten a SystemExit")
 
-    except SystemExit:
-        exp = (
-            "",
-            "Error: You must provide either a project or cron_batch value.\n",
-            )
+    exp = (
+        "",
+        "Error: You must provide either a project or cron_batch value.\n",
+        )
 
-        assert capsys.readouterr() == exp
+    assert capsys.readouterr() == exp
 
 
-def test_build(capsys, monkeypatch):
+def test_build(capsys, monkeypatch, ptm):
     """Test that passing the build and project params calls the right summary method"""
 
     calls = []
@@ -50,12 +49,12 @@ def test_build(capsys, monkeypatch):
         calls.append("mock build for {0}".format(project))
     monkeypatch.setattr(summary, "build_test_summaries", mock_build)
 
-    call_populate_summary_cache(build=True, project="testproj")
-    assert calls[0] == "mock build for testproj"
+    call_populate_summary_cache(build=True, project=ptm.project)
+    assert calls[0] == "mock build for {0}".format(ptm.project)
 
     exp = (
-        u"Starting for projects: testproj\n" +
-        u"Processing project testproj\n" +
+        u"Starting for projects: {0}\n".format(ptm.project) +
+        u"Processing project {0}\n".format(ptm.project) +
         u"Completed for 1 project(s).\n",
         ""
     )
@@ -63,7 +62,7 @@ def test_build(capsys, monkeypatch):
     assert capsys.readouterr() == exp
 
 
-def test_cache(monkeypatch):
+def test_cache(monkeypatch, ptm):
     """Test that passing the cache param calls the right summary method"""
 
     calls = []
@@ -71,11 +70,11 @@ def test_cache(monkeypatch):
         calls.append("mock cache for {0}".format(project))
     monkeypatch.setattr(summary, "cache_test_summaries", mock_cache)
 
-    call_populate_summary_cache(cache=True, project="testproj")
-    assert calls[0] == "mock cache for testproj"
+    call_populate_summary_cache(cache=True, project=ptm.project)
+    assert calls[0] == "mock cache for {0}".format(ptm.project)
 
 
-def test_build_and_cache(monkeypatch):
+def test_build_and_cache(monkeypatch, ptm):
     """Test that passing the cache and build params calls both methods"""
 
     calls = []
@@ -87,11 +86,11 @@ def test_build_and_cache(monkeypatch):
         calls.append("mock cache for {0}".format(project))
     monkeypatch.setattr(summary, "cache_test_summaries", mock_cache)
 
-    call_populate_summary_cache(cache=True, build=True, project="testproj")
+    call_populate_summary_cache(cache=True, build=True, project=ptm.project)
 
 
-    assert set(calls) == set(["mock cache for testproj",
-                              "mock build for testproj"])
+    assert set(calls) == set(["mock cache for {0}".format(ptm.project),
+                              "mock build for {0}".format(ptm.project)])
 
 
 def test_single_batch_success(capsys, monkeypatch):
@@ -163,7 +162,7 @@ def test_multiple_batches_success(capsys, monkeypatch):
     assert capsys.readouterr() == exp
 
 
-def test_view_batches(capsys):
+def test_view_batches(capsys, ptm):
     # view projects that exist in each batch
     create_project("foo", "medium")
     create_project("bar", "medium")
@@ -178,7 +177,7 @@ def test_view_batches(capsys):
         u"None: noo\n"
         u"large: baz\n"
         u"medium: foo, bar\n"
-        u"small: testproj\n",
+        u"small: {0}\n".format(ptm.project),
         ""
         )
 
@@ -187,16 +186,15 @@ def test_view_batches(capsys):
 
 def test_both_project_and_cron_branch_defined(capsys):
     """Shows project and cron_batch cannot both be defined."""
-    try:
+
+    with pytest.raises(SystemExit):
         call_populate_summary_cache(project="foo", cron_batches=["medium"])
-        raise Exception("Should have gotten a SystemExit")
 
-    except SystemExit:
-        exp = (
-            "",
-            "Error: You must provide either project or cron_batch, but not both.\n",
-            )
+    exp = (
+        "",
+        "Error: You must provide either project or cron_batch, but not both.\n",
+        )
 
-        assert capsys.readouterr() == exp
+    assert capsys.readouterr() == exp
 
 

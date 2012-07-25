@@ -3,6 +3,8 @@ Tests for management command to populate test collections.
 
 """
 
+import pytest
+
 from django.core.management import call_command
 from datazilla.controller.admin import collection
 
@@ -14,17 +16,15 @@ def call_populate_test_collections(*args, **kwargs):
 
 def test_no_args(capsys):
     """Shows need for a project name."""
-    try:
+    with pytest.raises(SystemExit):
         call_populate_test_collections()
-        raise Exception("Should have gotten a SystemExit")
 
-    except SystemExit:
-        exp = (
-            "",
-            "Error: You must provide either a project or cron_batch value.\n",
-            )
+    exp = (
+        "",
+        "Error: You must provide either a project or cron_batch value.\n",
+        )
 
-        assert capsys.readouterr() == exp
+    assert capsys.readouterr() == exp
 
 
 def test_successful_populate(monkeypatch):

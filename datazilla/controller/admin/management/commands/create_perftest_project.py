@@ -1,9 +1,9 @@
 from optparse import make_option
 from datazilla.model import PerformanceTestModel
 from datazilla.model.sql.models import CRON_BATCH_NAMES
-from base import ProjectCommandBase, ProjectBatchCommandBase
+from base import ProjectCommand, ProjectBatchCommand
 
-class Command(ProjectCommandBase):
+class Command(ProjectCommand):
     """
     Management command to create all databases for a new project.
 
@@ -15,7 +15,7 @@ class Command(ProjectCommandBase):
 
     help = "Create all databases for a new project."
 
-    option_list = ProjectCommandBase.option_list + (
+    option_list = ProjectCommand.option_list + (
 
         make_option("--perftest_host",
                     action="store",

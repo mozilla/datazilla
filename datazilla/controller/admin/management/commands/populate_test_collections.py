@@ -2,14 +2,14 @@ from optparse import make_option
 
 
 from datazilla.controller.admin import collection
-from base import ProjectBatchCommandBase
+from base import ProjectBatchCommand
 
 
 
-class Command(ProjectBatchCommandBase):
+class Command(ProjectBatchCommand):
     help = "Populate test collections."
 
-    option_list = ProjectBatchCommandBase.option_list + (
+    option_list = ProjectBatchCommand.option_list + (
 
         make_option(
             '-l',

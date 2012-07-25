@@ -83,12 +83,10 @@ def test_datasource_cache_invalidated(DataSource):
     assert len(DataSource.objects.cached()) == len(initial) + 1
 
 
-def test_create_next_dataset(dm, DataSource):
+def test_create_next_dataset(ptm, DataSource):
     """Creating the next dataset keeps all the important fields."""
 
-    sds = dm.sources["perftest"]
-#    sds.datasource.cron_batch = "small"
-#    sds.datasource.save()
+    sds = ptm.sources["perftest"]
     sds2 = sds.create_next_dataset()
 
     act = DataSource.objects.filter(dataset=2).values()[0]
@@ -96,16 +94,17 @@ def test_create_next_dataset(dm, DataSource):
     #remove fields we don't want to compare
     del(act["creation_date"])
     del(act["id"])
+    del(act["host"])
+    del(act["type"])
 
     exp = {'contenttype': u'perftest',
            'cron_batch': "small",
            'dataset': 2L,
-           'host': u's4n4.qa.phx1.mozilla.com',
-           'name': u'testproj_perftest_2',
+           'name': u'{0}_perftest_2'.format(ptm.project),
            'oauth_consumer_key': None,
            'oauth_consumer_secret': None,
-           'project': u'testproj',
-           'type': u'MySQL-InnoDB'}
+           'project': unicode(ptm.project),
+           }
 
     # special cleanup
     # drop the new database we created

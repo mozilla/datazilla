@@ -2,6 +2,7 @@
 Tests for management command to create perftest database.
 
 """
+import pytest
 
 from django.core.management import call_command
 from datazilla.model import PerformanceTestModel
@@ -14,21 +15,19 @@ def call_create_perftest_project(*args, **kwargs):
 
 def test_no_args(capsys):
     """Shows need for a project name."""
-    try:
+    with pytest.raises(SystemExit):
         call_create_perftest_project()
-        raise Exception("Should have gotten a SystemExit")
 
-    except SystemExit:
-        exp = (
-            "",
-            "Error: You must supply a project name: --project project\n",
-            )
+    exp = (
+        "",
+        "Error: You must supply a project name: --project project\n",
+        )
 
-        assert capsys.readouterr() == exp
+    assert capsys.readouterr() == exp
 
 
 def test_successful_create(capsys, monkeypatch):
-    """Successful create call on pushlog database."""
+    """Successful create of perftest project."""
 
     calls = []
     @classmethod

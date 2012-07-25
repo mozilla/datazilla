@@ -1,9 +1,17 @@
 from functools import partial
 import os
 import sys
+from django.conf import settings
 
 from datazilla.vendor import add_vendor_lib
 
+#@property
+#def testproj():
+#    return "{0}testproj".format(settings.UNIT_TEST_PREFIX)
+#
+#@property
+#def testpushlog():
+#    return "{0}testpushlog".format(settings.UNIT_TEST_PREFIX)
 
 
 def pytest_sessionstart(session):
@@ -25,15 +33,21 @@ def pytest_sessionstart(session):
     session.django_runner.setup_test_environment()
     # this sets up a clean test-only database
     session.django_db_config = session.django_runner.setup_databases()
+    # store the name of the testproj based on user custom settings
+    session.project = "{0}testproj".format(settings.UNIT_TEST_PREFIX)
+    session.pushlog = "{0}testpushlog".format(settings.UNIT_TEST_PREFIX)
 
     increment_cache_key_prefix()
 
     from datazilla.model import PerformanceTestModel, PushLogModel
-    dm = PerformanceTestModel.create("testproj", cron_batch="small")
-    PushLogModel.create(project="testpushlog")
+    ptm = PerformanceTestModel.create(
+        session.project,
+        cron_batch="small",
+        )
+    PushLogModel.create(project=session.pushlog)
 
     # patch in additional test-only procs on the datasources
-    objstore = dm.sources["objectstore"]
+    objstore = ptm.sources["objectstore"]
     del objstore.dhub.procs[objstore.datasource.key]
     objstore.dhub.data_sources[objstore.datasource.key]["procs"].append(
         os.path.join(
@@ -43,7 +57,7 @@ def pytest_sessionstart(session):
         )
     objstore.dhub.load_procs(objstore.datasource.key)
 
-    perftest = dm.sources["perftest"]
+    perftest = ptm.sources["perftest"]
     del perftest.dhub.procs[perftest.datasource.key]
     perftest.dhub.data_sources[perftest.datasource.key]["procs"].append(
         os.path.join(
@@ -63,8 +77,8 @@ def pytest_sessionfinish(session):
     from datazilla.model import PerformanceTestModel, PushLogModel
     import MySQLdb
 
-    source_list = PerformanceTestModel("testproj").sources.values()
-    source_list.extend(PushLogModel(project="testpushlog").sources.values())
+    source_list = PerformanceTestModel(session.project).sources.values()
+    source_list.extend(PushLogModel(project=session.pushlog).sources.values())
     for sds in source_list:
         conn = MySQLdb.connect(
             host=sds.datasource.host,
@@ -119,19 +133,19 @@ def pytest_runtest_teardown(item):
 
 
 
-def truncate(dm, skip_list=None):
+def truncate(ptm, skip_list=None):
     """
     Truncates all tables in all databases in given DatazillaModelBase.
 
     skip_list is a list of table names to skip truncation.
     """
-    dm.disconnect()
+    ptm.disconnect()
 
     skip_list = set(skip_list or [])
 
     from django.conf import settings
     import MySQLdb
-    for sds in dm.sources.values():
+    for sds in ptm.sources.values():
         conn = MySQLdb.connect(
             host=sds.datasource.host,
             user=settings.DATAZILLA_DATABASE_USER,
@@ -166,7 +180,7 @@ def increment_cache_key_prefix():
     cache.key_prefix = "t{0}".format(key_prefix_counter)
 
 
-def pytest_funcarg__dm(request):
+def pytest_funcarg__ptm(request):
     """
     Gives a test access to a PerformanceTestModel instance.
 
@@ -175,10 +189,10 @@ def pytest_funcarg__dm(request):
     """
     from datazilla.model import PerformanceTestModel
 
-    dm = PerformanceTestModel("testproj")
+    ptm = PerformanceTestModel(request._pyfuncitem.session.project)
 
-    request.addfinalizer(partial(truncate, dm))
-    return dm
+    request.addfinalizer(partial(truncate, ptm))
+    return ptm
 
 
 def pytest_funcarg__plm(request):
@@ -191,7 +205,9 @@ def pytest_funcarg__plm(request):
     from datazilla.model import PushLogModel
     import sys
 
-    plm = PushLogModel("testpushlog", out=sys.stdout, verbosity=2)
+    plm = PushLogModel(
+        request._pyfuncitem.session.pushlog,
+        out=sys.stdout, verbosity=2)
 
     request.addfinalizer(partial(truncate, plm, ["branches"]))
     return plm

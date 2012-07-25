@@ -8,7 +8,7 @@ from datazilla.model.sql.models import CRON_BATCH_NAMES
 from datazilla.model.base import PerformanceTestModel
 
 
-class ProjectCommandBase(NoArgsCommand):
+class ProjectCommand(NoArgsCommand):
 
     option_list = NoArgsCommand.option_list + (
         make_option(
@@ -30,7 +30,8 @@ class ProjectCommandBase(NoArgsCommand):
             raise CommandError(
                 "You must supply a project name: --project project"
                 )
-        self.handle_project(project, options)
+        del(options["project"])
+        self.handle_project(project, **options)
 
 
     @abstractmethod
@@ -38,19 +39,29 @@ class ProjectCommandBase(NoArgsCommand):
 
 
 
-class ProjectBatchCommandBase(ProjectCommandBase):
+class ProjectBatchCommand(ProjectCommand):
     """
     Base class for executing a management command against a batch
     of projects.
 
+    ``cron_batch`` is which cron batch this project belongs to.
+    Specifying this value will cause this command to iterate over
+    all projects with this cron_batch value.  Projects can
+    be broken into these batches so they can be executed at
+    different intervals via cron.  This value indicates the size
+    of the project.  Larger projects may work better executing at
+    longer intervals than smaller projects.  Can be used multiple
+    times.  Can not be used with --project command.
+
+
     Concurrency locking:
-    To set a custom lock-file for a command, assign a value to
-    self.lock_file.  Otherwise, it will use DEFAULT_LOCK_FILE.
+    To set a custom lock-file for a command, subclasses should assign a value
+    to LOCK_FILE.
     """
 
     LOCK_FILE = "cron_batch"
 
-    option_list = ProjectCommandBase.option_list + (
+    option_list = ProjectCommand.option_list + (
 
         make_option(
             '--cron_batch',
@@ -58,12 +69,12 @@ class ProjectBatchCommandBase(ProjectCommandBase):
             dest='cron_batches',
             choices=CRON_BATCH_NAMES,
             help=(
-                "Process all projects with this cron batch name.  Can be used "
-                "multiple times.  Can not be used with --project command.  "
-                "This value indicates the size of the project and may determine "
-                "how much time between intervals should be set.  Larger "
-                "projects will likely have a longer time interval between "
-                "execution as cron jobs."
+                "Process all projects with this cron_batch value.  Projects can "
+                "be broken into these batches so they can be executed at "
+                "different intervals via cron.  This value indicates the size "
+                "of the project.  Larger projects may work better executing at "
+                "longer intervals than smaller projects.  Can be used multiple "
+                "times.  Can not be used with --project command.  "
                 "Choices are: {0}".format(", ".join(CRON_BATCH_NAMES))
                 )),
 
@@ -75,7 +86,7 @@ class ProjectBatchCommandBase(ProjectCommandBase):
             type=None,
             help=(
                 "Show the cron batches and the projects that belong to them.  "
-                "Makes other commands do nothing."
+                "Cannot be used with --project or --cron_batch."
                 )),
         )
 
@@ -95,7 +106,10 @@ class ProjectBatchCommandBase(ProjectCommandBase):
             # that belong to it
             batches = PerformanceTestModel.get_projects_by_cron_batch()
             for key in sorted(batches.keys()):
-                self.stdout.write("{0}: {1}\n".format(key, batches[key]))
+                self.stdout.write("{0}: {1}\n".format(
+                    key,
+                    ", ".join(batches[key])),
+                    )
             return
 
         if not (project or cron_batches):

@@ -1,9 +1,9 @@
 from optparse import make_option
 
 from datazilla.model import PerformanceTestModel
-from base import ProjectBatchCommandBase
+from base import ProjectBatchCommand
 
-class Command(ProjectBatchCommandBase):
+class Command(ProjectBatchCommand):
     LOCK_FILE = "process_objects"
 
     help = (
@@ -11,7 +11,7 @@ class Command(ProjectBatchCommandBase):
             "them appropriately to the appropriate database."
             )
 
-    option_list = ProjectBatchCommandBase.option_list + (
+    option_list = ProjectBatchCommand.option_list + (
 
         make_option(
             '--loadlimit',

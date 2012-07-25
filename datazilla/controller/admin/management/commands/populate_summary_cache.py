@@ -11,15 +11,15 @@ significantly longer.
 from optparse import make_option
 
 from datazilla.controller.admin import summary
-from base import ProjectBatchCommandBase
+from base import ProjectBatchCommand
 
 
-class Command(ProjectBatchCommandBase):
+class Command(ProjectBatchCommand):
     LOCK_FILE = "populate_summary_cache"
 
     help = "Populate the summary cache for a project."
 
-    option_list = ProjectBatchCommandBase.option_list + (
+    option_list = ProjectBatchCommand.option_list + (
 
         make_option(
             '-b',

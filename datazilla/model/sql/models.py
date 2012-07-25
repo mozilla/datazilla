@@ -22,17 +22,16 @@ SOURCES_CACHE_KEY = "datazilla-datasources"
 
 SQL_PATH = os.path.dirname(os.path.abspath(__file__))
 
-# the valid cron_batch values.  Null is also ok.  These names are meant to
-# represent how large the project is and whether it's expected to take a long
-# time to process in a cron job.  So giving a project a cron_batch of "large"
-# indicates that some management commands called by cron_jobs may take a long
-# time and could be given a longer time interval between them.
+# ``cron_batch`` is which cron batch this project belongs to.  This will
+# determine how often the project is automatically processed by various
+# management commands.  None indicates it will not be automatically
+# processed.  Other possible values are: small, medium, or large
+# (generally depending on the size of the project, and how long a
+# management command may spend on the projects of that size.)
+# This only applies to the contenttype of "perftest".
+
+# The valid ``cron_batch`` values
 CRON_BATCH_NAMES = ["small", "medium", "large"]
-CRON_BATCH_CHOICES = (
-    ("small", "small"),
-    ("medium", "medium"),
-    ("large", "large"),
-    )
 
 
 class DatasetNotFoundError(ValueError):
@@ -116,7 +115,7 @@ class SQLDataSource(object):
                 cron_batch=batch,
                 contenttype="perftest",
                 ).values_list("project", flat=True)
-            batches[batch] = ", ".join(projnames)
+            batches[batch] = projnames
 
         return batches
 
@@ -280,7 +279,7 @@ class DataSource(models.Model):
         max_length=45,
         null=True,
         blank=True,
-        choices=CRON_BATCH_CHOICES,
+        choices=zip(CRON_BATCH_NAMES, CRON_BATCH_NAMES),
         )
 
     objects = DataSourceManager()

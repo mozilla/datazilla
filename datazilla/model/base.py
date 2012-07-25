@@ -392,16 +392,12 @@ class PerformanceTestModel(DatazillaModelBase):
         types = types or {}
 
         for ct in cls.CONTENT_TYPES:
-            # cron_batch only applies to perftest sources.
-            if ct != "perftest":
-                cron_batch = None
-
             SQLDataSource.create(
                 project,
                 ct,
                 host=hosts.get(ct),
                 db_type=types.get(ct),
-                cron_batch=cron_batch,
+                cron_batch=cron_batch if ct == "perftest" else None,
                 )
 
         return cls(project=project)
@@ -420,7 +416,7 @@ class PerformanceTestModel(DatazillaModelBase):
     @classmethod
     def get_projects_by_cron_batch(cls):
         """
-        Return a dict of all the cron_batch values and which projects ar in them.
+        Return a dict of all the cron_batch values and which projects are in them.
         """
         return SQLDataSource.get_projects_by_cron_batch()
 
