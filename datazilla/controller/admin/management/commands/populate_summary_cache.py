@@ -10,25 +10,16 @@ significantly longer.
 """
 from optparse import make_option
 
-
 from datazilla.controller.admin import summary
-from django.core.management.base import NoArgsCommand, CommandError
+from base import ProjectBatchCommand
 
 
+class Command(ProjectBatchCommand):
+    LOCK_FILE = "populate_summary_cache"
 
-class Command(NoArgsCommand):
     help = "Populate the summary cache for a project."
 
-    option_list = NoArgsCommand.option_list + (
-        make_option(
-            '-p',
-            '--project',
-            action='store',
-            dest='project',
-            default=False,
-            type='string',
-            help="Set the project to run on: talos, b2g, schema, test etc....",
-            ),
+    option_list = ProjectBatchCommand.option_list + (
 
         make_option(
             '-b',
@@ -49,16 +40,17 @@ class Command(NoArgsCommand):
             type=None,
             help="Update the test run summaries in memcached",
             ),
+
         )
 
 
-    def handle_noargs(self, **options):
-        project = options.get("project")
-        if not project:
-            raise CommandError("No project argument provided.")
+    def handle_project(self, project, options):
+        self.stdout.write("Processing project {0}\n".format(project))
 
         if options.get("build"):
             summary.build_test_summaries(project)
 
         if options.get("cache"):
             summary.cache_test_summaries(project)
+
+

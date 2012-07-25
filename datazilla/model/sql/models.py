@@ -16,11 +16,22 @@ from django.db import models, transaction
 import MySQLdb
 
 
+
 # the cache key is specific to the database name we're pulling the data from
 SOURCES_CACHE_KEY = "datazilla-datasources"
 
 SQL_PATH = os.path.dirname(os.path.abspath(__file__))
 
+# ``cron_batch`` is which cron batch this project belongs to.  This will
+# determine how often the project is automatically processed by various
+# management commands.  None indicates it will not be automatically
+# processed.  Other possible values are: small, medium, or large
+# (generally depending on the size of the project, and how long a
+# management command may spend on the projects of that size.)
+# This only applies to the contenttype of "perftest".
+
+# The valid ``cron_batch`` values
+CRON_BATCH_NAMES = ["small", "medium", "large"]
 
 
 class DatasetNotFoundError(ValueError):
@@ -77,6 +88,38 @@ class SQLDataSource(object):
         return self._dhub
 
 
+    @classmethod
+    def get_cron_batch_projects(cls, cron_batches):
+        """
+        Fetch a list of projects matching ``cron_batches``.
+
+        ``cron_batches`` is a list of cron_batch names or
+        a single cron_batch name.
+        """
+        return DataSource.objects.filter(
+            cron_batch__in=cron_batches,
+            contenttype="perftest",
+            ).values_list("project", flat=True)
+
+
+    @classmethod
+    def get_projects_by_cron_batch(cls):
+        """Return a dictionary of each cron_batch and the projects it contains"""
+
+        batch_names = DataSource.objects.values_list(
+            "cron_batch", flat=True).distinct()
+
+        batches = {}
+        for batch in batch_names:
+            projnames = DataSource.objects.filter(
+                cron_batch=batch,
+                contenttype="perftest",
+                ).values_list("project", flat=True)
+            batches[batch] = projnames
+
+        return batches
+
+
     def _get_datasource(self):
         candidate_sources = []
         for source in DataSource.objects.cached():
@@ -121,12 +164,13 @@ class SQLDataSource(object):
             host=self.datasource.host,
             db_type=self.datasource.type,
             schema_file=schema_file,
+            cron_batch=self.datasource.cron_batch,
             )
 
 
     @classmethod
-    def create(cls, project, contenttype,
-               host=None, name=None, db_type=None, schema_file=None):
+    def create(cls, project, contenttype, host=None, name=None, db_type=None,
+               schema_file=None, cron_batch=None):
         """
         Create and return a new datasource for given project/contenttype.
 
@@ -153,13 +197,14 @@ class SQLDataSource(object):
             name=name,
             db_type=db_type,
             schema_file=schema_file,
+            cron_batch=cron_batch,
             )
 
 
     @classmethod
     @transaction.commit_on_success
-    def _create_dataset(cls, project, contenttype, dataset, host,
-                        name=None, db_type=None, schema_file=None):
+    def _create_dataset(cls, project, contenttype, dataset, host, name=None,
+                        db_type=None, schema_file=None, cron_batch=None):
         """Create a new ``SQLDataSource`` and its corresponding database."""
         if name is None:
             name = "{0}_{1}_{2}".format(project, contenttype, dataset)
@@ -183,6 +228,7 @@ class SQLDataSource(object):
             oauth_consumer_key=oauth_consumer_key,
             oauth_consumer_secret=oauth_consumer_secret,
             creation_date=datetime.datetime.now(),
+            cron_batch=cron_batch,
             )
 
         ds.create_database(schema_file)
@@ -208,6 +254,13 @@ class DataSource(models.Model):
     """
     A dataset for a source of data for a single project / contenttype.
 
+    ``cron_batch`` can be None, or any value in CRON_BATCH_VALUES.  These
+    names are meant to represent how large the project is and whether it's
+    expected to take a long time to process in a cron job.  So giving a project
+    a cron_batch of "large" indicates that some management commands called by
+    cron_jobs may take a long time and could be given a longer time interval
+    between them to let them finish.
+
     """
     project = models.CharField(max_length=25)
     dataset = models.IntegerField()
@@ -215,9 +268,19 @@ class DataSource(models.Model):
     host = models.CharField(max_length=128)
     name = models.CharField(max_length=128)
     type = models.CharField(max_length=25)
-    oauth_consumer_key = models.CharField(max_length=45, null=True)
-    oauth_consumer_secret = models.CharField(max_length=45, null=True)
+    oauth_consumer_key = models.CharField(max_length=45, null=True, blank=True)
+    oauth_consumer_secret = models.CharField(
+        max_length=45,
+        null=True,
+        blank=True,
+        )
     creation_date = models.DateTimeField()
+    cron_batch = models.CharField(
+        max_length=45,
+        null=True,
+        blank=True,
+        choices=zip(CRON_BATCH_NAMES, CRON_BATCH_NAMES),
+        )
 
     objects = DataSourceManager()
 
@@ -233,6 +296,8 @@ class DataSource(models.Model):
     def save(self, *args, **kwargs):
         """Clear the cached datasources when a new one is saved."""
         clear_cache = (self.pk is None)
+
+        self.full_clean()
 
         super(DataSource, self).save(*args, **kwargs)
 
@@ -262,6 +327,7 @@ class DataSource(models.Model):
         if self.oauth_consumer_key == key:
             oauth_consumer_secret = self.oauth_consumer_secret
         return oauth_consumer_secret
+
 
     def dhub(self, procs_file_name):
         """

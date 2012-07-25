@@ -503,7 +503,7 @@ class RDBSHub(BaseHub):
                                 proc='sql.ds_selects.get_min',
                                 replace=[ column, table ],
                                 return_type='iter')
-            min_id = int(min.get_column_data('min_id'))
+            min_id = int(min.get_column_data('min_id') or min_id)
 
         max_id = int(max.get_column_data('max_id') or 0)
         if 'chunk_total' in kwargs:

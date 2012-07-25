@@ -2,23 +2,14 @@ from optparse import make_option
 
 
 from datazilla.controller.admin import collection
-from django.core.management.base import NoArgsCommand, CommandError
+from base import ProjectBatchCommand
 
 
 
-class Command(NoArgsCommand):
+class Command(ProjectBatchCommand):
     help = "Populate test collections."
 
-    option_list = NoArgsCommand.option_list + (
-        make_option(
-            '-p',
-            '--project',
-            action='store',
-            dest='project',
-            default=False,
-            type='string',
-            help="Set the project to run on: talos, b2g, schema, test etc....",
-            ),
+    option_list = ProjectBatchCommand.option_list + (
 
         make_option(
             '-l',
@@ -35,10 +26,8 @@ class Command(NoArgsCommand):
         )
 
 
-    def handle_noargs(self, **options):
-        project = options.get("project")
-        if not project:
-            raise CommandError("No project argument provided.")
+    def handle_project(self, project, options):
+        self.stdout.write("Processing project {0}\n".format(project))
 
         if options.get("load"):
             collection.load_test_collection(project)

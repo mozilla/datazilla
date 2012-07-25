@@ -6,25 +6,25 @@ from datazilla.model.base import TestDataError, TestData
 from ..sample_data import perftest_json, perftest_data, perftest_ref_data_json
 
 
-def test_unicode(dm):
+def test_unicode(ptm):
     """Unicode representation of a ``PerformanceTestModel`` is the project name."""
-    assert unicode(dm) == u"testproj"
+    assert unicode(ptm) == unicode(ptm.project)
 
 
-def test_disconnect(dm):
+def test_disconnect(ptm):
     """test that you model disconnects"""
 
     # establish the connection to perftest.
-    dm._get_last_insert_id()
+    ptm._get_last_insert_id()
     # establish the connection to objectstore
-    dm.retrieve_test_data(limit=1)
+    ptm.retrieve_test_data(limit=1)
 
-    dm.disconnect()
-    for src in dm.sources.itervalues():
+    ptm.disconnect()
+    for src in ptm.sources.itervalues():
         assert src.dhub.connection["master_host"]["con_obj"].open == False
 
 
-def test_claim_objects(dm):
+def test_claim_objects(ptm):
     """``claim_objects`` claims & returns unclaimed rows up to a limit."""
     blobs = [
         perftest_json(testrun={"date": "1330454755"}),
@@ -33,17 +33,17 @@ def test_claim_objects(dm):
         ]
 
     for blob in blobs:
-        dm.store_test_data(blob)
+        ptm.store_test_data(blob)
 
-    rows1 = dm.claim_objects(2)
+    rows1 = ptm.claim_objects(2)
 
     # a separate worker with a separate connection
     from datazilla.model import PerformanceTestModel
-    dm2 = PerformanceTestModel("testproj")
+    dm2 = PerformanceTestModel(ptm.project)
 
     rows2 = dm2.claim_objects(2)
 
-    loading_rows = dm.sources["objectstore"].dhub.execute(
+    loading_rows = ptm.sources["objectstore"].dhub.execute(
         proc="objectstore_test.counts.loading")[0]["loading_count"]
 
     assert len(rows1) == 2
@@ -57,113 +57,113 @@ def test_claim_objects(dm):
     assert loading_rows == 3
 
 
-def test_mark_object_complete(dm):
+def test_mark_object_complete(ptm):
     """Marks claimed row complete and records run id."""
-    dm.store_test_data(perftest_json())
-    row_id = dm.claim_objects(1)[0]["id"]
+    ptm.store_test_data(perftest_json())
+    row_id = ptm.claim_objects(1)[0]["id"]
     test_run_id = 7 # any arbitrary number; no cross-db constraint checks
 
-    dm.mark_object_complete(row_id, test_run_id)
+    ptm.mark_object_complete(row_id, test_run_id)
 
-    row_data = dm.sources["objectstore"].dhub.execute(
+    row_data = ptm.sources["objectstore"].dhub.execute(
         proc="objectstore_test.selects.row", placeholders=[row_id])[0]
 
     assert row_data["test_run_id"] == test_run_id
     assert row_data["processed_flag"] == "complete"
 
 
-def test_get_or_create_test_id(dm):
+def test_get_or_create_test_id(ptm):
     """Returns test id for the given test-run suite (creating it if needed)."""
     data = TestData({'testrun': {'suite': 'talos'}})
 
-    first_id = dm._get_or_create_test_id(data)
+    first_id = ptm._get_or_create_test_id(data)
 
-    inserted_id = dm._get_last_insert_id()
+    inserted_id = ptm._get_last_insert_id()
 
     # second call with same data returns existing id
-    second_id = dm._get_or_create_test_id(data)
+    second_id = ptm._get_or_create_test_id(data)
 
     assert second_id == first_id == inserted_id
 
 
-def test_get_or_create_test_id_no_testrun(dm):
+def test_get_or_create_test_id_no_testrun(ptm):
     """Raises TestDataError if there is no 'testrun' key in data."""
     with pytest.raises(TestDataError) as e:
-        dm._get_or_create_test_id(TestData({}))
+        ptm._get_or_create_test_id(TestData({}))
 
     assert str(e.value) == "Missing data: ['testrun']."
 
 
-def test_get_or_create_test_id_no_suite_name(dm):
+def test_get_or_create_test_id_no_suite_name(ptm):
     """Raises TestDataError if there is no 'suite' key in data['testrun']."""
     with pytest.raises(TestDataError) as e:
-        dm._get_or_create_test_id(TestData({'testrun': {}}))
+        ptm._get_or_create_test_id(TestData({'testrun': {}}))
 
     assert str(e.value) == "Missing data: ['testrun']['suite']."
 
 
-def test_get_or_create_test_id_bad_version(dm):
+def test_get_or_create_test_id_bad_version(ptm):
     """Raises TestDataError if the 'suite_version' key is not an integer."""
     with pytest.raises(TestDataError) as e:
-        dm._get_or_create_test_id(
+        ptm._get_or_create_test_id(
             TestData({'testrun': {'suite': 'talos', 'suite_version': 'foo'}}))
 
     expected = "Bad value: ['testrun']['suite_version'] is not an integer."
     assert str(e.value) == expected
 
 
-def test_get_or_create_option_ids(dm):
+def test_get_or_create_option_ids(ptm):
     """Returns option ID from db for given option (creating if needed)."""
-    first_id = dm._get_or_create_option_id('option1')
+    first_id = ptm._get_or_create_option_id('option1')
 
-    inserted_id = dm._get_last_insert_id()
+    inserted_id = ptm._get_last_insert_id()
 
     # second call returns same id for same option
-    second_id = dm._get_or_create_option_id('option1')
+    second_id = ptm._get_or_create_option_id('option1')
 
     assert first_id == second_id == inserted_id
 
 
-def test_get_or_create_os_id(dm):
+def test_get_or_create_os_id(ptm):
     """Returns OS id for the given test-machine (creating it if needed)."""
     data = TestData(
         {'test_machine': {'os': 'linux', 'osversion': 'Ubuntu 11.10'}})
 
-    first_id = dm._get_or_create_os_id(data)
+    first_id = ptm._get_or_create_os_id(data)
 
-    inserted_id = dm._get_last_insert_id()
+    inserted_id = ptm._get_last_insert_id()
 
     # second call with same data returns existing id
-    second_id = dm._get_or_create_os_id(data)
+    second_id = ptm._get_or_create_os_id(data)
 
     assert second_id == first_id == inserted_id
 
 
-def test_get_or_create_os_id_no_test_machine(dm):
+def test_get_or_create_os_id_no_test_machine(ptm):
     """Raises TestDataError if there is no 'test_machine' key in data."""
     with pytest.raises(TestDataError) as e:
-        dm._get_or_create_os_id(TestData({}))
+        ptm._get_or_create_os_id(TestData({}))
 
     assert str(e.value) == "Missing data: ['test_machine']."
 
 
-def test_get_or_create_os_id_no_os(dm):
+def test_get_or_create_os_id_no_os(ptm):
     """Raises TestDataError if there is no 'os' key in data['test_machine']."""
     with pytest.raises(TestDataError) as e:
-        dm._get_or_create_os_id(TestData({'test_machine': {'osversion': '7'}}))
+        ptm._get_or_create_os_id(TestData({'test_machine': {'osversion': '7'}}))
 
     assert str(e.value) == "Missing data: ['test_machine']['os']."
 
 
-def test_get_or_create_os_id_no_osversion(dm):
+def test_get_or_create_os_id_no_osversion(ptm):
     """Raises TestDataError if 'osversion' missing from 'test_machine'."""
     with pytest.raises(TestDataError) as e:
-        dm._get_or_create_os_id(TestData({'test_machine': {'os': 'linux'}}))
+        ptm._get_or_create_os_id(TestData({'test_machine': {'os': 'linux'}}))
 
     assert str(e.value) == "Missing data: ['test_machine']['osversion']."
 
 
-def test_get_or_create_product_id(dm):
+def test_get_or_create_product_id(ptm):
     """Returns product id for the given build (creating it if needed)."""
     data = TestData(
         {
@@ -174,28 +174,28 @@ def test_get_or_create_product_id(dm):
             }
         )
 
-    first_id = dm._get_or_create_product_id(data)
+    first_id = ptm._get_or_create_product_id(data)
 
-    inserted_id = dm._get_last_insert_id()
+    inserted_id = ptm._get_last_insert_id()
 
     # second call with same data returns existing id
-    second_id = dm._get_or_create_product_id(data)
+    second_id = ptm._get_or_create_product_id(data)
 
     assert second_id == first_id == inserted_id
 
 
-def test_get_or_create_product_id_no_test_build(dm):
+def test_get_or_create_product_id_no_test_build(ptm):
     """Raises TestDataError if there is no 'test_build' key in data."""
     with pytest.raises(TestDataError) as e:
-        dm._get_or_create_product_id(TestData({}))
+        ptm._get_or_create_product_id(TestData({}))
 
     assert str(e.value) == "Missing data: ['test_build']."
 
 
-def test_get_or_create_product_id_no_name(dm):
+def test_get_or_create_product_id_no_name(ptm):
     """Raises TestDataError if there is no 'name' key in data['test_build']."""
     with pytest.raises(TestDataError) as e:
-        dm._get_or_create_product_id(
+        ptm._get_or_create_product_id(
             TestData(
                 {
                     'test_build': {
@@ -209,19 +209,19 @@ def test_get_or_create_product_id_no_name(dm):
     assert str(e.value) == "Missing data: ['test_build']['name']."
 
 
-def test_get_or_create_product_id_no_branch(dm):
+def test_get_or_create_product_id_no_branch(ptm):
     """Raises TestDataError if there is no 'branch' in data['test_build']."""
     with pytest.raises(TestDataError) as e:
-        dm._get_or_create_product_id(
+        ptm._get_or_create_product_id(
             TestData({'test_build': {'name': 'Firefox', 'version': '14.0a2'}}))
 
     assert str(e.value) == "Missing data: ['test_build']['branch']."
 
 
-def test_get_or_create_product_id_no_version(dm):
+def test_get_or_create_product_id_no_version(ptm):
     """Raises TestDataError if there is no 'version' in data['test_build']."""
     with pytest.raises(TestDataError) as e:
-        dm._get_or_create_product_id(
+        ptm._get_or_create_product_id(
             TestData(
                 {'test_build': {'name': 'Firefox', 'branch': 'Mozilla-Aurora'}}
                 )
@@ -230,50 +230,50 @@ def test_get_or_create_product_id_no_version(dm):
     assert str(e.value) == "Missing data: ['test_build']['version']."
 
 
-def test_get_or_create_machine_id(dm):
+def test_get_or_create_machine_id(ptm):
     """Returns machine id for the given test data (creating it if needed)."""
     os_data = TestData(
         {'test_machine': {'os': 'linux', 'osversion': 'Ubuntu 11.10'}})
 
-    os_id = dm._get_or_create_os_id(os_data)
+    os_id = ptm._get_or_create_os_id(os_data)
 
     data = TestData({'test_machine': {'name': 'qm-pxp01'}})
 
-    first_id = dm._get_or_create_machine_id(data, os_id)
+    first_id = ptm._get_or_create_machine_id(data, os_id)
 
-    inserted_id = dm._get_last_insert_id()
+    inserted_id = ptm._get_last_insert_id()
 
     # second call with same data returns existing id
-    second_id = dm._get_or_create_machine_id(data, os_id)
+    second_id = ptm._get_or_create_machine_id(data, os_id)
 
     assert second_id == first_id == inserted_id
 
 
-def test_get_or_create_machine_id_no_test_machine(dm):
+def test_get_or_create_machine_id_no_test_machine(ptm):
     """Raises TestDataError if there is no 'test_machine' key in data."""
     with pytest.raises(TestDataError) as e:
-        dm._get_or_create_machine_id(TestData({}), None)
+        ptm._get_or_create_machine_id(TestData({}), None)
 
     assert str(e.value) == "Missing data: ['test_machine']."
 
 
-def test_get_or_create_machine_id_no_name(dm):
+def test_get_or_create_machine_id_no_name(ptm):
     """Raises TestDataError if there is no 'name' in data['test_machine']."""
     with pytest.raises(TestDataError) as e:
-        dm._get_or_create_machine_id(TestData({'test_machine': {}}), None)
+        ptm._get_or_create_machine_id(TestData({'test_machine': {}}), None)
 
     assert str(e.value) == "Missing data: ['test_machine']['name']."
 
 
-def test_set_build_data(dm):
+def test_set_build_data(ptm):
     """Inserts data into the build table."""
     data = TestData(perftest_data())
 
-    product_id = dm._get_or_create_product_id(data)
+    product_id = ptm._get_or_create_product_id(data)
 
-    build_id = dm._set_build_data(data, product_id)
+    build_id = ptm._set_build_data(data, product_id)
 
-    row_data = dm.sources["perftest"].dhub.execute(
+    row_data = ptm.sources["perftest"].dhub.execute(
         proc="perftest_test.selects.build", placeholders=[build_id])[0]
 
     assert row_data["test_build_id"] == data["test_build"]["id"]
@@ -282,28 +282,28 @@ def test_set_build_data(dm):
     assert row_data["revision"] == data["test_build"]["revision"]
 
 
-def test_set_existing_build_data(dm):
+def test_set_existing_build_data(ptm):
     """Returns build ID even if build already exists."""
     data = TestData(perftest_data())
 
-    product_id = dm._get_or_create_product_id(data)
+    product_id = ptm._get_or_create_product_id(data)
 
-    first_build_id = dm._set_build_data(data, product_id)
+    first_build_id = ptm._set_build_data(data, product_id)
 
     # perform another insert so that last_insert_id changes
     # second call to perftest_data() will have a new build ID
-    dm._set_build_data(TestData(perftest_data()), product_id)
+    ptm._set_build_data(TestData(perftest_data()), product_id)
 
     # using the original data, so should return first build id
-    build_id = dm._set_build_data(data, product_id)
+    build_id = ptm._set_build_data(data, product_id)
 
     assert build_id == first_build_id
 
 
-def test_set_build_data_no_test_machine(dm):
+def test_set_build_data_no_test_machine(ptm):
     """Raises TestDataError if there is no 'test_machine' key in data."""
     with pytest.raises(TestDataError) as e:
-        dm._set_build_data(
+        ptm._set_build_data(
             TestData({"test_build": {"id": "12345", "revision": "deadbeef"}}),
             None
             )
@@ -311,19 +311,19 @@ def test_set_build_data_no_test_machine(dm):
     assert str(e.value) == "Missing data: ['test_machine']."
 
 
-def test_set_build_data_no_test_build(dm):
+def test_set_build_data_no_test_build(ptm):
     """Raises TestDataError if there is no 'test_build' key in data."""
     with pytest.raises(TestDataError) as e:
-        dm._set_build_data(
+        ptm._set_build_data(
             TestData({"test_machine": {"platform": "arm"}}), None)
 
     assert str(e.value) ==  "Missing data: ['test_build']."
 
 
-def test_set_build_data_no_platform(dm):
+def test_set_build_data_no_platform(ptm):
     """Raises TestDataError if 'test_machine' is missing 'platform' key."""
     with pytest.raises(TestDataError) as e:
-        dm._set_build_data(
+        ptm._set_build_data(
             TestData(
                 {
                     "test_build": {"id": "12345", "revision": "deadbeef"},
@@ -336,10 +336,10 @@ def test_set_build_data_no_platform(dm):
     assert str(e.value) == "Missing data: ['test_machine']['platform']."
 
 
-def test_set_build_data_no_build_id(dm):
+def test_set_build_data_no_build_id(ptm):
     """Raises TestDataError if 'test_machine' is missing 'platform' key."""
     with pytest.raises(TestDataError) as e:
-        dm._set_build_data(
+        ptm._set_build_data(
             TestData(
                 {
                     "test_build": {"revision": "deadbeef"},
@@ -352,20 +352,20 @@ def test_set_build_data_no_build_id(dm):
     assert str(e.value) == "Missing data: ['test_build']['id']."
 
 
-def test_set_test_run_data(dm):
+def test_set_test_run_data(ptm):
     """Inserts data into the test_run table."""
     data = TestData(perftest_data())
 
-    test_id = dm._get_or_create_test_id(data)
-    os_id = dm._get_or_create_os_id(data)
-    product_id = dm._get_or_create_product_id(data)
-    machine_id = dm._get_or_create_machine_id(data, os_id)
+    test_id = ptm._get_or_create_test_id(data)
+    os_id = ptm._get_or_create_os_id(data)
+    product_id = ptm._get_or_create_product_id(data)
+    machine_id = ptm._get_or_create_machine_id(data, os_id)
 
-    build_id = dm._set_build_data(data, product_id)
+    build_id = ptm._set_build_data(data, product_id)
 
-    test_run_id = dm._set_test_run_data(data, test_id, build_id, machine_id)
+    test_run_id = ptm._set_test_run_data(data, test_id, build_id, machine_id)
 
-    row_data = dm.sources["perftest"].dhub.execute(
+    row_data = ptm.sources["perftest"].dhub.execute(
         proc="perftest_test.selects.test_run", placeholders=[test_run_id])[0]
 
     assert row_data["test_id"] == test_id
@@ -374,10 +374,10 @@ def test_set_test_run_data(dm):
     assert row_data["date_run"] == int(data["testrun"]["date"])
 
 
-def test_set_test_run_data_bad_date(dm):
+def test_set_test_run_data_bad_date(ptm):
     """Raises TestDataError if the testrun 'date' key is not an integer."""
     with pytest.raises(TestDataError) as e:
-        dm._set_test_run_data(
+        ptm._set_test_run_data(
             TestData({'testrun': {'date': 'foo'}}),
             None, None, None
             )
@@ -386,30 +386,30 @@ def test_set_test_run_data_bad_date(dm):
     assert str(e.value) == expected
 
 
-def test_set_option_data(dm):
+def test_set_option_data(ptm):
     """Inserts options in the db."""
     data = TestData(perftest_data(testrun={'options': {'opt': 'val'}}))
 
     # Create all the prerequisites for getting a test_run_id
-    test_id = dm._get_or_create_test_id(data)
-    os_id = dm._get_or_create_os_id(data)
-    product_id = dm._get_or_create_product_id(data)
-    machine_id = dm._get_or_create_machine_id(data, os_id)
+    test_id = ptm._get_or_create_test_id(data)
+    os_id = ptm._get_or_create_os_id(data)
+    product_id = ptm._get_or_create_product_id(data)
+    machine_id = ptm._get_or_create_machine_id(data, os_id)
 
-    build_id = dm._set_build_data(data, product_id)
-    test_run_id = dm._set_test_run_data(data, test_id, build_id, machine_id)
+    build_id = ptm._set_build_data(data, product_id)
+    test_run_id = ptm._set_test_run_data(data, test_id, build_id, machine_id)
 
     # Try to set the option data
-    dm._set_option_data(data, test_run_id)
+    ptm._set_option_data(data, test_run_id)
 
-    row_data = dm.sources["perftest"].dhub.execute(
+    row_data = ptm.sources["perftest"].dhub.execute(
         proc="perftest_test.selects.option_value",
         placeholders=['opt', test_run_id],
         )[0]
 
     assert row_data['value'] == 'val'
 
-def test_set_extension_data(dm):
+def test_set_extension_data(ptm):
     """Confirms that options named 'extensions' are ignored
        while other option names are inserted.
 
@@ -423,29 +423,29 @@ def test_set_extension_data(dm):
     data = TestData(perftest_data(testrun=options))
 
     # Create all the prerequisites for getting a test_run_id
-    test_id = dm._get_or_create_test_id(data)
-    os_id = dm._get_or_create_os_id(data)
-    product_id = dm._get_or_create_product_id(data)
-    machine_id = dm._get_or_create_machine_id(data, os_id)
+    test_id = ptm._get_or_create_test_id(data)
+    os_id = ptm._get_or_create_os_id(data)
+    product_id = ptm._get_or_create_product_id(data)
+    machine_id = ptm._get_or_create_machine_id(data, os_id)
 
-    build_id = dm._set_build_data(data, product_id)
+    build_id = ptm._set_build_data(data, product_id)
 
-    test_run_id = dm._set_test_run_data(data, test_id, build_id, machine_id)
+    test_run_id = ptm._set_test_run_data(data, test_id, build_id, machine_id)
 
     # Try to set the option data
-    dm._set_option_data(data, test_run_id)
+    ptm._set_option_data(data, test_run_id)
 
     # Retrieve any options named 'extensions'
-    option_name_data = dm.sources["perftest"].dhub.execute(
+    option_name_data = ptm.sources["perftest"].dhub.execute(
         proc="perftest_test.selects.option_name",
         placeholders=['extensions'])
 
-    # Make sure we don't get any data back for the 
+    # Make sure we don't get any data back for the
     # option name 'extensions'
     assert option_name_data == ()
 
     # Retrieve option values for the 'name' option
-    option_value_data = dm.sources["perftest"].dhub.execute(
+    option_value_data = ptm.sources["perftest"].dhub.execute(
         proc="perftest_test.selects.option_value",
         placeholders=['name', test_run_id],
         )[0]
@@ -453,29 +453,29 @@ def test_set_extension_data(dm):
     # Confirm that we get a value for the 'name' options
     assert option_value_data['value'] == 'value'
 
-def test_set_test_values(dm):
+def test_set_test_values(ptm):
     """Inserts test results in the db."""
     data = TestData(perftest_data(results={"example.com": [1, 2, 3]}))
 
     # Create all the prerequisites for getting a test_run_id
-    test_id = dm._get_or_create_test_id(data)
-    os_id = dm._get_or_create_os_id(data)
-    product_id = dm._get_or_create_product_id(data)
-    machine_id = dm._get_or_create_machine_id(data, os_id)
+    test_id = ptm._get_or_create_test_id(data)
+    os_id = ptm._get_or_create_os_id(data)
+    product_id = ptm._get_or_create_product_id(data)
+    machine_id = ptm._get_or_create_machine_id(data, os_id)
 
-    build_id = dm._set_build_data(data, product_id)
+    build_id = ptm._set_build_data(data, product_id)
 
-    test_run_id = dm._set_test_run_data(data, test_id, build_id, machine_id)
+    test_run_id = ptm._set_test_run_data(data, test_id, build_id, machine_id)
 
     # Try to set the test values
-    dm._set_test_values(data, test_id, test_run_id)
+    ptm._set_test_values(data, test_id, test_run_id)
 
-    page_row = dm.sources["perftest"].dhub.execute(
+    page_row = ptm.sources["perftest"].dhub.execute(
         proc="perftest_test.selects.pages",
         placeholders=[test_id],
         )[0]
 
-    value_rows = dm.sources["perftest"].dhub.execute(
+    value_rows = ptm.sources["perftest"].dhub.execute(
         proc="perftest_test.selects.test_values",
         placeholders=[test_run_id],
         )
@@ -487,29 +487,29 @@ def test_set_test_values(dm):
     assert set([r['page_id'] for r in value_rows]) == set([page_row['id']])
 
 
-def test_set_test_aux_data(dm):
+def test_set_test_aux_data(ptm):
     """Inserts test auxiliary data in the db."""
     data = TestData(perftest_data(results_aux={"foo": [1, 2, "three"]}))
 
     # Create all the prerequisites for getting a test_run_id
-    test_id = dm._get_or_create_test_id(data)
-    os_id = dm._get_or_create_os_id(data)
-    product_id = dm._get_or_create_product_id(data)
-    machine_id = dm._get_or_create_machine_id(data, os_id)
+    test_id = ptm._get_or_create_test_id(data)
+    os_id = ptm._get_or_create_os_id(data)
+    product_id = ptm._get_or_create_product_id(data)
+    machine_id = ptm._get_or_create_machine_id(data, os_id)
 
-    build_id = dm._set_build_data(data, product_id)
+    build_id = ptm._set_build_data(data, product_id)
 
-    test_run_id = dm._set_test_run_data(data, test_id, build_id, machine_id)
+    test_run_id = ptm._set_test_run_data(data, test_id, build_id, machine_id)
 
     # Try to set the aux data
-    dm._set_test_aux_data(data, test_id, test_run_id)
+    ptm._set_test_aux_data(data, test_id, test_run_id)
 
-    aux_row = dm.sources["perftest"].dhub.execute(
+    aux_row = ptm.sources["perftest"].dhub.execute(
         proc="perftest_test.selects.aux_data",
         placeholders=[test_id],
         )[0]
 
-    test_aux_rows = dm.sources["perftest"].dhub.execute(
+    test_aux_rows = ptm.sources["perftest"].dhub.execute(
         proc="perftest_test.selects.test_aux",
         placeholders=[test_run_id],
         )
@@ -527,15 +527,15 @@ def test_set_test_aux_data(dm):
     assert aux_data_ids == set([aux_row['id']])
 
 
-def test_load_test_data(dm):
+def test_load_test_data(ptm):
     """Loads a TestData instance into db and returns test_run_id."""
     data = TestData(perftest_data())
-    test_run_id = dm.load_test_data(data)
+    test_run_id = ptm.load_test_data(data)
 
-    test_run_data = dm.sources["perftest"].dhub.execute(
+    test_run_data = ptm.sources["perftest"].dhub.execute(
         proc="perftest_test.selects.test_run", placeholders=[test_run_id])[0]
 
-    value_rows = dm.sources["perftest"].dhub.execute(
+    value_rows = ptm.sources["perftest"].dhub.execute(
         proc="perftest_test.selects.test_values",
         placeholders=[test_run_id],
         )
@@ -548,7 +548,7 @@ def test_load_test_data(dm):
     assert len(distinct_pages) == len(data["results"])
 
 
-def test_process_objects(dm):
+def test_process_objects(ptm):
     """Claims and processes a chunk of unprocessed JSON test data blobs."""
     # Load some rows into the objectstore
     blobs = [
@@ -558,19 +558,19 @@ def test_process_objects(dm):
         ]
 
     for blob in blobs:
-        dm.store_test_data(blob)
+        ptm.store_test_data(blob)
 
     # just process two rows
-    dm.process_objects(2)
+    ptm.process_objects(2)
 
-    test_run_rows = dm.sources["perftest"].dhub.execute(
+    test_run_rows = ptm.sources["perftest"].dhub.execute(
         proc="perftest_test.selects.test_runs")
     date_set = set([r['date_run'] for r in test_run_rows])
     expected_dates = set([1330454755, 1330454756, 1330454757])
 
-    complete_count = dm.sources["objectstore"].dhub.execute(
+    complete_count = ptm.sources["objectstore"].dhub.execute(
         proc="objectstore_test.counts.complete")[0]["complete_count"]
-    loading_count = dm.sources["objectstore"].dhub.execute(
+    loading_count = ptm.sources["objectstore"].dhub.execute(
         proc="objectstore_test.counts.loading")[0]["loading_count"]
 
     assert complete_count == 2
@@ -579,13 +579,13 @@ def test_process_objects(dm):
     assert len(date_set) == 2
 
 
-def test_process_objects_invalid_json(dm):
-    dm.store_test_data("invalid json")
-    row_id = dm._get_last_insert_id("objectstore")
+def test_process_objects_invalid_json(ptm):
+    ptm.store_test_data("invalid json")
+    row_id = ptm._get_last_insert_id("objectstore")
 
-    dm.process_objects(1)
+    ptm.process_objects(1)
 
-    row_data = dm.sources["objectstore"].dhub.execute(
+    row_data = ptm.sources["objectstore"].dhub.execute(
         proc="objectstore_test.selects.row", placeholders=[row_id])[0]
 
     expected_error = "Malformed JSON: No JSON object could be decoded"
@@ -595,18 +595,18 @@ def test_process_objects_invalid_json(dm):
     assert row_data['processed_flag'] == 'ready'
 
 
-def test_process_objects_unknown_error(dm, monkeypatch):
-    dm.store_test_data("{}")
-    row_id = dm._get_last_insert_id("objectstore")
+def test_process_objects_unknown_error(ptm, monkeypatch):
+    ptm.store_test_data("{}")
+    row_id = ptm._get_last_insert_id("objectstore")
 
     # force an unexpected error to occur
     def raise_error(*args, **kwargs):
         raise ValueError("Something blew up!")
-    monkeypatch.setattr(dm, "load_test_data", raise_error)
+    monkeypatch.setattr(ptm, "load_test_data", raise_error)
 
-    dm.process_objects(1)
+    ptm.process_objects(1)
 
-    row_data = dm.sources["objectstore"].dhub.execute(
+    row_data = ptm.sources["objectstore"].dhub.execute(
         proc="objectstore_test.selects.row", placeholders=[row_id])[0]
 
     expected_error_msg = "Unknown error: ValueError: Something blew up!"
@@ -616,20 +616,20 @@ def test_process_objects_unknown_error(dm, monkeypatch):
     assert row_data['processed_flag'] == 'ready'
 
 
-def test_get_test_reference_data(dm):
+def test_get_test_reference_data(ptm):
 
     data = TestData(perftest_data())
 
     ##Insert reference data from perftest_data##
-    test_id = dm._get_or_create_test_id(data)
-    os_id = dm._get_or_create_os_id(data)
-    product_id = dm._get_or_create_product_id(data)
-    machine_id = dm._get_or_create_machine_id(data, os_id)
+    test_id = ptm._get_or_create_test_id(data)
+    os_id = ptm._get_or_create_os_id(data)
+    product_id = ptm._get_or_create_product_id(data)
+    machine_id = ptm._get_or_create_machine_id(data, os_id)
 
-    build_id = dm._set_build_data(data, product_id)
-    test_run_id = dm._set_test_run_data(data, test_id, build_id, machine_id)
+    build_id = ptm._set_build_data(data, product_id)
+    test_run_id = ptm._set_test_run_data(data, test_id, build_id, machine_id)
 
-    json_data = json.loads( dm.get_test_reference_data('testproj-refdata') )
+    json_data = json.loads( ptm.get_test_reference_data('{0}-refdata'.format(ptm.project)) )
 
     ##Retrieve reference data structure built from perttest_data##
     ref_data_json = json.loads( perftest_ref_data_json() )
@@ -637,7 +637,7 @@ def test_get_test_reference_data(dm):
     assert json_data == ref_data_json
 
 
-def test_get_default_product(dm):
+def test_get_default_product(ptm):
 
     data = TestData(
         {
@@ -648,11 +648,11 @@ def test_get_default_product(dm):
             }
         )
 
-    id = dm._get_or_create_product_id(data)
+    id = ptm._get_or_create_product_id(data)
 
-    dm.set_default_product(id)
+    ptm.set_default_product(id)
 
-    default_product = dm.get_default_product()
+    default_product = ptm.get_default_product()
 
     assert default_product['product'] == 'Firefox'
     assert default_product['branch'] == 'Mozilla-Aurora'
@@ -661,43 +661,43 @@ def test_get_default_product(dm):
 
 # TODO fill in the following tests:
 
-def test_get_operating_systems(dm):
-    dm.get_operating_systems()
+def test_get_operating_systems(ptm):
+    ptm.get_operating_systems()
 
 
-def test_get_tests(dm):
-    dm.get_tests()
+def test_get_tests(ptm):
+    ptm.get_tests()
 
 
-def test_get_products(dm):
-    dm.get_products()
+def test_get_products(ptm):
+    ptm.get_products()
 
 
-def test_get_machines(dm):
-    dm.get_machines()
+def test_get_machines(ptm):
+    ptm.get_machines()
 
 
-def test_get_options(dm):
-    dm.get_options()
+def test_get_options(ptm):
+    ptm.get_options()
 
 
-def test_get_pages(dm):
-    dm.get_pages()
+def test_get_pages(ptm):
+    ptm.get_pages()
 
 
-def test_get_aux_data(dm):
-    dm.get_aux_data()
+def test_get_aux_data(ptm):
+    ptm.get_aux_data()
 
 
-def test_get_test_collections(dm):
-    dm.get_test_collections()
+def test_get_test_collections(ptm):
+    ptm.get_test_collections()
 
 
 
 
-def test_get_product_test_os_map(dm):
-    dm.get_product_test_os_map()
+def test_get_product_test_os_map(ptm):
+    ptm.get_product_test_os_map()
 
 
-def test_get_summary_cache(dm):
-    dm.get_summary_cache(10, 'days_30')
+def test_get_summary_cache(ptm):
+    ptm.get_summary_cache(10, 'days_30')
