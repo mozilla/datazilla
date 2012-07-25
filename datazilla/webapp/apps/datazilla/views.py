@@ -3,7 +3,6 @@ import json
 import urllib
 import zlib
 
-import sys
 import oauth2 as oauth
 
 from django.shortcuts import render_to_response
@@ -13,6 +12,7 @@ from django.http import HttpResponse
 
 from datazilla.model import PerformanceTestModel
 from datazilla.model import utils
+from datazilla.model import DatasetNotFoundError
 
 APP_JS = 'application/json'
 
@@ -30,7 +30,7 @@ def oauth_required(func):
         # OAuth or use API/Keys we need to bypass OAuth to injest data.
         # This needs to be removed as soon as talos can support OAuth.
         ###
-        if project == 'talos':
+        if project in ['talos', 'views']:
             return func(request, *args, **kwargs)
 
         dm = PerformanceTestModel(project)
@@ -43,8 +43,13 @@ def oauth_required(func):
             return HttpResponse(
                 json.dumps(result), content_type=APP_JS, status=403)
 
-        #Get the consumer secret stored with this key
-        ds_consumer_secret = dm.get_oauth_consumer_secret(key)
+        try:
+            #Get the consumer secret stored with this key
+            ds_consumer_secret = dm.get_oauth_consumer_secret(key)
+        except DatasetNotFoundError:
+            result = {"status": "Unknown project '%s'" % project}
+            return HttpResponse(
+                json.dumps(result), content_type=APP_JS, status=404)
 
         #Construct the OAuth request based on the django request object
         req_obj = oauth.Request(request.method,
@@ -66,7 +71,7 @@ def oauth_required(func):
             server.verify_request(req_obj, cons_obj, None)
         except oauth.Error:
             status = 403
-            result = {"status":"Error in verify_request"}
+            result = {"status": "Oauth verification error."}
             return HttpResponse(
                 json.dumps(result), content_type=APP_JS, status=status)
 
@@ -138,33 +143,34 @@ def set_test_data(request, project=""):
 
     try:
         json_data = request.POST['data']
-    except KeyError as e:
-        result = {"status":"No POST data found", "message": e.message}
-
-    unquoted_json_data = urllib.unquote(json_data)
-
-    error = None
-
-    try:
-        json.loads( unquoted_json_data )
-    except ValueError as e:
-        error = "Malformed JSON: {0}".format(e.message)
-        result = {"status": "Malformed JSON", "message": error}
+    except KeyError:
+        result = {"status":"No POST data found"}
     else:
-        result = {
-            "status": "well-formed JSON stored",
-            "size": str(len(unquoted_json_data)),
-        }
+        unquoted_json_data = urllib.unquote(json_data)
 
-    try:
-        dm = PerformanceTestModel(project)
-        dm.store_test_data(unquoted_json_data, error)
-        dm.disconnect()
-    except Exception as e:
-        status = 500
-        result = {"status":"Unknown error", "message": e.message}
-    else:
-        status = 200
+        error = None
+
+        try:
+            json.loads( unquoted_json_data )
+        except ValueError as e:
+            error = "Malformed JSON: {0}".format(e.message)
+            result = {"status": "Malformed JSON", "message": error}
+        else:
+            result = {
+                "status": "well-formed JSON stored",
+                "size": len(unquoted_json_data),
+            }
+
+        try:
+            dm = PerformanceTestModel(project)
+            dm.store_test_data(unquoted_json_data, error)
+            dm.disconnect()
+        except Exception as e:
+            status = 500
+            result = {"status": "Unknown error", "message": str(e)}
+        else:
+            if not error:
+                status = 200
 
     return HttpResponse(json.dumps(result), mimetype=APP_JS, status=status)
 
@@ -256,12 +262,17 @@ def _get_test_run_summary(project, method, request, dm):
         time_key = request.GET['tkey']
 
     if not product_ids:
-        ##Set default product_id##
-        pck = dm.get_project_cache_key('default_product')
-        default_project = cache.get(pck)
 
-        if default_project:
-            product_ids = [ int(default_project['id']) ]
+        ##Default to id 1
+        product_ids = [1]
+
+        ##Set default product_id
+        pck = dm.get_project_cache_key('default_product')
+        default_product = cache.get(pck)
+
+        ##If we have one use it
+        if default_product:
+            product_ids = [ int(default_product['id']) ]
 
     json_data = '{}'
 

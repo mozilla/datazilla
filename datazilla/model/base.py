@@ -659,7 +659,7 @@ class PerformanceTestModel(DatazillaModelBase):
 
         return compressed_json_data
 
-    def cache_default_project(self, cache_key_str='default_project'):
+    def cache_default_project(self, cache_key_str='default_product'):
 
         default_project = self.get_default_product()
         cache_key = self.get_project_cache_key(cache_key_str)
