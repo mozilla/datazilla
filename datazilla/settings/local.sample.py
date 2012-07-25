@@ -24,3 +24,7 @@ DEBUG = os.environ.get("DATAZILLA_DEBUG") is not None
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = os.environ["DATAZILLA_DJANGO_SECRET_KEY"]
+
+# Make this unique so that if you execute the tests against a shared database,
+# you don't conflict with other people running the tests simultaneously.
+TEST_DB_PREFIX="user_"

@@ -1,7 +1,9 @@
 from optparse import make_option
+from lockfile import FileLock, AlreadyLocked
+
 from django.core.management.base import BaseCommand
+
 from datazilla.model import PushLogModel
-from django.conf import settings
 
 
 
@@ -14,6 +16,7 @@ class Command(BaseCommand):
 
 
     """
+    LOCK_FILE = "update_pushlog"
 
     help = "Update the repo pushlog table."
 
@@ -54,6 +57,7 @@ class Command(BaseCommand):
                           "storage (default to 'pushlog')")),
         )
 
+
     def println(self, val):
         self.stdout.write("{0}\n".format(str(val)))
 
@@ -83,17 +87,28 @@ class Command(BaseCommand):
                 self.println("numdays must be an integer.")
                 return
 
-        plm = PushLogModel(project=project, out=self.stdout, verbosity=verbosity)
+        lock = FileLock(self.LOCK_FILE)
+        try:
+            lock.acquire(timeout=0)
+            try:
+                plm = PushLogModel(project=project, out=self.stdout, verbosity=verbosity)
 
-        # store the pushlogs for the branch specified, or all branches
-        summary = plm.store_pushlogs(repo_host, numdays, enddate, branch)
-        self.println(("Branches: {0}\nPushlogs stored: {1}, skipped: {2}\n" +
-                      "Changesets stored: {3}, skipped: {4}").format(
-                summary["branches"],
-                summary["pushlogs_stored"],
-                summary["pushlogs_skipped"],
-                summary["changesets_stored"],
-                summary["changesets_skipped"],
-                ))
-        plm.disconnect()
+                # store the pushlogs for the branch specified, or all branches
+                summary = plm.store_pushlogs(repo_host, numdays, enddate, branch)
+                self.println(("Branches: {0}\nPushlogs stored: {1}, skipped: {2}\n" +
+                              "Changesets stored: {3}, skipped: {4}").format(
+                        summary["branches"],
+                        summary["pushlogs_stored"],
+                        summary["pushlogs_skipped"],
+                        summary["changesets_stored"],
+                        summary["changesets_skipped"],
+                        ))
+                plm.disconnect()
+
+            finally:
+                lock.release()
+
+        except AlreadyLocked:
+            self.println("This command is already being run elsewhere.  Please try again later.")
+
 

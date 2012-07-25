@@ -1,7 +1,6 @@
 from functools import partial
 import os
 import sys
-
 from datazilla.vendor import add_vendor_lib
 
 
@@ -17,6 +16,7 @@ def pytest_sessionstart(session):
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "datazilla.settings.base")
     add_vendor_lib()
 
+    from django.conf import settings
     from django.test.simple import DjangoTestSuiteRunner
     # we don't actually let Django run the tests, but we need to use some
     # methods of its runner for setup/teardown of dbs and some other things
@@ -25,15 +25,22 @@ def pytest_sessionstart(session):
     session.django_runner.setup_test_environment()
     # this sets up a clean test-only database
     session.django_db_config = session.django_runner.setup_databases()
+    # store the name of the test project/pushlog based on user custom settings
+    prefix = getattr(settings, "TEST_DB_PREFIX", "")
+    session.perftest_name = "{0}testproj".format(prefix)
+    session.pushlog_name = "{0}testpushlog".format(prefix)
 
     increment_cache_key_prefix()
 
     from datazilla.model import PerformanceTestModel, PushLogModel
-    dm = PerformanceTestModel.create("testproj")
-    PushLogModel.create(project="testpushlog")
+    ptm = PerformanceTestModel.create(
+        session.perftest_name,
+        cron_batch="small",
+        )
+    PushLogModel.create(project=session.pushlog_name)
 
     # patch in additional test-only procs on the datasources
-    objstore = dm.sources["objectstore"]
+    objstore = ptm.sources["objectstore"]
     del objstore.dhub.procs[objstore.datasource.key]
     objstore.dhub.data_sources[objstore.datasource.key]["procs"].append(
         os.path.join(
@@ -43,7 +50,7 @@ def pytest_sessionstart(session):
         )
     objstore.dhub.load_procs(objstore.datasource.key)
 
-    perftest = dm.sources["perftest"]
+    perftest = ptm.sources["perftest"]
     del perftest.dhub.procs[perftest.datasource.key]
     perftest.dhub.data_sources[perftest.datasource.key]["procs"].append(
         os.path.join(
@@ -63,8 +70,8 @@ def pytest_sessionfinish(session):
     from datazilla.model import PerformanceTestModel, PushLogModel
     import MySQLdb
 
-    source_list = PerformanceTestModel("testproj").sources.values()
-    source_list.extend(PushLogModel(project="testpushlog").sources.values())
+    source_list = PerformanceTestModel(session.perftest_name).sources.values()
+    source_list.extend(PushLogModel(project=session.pushlog_name).sources.values())
     for sds in source_list:
         conn = MySQLdb.connect(
             host=sds.datasource.host,
@@ -108,7 +115,7 @@ def pytest_runtest_teardown(item):
     Per-test teardown.
 
     Roll back the Django ORM transaction and truncates tables in the
-    "testproj" PerformanceTestModel.
+    test PerformanceTestModel database.
 
     """
     from django.test.testcases import restore_transaction_methods
@@ -119,24 +126,24 @@ def pytest_runtest_teardown(item):
     transaction.rollback()
     transaction.leave_transaction_management()
 
-    ptm = PerformanceTestModel("testproj")
+    ptm = PerformanceTestModel(item.session.perftest_name)
     truncate(ptm)
 
 
 
-def truncate(dm, skip_list=None):
+def truncate(ptm, skip_list=None):
     """
     Truncate all tables in all databases in given DatazillaModelBase.
 
     skip_list is a list of table names to skip truncation.
     """
-    dm.disconnect()
+    ptm.disconnect()
 
     skip_list = set(skip_list or [])
 
     from django.conf import settings
     import MySQLdb
-    for sds in dm.sources.values():
+    for sds in ptm.sources.values():
         conn = MySQLdb.connect(
             host=sds.datasource.host,
             user=settings.DATAZILLA_DATABASE_USER,
@@ -171,14 +178,14 @@ def increment_cache_key_prefix():
     cache.key_prefix = "t{0}".format(key_prefix_counter)
 
 
-def pytest_funcarg__dm(request):
+def pytest_funcarg__ptm(request):
     """
     Give a test access to a PerformanceTestModel instance.
 
     """
     from datazilla.model import PerformanceTestModel
 
-    return PerformanceTestModel("testproj")
+    return PerformanceTestModel(request._pyfuncitem.session.perftest_name)
 
 
 def pytest_funcarg__plm(request):
@@ -190,7 +197,9 @@ def pytest_funcarg__plm(request):
     """
     from datazilla.model import PushLogModel
 
-    plm = PushLogModel("testpushlog", out=sys.stdout, verbosity=2)
+    plm = PushLogModel(
+        request._pyfuncitem.session.pushlog_name,
+        out=sys.stdout, verbosity=2)
 
     request.addfinalizer(partial(truncate, plm, ["branches"]))
     return plm

@@ -1,0 +1,16 @@
+# This is a sample crontab
+PYTHON_ROOT=/usr/bin/
+DATAZILLA_HOME=/usr/local/datazilla
+
+*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_summary_cache --build --cache --cron_batch small
+*/10 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_summary_cache --build --cache --cron_batch medium
+0,30 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_summary_cache --build --cache --cron_batch large
+
+*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --cron_batch small
+*/10 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --cron_batch medium
+0,30 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --cron_batch large
+
+# run twice every minute
+* * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --cron_batch small --cron_batch medium --cron_batch large --loadlimit 25 && $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --cron_batch small --cron_batch large --loadlimit 25
+
+* * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py update_pushlog --repo_host=hg.mozilla.org --numdays=1

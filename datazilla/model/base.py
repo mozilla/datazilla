@@ -364,7 +364,7 @@ class PerformanceTestModel(DatazillaModelBase):
 
 
     @classmethod
-    def create(cls, project, hosts=None, types=None):
+    def create(cls, project, hosts=None, types=None, cron_batch=None):
         """
         Create all the datasource tables for this project.
 
@@ -379,6 +379,13 @@ class PerformanceTestModel(DatazillaModelBase):
         all contenttypes need to be represented; any that aren't will use the
         default (``MySQL-InnoDB``).
 
+        ``cron_batch`` is which cron batch this project belongs to.  This will
+        determine how often the project is automatically processed by various
+        management commands.  None indicates it will not be automatically
+        processed.  Other possible values are: small, medium, or large
+        (generally depending on the size of the project, and how long a
+        management command may spend on the projects of that size.)
+        This only applies to the contenttype of "perftest".
 
         """
         hosts = hosts or {}
@@ -386,9 +393,33 @@ class PerformanceTestModel(DatazillaModelBase):
 
         for ct in cls.CONTENT_TYPES:
             SQLDataSource.create(
-                project, ct, host=hosts.get(ct), db_type=types.get(ct))
+                project,
+                ct,
+                host=hosts.get(ct),
+                db_type=types.get(ct),
+                cron_batch=cron_batch if ct == "perftest" else None,
+                )
 
         return cls(project=project)
+
+
+    @classmethod
+    def get_cron_batch_projects(cls, cron_batches):
+        """
+        Fetch a list of projects matching ``cron_batches``.
+
+        ``cron_batches`` can be a list of cron_batch names.
+        """
+        return SQLDataSource.get_cron_batch_projects(cron_batches)
+
+
+    @classmethod
+    def get_projects_by_cron_batch(cls):
+        """
+        Return a dict of all the cron_batch values and which projects are in them.
+        """
+        return SQLDataSource.get_projects_by_cron_batch()
+
 
     def get_oauth_consumer_secret(self, key):
         ds = self.sources['objectstore'].datasource
@@ -473,6 +504,7 @@ class PerformanceTestModel(DatazillaModelBase):
 
         return products
 
+
     def get_default_product(self):
 
         proc = 'perftest.selects.get_default_product'
@@ -488,6 +520,7 @@ class PerformanceTestModel(DatazillaModelBase):
             product_data = default_product[0]
 
         return product_data
+
 
     def get_machines(self):
 
