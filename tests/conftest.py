@@ -1,8 +1,5 @@
 from functools import partial
 import os
-import sys
-from django.conf import settings
-
 from datazilla.vendor import add_vendor_lib
 
 
@@ -18,6 +15,7 @@ def pytest_sessionstart(session):
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "datazilla.settings.base")
     add_vendor_lib()
 
+    from django.conf import settings
     from django.test.simple import DjangoTestSuiteRunner
     # we don't actually let Django run the tests, but we need to use some
     # methods of its runner for setup/teardown of dbs and some other things
@@ -26,18 +24,19 @@ def pytest_sessionstart(session):
     session.django_runner.setup_test_environment()
     # this sets up a clean test-only database
     session.django_db_config = session.django_runner.setup_databases()
-    # store the name of the testproj based on user custom settings
-    session.project = "{0}testproj".format(settings.UNIT_TEST_PREFIX)
-    session.pushlog = "{0}testpushlog".format(settings.UNIT_TEST_PREFIX)
+    # store the name of the test project/pushlog based on user custom settings
+    prefix = getattr(settings, "TEST_DB_PREFIX", "")
+    session.perftest_name = "{0}testproj".format(prefix)
+    session.pushlog_name = "{0}testpushlog".format(prefix)
 
     increment_cache_key_prefix()
 
     from datazilla.model import PerformanceTestModel, PushLogModel
     ptm = PerformanceTestModel.create(
-        session.project,
+        session.perftest_name,
         cron_batch="small",
         )
-    PushLogModel.create(project=session.pushlog)
+    PushLogModel.create(project=session.pushlog_name)
 
     # patch in additional test-only procs on the datasources
     objstore = ptm.sources["objectstore"]
@@ -70,8 +69,8 @@ def pytest_sessionfinish(session):
     from datazilla.model import PerformanceTestModel, PushLogModel
     import MySQLdb
 
-    source_list = PerformanceTestModel(session.project).sources.values()
-    source_list.extend(PushLogModel(project=session.pushlog).sources.values())
+    source_list = PerformanceTestModel(session.perftest_name).sources.values()
+    source_list.extend(PushLogModel(project=session.pushlog_name).sources.values())
     for sds in source_list:
         conn = MySQLdb.connect(
             host=sds.datasource.host,
@@ -182,7 +181,7 @@ def pytest_funcarg__ptm(request):
     """
     from datazilla.model import PerformanceTestModel
 
-    ptm = PerformanceTestModel(request._pyfuncitem.session.project)
+    ptm = PerformanceTestModel(request._pyfuncitem.session.perftest_name)
 
     request.addfinalizer(partial(truncate, ptm))
     return ptm
@@ -199,7 +198,7 @@ def pytest_funcarg__plm(request):
     import sys
 
     plm = PushLogModel(
-        request._pyfuncitem.session.pushlog,
+        request._pyfuncitem.session.pushlog_name,
         out=sys.stdout, verbosity=2)
 
     request.addfinalizer(partial(truncate, plm, ["branches"]))
