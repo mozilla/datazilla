@@ -5,13 +5,6 @@ from django.conf import settings
 
 from datazilla.vendor import add_vendor_lib
 
-#@property
-#def testproj():
-#    return "{0}testproj".format(settings.UNIT_TEST_PREFIX)
-#
-#@property
-#def testpushlog():
-#    return "{0}testpushlog".format(settings.UNIT_TEST_PREFIX)
 
 
 def pytest_sessionstart(session):
