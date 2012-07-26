@@ -23,7 +23,7 @@ Installation
   running.
 
 * Run ``python manage.py syncdb`` to create the core datasource table,
-  then ``python manage.py create_project --project projectname`` to
-  create a project. See ``python manage.py help create_project`` for all
-  the project-creation options (including placing the project database
+  then ``python manage.py create_perftest_project --project projectname`` to
+  create a project. See ``python manage.py help create_perftest_project`` for
+  all the project-creation options (including placing the project database
   on a different database host).
