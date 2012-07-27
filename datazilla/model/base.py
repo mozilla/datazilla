@@ -965,6 +965,77 @@ class PerformanceTestModel(DatazillaModelBase):
             )
 
 
+    def get_all_object_errors(self):
+        """ Get all the error records in the objectstore """
+
+        data_iter = self.sources["objectstore"].dhub.execute(
+            proc="objectstore.selects.get_all_errors",
+            debug_show=self.DEBUG,
+            chunk_size=30,
+            chunk_source="objectstore.id",
+            return_type='tuple',
+            )
+
+        return data_iter
+
+
+    def get_object_error_data(self):
+        """Process all the errors in the objectstore and summarize."""
+        import re
+        data_iter = self.get_all_object_errors()
+
+        results = []
+        versions = {}
+        for d in data_iter:
+            # one chunk
+            for data in d:
+                # one item of one chunk
+                blob = data["json_blob"]
+                try:
+                    res_data = json.loads(blob)
+                    # since this parsed ok, let's get some values
+                    data_error = {
+                        "status": "json parsed",
+                        "test_build": {
+                            "name": res_data["test_build"]["name"],
+                            "branch": res_data["test_build"]["branch"],
+                            "version": res_data["test_build"]["version"],
+                            }
+                        }
+                    results.append(data_error)
+                    tb = res_data["test_build"]
+                    versions[tb["version"]] = versions.get(tb["version"], 0) + 1
+
+                except ValueError:
+                    # we need to use regex to do SOME parsing of this
+                    # data to extract some field values
+                    data_error = {"status": "bad json"}
+
+                    # attempt to find the test_machine
+                    re_tb = re.compile("(?<=\"test_build\":)(.*?})")
+                    tb_res = re_tb.search(blob)
+
+                    try:
+                        # maybe this much JSON is ok.
+                        tb = json.loads(tb_res.group())
+                        data_error["test_build"] = {
+                            "name": tb["name"],
+                            "branch": tb["branch"],
+                            "version": tb["version"],
+                            }
+                        versions[tb["version"]] = versions.get(tb["version"], 0) + 1
+
+                    except ValueError:
+                        # nope, let's just store this now
+                        data_error["test_build"] = tb_res.group()
+                        versions["unparsable"] = versions.get("unparsable", 0) + 1
+
+
+                    results.append(data_error)
+
+        return results
+
+
     def _set_test_aux_data(self, data, test_id, test_run_id):
         """Insert test aux data to db for given test_id and test_run_id."""
         for aux_data, aux_values in data.get('results_aux', {}).items():

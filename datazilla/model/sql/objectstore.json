@@ -34,9 +34,19 @@
                    LIMIT ?",
 
             "host":"master_host"
+        },
+
+        "get_all_errors":{
+
+            "sql":"SELECT   `json_blob`, `id`
+                FROM     `objectstore`
+                WHERE    `error_flag` = 'Y'",
+
+            "host":"master_host"
         }
 
-    },
+
+},
 
     "updates":{
         "mark_loading":{
