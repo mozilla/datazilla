@@ -1,0 +1,11 @@
+../dzmetrics/ttest.py
+../dzmetrics/__init__.py
+../dzmetrics/ttest.pyc
+../dzmetrics/__init__.pyc
+./
+SOURCES.txt
+dependency_links.txt
+requires.txt
+not-zip-safe
+top_level.txt
+PKG-INFO

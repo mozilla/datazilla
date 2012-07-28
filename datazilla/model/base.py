@@ -13,6 +13,7 @@ import time
 import json
 import urllib
 import zlib
+
 from MySQLdb import IntegrityError
 
 from django.conf import settings
@@ -20,6 +21,7 @@ from django.core.cache import cache
 
 
 from . import utils
+from .metrics import MetricsFactory
 from .sql.models import SQLDataSource
 
 
@@ -159,7 +161,6 @@ class PushLogModel(DatazillaModelBase):
 
         return data_iter
 
-
     def get_changesets(self, pushlog_id):
 
         placeholders = [pushlog_id]
@@ -170,6 +171,19 @@ class PushLogModel(DatazillaModelBase):
             debug_show=self.DEBUG,
             return_type='tuple',
             placeholders=placeholders,
+            )
+
+        return data_iter
+
+    def get_branch_pushlog(self, branch_id):
+
+        proc = 'hgmozilla.selects.get_branch_pushlog'
+
+        data_iter = self.hg_ds.dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            placeholders=[branch_id]
             )
 
         return data_iter
@@ -264,7 +278,6 @@ class PushLogModel(DatazillaModelBase):
 
     def _insert_branch_pushlogs(self, branch_id, pushlog_dict):
         """Loop through all the pushlogs and insert them."""
-
         for pushlog_json_id, pushlog in pushlog_dict.items():
             # make sure the pushlog_id isn't confused with a previous iteration
             self.println("    Pushlog {0}".format(pushlog_json_id), 1)
@@ -355,12 +368,12 @@ class PushLogModel(DatazillaModelBase):
             self.out.write("{0}\n".format(str(val)))
 
 
-
 class PerformanceTestModel(DatazillaModelBase):
     """Public interface to all data access for a performance project."""
 
     # content types that every project will have
     CONTENT_TYPES = ["perftest", "objectstore"]
+
 
 
     @classmethod
@@ -425,6 +438,7 @@ class PerformanceTestModel(DatazillaModelBase):
         ds = self.sources['objectstore'].datasource
         secret = ds.get_oauth_consumer_secret(key)
         return secret
+
 
     def get_product_test_os_map(self):
 
@@ -1339,10 +1353,218 @@ class PerformanceTestModel(DatazillaModelBase):
         return data_dict
 
 
+class MetricsTestModel(DatazillaModelBase):
+    """Public interface to all data access for the metrics part of the perftest schema."""
+
+    # Content types that every project will have
+    CONTENT_TYPES = ["perftest"]
+
+    # Used together to define a unique metrics datum
+    METRICS_KEYS = [
+        'product_id',
+        'operating_system_id',
+        'processor',
+        'test_id',
+        'page_id'
+        ]
+
+    # Branches that require special handling
+    SPECIAL_HANDLING_BRANCHES = set(['Try'])
+
+    def __init__(self, project=None):
+        super(MetricsTestModel, self).__init__(project)
+        self.skip_revisions = set()
+
+        self.metrics = self.get_metric_collection()
+        self.mf = MetricsFactory(self.metrics)
+
+    @classmethod
+    def get_metrics_key(cls, data):
+        return '-'.join( map(lambda s: str( data[s] ), cls.METRICS_KEYS) )
+
+    @classmethod
+    def extend_with_metrics_keys(cls, data, default=None):
+        return dict([(k, data.get(k, default)) for k in cls.METRICS_KEYS])
+
+    @classmethod
+    def get_revision_from_node(cls, node):
+        return node[0:12]
+
+    def skip_revision(self, revision):
+        if revision:
+            self.skip_revisions.add(revision)
+
+    def get_metric_collection(self):
+
+        proc = 'perftest.selects.get_metric_collection'
+
+        metric_collection = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            key_column='metric_name',
+            return_type='tuple',
+            )
+
+        return metric_collection
+
+    def get_test_values(self, revision):
+
+        proc = 'perftest.selects.get_test_values'
+
+        changeset_data = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            placeholders=[revision],
+            return_type='tuple',
+            )
+
+        metrics_test_lookup = {}
+
+        for data in changeset_data:
+
+            key = self.get_metrics_key(data)
+
+            if key not in metrics_test_lookup:
+                #set reference data
+                metrics_test_lookup[key] = {
+                    'values':[],
+                    'ref_data':self.extend_with_metrics_keys(data)
+                    }
+
+            #load the test values
+            metrics_test_lookup[key]['values'].append( data['value'] )
+
+        return metrics_test_lookup
+
+    def get_threshold_data(self, ref_data):
+
+        proc = 'perftest.selects.get_metric_threshold'
+
+        placeholders = [
+            ref_data['product_id'],
+            ref_data['operating_system_id'],
+            ref_data['processor'],
+            #TODO: This cannot be harcoded here
+            'welch_ttest',
+            ref_data['test_id'],
+            ref_data['page_id'],
+            ref_data['page_id']
+            ]
+
+        changeset_data = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            placeholders=placeholders,
+            return_type='tuple',
+            )
+
+        metrics_threshold_data = {}
+        for data in changeset_data:
+            key = self.get_metrics_key(data)
+            metrics_threshold_data[key] = data
+
+        return metrics_threshold_data
+
+    def get_metrics_data(self, revision):
+
+        proc = 'perftest.selects.get_computed_metrics'
+
+        computed_metrics = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            placeholders=[revision],
+            return_type='tuple'
+            )
+
+        metrics_data_lookup = {}
+
+        for data in computed_metrics:
+
+            key = self.get_metrics_key(data)
+
+            if key not in metrics_data_lookup:
+                metrics_data_lookup[key] = []
+
+            metrics_data_lookup[key].append(data)
+
+        return metrics_data_lookup
+
+    def get_parent_test_data(
+        self, pushlog, index, key, bootstrap_data=None
+        ):
+
+        parent_data = {}
+        test_result = {}
+        parent_index = index
+
+        try:
+
+            while not parent_data:
+
+                if parent_index == 0:
+                    break
+                else:
+                    #walk back through the pushlog to find the parent
+                    parent_index -= 1
+
+                parent_node = pushlog[ parent_index ]
+                revision = self.get_revision_from_node(parent_node['node'])
+
+                #skip pushes without data
+                if revision in self.skip_revisions:
+                    continue
+
+                data = self.get_test_values(revision)
+
+                if not data:
+                    self.skip_revisions.add(revision)
+
+                if key in data:
+                    if bootstrap_data:
+                        #Confirm that it passes test
+                        m = self.mf.get_metric_method()
+
+                        test_result = m.run_test(
+                            bootstrap_data,
+                            data[key]['values']
+                            )
+
+                        if m.evaluate_test_result(test_result):
+                            #make sure we pass the test
+                            parent_data = data[key]
+                    else:
+                        #parent found
+                        parent_data = data[key]
+
+        except IndexError:
+            #last index reached, no parent with data found
+            return parent_data
+
+        else:
+            #parent with data found
+            return parent_data, test_result
+
+    def store_test(self, ref_data, results):
+
+        print [ref_data, results]
+        """
+        proc = 'perftest.inserts.set_test_page_metric'
+
+        self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=settings.DEBUG,
+            placeholders=placeholders,
+            executemany=executemany,
+            return_type='iter',
+            )
+        """
+
+    def insert_or_update_metric_threshold(self, results):
+
+        proc = 'perftest.inserts.set_metric_threshold'
 
 class TestDataError(ValueError):
     pass
-
 
 
 class TestData(dict):

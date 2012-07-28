@@ -35,6 +35,20 @@
         "get_changesets":{
             "sql":"SELECT * FROM changesets where pushlog_id = ?",
             "host":"master_host"
+        },
+        "get_branch_pushlog":{
+            "sql":"SELECT p.id,
+                          p.push_id,
+                          p.date,
+                          c.node,
+                          b.id,
+                          b.name
+                   FROM pushlogs AS p
+                   LEFT JOIN changesets AS c ON p.id = c.pushlog_id
+                   LEFT JOIN branches AS b ON p.branch_id = b.id
+                   WHERE b.id = ?
+                   ORDER BY b.name, p.date ASC",
+            "host":"master_host"
         }
     }
 }
