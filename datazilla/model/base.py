@@ -160,6 +160,19 @@ class PushLogModel(DatazillaModelBase):
         return data_iter
 
 
+    def get_all_changeset_nodes_by_id(self):
+
+        proc = 'hgmozilla.selects.get_all_changeset_nodes_by_id'
+
+        data_set = self.hg_ds.dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            return_type='iter',
+            )
+
+        return data_set
+
+
     def get_changesets(self, pushlog_id):
 
         placeholders = [pushlog_id]
@@ -705,6 +718,20 @@ class PerformanceTestModel(DatazillaModelBase):
             )
 
         return test_run_summary_table
+
+
+    def get_all_test_run_revisions(self):
+        """Return ids and revisions of all test runs"""
+
+        proc = 'perftest.selects.get_all_test_run_revisions'
+
+        data_iter = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            return_type='iter',
+            )
+
+        return data_iter
 
 
     def get_test_run_values(self, test_run_id):

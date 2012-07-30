@@ -4,7 +4,6 @@ from datazilla.model import PerformanceTestModel
 from base import ProjectCommand
 
 class Command(ProjectCommand):
-    LOCK_FILE = "process_objects"
 
     help = (
         "Generate a report of all the JSON data that had an error "

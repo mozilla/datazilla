@@ -32,6 +32,10 @@
             "sql":"SELECT * FROM changesets",
             "host":"master_host"
         },
+        "get_all_changeset_nodes_by_id":{
+            "sql":"SELECT node, pushlog_id FROM changesets",
+            "host":"master_host"
+        },
         "get_changesets":{
             "sql":"SELECT * FROM changesets where pushlog_id = ?",
             "host":"master_host"

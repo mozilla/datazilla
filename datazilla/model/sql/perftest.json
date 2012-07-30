@@ -331,6 +331,15 @@
           "host":"master_host"
 
       },
+      "get_all_test_run_revisions":{
+
+          "sql":"SELECT tr.id AS 'test_run_id', tr.revision
+                        FROM test_run AS tr",
+
+            "host":"master_host"
+
+      },
+
       "get_test_run_values":{
 
          "sql":"SELECT tv.test_run_id,
