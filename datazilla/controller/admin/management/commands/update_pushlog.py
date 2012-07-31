@@ -1,7 +1,7 @@
 from optparse import make_option
 from lockfile import FileLock, AlreadyLocked
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from datazilla.model import PushLogModel
 
@@ -73,19 +73,16 @@ class Command(BaseCommand):
         project = options.get("project")
 
         if not repo_host:
-            self.println("You must supply a host name for the repo pushlogs " +
+            raise CommandError("You must supply a host name for the repo pushlogs " +
                          "to store: --repo_host hostname")
-            return
 
         if not numdays:
-            self.println("You must supply the number of days data.")
-            return
+            raise CommandError("You must supply the number of days data.")
         else:
             try:
                 numdays = int(numdays)
             except ValueError:
-                self.println("numdays must be an integer.")
-                return
+                raise CommandError("numdays must be an integer.")
 
         lock = FileLock(self.LOCK_FILE)
         try:

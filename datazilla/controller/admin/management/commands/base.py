@@ -95,6 +95,7 @@ class ProjectBatchCommand(ProjectCommand):
         """Handle working on a single project or looping over several."""
 
         project = options.get("project")
+        del options["project"]
         cron_batches = options.get("cron_batches")
 
         if options.get("view_batches"):
@@ -134,7 +135,7 @@ class ProjectBatchCommand(ProjectCommand):
                     "Starting for projects: {0}\n".format(", ".join(projects)))
 
                 for p in projects:
-                    self.handle_project(p, options)
+                    self.handle_project(p, **options)
 
                 self.stdout.write(
                     "Completed for {0} project(s).\n".format(len(projects)))
@@ -147,4 +148,4 @@ class ProjectBatchCommand(ProjectCommand):
 
 
     @abstractmethod
-    def handle_project(self, project, options): pass
+    def handle_project(self, project, **options): pass

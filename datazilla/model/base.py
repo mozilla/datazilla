@@ -160,13 +160,14 @@ class PushLogModel(DatazillaModelBase):
         return data_iter
 
 
-    def get_all_changeset_nodes_by_id(self):
+    def get_changeset_nodes_by_date(self, date):
 
-        proc = 'hgmozilla.selects.get_all_changeset_nodes_by_id'
+        proc = 'hgmozilla.selects.get_changeset_nodes_by_date'
 
         data_set = self.hg_ds.dhub.execute(
             proc=proc,
             debug_show=self.DEBUG,
+            placeholders=[date],
             return_type='iter',
             )
 
@@ -186,6 +187,34 @@ class PushLogModel(DatazillaModelBase):
             )
 
         return data_iter
+
+
+    def get_pushlog_dict(self, since_date):
+        # get the pushlogs in the specified date range
+        pl_nodes = self.get_changeset_nodes_by_date(since_date)
+
+        # build a dict with pushlog_id as the keys, and changeset list as
+        # values.
+        # testrun revision will match the first 12 characters of a node.
+        pl_dict = {}
+        for pl in pl_nodes:
+            node_branch = pl_dict.setdefault(pl["pushlog_id"], {})
+            node_list = node_branch.setdefault("nodes", [])
+            node_list.append(pl["node"][:12])
+            node_branch.setdefault("branch_name", pl["branch_name"])
+
+        return pl_dict
+
+
+    def get_pushlogs_not_in_set_by_branch(self, tr_set, since_date):
+        pl_dict = self.get_pushlog_dict(since_date)
+
+        branch_wo_match = {}
+        for pl, data in pl_dict.iteritems():
+            if not len(tr_set.intersection(set(data["nodes"]))):
+                br_list = branch_wo_match.setdefault(data["branch_name"], [])
+                br_list.append(pl)
+        return branch_wo_match
 
 
     def get_params(self, numdays, enddate=None):

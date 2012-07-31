@@ -1,14 +1,12 @@
-import json
-
-from datazilla.model import PerformanceTestModel, PushLogModel
+from datazilla.model import PerformanceTestModel, PushLogModel, utils
 from base import ProjectCommand
 
 class Command(ProjectCommand):
     """
     Compare perftest test_run.revision field with pushlog revision field
-    for a project.  Anything in one and not in the other should be reported.
+    for a project.  Anything in one and not in the other for the most recent
+    7 day period will be reported.
 
-    Jeads is seeing data in pushlog that's not in perftest.
     """
     help = (
         "Check each pushlog entry for a project and report any changeset"
@@ -24,27 +22,31 @@ class Command(ProjectCommand):
         ptm = PerformanceTestModel(project)
         plm = PushLogModel()
 
+        # get the test run data for this project
         test_runs = ptm.get_all_test_run_revisions()
         tr_set = set([x["revision"] for x in test_runs])
 
-        pl_nodes = plm.get_all_changeset_nodes_by_id()
+        since_date = utils.get_time_ranges()["days_7"]["stop"]
+        pl_dict = plm.get_pushlog_dict(since_date)
 
-        # build a dict with pushlog_id as the keys, and changeset list as
-        # values
-        pl_dict = {}
-        for pl in pl_nodes:
-            node_list = pl_dict.setdefault(pl["pushlog_id"], [])
-            node_list.append(pl["node"][:12])
+        # create a list of counts by branch for output
+        branch_wo_match = plm.get_pushlogs_not_in_set_by_branch(tr_set, since_date)
 
-        no_match = [x for x in pl_dict.keys() if (
-            len(tr_set.intersection(set(pl_dict[x]))) == 0)
-            ]
+        total_wo_match = 0
+        for br in branch_wo_match.itervalues():
+            total_wo_match += len(br)
 
         ptm.disconnect()
         plm.disconnect()
 
-        self.stdout.write("datazilla testrun count: {0}\n".format(len(tr_set)))
-        self.stdout.write("pushlog count: {0}\n".format(len(pl_dict)))
-        self.stdout.write("pushlog changeset count: {0}\n".format(pl_nodes.rowcount))
-        self.stdout.write("No match count: {0}\n".format(len(no_match)))
-#        self.stdout.write("No match: {0}".format(", ".join(str(x) for x in no_match)))
+        self.stdout.write("total datazilla testrun count: {0}\n".format(len(tr_set)))
+        self.stdout.write("7 day pushlog count: {0}\n".format(len(pl_dict)))
+        self.stdout.write("7 day no match count: {0}\n".format(total_wo_match))
+
+        # print counts by branch
+        self.stdout.write("Breakdown by branch:\n")
+        for br in branch_wo_match.iterkeys():
+            self.stdout.write("{0} - {1}\n".format(
+                br,
+                len(branch_wo_match[br]),
+                ))

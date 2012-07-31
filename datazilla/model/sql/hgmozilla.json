@@ -32,8 +32,12 @@
             "sql":"SELECT * FROM changesets",
             "host":"master_host"
         },
-        "get_all_changeset_nodes_by_id":{
-            "sql":"SELECT node, pushlog_id FROM changesets",
+        "get_changeset_nodes_by_date":{
+            "sql":"SELECT cs.node, cs.pushlog_id, pl.date, br.name as 'branch_name'
+                    FROM changesets as cs
+                    LEFT JOIN pushlogs as pl ON cs.pushlog_id = pl.id
+                    LEFT JOIN branches as br ON pl.branch_id = br.id
+                    WHERE pl.date > ?",
             "host":"master_host"
         },
         "get_changesets":{
