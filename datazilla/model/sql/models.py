@@ -266,6 +266,7 @@ class DataSource(models.Model):
     dataset = models.IntegerField()
     contenttype = models.CharField(max_length=25)
     host = models.CharField(max_length=128)
+    read_only_host = models.CharField(max_length=128, null=True, blank=True)
     name = models.CharField(max_length=128)
     type = models.CharField(max_length=25)
     oauth_consumer_key = models.CharField(max_length=45, null=True, blank=True)
@@ -351,6 +352,14 @@ class DataSource(models.Model):
                     ],
                 }
             }
+
+        if self.read_only_host:
+            data_source[self.key]['read_host'] = {
+                "host": self.read_only_host,
+                "user": settings.DATAZILLA_RO_DATABASE_USER,
+                "passwd": settings.DATAZILLA_RO_DATABASE_PASSWORD,
+                }
+
         BaseHub.add_data_source(data_source)
         # @@@ the datahub class should depend on self.type
         return MySQL(self.key)
