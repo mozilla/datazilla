@@ -28,6 +28,10 @@
             "sql":"SELECT * FROM pushlogs where push_id = ?",
             "host":"master_host"
         },
+        "get_pushlog_count_by_date":{
+            "sql":"SELECT count(id) as 'pl_count' from pushlogs WHERE date > ?",
+            "host":"master_host"
+        },
         "get_all_changesets":{
             "sql":"SELECT * FROM changesets",
             "host":"master_host"

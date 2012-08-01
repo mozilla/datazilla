@@ -331,10 +331,9 @@
           "host":"master_host"
 
       },
-      "get_all_test_run_revisions":{
+      "get_distinct_test_run_revisions":{
 
-          "sql":"SELECT tr.id AS 'test_run_id', tr.revision
-                        FROM test_run AS tr",
+          "sql":"SELECT distinct revision FROM test_run",
 
             "host":"master_host"
 

@@ -174,6 +174,20 @@ class PushLogModel(DatazillaModelBase):
         return data_set
 
 
+    def get_pushlog_count_by_date(self, date):
+
+        proc = 'hgmozilla.selects.get_pushlog_count_by_date'
+
+        count = self.hg_ds.dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            placeholders=[date],
+            return_type='tuple',
+            )
+
+        return count
+
+
     def get_changesets(self, pushlog_id):
 
         placeholders = [pushlog_id]
@@ -200,7 +214,7 @@ class PushLogModel(DatazillaModelBase):
         for pl in pl_nodes:
             node_branch = pl_dict.setdefault(pl["pushlog_id"], {})
             node_list = node_branch.setdefault("nodes", [])
-            node_list.append(pl["node"][:12])
+            node_list.append(unicode(pl["node"][:12]))
             node_branch.setdefault("branch_name", pl["branch_name"])
 
         return pl_dict
@@ -214,6 +228,9 @@ class PushLogModel(DatazillaModelBase):
             if not len(tr_set.intersection(set(data["nodes"]))):
                 br_list = branch_wo_match.setdefault(data["branch_name"], [])
                 br_list.append(pl)
+            else:
+                matched = pl
+
         return branch_wo_match
 
 
@@ -752,12 +769,13 @@ class PerformanceTestModel(DatazillaModelBase):
     def get_all_test_run_revisions(self):
         """Return ids and revisions of all test runs"""
 
-        proc = 'perftest.selects.get_all_test_run_revisions'
+        proc = 'perftest.selects.get_distinct_test_run_revisions'
 
         data_iter = self.sources["perftest"].dhub.execute(
             proc=proc,
             debug_show=self.DEBUG,
-            return_type='iter',
+            return_type='set',
+            key_column="revision",
             )
 
         return data_iter

@@ -22,12 +22,20 @@ class Command(ProjectCommand):
         ptm = PerformanceTestModel(project)
         plm = PushLogModel()
 
-        # get the test run data for this project
-        test_runs = ptm.get_all_test_run_revisions()
-        tr_set = set([x["revision"] for x in test_runs])
+        # get the unique revisions for testruns for this project
+        tr_set = ptm.get_all_test_run_revisions()
 
-        since_date = utils.get_time_ranges()["days_7"]["stop"]
-        pl_dict = plm.get_pushlog_dict(since_date)
+        range_key = "days_7"
+        since_date = utils.get_time_ranges()[range_key]["stop"]
+        pl_count = plm.get_pushlog_count_by_date(since_date)
+
+#        import json
+#        c = 0
+#        for k, v in pl_dict.iteritems():
+#
+#            self.stdout.write("{0}: {1}\n".format(k, json.dumps(v, indent=4)))
+#            c += 1
+#            if c == 5: break
 
         # create a list of counts by branch for output
         branch_wo_match = plm.get_pushlogs_not_in_set_by_branch(tr_set, since_date)
@@ -39,9 +47,17 @@ class Command(ProjectCommand):
         ptm.disconnect()
         plm.disconnect()
 
-        self.stdout.write("total datazilla testrun count: {0}\n".format(len(tr_set)))
-        self.stdout.write("7 day pushlog count: {0}\n".format(len(pl_dict)))
-        self.stdout.write("7 day no match count: {0}\n".format(total_wo_match))
+        self.stdout.write("total datazilla testrun count: {0}\n".format(
+            len(tr_set),
+            ))
+        self.stdout.write("{0} pushlog count: {1}\n".format(
+            range_key,
+            pl_count[0]["pl_count"],
+            ))
+        self.stdout.write("{0} no match count: {1}\n".format(
+            range_key,
+            total_wo_match,
+            ))
 
         # print counts by branch
         self.stdout.write("Breakdown by branch:\n")
@@ -50,3 +66,5 @@ class Command(ProjectCommand):
                 br,
                 len(branch_wo_match[br]),
                 ))
+
+        self.stdout.write("date: {0}".format(since_date))
