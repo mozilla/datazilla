@@ -263,8 +263,13 @@
       "set_summary_cache":{
 
          "sql":"INSERT INTO `summary_cache` (`item_id`, `item_data`, `value`, `date`)
-                VALUES (?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE `value`=?, `date`=?",
+                SELECT ?, ?, ?, ?
+                FROM DUAL
+                WHERE NOT EXISTS (
+                    SELECT `item_id`, `item_data`
+                    FROM `summary_cache`
+                    WHERE `item_id` = ? AND `item_data` = ?
+                )",
 
          "host":"master_host"
       },

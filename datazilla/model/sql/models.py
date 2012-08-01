@@ -307,6 +307,10 @@ class DataSource(models.Model):
         if clear_cache:
             cache.delete(SOURCES_CACHE_KEY)
 
+    @classmethod
+    def reset_cache(cls):
+        cache.delete(SOURCES_CACHE_KEY)
+        cls.objects.cached()
 
     @property
     def key(self):
