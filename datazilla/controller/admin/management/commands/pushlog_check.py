@@ -39,8 +39,8 @@ class Command(ProjectCommand):
             ))
 
         self.query_technique(plm, tr_set, since_date)
-        return
 
+        self.stdout.write("\nBY DICT\n\n")
 
 
 
@@ -71,7 +71,14 @@ class Command(ProjectCommand):
 
 
     def query_technique(self, plm, tr_set, since_date):
+        """
+        Use a query to get the list of pushlogs, then separate
+        queries per pushlog to get the changesets that apply to it.
 
+        Slower, but possibly more accurate?
+        """
+
+        self.stdout.write("\nBY QUERY\n\n")
         pushlogs = plm.get_pushlogs_since_date(since_date)
 
         count = 0
@@ -97,5 +104,4 @@ class Command(ProjectCommand):
                 ct,
                 ))
 
-        plm.disconnect()
 
