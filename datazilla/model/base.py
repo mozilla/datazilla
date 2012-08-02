@@ -15,6 +15,7 @@ import urllib
 import zlib
 
 from MySQLdb import IntegrityError
+from collections import defaultdict
 
 from django.conf import settings
 from django.core.cache import cache
@@ -1383,8 +1384,12 @@ class MetricsTestModel(DatazillaModelBase):
         return '-'.join( map(lambda s: str( data[s] ), cls.METRICS_KEYS) )
 
     @classmethod
-    def extend_with_metrics_keys(cls, data, default=None):
-        return dict([(k, data.get(k, default)) for k in cls.METRICS_KEYS])
+    def extend_with_metrics_keys(cls, data, add_keys=[]):
+        keys = []
+        keys.extend(cls.METRICS_KEYS)
+        if add_keys:
+            keys.extend(add_keys)
+        return dict([(k, data.get(k, None)) for k in keys])
 
     @classmethod
     def get_revision_from_node(cls, node):
@@ -1407,36 +1412,23 @@ class MetricsTestModel(DatazillaModelBase):
 
         return metric_collection
 
-    def get_test_values(self, revision):
+    def get_test_values(self, revision, struct_type='metric_key'):
 
         proc = 'perftest.selects.get_test_values'
 
-        changeset_data = self.sources["perftest"].dhub.execute(
+        revision_data = self.sources["perftest"].dhub.execute(
             proc=proc,
             debug_show=self.DEBUG,
             placeholders=[revision],
             return_type='tuple',
             )
 
-        metrics_test_lookup = {}
+        return self._adapt_data(struct_type, revision_data)
 
-        for data in changeset_data:
+    def get_threshold_data(self, ref_data, struct_type='metric_key'):
 
-            key = self.get_metrics_key(data)
-
-            if key not in metrics_test_lookup:
-                #set reference data
-                metrics_test_lookup[key] = {
-                    'values':[],
-                    'ref_data':self.extend_with_metrics_keys(data)
-                    }
-
-            #load the test values
-            metrics_test_lookup[key]['values'].append( data['value'] )
-
-        return metrics_test_lookup
-
-    def get_threshold_data(self, ref_data):
+        m = self.mf.get_metric_method(ref_data['test_name'])
+        metric_id = m.metric_id
 
         proc = 'perftest.selects.get_metric_threshold'
 
@@ -1444,26 +1436,20 @@ class MetricsTestModel(DatazillaModelBase):
             ref_data['product_id'],
             ref_data['operating_system_id'],
             ref_data['processor'],
-            #TODO: This cannot be harcoded here
-            'welch_ttest',
+            metric_id,
             ref_data['test_id'],
             ref_data['page_id'],
             ref_data['page_id']
             ]
 
-        changeset_data = self.sources["perftest"].dhub.execute(
+        threshold_data = self.sources["perftest"].dhub.execute(
             proc=proc,
             debug_show=self.DEBUG,
             placeholders=placeholders,
             return_type='tuple',
             )
 
-        metrics_threshold_data = {}
-        for data in changeset_data:
-            key = self.get_metrics_key(data)
-            metrics_threshold_data[key] = data
-
-        return metrics_threshold_data
+        return self._adapt_data(struct_type, threshold_data)
 
     def get_metrics_data(self, revision):
 
@@ -1522,7 +1508,9 @@ class MetricsTestModel(DatazillaModelBase):
                 if key in data:
                     if bootstrap_data:
                         #Confirm that it passes test
-                        m = self.mf.get_metric_method()
+                        m = self.mf.get_metric_method(
+                            data[key]['ref_data']['test_name']
+                            )
 
                         test_result = m.run_test(
                             bootstrap_data,
@@ -1544,24 +1532,120 @@ class MetricsTestModel(DatazillaModelBase):
             #parent with data found
             return parent_data, test_result
 
-    def store_test(self, ref_data, results):
+    def run_test(self, ref_data, child_data, parent_data):
 
-        print [ref_data, results]
-        """
+        m = self.mf.get_metric_method(ref_data['test_name'])
+        results = m.run_test(child_data, parent_data)
+        return results
+
+    def store_test(self, revision, ref_data, results):
+
+        m = self.mf.get_metric_method(ref_data['test_name'])
+
+        placeholders = m.get_data_for_storage(ref_data, results)
+
         proc = 'perftest.inserts.set_test_page_metric'
 
         self.sources["perftest"].dhub.execute(
             proc=proc,
             debug_show=settings.DEBUG,
             placeholders=placeholders,
-            executemany=executemany,
-            return_type='iter',
+            executemany=True,
             )
-        """
 
-    def insert_or_update_metric_threshold(self, results):
+        if m.evaluate_test_result(results):
+            self.insert_or_update_metric_threshold(
+                revision,
+                ref_data,
+                m.metric_id
+                )
+
+    def insert_or_update_metric_threshold(
+        self, revision, ref_data, metric_id
+        ):
 
         proc = 'perftest.inserts.set_metric_threshold'
+
+        creation_date = int(time.time())
+
+        placeholders = [
+            ##Insert Values
+            ref_data['product_id'],
+            ref_data['operating_system_id'],
+            ref_data['processor'],
+            metric_id,
+            ref_data['test_id'],
+            ref_data['page_id'],
+            ref_data['test_run_id'],
+            revision,
+            creation_date,
+            ##Duplicate Key Values
+            ref_data['product_id'],
+            ref_data['operating_system_id'],
+            ref_data['processor'],
+            metric_id,
+            ref_data['test_id'],
+            ref_data['page_id'],
+            creation_date
+            ]
+
+        self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=settings.DEBUG,
+            placeholders=placeholders
+            )
+
+    def _adapt_data(self, struct_type, data):
+
+        adapted_data = {}
+        if struct_type == 'aggregate_ids':
+            adapted_data = self._get_aggregate_lookup(data)
+        else:
+            adapted_data = self._get_key_lookup(data)
+
+        return adapted_data
+
+    def _get_key_lookup(self, data):
+
+        key_lookup = {}
+        for d in data:
+            key = self.get_metrics_key(d)
+            if key not in key_lookup:
+                #set reference data
+                key_lookup[key] = {
+                    'values':[],
+                    'ref_data':self.extend_with_metrics_keys(
+                        d, ['test_run_id', 'test_name']
+                        )
+                    }
+            key_lookup[key]['values'].append( d['value'] )
+
+        return key_lookup
+
+    def _get_aggregate_lookup(self, data):
+
+        aggregate_lookup = defaultdict(
+            #holds product_id
+            lambda: defaultdict(
+                #holds operating_system_id
+                lambda: defaultdict(
+                    #holds processor
+                    lambda:defaultdict( dictlist)
+                        #holds test_id
+                    )
+                )
+            )
+
+        for d in data:
+            key = self.get_metrics_key(d)
+            aggregate_lookup[
+                d['product_id']
+                ][
+                    d['operating_system_id']
+                    ][ d['processor']][d['test_id']].append(d)
+
+        return aggregate_lookup
+
 
 class TestDataError(ValueError):
     pass

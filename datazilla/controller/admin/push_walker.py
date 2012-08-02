@@ -90,18 +90,30 @@ def bootstrap(project):
                     if parent_data and test_result:
 
                         mtm.store_test(
-                            child_test_data[key]['ref_data'], test_result
+                            revision,
+                            child_test_data[key]['ref_data'],
+                            test_result
                             )
-                        sys.exit(0)
-                        #store_results()
-                        pass
+
                     else:
                         continue
                 else:
 
                     ###
-                    #CASE 2: Threshold data exists for the metric datum
+                    #CASE 2: Threshold data exists for the metric datum.
+                    #   Use it to run the test. 
                     ###
+                    test_result = mtm.run_test(
+                        child_test_data[key]['ref_data'],
+                        child_test_data[key]['values'],
+                        threshold_data[key]['values']
+                        )
+
+                    mtm.store_test(
+                        revision,
+                        child_test_data[key]['ref_data'],
+                        test_result
+                        )
 
                     #TODO: set the parent_test_data here
                     pass
@@ -109,3 +121,39 @@ def bootstrap(project):
 
     plm.disconnect()
     mtm.disconnect()
+
+def summary(project):
+
+    mtm = MetricsTestModel(project)
+    plm = PushLogModel('pushlog')
+
+    branches = plm.get_branch_list()
+
+    for b in branches:
+
+        if b['name'] in mtm.SPECIAL_HANDLING_BRANCHES:
+            continue
+
+        pushlog = plm.get_branch_pushlog( b['id'] )
+
+        for index, node in enumerate( pushlog ):
+
+            revision = mtm.get_revision_from_node(node['node'])
+
+            #Get the test value data for this changeset
+            test_data = mtm.get_test_values(revision, 'aggregate_ids')
+            metrics_data = mtm.get_metrics_data(revision, 'aggregate_ids')
+
+            for product_id in test_data:
+                for os_id in test_data[product_id]:
+                    for processor in test_data[product_id][os_id]:
+                        for test_id in test_data[product_id][os_id][processor]:
+                            print test_data[product_id][os_id][processor][test_id]
+
+
+            #computed_metrics_data = mtm.get_metrics_data(revision)
+
+
+    plm.disconnect()
+    mtm.disconnect()
+

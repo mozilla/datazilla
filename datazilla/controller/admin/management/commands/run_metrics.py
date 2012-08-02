@@ -28,7 +28,24 @@ class Command(ProjectBatchCommand):
             dest='bootstrap',
             default=False,
             type=None,
-            help="Populates the metric_threshold table for the first time."
+            help=(
+                "Walks the push log, identifying parent and child pushes, "
+                "computes/stores metrics data, and populates the "
+                "metric_threshold table."
+                )
+            ),
+
+        make_option(
+            '-m',
+            '--summary',
+            action='store_true',
+            dest='summary',
+            default=False,
+            type=None,
+            help=(
+                "Computes summary metrics that require data for all "
+                "pages in a test suite."
+                )
             ),
 
         )
@@ -38,6 +55,8 @@ class Command(ProjectBatchCommand):
         self.stdout.write("Processing project {0}\n".format(project))
         if options.get("bootstrap"):
             push_walker.bootstrap(project)
+        if options.get("summary"):
+            push_walker.summary(project)
 
 
 

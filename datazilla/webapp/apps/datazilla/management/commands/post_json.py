@@ -102,8 +102,7 @@ class Command(BaseCommand):
             json_data = f.read()
 
         path = '/%s/api/load_test' % (project)
-        uri = 'http://%s%s' % (host, path)
-
+        uri = 'https://%s%s' % (host, path)
         params = {
             'oauth_version': "1.0",
             'oauth_nonce': oauth.generate_nonce(),
@@ -111,7 +110,6 @@ class Command(BaseCommand):
             'user': project,
             'data': urllib.quote(json_data)
         }
-
         #There is no requirement for the token in two-legged
         #OAuth but we still need the token object.
         token = oauth.Token(key="", secret="")
@@ -140,8 +138,7 @@ class Command(BaseCommand):
 
         else:
 
-            conn = httplib.HTTPConnection(host)
-
+            conn = httplib.HTTPSConnection(host)
             conn.request("POST", path, req.to_postdata(), header)
             response = conn.getresponse()
 
