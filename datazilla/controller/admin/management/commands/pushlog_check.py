@@ -22,49 +22,80 @@ class Command(ProjectCommand):
         ptm = PerformanceTestModel(project)
         plm = PushLogModel()
 
-        # get the unique revisions for testruns for this project
-        tr_set = ptm.get_all_test_run_revisions()
-
         range_key = "days_7"
         since_date = utils.get_time_ranges()[range_key]["stop"]
-        pl_count = plm.get_pushlog_count_by_date(since_date)
+        pl_count = plm.get_pushlog_count_since_date(since_date)
 
-#        import json
-#        c = 0
-#        for k, v in pl_dict.iteritems():
-#
-#            self.stdout.write("{0}: {1}\n".format(k, json.dumps(v, indent=4)))
-#            c += 1
-#            if c == 5: break
+        # get the unique revisions for testruns for this project
+        tr_set = ptm.get_distinct_test_run_revisions(since_date)
+        ptm.disconnect()
+        self.stdout.write("{0} datazilla testrun count: {1}\n".format(
+            range_key,
+            len(tr_set),
+        ))
+        self.stdout.write("{0} pushlog count: {1}\n".format(
+            range_key,
+            pl_count[0]["pl_count"],
+            ))
+
+        self.query_technique(plm, tr_set, since_date)
+        return
+
+
+
 
         # create a list of counts by branch for output
-        branch_wo_match = plm.get_pushlogs_not_in_set_by_branch(tr_set, since_date)
+        branch_wo_match, branch_w_match = plm.get_pushlogs_not_in_set_by_branch(tr_set, since_date)
 
         total_wo_match = 0
         for br in branch_wo_match.itervalues():
             total_wo_match += len(br)
 
-        ptm.disconnect()
         plm.disconnect()
 
-        self.stdout.write("total datazilla testrun count: {0}\n".format(
-            len(tr_set),
-            ))
-        self.stdout.write("{0} pushlog count: {1}\n".format(
-            range_key,
-            pl_count[0]["pl_count"],
-            ))
         self.stdout.write("{0} no match count: {1}\n".format(
             range_key,
             total_wo_match,
             ))
 
-        # print counts by branch
-        self.stdout.write("Breakdown by branch:\n")
-        for br in branch_wo_match.iterkeys():
-            self.stdout.write("{0} - {1}\n".format(
-                br,
-                len(branch_wo_match[br]),
-                ))
+        for brdict in [branch_wo_match, branch_w_match]:
+            # print counts by branch
+            self.stdout.write("\nBreakdown by branch:\n")
+            for br in brdict.iterkeys():
+                self.stdout.write("{0} - {1}\n".format(
+                    br,
+                    len(brdict[br]),
+                    ))
 
         self.stdout.write("date: {0}".format(since_date))
+
+
+    def query_technique(self, plm, tr_set, since_date):
+
+        pushlogs = plm.get_pushlogs_since_date(since_date)
+
+        count = 0
+        branch_counts = {}
+        for pl in pushlogs:
+            br_count = branch_counts.get(pl["branch_name"], 0)
+
+            changesets = plm.get_changesets(pl["push_id"])
+            revisions = [x["node"][:12] for x in changesets]
+
+            if not tr_set.intersection(revisions):
+                count += 1
+                br_count += 1
+                branch_counts[pl["branch_name"]] = br_count
+
+
+
+        self.stdout.write("No match by query: {0}\n".format(count))
+        self.stdout.write("\nBreakdown by branch:\n")
+        for br, ct in branch_counts.iteritems():
+            self.stdout.write("{0} - {1}\n".format(
+                br,
+                ct,
+                ))
+
+        plm.disconnect()
+

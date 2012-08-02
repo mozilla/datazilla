@@ -333,7 +333,8 @@
       },
       "get_distinct_test_run_revisions":{
 
-          "sql":"SELECT distinct revision FROM test_run",
+          "sql":"SELECT distinct revision FROM test_run
+                WHERE date_run > ?",
 
             "host":"master_host"
 
