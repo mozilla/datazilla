@@ -147,14 +147,14 @@ class PushLogModel(DatazillaModelBase):
         return data_iter
 
 
-    def get_pushlogs_since_date(self, date, branch_names):
+    def get_pushlogs_since_date(self, startdate, enddate, branch_names):
 
         proc = 'hgmozilla.selects.get_pushlogs_since_date'
 
         data_iter = self.hg_ds.dhub.execute(
             proc=proc,
             debug_show=self.DEBUG,
-            placeholders=[date, ", ".join(branch_names)],
+            placeholders=[startdate, enddate, ", ".join(branch_names)],
             return_type='tuple',
             )
 

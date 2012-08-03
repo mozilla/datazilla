@@ -52,7 +52,7 @@ class Command(ProjectCommand):
             pl_count[0]["pl_count"],
             ))
 
-#        self.query_technique(plm, tr_set, date_range)
+        self.query_technique(plm, tr_set, date_range, branches)
 
         self.stdout.write("\nBY DICT\n=======\n")
 
@@ -103,7 +103,7 @@ class Command(ProjectCommand):
 
 
 
-    def query_technique(self, plm, tr_set, date_range):
+    def query_technique(self, plm, tr_set, date_range, branches):
         """
         Use a query to get the list of pushlogs, then separate
         queries per pushlog to get the changesets that apply to it.
@@ -115,7 +115,7 @@ class Command(ProjectCommand):
         pushlogs = plm.get_pushlogs_since_date(
             date_range["start"],
             date_range["stop"],
-            ["Mozilla-Inbound"],
+            branches,
             )
 
         count = 0
