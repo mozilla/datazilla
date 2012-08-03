@@ -26,7 +26,7 @@
                  ORDER BY tr.id DESC
                  LIMIT 1000",
 
-         "host":"master_host"
+         "host":"read_host"
 
       },
       "test_run":{
@@ -55,7 +55,7 @@
                  ORDER BY tr.id DESC
                  LIMIT 1000",
 
-         "host":"master_host"
+         "host":"read_host"
 
       },
       "test_value":{
@@ -70,7 +70,7 @@
                 LEFT JOIN value AS v ON tv.value_id = v.id
                 WHERE tv.test_run_id = ?",
 
-         "host":"master_host"
+         "host":"read_host"
       },
 
       "test_option_values":{
@@ -82,7 +82,7 @@
                 LEFT JOIN `option` AS o ON tov.option_id = o.id
                 WHERE tov.test_run_id = ?",
 
-         "host":"master_host"
+         "host":"read_host"
       },
 
       "test_aux_data":{
@@ -96,7 +96,7 @@
                 LEFT JOIN aux_data AS ad ON tad.aux_data_id = ad.id
                 WHERE tad.test_run_id = ?",
 
-         "host":"master_host"
+         "host":"read_host"
       }
  },
  "inserts":{
@@ -264,7 +264,7 @@
 
          "sql":"INSERT INTO `summary_cache` (`item_id`, `item_data`, `value`, `date`)
                 VALUES (?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE `value`=?, `date`=?",
+                ON DUPLICATE KEY UPDATE `value` = ?, `date` = ?",
 
          "host":"master_host"
       },
@@ -305,7 +305,7 @@
                 GROUP BY tr.id, tr.revision, b.product_id, tr.test_id, m.operating_system_id
                 ORDER BY tr.date_run ASC",
 
-          "host":"master_host"
+          "host":"read_host"
 
       },
 
@@ -328,7 +328,7 @@
                 GROUP BY tr.id, tr.revision, b.product_id, tr.test_id, m.operating_system_id
                 ORDER BY tr.date_run ASC",
 
-          "host":"master_host"
+          "host":"read_host"
 
       },
       "get_distinct_test_run_revisions":{
@@ -361,7 +361,7 @@
                WHERE tv.test_run_id = ?
                ORDER BY p.url, tv.value ASC",
 
-         "host":"master_host"
+         "host":"read_host"
 
       },
       "get_test_run_value_summary":{
@@ -390,7 +390,7 @@
                GROUP BY tv.page_id
                ORDER BY p.url, tv.value ASC",
 
-         "host":"master_host"
+         "host":"read_host"
 
       },
       "get_page_values":{
@@ -416,7 +416,7 @@
                WHERE tv.test_run_id = ? AND tv.page_id = ?
                ORDER BY p.url, tv.run_id ASC",
 
-         "host":"master_host"
+         "host":"read_host"
 
       },
       "get_product_test_os_map":{
@@ -430,32 +430,32 @@
                   FROM product )
                GROUP BY b.product_id, tr.test_id, m.operating_system_id",
 
-          "host":"master_host"
+          "host":"read_host"
       },
       "get_tests":{
 
          "sql":"SELECT `id`, `name`, `version` FROM `test`",
 
-         "host":"master_host"
+         "host":"read_host"
 
       },
       "get_operating_systems":{
 
          "sql":"SELECT `id`, `name`, `version` FROM operating_system",
 
-         "host":"master_host"
+         "host":"read_host"
       },
       "get_aux_data":{
 
          "sql":"SELECT `id`, `test_id`, `name` FROM `aux_data`",
 
-         "host":"master_host"
+         "host":"read_host"
       },
       "get_product_data":{
 
          "sql":"SELECT `id`, `product`, `branch`, `version`, `default_product` FROM `product`",
 
-         "host":"master_host"
+         "host":"read_host"
       },
       "get_default_product":{
 
@@ -463,32 +463,32 @@
                 FROM `product`
                 WHERE `default_product` = 1",
 
-         "host":"master_host"
+         "host":"read_host"
       },
       "get_machines":{
 
          "sql":"SELECT `id`, `name` FROM `machine`",
 
-         "host":"master_host"
+         "host":"read_host"
 
       },
       "get_options":{
 
          "sql":"SELECT `id`, `name` FROM `option`",
 
-         "host":"master_host"
+         "host":"read_host"
       },
       "get_aux_data":{
 
          "sql":"SELECT `id`, `test_id`, `name` FROM `aux_data`",
 
-         "host":"master_host"
+         "host":"read_host"
       },
       "get_pages":{
 
          "sql":"SELECT `id`, `test_id`, `url` FROM `pages`",
 
-         "host":"master_host"
+         "host":"read_host"
       },
       "get_summary_cache":{
 
@@ -496,14 +496,14 @@
                 FROM `summary_cache`
                 WHERE `item_id` = ? AND `item_data` = ?",
 
-         "host":"master_host"
+         "host":"read_host"
       },
       "get_all_summary_cache_data":{
 
          "sql":"SELECT `item_id`, `item_data`, `value`, `date`
                 FROM `summary_cache`",
 
-         "host":"master_host"
+         "host":"read_host"
       },
       "get_test_collections":{
 
@@ -518,7 +518,7 @@
                 LEFT JOIN test AS t ON tcm.test_id = t.id
                 ORDER BY tc.name",
 
-         "host":"master_host"
+         "host":"read_host"
       },
       "get_build_id":{
 
@@ -526,7 +526,7 @@
                FROM `build`
                WHERE `test_build_id` = ?",
 
-        "host":"master_host"
+        "host":"read_host"
       },
       "get_test_id":{
 
@@ -534,7 +534,7 @@
                FROM `test`
                WHERE `name` = ? AND `version` = ?",
 
-        "host":"master_host"
+        "host":"read_host"
       },
       "get_option_id":{
 
@@ -542,7 +542,7 @@
                FROM `option`
                WHERE `name` = ?",
 
-        "host":"master_host"
+        "host":"read_host"
       },
       "get_os_id":{
 
@@ -550,7 +550,7 @@
                FROM `operating_system`
                WHERE `name` = ? AND `version` = ?",
 
-        "host":"master_host"
+        "host":"read_host"
       },
       "get_product_id":{
 
@@ -558,7 +558,7 @@
                FROM `product`
                WHERE `product` = ? AND `branch` = ? AND `version` = ?",
 
-        "host":"master_host"
+        "host":"read_host"
       },
       "get_machine_id":{
 
@@ -566,7 +566,7 @@
                FROM `machine`
                WHERE `name` = ? AND `operating_system_id` = ?",
 
-        "host":"master_host"
+        "host":"read_host"
       },
       "get_page_id":{
 
@@ -574,7 +574,7 @@
                FROM `pages`
                WHERE `test_id` = ? AND `url` = ?",
 
-        "host":"master_host"
+        "host":"read_host"
       },
       "get_aux_data_id":{
 
@@ -582,7 +582,7 @@
                FROM `aux_data`
                WHERE `test_id` = ? AND `name` = ?",
 
-        "host":"master_host"
+        "host":"read_host"
       }
    }
 }

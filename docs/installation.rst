@@ -17,11 +17,13 @@ Installation
   and nginx in ``datazilla/webapp/sample_configs/``.
 
 * Copy ``datazilla/settings/local.sample.py`` to
-  ``datazilla/settings/local.py`` and edit the settings it contains to
-  the correct values for your installation.
+  ``datazilla/settings/local.py`` and edit the settings it contains to the
+  correct values for your installation. ``DATAZILLA_MEMCACHED`` should be a
+  string like ``127.0.0.1:11211`` - the host and port at which memcached is
+  running.
 
 * Run ``python manage.py syncdb`` to create the core datasource table,
-  then ``python manage.py create_project --project projectname`` to
-  create a project. See ``python manage.py help create_project`` for all
-  the project-creation options (including placing the project database
+  then ``python manage.py create_perftest_project --project projectname`` to
+  create a project. See ``python manage.py help create_perftest_project`` for
+  all the project-creation options (including placing the project database
   on a different database host).
