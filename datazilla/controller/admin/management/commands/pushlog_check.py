@@ -1,5 +1,9 @@
+import json
+
 from datazilla.model import PerformanceTestModel, PushLogModel, utils
 from base import ProjectCommand
+
+
 
 class Command(ProjectCommand):
     """
@@ -22,15 +26,25 @@ class Command(ProjectCommand):
         ptm = PerformanceTestModel(project)
         plm = PushLogModel()
 
-        range_key = "days_7"
-        since_date = utils.get_time_ranges()[range_key]["stop"]
-        pl_count = plm.get_pushlog_count_since_date(since_date)
+        branches = ["Mozilla-Inbound"]
+        days_ago = 30
+        numdays = 30
+        range_key = "{0} days of data, starting {1} days ago: ".format(
+            numdays,
+            days_ago,
+            )
+        date_range = utils.get_day_range(days_ago, numdays)
+        pl_count = plm.get_pushlog_count_since_date(
+            date_range["start"],
+            date_range["stop"],
+            branches,
+            )
 
         # get the unique revisions for testruns for this project
-        tr_set = ptm.get_distinct_test_run_revisions(since_date)
+        tr_set = ptm.get_distinct_test_run_revisions()
         ptm.disconnect()
-        self.stdout.write("{0} datazilla testrun count: {1}\n".format(
-            range_key,
+        self.stdout.write("{0} datazilla testrun distinct revision count: {1}\n".format(
+            "TOTAL",
             len(tr_set),
         ))
         self.stdout.write("{0} pushlog count: {1}\n".format(
@@ -38,14 +52,19 @@ class Command(ProjectCommand):
             pl_count[0]["pl_count"],
             ))
 
-        self.query_technique(plm, tr_set, since_date)
+#        self.query_technique(plm, tr_set, date_range)
 
-        self.stdout.write("\nBY DICT\n\n")
+        self.stdout.write("\nBY DICT\n=======\n")
 
 
 
         # create a list of counts by branch for output
-        branch_wo_match, branch_w_match = plm.get_pushlogs_not_in_set_by_branch(tr_set, since_date)
+        branch_wo_match, branch_w_match = plm.get_pushlogs_not_in_set_by_branch(
+            tr_set,
+            date_range["start"],
+            date_range["stop"],
+            branches,
+            )
 
         total_wo_match = 0
         for br in branch_wo_match.itervalues():
@@ -58,19 +77,33 @@ class Command(ProjectCommand):
             total_wo_match,
             ))
 
-        for brdict in [branch_wo_match, branch_w_match]:
+        def print_branches(text, brdict):
             # print counts by branch
-            self.stdout.write("\nBreakdown by branch:\n")
+            self.stdout.write("\n{0}:\n".format(text))
             for br in brdict.iterkeys():
                 self.stdout.write("{0} - {1}\n".format(
                     br,
                     len(brdict[br]),
                     ))
 
-        self.stdout.write("date: {0}".format(since_date))
+        print_branches("Non-Matching by branch", branch_wo_match)
+        print_branches("Matching by branch", branch_w_match)
+
+        import time
+
+        self.stdout.write("Dates: {0}\nStart: {1}\nEnd: {2}\n".format(
+            json.dumps(date_range),
+            time.ctime(date_range["start"]),
+            time.ctime(date_range["stop"]),
+            ))
+
+#        self.stdout.write(json.dumps(branch_wo_match, indent=4))
+        plm.disconnect()
+        return
 
 
-    def query_technique(self, plm, tr_set, since_date):
+
+    def query_technique(self, plm, tr_set, date_range):
         """
         Use a query to get the list of pushlogs, then separate
         queries per pushlog to get the changesets that apply to it.
@@ -78,8 +111,12 @@ class Command(ProjectCommand):
         Slower, but possibly more accurate?
         """
 
-        self.stdout.write("\nBY QUERY\n\n")
-        pushlogs = plm.get_pushlogs_since_date(since_date)
+        self.stdout.write("\nBY QUERY\n========\n")
+        pushlogs = plm.get_pushlogs_since_date(
+            date_range["start"],
+            date_range["stop"],
+            ["Mozilla-Inbound"],
+            )
 
         count = 0
         branch_counts = {}

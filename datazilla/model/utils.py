@@ -44,6 +44,17 @@ def get_summary_cache_key(project, item_id, item_data):
     return "_".join(map(str, [project, item_id, item_data]))
 
 
+def get_day_range(days_ago, numdays):
+    from datetime import timedelta
+    def to_seconds(td):
+        return (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6
+
+    now = int(time.time())
+    start = now - to_seconds(timedelta(days_ago))
+    stop = start + to_seconds(timedelta(numdays))
+    return {"start": int(start), "stop": int(stop)}
+
+
 def get_time_ranges():
     """
     Get a dictionary of time ranges.

@@ -28,7 +28,7 @@
             "sql":"SELECT pl.*, br.name as 'branch_name'
                 FROM pushlogs as pl
                 LEFT JOIN branches as br ON pl.branch_id = br.id
-                WHERE pl.date > ?",
+                WHERE pl.date > ? AND pl.date < ? AND br.name IN (?)",
             "host":"master_host"
         },
         "get_pushlog":{
@@ -36,7 +36,10 @@
             "host":"master_host"
         },
         "get_pushlog_count_by_date":{
-            "sql":"SELECT count(id) as 'pl_count' from pushlogs WHERE date > ?",
+            "sql":"SELECT count(pl.id) as 'pl_count'
+                FROM pushlogs as pl
+                LEFT JOIN branches as br ON pl.branch_id = br.id
+                WHERE date > ? AND date < ? AND br.name in (?)",
             "host":"master_host"
         },
         "get_all_changesets":{
@@ -48,7 +51,7 @@
                     FROM changesets as cs
                     LEFT JOIN pushlogs as pl ON cs.pushlog_id = pl.id
                     LEFT JOIN branches as br ON pl.branch_id = br.id
-                    WHERE pl.date > ?",
+                    WHERE pl.date > ? AND pl.date < ? AND br.name IN (?)",
             "host":"master_host"
         },
         "get_changesets":{

@@ -147,14 +147,14 @@ class PushLogModel(DatazillaModelBase):
         return data_iter
 
 
-    def get_pushlogs_since_date(self, date):
+    def get_pushlogs_since_date(self, date, branch_names):
 
         proc = 'hgmozilla.selects.get_pushlogs_since_date'
 
         data_iter = self.hg_ds.dhub.execute(
             proc=proc,
             debug_show=self.DEBUG,
-            placeholders=[date],
+            placeholders=[date, ", ".join(branch_names)],
             return_type='tuple',
             )
 
@@ -174,28 +174,28 @@ class PushLogModel(DatazillaModelBase):
         return data_iter
 
 
-    def get_changeset_nodes_since_date(self, date):
+    def get_changeset_nodes_since_date(self, startdate, enddate, branch_names):
 
         proc = 'hgmozilla.selects.get_changeset_nodes_since_date'
 
         data_set = self.hg_ds.dhub.execute(
             proc=proc,
             debug_show=self.DEBUG,
-            placeholders=[date],
+            placeholders=[startdate, enddate, ", ".join(branch_names)],
             return_type='iter',
             )
 
         return data_set
 
 
-    def get_pushlog_count_since_date(self, date):
+    def get_pushlog_count_since_date(self, startdate, enddate, branches):
 
         proc = 'hgmozilla.selects.get_pushlog_count_by_date'
 
         count = self.hg_ds.dhub.execute(
             proc=proc,
             debug_show=self.DEBUG,
-            placeholders=[date],
+            placeholders=[startdate, enddate, ", ".join(branches)],
             return_type='tuple',
             )
 
@@ -217,9 +217,9 @@ class PushLogModel(DatazillaModelBase):
         return data_iter
 
 
-    def get_pushlog_dict(self, since_date):
+    def get_pushlog_dict(self, startdate, enddate, branch_names):
         # get the pushlogs in the specified date range
-        pl_nodes = self.get_changeset_nodes_since_date(since_date)
+        pl_nodes = self.get_changeset_nodes_since_date(startdate, enddate, branch_names)
 
         # build a dict with pushlog_id as the keys, and changeset list as
         # values.
@@ -227,25 +227,26 @@ class PushLogModel(DatazillaModelBase):
         pl_dict = {}
         for pl in pl_nodes:
             node_branch = pl_dict.setdefault(pl["push_id"], {})
-            node_list = node_branch.setdefault("nodes", [])
-            node_list.append(unicode(pl["node"][:12]))
+            revision_list = node_branch.setdefault("revisions", [])
+            revision_list.append(unicode(pl["node"][:12]))
             node_branch.setdefault("branch_name", pl["branch_name"])
 
         return pl_dict
 
 
-    def get_pushlogs_not_in_set_by_branch(self, tr_set, since_date):
-        pl_dict = self.get_pushlog_dict(since_date)
+    def get_pushlogs_not_in_set_by_branch(self, tr_set, startdate, enddate, branch_names):
+        pl_dict = self.get_pushlog_dict(startdate, enddate, branch_names)
 
         branch_wo_match = {}
         branch_w_match = {}
         for pl, data in pl_dict.iteritems():
-            if not len(tr_set.intersection(set(data["nodes"]))):
-                br_list = branch_wo_match.setdefault(data["branch_name"], [])
-                br_list.append(pl)
+            if not len(tr_set.intersection(set(data["revisions"]))):
+                bucket = branch_wo_match
             else:
-                br_list = branch_w_match.setdefault(data["branch_name"], [])
-                br_list.append(pl)
+                bucket = branch_w_match
+
+            br_list = bucket.setdefault(data["branch_name"], {})
+            br_list[pl] = data["revisions"]
 
         return branch_wo_match, branch_w_match
 
@@ -782,7 +783,7 @@ class PerformanceTestModel(DatazillaModelBase):
         return test_run_summary_table
 
 
-    def get_distinct_test_run_revisions(self, date):
+    def get_distinct_test_run_revisions(self):
         """Return ids and revisions of all test runs"""
 
         proc = 'perftest.selects.get_distinct_test_run_revisions'
@@ -791,7 +792,6 @@ class PerformanceTestModel(DatazillaModelBase):
             proc=proc,
             debug_show=self.DEBUG,
             return_type='set',
-            placeholders=[date],
             key_column="revision",
             )
 
