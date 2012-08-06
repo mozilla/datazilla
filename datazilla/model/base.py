@@ -1070,6 +1070,30 @@ class PerformanceTestModel(DatazillaModelBase):
         return data_iter
 
 
+    def get_object_error_metadata(self):
+        """ Get all the error records metadata in the objectstore """
+
+        data_iter = self.sources["objectstore"].dhub.execute(
+            proc="objectstore.selects.get_all_error_metadata",
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            )
+
+        return data_iter
+
+
+    def get_object_error_counts(self):
+        """ Get all the error records in the objectstore """
+
+        data_iter = self.sources["objectstore"].dhub.execute(
+            proc="objectstore.selects.get_count_errors",
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            )
+
+        return data_iter
+
+
     def get_object_error_data(self):
         """Process all the errors in the objectstore and summarize."""
         import re

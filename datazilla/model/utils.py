@@ -44,7 +44,12 @@ def get_summary_cache_key(project, item_id, item_data):
     return "_".join(map(str, [project, item_id, item_data]))
 
 
-def get_day_range(days_ago, numdays):
+def get_day_range(days_ago, numdays=None):
+    """Return a start and stop date based on values given in unix timestamp"""
+
+    # if numdays not given, get all since days_ago (same value)
+    numdays = numdays or days_ago
+
     from datetime import timedelta
     def to_seconds(td):
         return (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6
