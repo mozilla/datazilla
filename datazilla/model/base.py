@@ -813,7 +813,7 @@ class PerformanceTestModel(DatazillaModelBase):
             value,
             now_datetime,
             value,
-            now_datetime,
+            now_datetime
             ]
 
         self.sources["perftest"].dhub.execute(

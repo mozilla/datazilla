@@ -264,7 +264,7 @@
 
          "sql":"INSERT INTO `summary_cache` (`item_id`, `item_data`, `value`, `date`)
                 VALUES (?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE `value`=?, `date`=?",
+                ON DUPLICATE KEY UPDATE `value` = ?, `date` = ?",
 
          "host":"master_host"
       },
@@ -607,6 +607,7 @@
                WHERE `test_id` = ? AND `name` = ?",
 
         "host":"read_host"
+<<<<<<< HEAD
       },
       "get_metric_collection":{
 
@@ -690,6 +691,9 @@
 
              "host":"read_host"
         }
+=======
+      }
+>>>>>>> b74946b3110a1a6a2f79a4739eef652283c4af38
    }
 }
 

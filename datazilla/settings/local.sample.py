@@ -14,6 +14,9 @@ DATAZILLA_DATABASE_PASSWORD = os.environ.get("DATAZILLA_DATABASE_PASSWORD", "")
 DATAZILLA_DATABASE_HOST     = os.environ.get("DATAZILLA_DATABASE_HOST", "")
 DATAZILLA_DATABASE_PORT     = os.environ.get("DATAZILLA_DATABASE_PORT", "")
 
+DATAZILLA_RO_DATABASE_USER     = os.environ.get("DATAZILLA_RO_DATABASE_USER", "")
+DATAZILLA_RO_DATABASE_PASSWORD = os.environ.get("DATAZILLA_RO_DATABASE_PASSWORD", "")
+
 DATAZILLA_MEMCACHED         = os.environ.get("DATAZILLA_MEMCACHED", "")
 
 # base URL
@@ -23,7 +26,7 @@ DATAZILLA_URL               = os.environ.get("DATAZILLA_URL", "/")
 DEBUG = os.environ.get("DATAZILLA_DEBUG") is not None
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = os.environ["DATAZILLA_DJANGO_SECRET_KEY"]
+SECRET_KEY = os.environ.get("DATAZILLA_DJANGO_SECRET_KEY", "")
 
 # Make this unique so that if you execute the tests against a shared database,
 # you don't conflict with other people running the tests simultaneously.

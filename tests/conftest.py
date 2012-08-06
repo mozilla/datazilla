@@ -23,10 +23,13 @@ def pytest_sessionstart(session):
     session.django_runner = DjangoTestSuiteRunner()
     # this provides templates-rendered debugging info and locmem mail storage
     session.django_runner.setup_test_environment()
+    # support custom db prefix for tests for the main datazilla datasource
+    # as well as for the testproj and testpushlog dbs
+    prefix = getattr(settings, "TEST_DB_PREFIX", "")
+    settings.DATABASES["default"]["TEST_NAME"] = "{0}test_datazilla".format(prefix)
     # this sets up a clean test-only database
     session.django_db_config = session.django_runner.setup_databases()
     # store the name of the test project/pushlog based on user custom settings
-    prefix = getattr(settings, "TEST_DB_PREFIX", "")
     session.perftest_name = "{0}testproj".format(prefix)
     session.pushlog_name = "{0}testpushlog".format(prefix)
 

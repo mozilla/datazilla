@@ -101,6 +101,7 @@ def test_create_next_dataset(ptm, DataSource):
            'cron_batch': "small",
            'dataset': 2L,
            'name': u'{0}_perftest_2'.format(ptm.project),
+           'read_only_host': None,
            'oauth_consumer_key': None,
            'oauth_consumer_secret': None,
            'project': unicode(ptm.project),
