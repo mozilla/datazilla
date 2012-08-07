@@ -3,7 +3,8 @@ from django.http import HttpResponse
 
 from datazilla.controller.admin.stats import objectstore_stats
 from datazilla.model import utils
-from datazilla.webapp.apps.datazilla.views import APP_JS
+
+APP_JS = 'application/json'
 
 def get_list_errors(request, project):
     """
@@ -15,8 +16,7 @@ def get_list_errors(request, project):
         range["start"],
         range["stop"],
         )
-    json_stats = json.dumps(stats)
-    return HttpResponse(json.dumps(json_stats), mimetype=APP_JS)
+    return HttpResponse(json.dumps(stats), mimetype=APP_JS)
 
 
 def get_count_errors(request, project):
@@ -26,5 +26,11 @@ def get_count_errors(request, project):
     stats = objectstore_stats.get_count_errors(
         project,
         )
-    json_stats = json.dumps(stats)
-    return HttpResponse(json.dumps({"camsays": "success"}), mimetype=APP_JS)
+    return HttpResponse(json.dumps(stats), mimetype=APP_JS)
+
+
+def get_json_blob(request, project, id):
+    """Return a count of all objectstore entries with error"""
+
+    blob = objectstore_stats.get_json_blob(project, id)
+    return HttpResponse(blob, mimetype=APP_JS)

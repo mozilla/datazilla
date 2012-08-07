@@ -1094,6 +1094,17 @@ class PerformanceTestModel(DatazillaModelBase):
         return data_iter
 
 
+    def get_object_json_blob(self, id):
+        blob = self.sources["objectstore"].dhub.execute(
+            proc="objectstore.selects.get_json_blob",
+            debug_show=self.DEBUG,
+            placeholders = [id],
+            return_type='tuple',
+            )
+
+        return blob
+
+
     def get_object_error_data(self):
         """Process all the errors in the objectstore and summarize."""
         import re

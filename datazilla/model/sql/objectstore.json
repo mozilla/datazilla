@@ -54,6 +54,13 @@
             "host":"read_host"
         },
 
+        "get_json_blob":{
+
+            "sql":"SELECT `json_blob` FROM `objectstore` WHERE `id` = ?",
+
+            "host":"read_host"
+        },
+
         "get_count_errors":{
 
             "sql":"SELECT
@@ -63,10 +70,10 @@
                 END) AS message, count(id)
                 FROM `objectstore`
                 WHERE error_flag = 'Y'
-                GROUP BY message"
+                GROUP BY message",
 
             "host":"read_host"
-        },
+        }
 
     },
 

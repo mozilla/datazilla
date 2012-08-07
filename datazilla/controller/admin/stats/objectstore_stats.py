@@ -20,9 +20,12 @@ def get_list_errors(project, startdate, enddate):
     return err_list
 
 
-def get_json(id):
+def get_json_blob(project, id):
     """Based on the ID passed in, return the JSON blob"""
-    raise NotImplementedError
+    ptm = PerformanceTestModel(project)
+    blob = ptm.get_object_json_blob(id)
+    ptm.disconnect()
+    return blob[0]["json_blob"]
 
 
 def inspect_error_data(project):

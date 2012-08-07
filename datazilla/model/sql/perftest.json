@@ -308,7 +308,6 @@
           "host":"read_host"
 
       },
-
       "get_all_test_runs":{
 
          "sql":"SELECT tr.id AS 'test_run_id',
@@ -335,10 +334,9 @@
 
           "sql":"SELECT distinct revision FROM test_run",
 
-            "host":"master_host"
+          "host":"master_host"
 
       },
-
       "get_test_run_values":{
 
          "sql":"SELECT tv.test_run_id,

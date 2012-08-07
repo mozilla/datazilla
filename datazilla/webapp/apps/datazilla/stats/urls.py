@@ -1,8 +1,12 @@
 from django.conf.urls.defaults import *
-from datazilla.webapp.apps.datazilla.stats import views
 
-urlpatterns = patterns('',
+urlpatterns = patterns(
+    "datazilla.webapp.apps.datazilla.stats",
 
-    (r'^count$', views.get_count_errors),
+    (r"^objectstore/error_count$", "views.get_error_count"),
+
+    (r"^objectstore/error_list$", "views.get_error_list"),
+
+    (r"^objectstore/json_blob/(?P<id>\d+)/$", "views.get_json_blob"),
 
     )
