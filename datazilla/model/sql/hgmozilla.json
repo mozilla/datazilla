@@ -51,7 +51,7 @@
                     FROM changesets as cs
                     LEFT JOIN pushlogs as pl ON cs.pushlog_id = pl.id
                     LEFT JOIN branches as br ON pl.branch_id = br.id
-                    WHERE pl.date > ? AND pl.date < ? AND br.name IN (?)",
+                    WHERE pl.date > ? AND pl.date < ? AND br.name IN (REP0)",
             "host":"master_host"
         },
         "get_changesets":{

@@ -27,7 +27,8 @@ class PushlogStatsModel(PushLogModel):
         data_set = self.hg_ds.dhub.execute(
             proc=proc,
             debug_show=self.DEBUG,
-            placeholders=[startdate, enddate, ", ".join(branch_names)],
+            replace_quote=[branch_names],
+            placeholders=[startdate, enddate],
             return_type='iter',
             )
 
@@ -40,8 +41,9 @@ class PushlogStatsModel(PushLogModel):
 
         count = self.hg_ds.dhub.execute(
             proc=proc,
+            replace_quote=[branches],
             debug_show=self.DEBUG,
-            placeholders=[startdate, enddate, ", ".join(branches)],
+            placeholders=[startdate, enddate],
             return_type='tuple',
             )
 
@@ -65,7 +67,9 @@ class PushlogStatsModel(PushLogModel):
         return pl_dict
 
 
-    def get_pushlogs_not_in_set_by_branch(self, tr_set, startdate, enddate, branch_names):
+    def get_pushlogs_not_in_set_by_branch(self, tr_set,
+        startdate, enddate, branch_names):
+        """Return a list of pushlogs that don't match the set"""
         pl_dict = self.get_pushlog_dict(startdate, enddate, branch_names)
 
         branch_wo_match = {}
@@ -79,7 +83,7 @@ class PushlogStatsModel(PushLogModel):
             br_list = bucket.setdefault(data["branch_name"], {})
             br_list[pl] = data["revisions"]
 
-        return branch_wo_match, branch_w_match
+        return branch_wo_match
 
 
 

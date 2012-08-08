@@ -44,4 +44,4 @@ def get_ref_data_method(ptm, table):
 
     except KeyError:
         raise FieldError(
-            "Not a valid ref data field.  Must be in: {0}".format(methods.keys()))
+            "Not a supported ref_data table.  Must be in: {0}".format(methods.keys()))
