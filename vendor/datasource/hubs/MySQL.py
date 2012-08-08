@@ -32,16 +32,18 @@ class MySQL(SQLHub):
 
     def escape_string(self, value):
         """
-        Pass through to _mysql escape_string which calls mysql_escape_string().
-        Would be better to call mysql_real_escape_string() since it takes the
-        character set into account but it requires a connection object.  Connection
-        objects are only created on query execution so we need to call it through
-        the class.
+        Pass through to connection.escape_string which calls mysql_real_escape_string().
+        escape_string must be called through the connection object so mysql_real_escape_string
+        can take the character set of the connection into account.  If no connection object
+        has been constructed use the default host type to make a connection.
 
         Parameters:
            value - The string to be escaped.
         """
-        return _mysql.escape_string(value)
+        if not self.connection:
+            self.try_to_connect(self.default_host_type, None)
+
+        return self.connection[self.default_host_type]['con_obj'].escape_string(value)
 
     """
     Private Methods

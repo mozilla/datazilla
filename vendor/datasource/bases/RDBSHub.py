@@ -454,7 +454,7 @@ class RDBSHub(BaseHub):
                     #r could contain integers which will break join
                     #make sure we cast to strings
                     ###
-                    r = join_char.join( map(lambda s: self.escape_string(str(s)), r) )
+                    r = join_char.join( map(lambda s: self.escape_string(s), r) )
 
                 sql = sql.replace("%s%i"%(self.replace_string, i), "%s%s%s"%(self.quote_char, r, self.quote_char))
 
@@ -497,7 +497,7 @@ class RDBSHub(BaseHub):
 
         min_id = 0
         if 'chunk_min' in kwargs:
-            min_id = int( kwargs['chunk_min'] ) 
+            min_id = int( kwargs['chunk_min'] )
         else:
             min = self.execute( db=kwargs['db'],
                                 proc='sql.ds_selects.get_min',
