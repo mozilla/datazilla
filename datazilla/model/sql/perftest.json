@@ -607,7 +607,6 @@
                WHERE `test_id` = ? AND `name` = ?",
 
         "host":"read_host"
-<<<<<<< HEAD
       },
       "get_metric_collection":{
 
@@ -690,10 +689,7 @@
                    WHERE tr.revision = ?",
 
              "host":"read_host"
-        }
-=======
       }
->>>>>>> b74946b3110a1a6a2f79a4739eef652283c4af38
    }
 }
 

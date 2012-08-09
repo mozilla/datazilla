@@ -1,7 +1,9 @@
 ../dzmetrics/ttest.py
 ../dzmetrics/__init__.py
+../dzmetrics/fdr.py
 ../dzmetrics/ttest.pyc
 ../dzmetrics/__init__.pyc
+../dzmetrics/fdr.pyc
 ./
 SOURCES.txt
 dependency_links.txt

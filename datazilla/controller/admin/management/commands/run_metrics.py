@@ -15,6 +15,7 @@ from base import ProjectBatchCommand
 
 
 class Command(ProjectBatchCommand):
+
     LOCK_FILE = "run_metrics"
 
     help = "Populate the summary cache for a project."
@@ -48,15 +49,28 @@ class Command(ProjectBatchCommand):
                 )
             ),
 
+        make_option("--numdays",
+                    action="store",
+                    dest="numdays",
+                    default=7,
+                    help="Number of days worth of pushlogs to return."),
+
+        make_option("--enddate",
+                    action="store",
+                    dest="enddate",
+                    default=None,
+                    help="(optional) The ending date range for pushlogs in " +
+                         "the format: MM/DD/YYYY.  Default to today."),
+
         )
 
 
     def handle_project(self, project, options):
         self.stdout.write("Processing project {0}\n".format(project))
         if options.get("bootstrap"):
-            push_walker.bootstrap(project)
+            push_walker.bootstrap(project, options)
         if options.get("summary"):
-            push_walker.summary(project)
+            push_walker.summary(project, options)
 
 
 

@@ -1,6 +1,8 @@
 import sys
+import copy
 
-from dzmetrics.ttest import welchs_ttest, fdr
+from dzmetrics.ttest import welchs_ttest
+from dzmetrics.fdr import rejector
 
 class MetricsFactory(object):
     """Class instance factory for different metric methods"""
@@ -15,7 +17,7 @@ class MetricsFactory(object):
         #
         # New metric method classes should be added to this conditional
         # with their appropriate test_suite condition.  The TtestMethod
-        # should be returned in the else clause.
+        # is the current default.
         ###
         metric_method = None
         if test_name == 'Talos tp5n':
@@ -33,10 +35,16 @@ class MetricMethodInterface(object):
 
     def run_test(self):
         raise NotImplementedError(self.MSG)
+    def run_test_summary(self):
+        raise NotImplementedError(self.MSG)
     def evaluate_test_result(self):
         """Should return true if the test passed false if not"""
         raise NotImplementedError(self.MSG)
-    def get_data_for_storage(self):
+    def get_summary_name(self):
+        raise NotImplementedError(self.MSG)
+    def get_data_for_metric_storage(self):
+        raise NotImplementedError(self.MSG)
+    def get_data_for_summary_storage(self):
         raise NotImplementedError(self.MSG)
 
 class MetricMethodBase(MetricMethodInterface):
@@ -68,6 +76,16 @@ class MetricMethodBase(MetricMethodInterface):
         ##Need to throw some sort of error here indicating
         ##the metric name was not found
 
+    def filter_by_metric_value_name(self, data):
+        flist = filter(self._get_metric_value_name, data)
+        return { 'values':map(lambda d: d['value'], flist), 'list':flist }
+
+    def get_summary_name(self):
+        return self.summary
+
+    def _get_metric_value_name(self, datum):
+        if datum['metric_value_name'] == self.metric_value_name:
+            return True
 
 class TtestMethod(MetricMethodBase):
     """Class implements welch's ttest"""
@@ -80,12 +98,18 @@ class TtestMethod(MetricMethodBase):
 
         self.name = 'welch_ttest'
 
-        self.result_key = set(['p', 'h0_rejected'])
+        self.summary = 'fdr'
+
+        self.result_key = set(['p', 'h0_rejected', self.summary])
 
         self.set_metric_method()
 
+        #Store p value id for fdr
+        self.metric_value_name = 'p'
+
     def run_test(self, child_data, parent_data):
 
+        #Filter out the first replicate here
         result = welchs_ttest(
             child_data,
             parent_data,
@@ -94,13 +118,30 @@ class TtestMethod(MetricMethodBase):
 
         return result
 
+    def run_test_summary(self, data):
+
+        filtered_data = self.filter_by_metric_value_name(data)
+        rejector_data = rejector(filtered_data['values'])
+
+        results = []
+        for s, d in zip( rejector_data['status'], filtered_data['list'] ):
+
+            rd = copy.copy(d)
+            rd['metric_value_name'] = self.summary
+            rd['metric_value_id'] = self.metric_values[ self.summary ]
+            rd['value'] = s
+
+            results.append(rd)
+
+        return results
+
     def evaluate_test_result(self, test_result):
         success = False
         if not test_result['h0_rejected']:
             success = True
         return success
 
-    def get_data_for_storage(self, ref_data, result):
+    def get_data_for_metric_storage(self, ref_data, result):
 
         test_run_id = ref_data['test_run_id']
 
@@ -111,6 +152,7 @@ class TtestMethod(MetricMethodBase):
             value = self.get_metric_value(metric_value_name, result)
 
             if metric_value_name == 'h0_rejected':
+
                 if value == False:
                     value = 0
                 else:
@@ -130,6 +172,35 @@ class TtestMethod(MetricMethodBase):
 
         return placeholders
 
+    def get_data_for_summary_storage(self, ref_data, result):
+
+        test_run_id = ref_data['test_run_id']
+
+        placeholders = []
+
+        for d in result:
+
+            value = d['value']
+
+            if value == False:
+                value = 0
+            else:
+                value = 1
+
+            if value != None:
+
+                placeholders.append(
+                    [
+                        test_run_id,
+                        self.metric_id,
+                        self.metric_values[ self.summary ],
+                        d['page_id'],
+                        value
+                    ]
+                )
+
+        return placeholders
+
     def get_metric_value(self, metric_value_name, result):
 
         value = None
@@ -139,6 +210,5 @@ class TtestMethod(MetricMethodBase):
             value = result[metric_value_name + str(1)]
 
         return value
-
 
 

@@ -176,7 +176,7 @@ class PushLogModel(DatazillaModelBase):
 
         return data_iter
 
-    def get_branch_pushlog(self, branch_id):
+    def get_branch_pushlog(self, branch_id, days_ago, numdays):
 
         proc = 'hgmozilla.selects.get_branch_pushlog'
 
@@ -275,6 +275,7 @@ class PushLogModel(DatazillaModelBase):
             "pushlogs_skipped": self.pushlog_skipped_count,
             "changesets_skipped": self.changeset_skipped_count,
         }
+
 
 
     def _insert_branch_pushlogs(self, branch_id, pushlog_dict):
@@ -1425,6 +1426,10 @@ class MetricsTestModel(DatazillaModelBase):
 
         return self._adapt_data(struct_type, revision_data)
 
+    def get_summary_name(self, ref_data):
+        m = self.mf.get_metric_method(ref_data['test_name'])
+        return m.get_summary_name()
+
     def get_threshold_data(self, ref_data, struct_type='metric_key'):
 
         m = self.mf.get_metric_method(ref_data['test_name'])
@@ -1451,7 +1456,7 @@ class MetricsTestModel(DatazillaModelBase):
 
         return self._adapt_data(struct_type, threshold_data)
 
-    def get_metrics_data(self, revision):
+    def get_metrics_data(self, revision, struct_type='metric_key'):
 
         proc = 'perftest.selects.get_computed_metrics'
 
@@ -1462,18 +1467,7 @@ class MetricsTestModel(DatazillaModelBase):
             return_type='tuple'
             )
 
-        metrics_data_lookup = {}
-
-        for data in computed_metrics:
-
-            key = self.get_metrics_key(data)
-
-            if key not in metrics_data_lookup:
-                metrics_data_lookup[key] = []
-
-            metrics_data_lookup[key].append(data)
-
-        return metrics_data_lookup
+        return self._adapt_data(struct_type, computed_metrics)
 
     def get_parent_test_data(
         self, pushlog, index, key, bootstrap_data=None
@@ -1502,12 +1496,12 @@ class MetricsTestModel(DatazillaModelBase):
 
                 data = self.get_test_values(revision)
 
+                #no data for this revision, skip
                 if not data:
                     self.skip_revisions.add(revision)
 
                 if key in data:
                     if bootstrap_data:
-                        #Confirm that it passes test
                         m = self.mf.get_metric_method(
                             data[key]['ref_data']['test_name']
                             )
@@ -1517,6 +1511,7 @@ class MetricsTestModel(DatazillaModelBase):
                             data[key]['values']
                             )
 
+                        #Confirm that it passes test
                         if m.evaluate_test_result(test_result):
                             #make sure we pass the test
                             parent_data = data[key]
@@ -1525,8 +1520,9 @@ class MetricsTestModel(DatazillaModelBase):
                         parent_data = data[key]
 
         except IndexError:
-            #last index reached, no parent with data found
-            return parent_data
+            #last index reached, no parent with data found,
+            #return empty data structures
+            return parent_data, test_result
 
         else:
             #parent with data found
@@ -1538,26 +1534,51 @@ class MetricsTestModel(DatazillaModelBase):
         results = m.run_test(child_data, parent_data)
         return results
 
-    def store_test(self, revision, ref_data, results):
+    def run_test_summary(self, ref_data, data):
 
         m = self.mf.get_metric_method(ref_data['test_name'])
+        results = m.run_test_summary(data)
+        return results
 
-        placeholders = m.get_data_for_storage(ref_data, results)
+    def store_test(self, revision, ref_data, results):
 
         proc = 'perftest.inserts.set_test_page_metric'
 
-        self.sources["perftest"].dhub.execute(
-            proc=proc,
-            debug_show=settings.DEBUG,
-            placeholders=placeholders,
-            executemany=True,
-            )
+        m = self.mf.get_metric_method(ref_data['test_name'])
 
-        if m.evaluate_test_result(results):
-            self.insert_or_update_metric_threshold(
-                revision,
-                ref_data,
-                m.metric_id
+        placeholders = m.get_data_for_metric_storage(ref_data, results)
+
+        if placeholders:
+
+            self.sources["perftest"].dhub.execute(
+                proc=proc,
+                debug_show=settings.DEBUG,
+                placeholders=placeholders,
+                executemany=True,
+                )
+
+            if m.evaluate_test_result(results):
+                self.insert_or_update_metric_threshold(
+                    revision,
+                    ref_data,
+                    m.metric_id
+                    )
+
+    def store_test_summary(self, revision, ref_data, results):
+
+        proc = 'perftest.inserts.set_test_page_metric'
+
+        m = self.mf.get_metric_method(ref_data['test_name'])
+
+        placeholders = m.get_data_for_summary_storage(ref_data, results)
+
+        if placeholders:
+
+            self.sources["perftest"].dhub.execute(
+                proc=proc,
+                debug_show=settings.DEBUG,
+                placeholders=placeholders,
+                executemany=True,
                 )
 
     def insert_or_update_metric_threshold(
@@ -1569,7 +1590,8 @@ class MetricsTestModel(DatazillaModelBase):
         creation_date = int(time.time())
 
         placeholders = [
-            ##Insert Values
+
+            ##Insert Placeholders
             ref_data['product_id'],
             ref_data['operating_system_id'],
             ref_data['processor'],
@@ -1579,7 +1601,8 @@ class MetricsTestModel(DatazillaModelBase):
             ref_data['test_run_id'],
             revision,
             creation_date,
-            ##Duplicate Key Values
+
+            ##Duplicate Key Placeholders
             ref_data['product_id'],
             ref_data['operating_system_id'],
             ref_data['processor'],
@@ -1598,8 +1621,8 @@ class MetricsTestModel(DatazillaModelBase):
     def _adapt_data(self, struct_type, data):
 
         adapted_data = {}
-        if struct_type == 'aggregate_ids':
-            adapted_data = self._get_aggregate_lookup(data)
+        if struct_type == 'test_lookup':
+            adapted_data = self._get_test_lookup(data)
         else:
             adapted_data = self._get_key_lookup(data)
 
@@ -1622,29 +1645,27 @@ class MetricsTestModel(DatazillaModelBase):
 
         return key_lookup
 
-    def _get_aggregate_lookup(self, data):
+    def _get_test_lookup(self, data):
 
-        aggregate_lookup = defaultdict(
-            #holds product_id
-            lambda: defaultdict(
-                #holds operating_system_id
-                lambda: defaultdict(
-                    #holds processor
-                    lambda:defaultdict( dictlist)
-                        #holds test_id
-                    )
-                )
-            )
-
+        test_lookup = {}
         for d in data:
-            key = self.get_metrics_key(d)
-            aggregate_lookup[
-                d['product_id']
-                ][
-                    d['operating_system_id']
-                    ][ d['processor']][d['test_id']].append(d)
+            key = self._get_test_key(d)
+            if key not in test_lookup:
+                #set reference data
+                test_lookup[key] = {
+                    'values':[],
+                    'ref_data':self.extend_with_metrics_keys(
+                        d, ['test_run_id', 'test_name']
+                        )
+                    }
+            test_lookup[key]['values'].append(d)
 
-        return aggregate_lookup
+        return test_lookup
+
+    def _get_test_key(self, data):
+        test_keys = ['product_id', 'operating_system_id',
+            'processor', 'test_id']
+        return '-'.join( map(lambda s: str( data[s] ), test_keys ) )
 
 
 class TestDataError(ValueError):

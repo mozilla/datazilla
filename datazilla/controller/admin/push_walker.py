@@ -5,11 +5,9 @@ the metrics schema
 """
 import sys
 
-from dzmetrics.ttest import welchs_ttest, fdr
-
 from datazilla.model import PushLogModel, MetricsTestModel
 
-def bootstrap(project):
+def bootstrap(project, options):
 
     plm = PushLogModel('pushlog')
 
@@ -22,7 +20,9 @@ def bootstrap(project):
         if b['name'] in mtm.SPECIAL_HANDLING_BRANCHES:
             continue
 
-        pushlog = plm.get_branch_pushlog( b['id'] )
+        pushlog = plm.get_branch_pushlog(
+            b['id'], options['numdays'], options['enddate']
+            )
 
         for index, node in enumerate( pushlog ):
 
@@ -101,7 +101,7 @@ def bootstrap(project):
 
                     ###
                     #CASE 2: Threshold data exists for the metric datum.
-                    #   Use it to run the test. 
+                    #   Use it to run the test.
                     ###
                     test_result = mtm.run_test(
                         child_test_data[key]['ref_data'],
@@ -109,20 +109,17 @@ def bootstrap(project):
                         threshold_data[key]['values']
                         )
 
-                    mtm.store_test(
+                    mtm.store_test_summary(
                         revision,
                         child_test_data[key]['ref_data'],
                         test_result
                         )
 
-                    #TODO: set the parent_test_data here
-                    pass
-
 
     plm.disconnect()
     mtm.disconnect()
 
-def summary(project):
+def summary(project, options):
 
     mtm = MetricsTestModel(project)
     plm = PushLogModel('pushlog')
@@ -134,26 +131,62 @@ def summary(project):
         if b['name'] in mtm.SPECIAL_HANDLING_BRANCHES:
             continue
 
-        pushlog = plm.get_branch_pushlog( b['id'] )
+        pushlog = plm.get_branch_pushlog(
+            b['id'], options['numdays'], options['enddate']
+            )
 
         for index, node in enumerate( pushlog ):
 
             revision = mtm.get_revision_from_node(node['node'])
 
-            #Get the test value data for this changeset
-            test_data = mtm.get_test_values(revision, 'aggregate_ids')
-            metrics_data = mtm.get_metrics_data(revision, 'aggregate_ids')
+            #Get the metric value data for this changeset
+            metrics_data = mtm.get_metrics_data(revision, 'test_lookup')
 
-            for product_id in test_data:
-                for os_id in test_data[product_id]:
-                    for processor in test_data[product_id][os_id]:
-                        for test_id in test_data[product_id][os_id][processor]:
-                            print test_data[product_id][os_id][processor][test_id]
+            if not metrics_data:
+                continue
 
+            #Filter out tests that have had their summary computed
+            store_list = get_test_keys_for_storage(mtm, metrics_data)
 
-            #computed_metrics_data = mtm.get_metrics_data(revision)
+            for test_key in store_list:
 
+                ############
+                # ASSUMPTION: If we have a test_id in the
+                # metrics data all of the metric values for each
+                # page in the test are computed.
+                ###########
+                results = mtm.run_test_summary(
+                    metrics_data[test_key]['ref_data'],
+                    metrics_data[test_key]['values']
+                    )
+
+                mtm.store_test_summary(
+                    revision,
+                    metrics_data[test_key]['ref_data'],
+                    results
+                    )
 
     plm.disconnect()
     mtm.disconnect()
 
+def get_test_keys_for_storage(mtm, metrics_data):
+
+    store_list = set()
+
+    for test_key in metrics_data:
+
+        summary_name = mtm.get_summary_name(
+            metrics_data[test_key]['ref_data']
+            )
+
+        store = True
+
+        for v in metrics_data[test_key]['values']:
+            name = v.get('metric_value_name', None)
+            if summary_name in name:
+                store = False
+                break
+        if store:
+            store_list.add(test_key)
+
+    return store_list

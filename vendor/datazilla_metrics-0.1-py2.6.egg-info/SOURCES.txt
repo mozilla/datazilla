@@ -5,4 +5,5 @@ datazilla_metrics.egg-info/not-zip-safe
 datazilla_metrics.egg-info/requires.txt
 datazilla_metrics.egg-info/top_level.txt
 dzmetrics/__init__.py
+dzmetrics/fdr.py
 dzmetrics/ttest.py

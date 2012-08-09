@@ -6,4 +6,4 @@ oauth2==1.5.211
 httplib2==0.7.4
 lockfile==0.9.1
 git+git://github.com/jeads/datasource@c1359c1aee
-git+git://github.com/mozilla/datazilla-metrics@b14c5bd611
+git+git://github.com/mozilla/datazilla-metrics@12d6a463d7
