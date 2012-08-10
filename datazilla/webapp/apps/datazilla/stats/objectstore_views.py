@@ -36,3 +36,12 @@ def get_objectstore_json_blob(request, project, id):
     return HttpResponse(blob, mimetype=APP_JS)
 
 
+def get_db_size(request, project):
+    """Return the size of the DB on disk in MB."""
+    size_tuple = objectstore_stats.get_db_size(project)
+    #JSON can't serialize a decimal, so converting size_MB to string
+    result = []
+    for item in size_tuple:
+        item["size_mb"] = str(item["size_mb"])
+        result.append(item)
+    return HttpResponse(json.dumps(result), mimetype=APP_JS)

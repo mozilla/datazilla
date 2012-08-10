@@ -16,7 +16,7 @@ def get_runs_by_branch(request, project):
         "all since days ago"
 
     """
-    range = get_range(request)
+    range = _get_range(request)
     stats = perftest_stats.get_runs_by_branch(
         project,
         range["start"],
@@ -31,7 +31,18 @@ def get_ref_data(request, project, table):
     return HttpResponse(json.dumps(stats), mimetype=APP_JS)
 
 
-def get_range(request):
+def get_db_size(request, project):
+    """Return the size of the DB on disk in MB."""
+    size_tuple = perftest_stats.get_db_size(project)
+    #JSON can't serialize a decimal, so converting size_MB to string
+    result = []
+    for item in size_tuple:
+        item["size_mb"] = str(item["size_mb"])
+        result.append(item)
+    return HttpResponse(json.dumps(result), mimetype=APP_JS)
+
+
+def _get_range(request):
     """Utility function to extract the date range from the request."""
     days_ago = int(request.GET.get("days_ago"))
     numdays = int(request.GET.get("numdays", 0))

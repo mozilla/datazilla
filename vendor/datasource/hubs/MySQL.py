@@ -43,8 +43,17 @@ class MySQL(SQLHub):
         if not self.connection:
             self.try_to_connect(self.default_host_type, None)
 
-        return self.connection[self.default_host_type]['con_obj'].escape_string(value)
+        uval = unicode(value).encode("utf-8")
 
+        return self.connection[self.default_host_type]['con_obj'].escape_string(uval).decode("utf-8")
+
+    def select_db(self, host_type, db):
+        if host_type not in self.connection:
+            self.try_to_connect(host_type, db)
+
+        if db and db != self.connection[host_type]['db']:
+            self.connection[host_type]['con_obj'].select_db(db)
+            self.connection[host_type]['db'] = db
     """
     Private Methods
     """
@@ -83,6 +92,7 @@ class MySQL(SQLHub):
 
             self.connection[host_type]['con_obj'].autocommit(False)
             self.connection[host_type]['cursor'] = self.connection[host_type]['con_obj'].cursor()
+            self.connection[host_type]['db'] = db
 
     def try_to_connect(self, host_type, db):
 

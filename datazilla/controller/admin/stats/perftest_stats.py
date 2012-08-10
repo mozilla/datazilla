@@ -29,6 +29,14 @@ def get_ref_data(project, table):
     return result
 
 
+def get_db_size(project):
+    ptm = PerformanceTestStatsModel(project)
+    pt_size = ptm.get_db_size()
+    ptm.disconnect()
+
+    return pt_size
+
+
 def get_ref_data_method(ptm, table):
     """Return the matching model method for the ``table``."""
     methods = {
@@ -45,3 +53,5 @@ def get_ref_data_method(ptm, table):
     except KeyError:
         raise FieldError(
             "Not a supported ref_data table.  Must be in: {0}".format(methods.keys()))
+
+

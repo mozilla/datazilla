@@ -13,18 +13,43 @@ def get_not_referenced(project, startdate, enddate, branches=None):
     ptm.disconnect()
 
     plm = PushlogStatsModel()
-    result = plm.get_pushlogs_not_in_set_by_branch(
-        tr_set,
-        startdate,
-        enddate,
-        branches,
-        )
-
+    pl_dict = plm.get_pushlog_dict(startdate, enddate, branches)
     plm.disconnect()
 
-    return result
+    # gather matching and non-matching sets
+    branch_wo_match = {}
+    branch_w_match = {}
+    for pl, data in pl_dict.iteritems():
+        rev_list = data["revisions"]
+
+        if not len(tr_set.intersection(set(rev_list))):
+            bucket = branch_wo_match
+        else:
+            bucket = branch_w_match
+
+        br_list = bucket.setdefault(data["branch_name"], {})
+        pushlog_list = br_list.setdefault("pushlogs", [])
+        pushlog_list.append({
+            "push_id": pl,
+            "revisions": rev_list,
+            })
+
+    return {
+        "with_matching_test_run": branch_w_match,
+        "without_matching_test_run": branch_wo_match,
+        }
+
 
 
 def get_all_branches():
     plm = PushlogStatsModel()
-    return [x["name"] for x in plm.get_all_branches()]
+    branches = [x["name"] for x in plm.get_all_branches()]
+    plm.disconnect()
+    return branches
+
+
+def get_db_size(project):
+    plm = PushlogStatsModel()
+    size = plm.get_db_size()
+    plm.disconnect()
+    return size

@@ -53,3 +53,12 @@ def result_key(self, tb):
         key = "unknown"
 
     return key
+
+
+def get_db_size(project):
+    """Return the size of the objectstore database on disk in MB."""
+    ptm = PerformanceTestStatsModel(project)
+    size = ptm.get_db_size(source="objectstore")
+    ptm.disconnect()
+    return size
+

@@ -6,6 +6,17 @@ from base import PerformanceTestModel, PushLogModel
 class PushlogStatsModel(PushLogModel):
     """Model for PushLog statistics and error information."""
 
+    def get_db_size(self):
+        """Return size of DB on disk in MB."""
+        placeholders = ["%{0}%".format(self.project)]
+        return self.hg_ds.dhub.execute(
+            proc='generic.selects.get_db_size',
+            debug_show=self.DEBUG,
+            placeholders=placeholders,
+            return_type='tuple',
+            )
+
+
     def get_pushlogs_since_date(self, startdate, enddate, branch_names):
 
         proc = 'hgmozilla.selects.get_pushlogs_since_date'
@@ -67,28 +78,19 @@ class PushlogStatsModel(PushLogModel):
         return pl_dict
 
 
-    def get_pushlogs_not_in_set_by_branch(self, tr_set,
-        startdate, enddate, branch_names):
-        """Return a list of pushlogs that don't match the set"""
-        pl_dict = self.get_pushlog_dict(startdate, enddate, branch_names)
-
-        branch_wo_match = {}
-        branch_w_match = {}
-        for pl, data in pl_dict.iteritems():
-            if not len(tr_set.intersection(set(data["revisions"]))):
-                bucket = branch_wo_match
-            else:
-                bucket = branch_w_match
-
-            br_list = bucket.setdefault(data["branch_name"], {})
-            br_list[pl] = data["revisions"]
-
-        return branch_wo_match
-
-
-
 class PerformanceTestStatsModel(PerformanceTestModel):
     """Model for PerformanceTest statistics and error information."""
+
+    def get_db_size(self, source="perftest"):
+        """Return size of DB on disk in MB."""
+        placeholders = ["%{0}%".format(self.project)]
+        return self.sources[source].dhub.execute(
+            proc='generic.selects.get_db_size',
+            debug_show=self.DEBUG,
+            placeholders=placeholders,
+            return_type='tuple',
+            )
+
 
     def get_distinct_test_run_revisions(self):
         """Return ids and revisions of all test runs"""
