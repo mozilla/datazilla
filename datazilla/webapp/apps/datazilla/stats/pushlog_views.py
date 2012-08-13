@@ -18,6 +18,9 @@ def get_not_referenced(request, project):
         "all since days ago"
 
     """
+    if not request.GET.get("days_ago"):
+        return HttpResponse("Invalid Request: Require days_ago parameter. "
+                            "This specifies the number of days ago to use as the start date range for this response.", status=400)
     range = get_range(request)
     branches = request.GET.get("branches", None)
     if branches:

@@ -19,7 +19,7 @@ def get_error_list(request, project):
     return HttpResponse(json.dumps(stats), mimetype=APP_JS)
 
 
-def get_objectstore_error_count(request, project):
+def get_error_count(request, project):
     """Return a count of all objectstore entries with error"""
 
     range = utils.get_day_range(5)
@@ -29,7 +29,7 @@ def get_objectstore_error_count(request, project):
     return HttpResponse(json.dumps(stats), mimetype=APP_JS)
 
 
-def get_objectstore_json_blob(request, project, id):
+def get_json_blob(request, project, id):
     """Return a count of all objectstore entries with error"""
 
     blob = objectstore_stats.get_json_blob(project, id)

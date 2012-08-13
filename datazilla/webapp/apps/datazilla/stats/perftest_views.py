@@ -16,6 +16,9 @@ def get_runs_by_branch(request, project):
         "all since days ago"
 
     """
+    if not request.GET.get("days_ago"):
+        return HttpResponse("Invalid Request: Require days_ago parameter. "
+        "This specifies the number of days ago to use as the start date range for this response.", status=400)
     range = _get_range(request)
     stats = perftest_stats.get_runs_by_branch(
         project,
