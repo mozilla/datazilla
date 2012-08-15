@@ -3,9 +3,7 @@ import json
 from django.http import HttpResponse
 
 from datazilla.controller.admin.stats import perftest_stats, pushlog_stats
-import view_utils
-
-APP_JS = 'application/json'
+from .view_utils import get_range, REQUIRE_DAYS_AGO, API_CONTENT_TYPE
 
 def get_not_referenced(request, project):
     """
@@ -19,8 +17,8 @@ def get_not_referenced(request, project):
 
     """
     if not request.GET.get("days_ago"):
-        return HttpResponse(view_utils.REQUIRE_DAYS_AGO, status=400)
-    range = view_utils.get_range(request)
+        return HttpResponse(REQUIRE_DAYS_AGO, status=400)
+    range = get_range(request)
     branches = request.GET.get("branches", None)
     if branches:
         branches = branches.split(",")
@@ -31,13 +29,13 @@ def get_not_referenced(request, project):
         range["stop"],
         branches,
         )
-    return HttpResponse(json.dumps(stats), mimetype=APP_JS)
+    return HttpResponse(json.dumps(stats), content_type=API_CONTENT_TYPE)
 
 
 def get_all_branches(request, project):
     """Get the full list of pushlog branches"""
     branches = pushlog_stats.get_all_branches()
-    return HttpResponse(json.dumps(branches), mimetype=APP_JS)
+    return HttpResponse(json.dumps(branches), content_type=API_CONTENT_TYPE)
 
 
 def get_db_size(request, project):
@@ -48,4 +46,4 @@ def get_db_size(request, project):
     for item in size_tuple:
         item["size_mb"] = str(item["size_mb"])
         result.append(item)
-    return HttpResponse(json.dumps(result), mimetype=APP_JS)
+    return HttpResponse(json.dumps(result), content_type=API_CONTENT_TYPE)

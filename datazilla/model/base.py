@@ -667,6 +667,7 @@ class PerformanceTestModel(DatazillaModelBase):
         cache_key = self.get_project_cache_key(cache_key_str)
         cache.set(cache_key, default_project)
 
+
     def get_test_run_summary(self,
                           start,
                           end,

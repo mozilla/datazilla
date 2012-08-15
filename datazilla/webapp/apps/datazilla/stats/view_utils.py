@@ -10,7 +10,7 @@ REQUIRE_DAYS_AGO = """Invalid Request: Require days_ago parameter.
                     This specifies the number of days ago to use as the start
                     date range for this response."""
 
-APP_JS = 'application/json'
+API_CONTENT_TYPE = 'application/json; charset=utf-8'
 
 
 def get_range(request):

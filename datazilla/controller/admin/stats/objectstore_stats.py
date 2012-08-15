@@ -25,7 +25,10 @@ def get_json_blob(project, id):
     ptm = PerformanceTestStatsModel(project)
     blob = ptm.get_object_json_blob(id)
     ptm.disconnect()
-    return blob[0]["json_blob"]
+    if blob:
+        return blob[0]["json_blob"]
+    else:
+        return None
 
 
 def inspect_error_data(project):

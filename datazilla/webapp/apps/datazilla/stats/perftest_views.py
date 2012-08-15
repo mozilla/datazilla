@@ -3,9 +3,8 @@ import json
 from django.http import HttpResponse
 
 from datazilla.controller.admin.stats import perftest_stats
-import view_utils
+from .view_utils import get_range, REQUIRE_DAYS_AGO, API_CONTENT_TYPE
 
-APP_JS = 'application/json'
 
 def get_runs_by_branch(request, project):
     """
@@ -17,21 +16,21 @@ def get_runs_by_branch(request, project):
 
     """
     if not request.GET.get("days_ago"):
-        return HttpResponse(view_utils.REQUIRE_DAYS_AGO, status=400)
+        return HttpResponse(REQUIRE_DAYS_AGO, status=400)
 
-    range = view_utils.get_range(request)
+    range = get_range(request)
     stats = perftest_stats.get_runs_by_branch(
         project,
         range["start"],
         range["stop"],
         )
-    return HttpResponse(json.dumps(stats), mimetype=APP_JS)
+    return HttpResponse(json.dumps(stats), content_type=API_CONTENT_TYPE)
 
 
 def get_ref_data(request, project, table):
     """Get simple list of ref_data for ``table`` in ``project``"""
     stats = perftest_stats.get_ref_data(project, table)
-    return HttpResponse(json.dumps(stats), mimetype=APP_JS)
+    return HttpResponse(json.dumps(stats), content_type=API_CONTENT_TYPE)
 
 
 def get_db_size(request, project):
@@ -42,4 +41,4 @@ def get_db_size(request, project):
     for item in size_tuple:
         item["size_mb"] = str(item["size_mb"])
         result.append(item)
-    return HttpResponse(json.dumps(result), mimetype=APP_JS)
+    return HttpResponse(json.dumps(result), content_type=API_CONTENT_TYPE)
