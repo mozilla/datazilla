@@ -1,4 +1,4 @@
-STATISTICS
+Statistics
 ==========
 
 These are a set of webservice endpoints for getting data about a Datazilla
