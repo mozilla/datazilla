@@ -6,7 +6,7 @@ from datazilla.model.stats import PerformanceTestStatsModel
 def get_runs_by_branch(project, startdate, enddate):
     """Return a list of test runs by branch in date range"""
     ptm = PerformanceTestStatsModel(project)
-    test_runs = ptm.get_runs_by_branch(startdate, enddate)
+    test_runs = ptm.get_run_lists_by_branch(startdate, enddate)
     ptm.disconnect()
 
     #now form the data the way we want it
@@ -18,6 +18,15 @@ def get_runs_by_branch(project, startdate, enddate):
         runs.append(tr)
 
     return result
+
+
+def get_run_counts_by_branch(project, startdate, enddate):
+    """Return a count of test runs by branch in date range"""
+    ptm = PerformanceTestStatsModel(project)
+    test_runs = ptm.get_run_counts_by_branch(startdate, enddate)
+    ptm.disconnect()
+
+    return test_runs
 
 
 def get_ref_data(project, table):

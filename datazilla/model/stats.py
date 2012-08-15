@@ -107,12 +107,26 @@ class PerformanceTestStatsModel(PerformanceTestModel):
         return data_iter
 
 
-    def get_runs_by_branch(self, startdate, enddate):
+    def get_run_lists_by_branch(self, startdate, enddate):
         """Return a list of test runs by branch in date range"""
         placeholders = [startdate, enddate]
 
         data_iter = self.sources["perftest"].dhub.execute(
             proc="perftest.selects.get_test_runs",
+            debug_show=self.DEBUG,
+            placeholders = placeholders,
+            return_type='tuple',
+            )
+
+        return data_iter
+
+
+    def get_run_counts_by_branch(self, startdate, enddate):
+        """Return a count of test runs by branch in date range"""
+        placeholders = [startdate, enddate]
+
+        data_iter = self.sources["perftest"].dhub.execute(
+            proc="perftest.selects.get_test_run_counts",
             debug_show=self.DEBUG,
             placeholders = placeholders,
             return_type='tuple',

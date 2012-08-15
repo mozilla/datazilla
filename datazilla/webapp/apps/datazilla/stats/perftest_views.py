@@ -19,11 +19,20 @@ def get_runs_by_branch(request, project):
         return HttpResponse(REQUIRE_DAYS_AGO, status=400)
 
     range = get_range(request)
-    stats = perftest_stats.get_runs_by_branch(
-        project,
-        range["start"],
-        range["stop"],
-        )
+
+    if request.GET.get("show_test_runs"):
+        stats = perftest_stats.get_runs_by_branch(
+            project,
+            range["start"],
+            range["stop"],
+            )
+    else:
+        stats = perftest_stats.get_run_counts_by_branch(
+            project,
+            range["start"],
+            range["stop"],
+            )
+
     return HttpResponse(json.dumps(stats), content_type=API_CONTENT_TYPE)
 
 
