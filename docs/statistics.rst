@@ -217,7 +217,7 @@ Performance Tests
         }
 
 
-.. http:get:: /(project)/stats/objectstore/db_size
+.. http:get:: /(project)/stats/perftest/db_size
 
     Return size (in MegaBytes) of the perftest database for this project.
 

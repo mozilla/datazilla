@@ -2,7 +2,7 @@ import json
 
 from django.http import HttpResponse
 
-from datazilla.controller.admin.stats import perftest_stats, pushlog_stats
+from datazilla.controller.admin.stats import pushlog_stats
 from .view_utils import get_range, REQUIRE_DAYS_AGO, API_CONTENT_TYPE
 
 def get_not_referenced(request, project):
