@@ -8,7 +8,7 @@ project.
 Object Store
 ------------
 
-.. http:get:: /(project)/stats/objectstore/error_counts
+.. http:get:: /(project)/stats/objectstore/error_count
 
     Return a count of all objectstore entries that have an error.  The return
     value is broken down by two types:
@@ -16,13 +16,17 @@ Object Store
         * JSON parse errors
         * All other errors
 
+    :query days_ago: (required) Number of days prior to this date to use as the
+        beginning of the date range for this request.  This acts on the
+        ``date_loaded`` field in the objectstore database.
+    :query numdays: (optional) Number of days worth of data to return.  If not
+        provided, the date range will be from ``days_ago`` to today.
+
     **Example request**:
 
     .. sourcecode:: http
 
-        GET /talos/stats/objectstore/error_count
-        Host: example.com
-        Accept: application/json
+        GET /talos/stats/objectstore/error_count?days_ago=10
 
     **Example response**:
 
@@ -48,10 +52,9 @@ Object Store
 
     Return a list of all objectstore entries for this project that have an error.
 
-    :query days_ago: (optional) Number of days prior to this date to use as the
+    :query days_ago: (required) Number of days prior to this date to use as the
         beginning of the date range for this request.  This acts on the
-        ``date_loaded`` field in the objectstore database.  If not provided,
-        return all days of data.
+        ``date_loaded`` field in the objectstore database.
     :query numdays: (optional) Number of days worth of data to return.  If not
         provided, the date range will be from ``days_ago`` to today.
 
@@ -60,7 +63,7 @@ Object Store
 
     .. sourcecode:: http
 
-        GET /talos/stats/objectstore/error_list
+        GET /talos/stats/objectstore/error_list?days_ago=10
 
     **Example response**:
 
@@ -191,13 +194,14 @@ Performance Tests
 .. http:get:: /(project)/stats/perftest/ref_data/(table)
 
     Return a raw list of data from the ``table`` provided.  Valid ``table``
-    values are: machines, operating_systems, options, tests, pages, products
+    values are: ``machines``, ``operating_systems``, ``options``,
+    ``tests, pages``, ``products``
 
     **Example request**:
 
     .. sourcecode:: http
 
-        GET /talos/stats/objectstore/operating_systems
+        GET /talos/stats/perftest/ref_data/operating_systems
 
     **Example response**:
 
@@ -307,7 +311,7 @@ Push Logs
 
     .. sourcecode:: http
 
-        GET /talos/stats/perftest/branches
+        GET /talos/stats/pushlog/branches
 
     **Example response**:
 
@@ -330,7 +334,7 @@ Push Logs
 
     .. sourcecode:: http
 
-        GET /talos/stats/perftest/db_size
+        GET /talos/stats/pushlog/db_size
 
     **Example response**:
 
