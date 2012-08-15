@@ -155,12 +155,38 @@ Performance Tests
         beginning of the date range for this request.
     :query numdays: (optional) Number of days worth of data to return.  If not
         provided, the date range will be from ``days_ago`` to today.
+    :query show_test_runs: (optional) If set to ``true`` then show all the test
+        run detail.  If omitted, or set to ``false`` then show only counts.
+
 
     **Example request**:
 
     .. sourcecode:: http
 
         GET /talos/stats/perftest/runs_by_branch?days_ago=5
+
+    **Example response**:
+
+    .. sourcecode:: http
+
+        Content-Type: application/json
+
+        {
+
+            "Mozilla-Beta": {
+                "count": 749
+            }
+            Mozilla-Beta-Release-Non-PGO": {
+                "count": 510,
+            }
+        }
+
+
+    **Example request**:
+
+    .. sourcecode:: http
+
+        GET /talos/stats/perftest/runs_by_branch?days_ago=5&show_test_runs=true
 
     **Example response**:
 

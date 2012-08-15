@@ -26,7 +26,13 @@ def get_run_counts_by_branch(project, startdate, enddate):
     test_runs = ptm.get_run_counts_by_branch(startdate, enddate)
     ptm.disconnect()
 
-    return test_runs
+    #now form the data the way we want it
+    result = {}
+    for tr in test_runs:
+        branch = result.setdefault(tr["branch"], {})
+        branch["count"] = tr.get("count")
+
+    return result
 
 
 def get_ref_data(project, table):

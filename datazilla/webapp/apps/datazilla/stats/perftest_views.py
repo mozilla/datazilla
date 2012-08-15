@@ -20,7 +20,8 @@ def get_runs_by_branch(request, project):
 
     range = get_range(request)
 
-    if request.GET.get("show_test_runs"):
+    show_tr = request.GET.get("show_test_runs")
+    if show_tr and show_tr.lower() == "true":
         stats = perftest_stats.get_runs_by_branch(
             project,
             range["start"],
