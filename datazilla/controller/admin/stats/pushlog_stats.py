@@ -1,18 +1,24 @@
-from django.core.exceptions import FieldError
 
-from datazilla.model.stats import PushlogStatsModel, PerformanceTestStatsModel
-from datazilla.model import utils
+from datazilla.model.stats import PushLogStatsModel, PerformanceTestStatsModel
+
+def ptsm(project):
+    return PerformanceTestStatsModel(project)
+
+
+def plsm():
+    return PushLogStatsModel()
+
 
 def get_not_referenced(project, startdate, enddate, branches=None):
     """Return a list of test runs by in pushlogs not in Datazilla"""
 
     branches = branches or get_all_branches()
 
-    ptm = PerformanceTestStatsModel(project)
+    ptm = ptsm(project)
     tr_set = ptm.get_distinct_test_run_revisions()
     ptm.disconnect()
 
-    plm = PushlogStatsModel()
+    plm = plsm()
     pl_dict = plm.get_pushlog_dict(startdate, enddate, branches)
     plm.disconnect()
 
@@ -40,16 +46,17 @@ def get_not_referenced(project, startdate, enddate, branches=None):
         }
 
 
-
 def get_all_branches():
-    plm = PushlogStatsModel()
+    """Return a list of all the branch names our pushlogs know about"""
+    plm = plsm()
     branches = [x["name"] for x in plm.get_all_branches()]
     plm.disconnect()
     return branches
 
 
 def get_db_size(project):
-    plm = PushlogStatsModel()
+    """Return the database size, on disk in MB"""
+    plm = plsm()
     size = plm.get_db_size()
     plm.disconnect()
     return size

@@ -3,10 +3,10 @@ import json
 from datazilla.model.stats import PerformanceTestStatsModel
 
 
-def get_error_count(project):
+def get_error_count(project, startdate, enddate):
     """Return a count of all objectstore entries with error"""
     ptm = PerformanceTestStatsModel(project)
-    err_counts = ptm.get_object_error_counts()
+    err_counts = ptm.get_object_error_counts(startdate, enddate)
     ptm.disconnect()
 
     return err_counts
@@ -15,7 +15,7 @@ def get_error_count(project):
 def get_error_list(project, startdate, enddate):
     """Return a list of all objectstore entries with errors in a date range"""
     ptm = PerformanceTestStatsModel(project)
-    err_list = ptm.get_object_error_metadata()
+    err_list = ptm.get_object_error_metadata(startdate, enddate)
     ptm.disconnect()
     return err_list
 

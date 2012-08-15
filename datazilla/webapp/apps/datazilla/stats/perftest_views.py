@@ -3,7 +3,7 @@ import json
 from django.http import HttpResponse
 
 from datazilla.controller.admin.stats import perftest_stats
-from datazilla.model import utils
+import view_utils
 
 APP_JS = 'application/json'
 
@@ -17,9 +17,9 @@ def get_runs_by_branch(request, project):
 
     """
     if not request.GET.get("days_ago"):
-        return HttpResponse("Invalid Request: Require days_ago parameter. "
-        "This specifies the number of days ago to use as the start date range for this response.", status=400)
-    range = _get_range(request)
+        return HttpResponse(view_utils.REQUIRE_DAYS_AGO, status=400)
+
+    range = view_utils.get_range(request)
     stats = perftest_stats.get_runs_by_branch(
         project,
         range["start"],
@@ -43,11 +43,3 @@ def get_db_size(request, project):
         item["size_mb"] = str(item["size_mb"])
         result.append(item)
     return HttpResponse(json.dumps(result), mimetype=APP_JS)
-
-
-def _get_range(request):
-    """Utility function to extract the date range from the request."""
-    days_ago = int(request.GET.get("days_ago"))
-    numdays = int(request.GET.get("numdays", 0))
-
-    return utils.get_day_range(days_ago, numdays)

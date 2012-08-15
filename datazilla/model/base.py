@@ -426,6 +426,7 @@ class PerformanceTestModel(DatazillaModelBase):
         secret = ds.get_oauth_consumer_secret(key)
         return secret
 
+
     def get_product_test_os_map(self):
 
         proc = 'perftest.selects.get_product_test_os_map'
@@ -637,6 +638,7 @@ class PerformanceTestModel(DatazillaModelBase):
         json_data = zlib.decompress( compressed_json_data )
 
         return json_data
+
 
     def cache_ref_data(self, cache_key_str='reference_data'):
         #retrieve ref data

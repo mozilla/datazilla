@@ -3,7 +3,7 @@ import json
 from base import PerformanceTestModel, PushLogModel
 
 
-class PushlogStatsModel(PushLogModel):
+class PushLogStatsModel(PushLogModel):
     """Model for PushLog statistics and error information."""
 
     def get_db_size(self):
@@ -121,7 +121,7 @@ class PerformanceTestStatsModel(PerformanceTestModel):
         return data_iter
 
 
-    def get_all_object_errors(self):
+    def get_all_object_errors(self, startdate, enddate):
         """ Get all the error records in the objectstore """
 
         data_iter = self.sources["objectstore"].dhub.execute(
@@ -129,30 +129,33 @@ class PerformanceTestStatsModel(PerformanceTestModel):
             debug_show=self.DEBUG,
             chunk_size=30,
             chunk_source="objectstore.id",
+            placeholders=[startdate, enddate],
             return_type='tuple',
             )
 
         return data_iter
 
 
-    def get_object_error_metadata(self):
+    def get_object_error_metadata(self, startdate, enddate):
         """ Get all the error records metadata in the objectstore """
 
         data_iter = self.sources["objectstore"].dhub.execute(
-            proc="objectstore.selects.get_all_error_metadata",
+            proc="objectstore.selects.get_error_metadata",
             debug_show=self.DEBUG,
+            placeholders=[startdate, enddate],
             return_type='tuple',
             )
 
         return data_iter
 
 
-    def get_object_error_counts(self):
+    def get_object_error_counts(self, startdate, enddate):
         """ Get all the error records in the objectstore """
 
         data_iter = self.sources["objectstore"].dhub.execute(
-            proc="objectstore.selects.get_count_errors",
+            proc="objectstore.selects.get_error_counts",
             debug_show=self.DEBUG,
+            replace=[str(startdate), str(enddate)],
             return_type='tuple',
             )
 

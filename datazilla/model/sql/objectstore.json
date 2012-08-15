@@ -40,16 +40,18 @@
 
             "sql":"SELECT   `json_blob`, `id`
                 FROM     `objectstore`
-                WHERE    `error_flag` = 'Y'",
+                WHERE    `error_flag` = 'Y'
+                AND date_loaded BETWEEN ? AND ?",
 
             "host":"read_host"
         },
 
-        "get_all_error_metadata":{
+        "get_error_metadata":{
 
             "sql":"SELECT   `id`, test_run_id, date_loaded, processed_flag, error_msg, worker_id
                 FROM     `objectstore`
-                WHERE    `error_flag` = 'Y'",
+                WHERE    `error_flag` = 'Y'
+                AND date_loaded BETWEEN ? AND ?",
 
             "host":"read_host"
         },
@@ -61,15 +63,17 @@
             "host":"read_host"
         },
 
-        "get_count_errors":{
+        "get_error_counts":{
 
             "sql":"SELECT
                 (CASE
-                    WHEN error_msg LIKE 'Malformed JSON%' THEN 'Malformed JSON'
+                    WHEN error_msg LIKE 'Malformed JSON%'
+                    THEN 'Malformed JSON'
                     ELSE 'Other'
-                END) AS message, count(id)
+                END) AS message, count(id) AS count
                 FROM `objectstore`
-                WHERE error_flag = 'Y'
+                WHERE `error_flag` = 'Y'
+                AND date_loaded BETWEEN REP0 AND REP1
                 GROUP BY message",
 
             "host":"read_host"

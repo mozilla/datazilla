@@ -1,6 +1,8 @@
 import pytest
+from datazilla.controller.stats import objectstore_stats
 
-def test_get_error_count():
+def test_get_error_count(monkeypatch):
+    objectstore_stats.get_error_count()
     raise NotImplementedError
 
 

@@ -3,7 +3,7 @@ import json
 from django.http import HttpResponse
 
 from datazilla.controller.admin.stats import perftest_stats, pushlog_stats
-from datazilla.model import utils
+import view_utils
 
 APP_JS = 'application/json'
 
@@ -19,9 +19,8 @@ def get_not_referenced(request, project):
 
     """
     if not request.GET.get("days_ago"):
-        return HttpResponse("Invalid Request: Require days_ago parameter. "
-                            "This specifies the number of days ago to use as the start date range for this response.", status=400)
-    range = get_range(request)
+        return HttpResponse(view_utils.REQUIRE_DAYS_AGO, status=400)
+    range = view_utils.get_range(request)
     branches = request.GET.get("branches", None)
     if branches:
         branches = branches.split(",")
@@ -35,18 +34,10 @@ def get_not_referenced(request, project):
     return HttpResponse(json.dumps(stats), mimetype=APP_JS)
 
 
-def get_ref_data(request, project, table):
-    """Get simple list of ref_data for ``table`` in ``project``"""
-    stats = perftest_stats.get_ref_data(project, table)
-    return HttpResponse(json.dumps(stats), mimetype=APP_JS)
-
-
-def get_range(request):
-    """Utility function to extract the date range from the request."""
-    days_ago = int(request.GET.get("days_ago"))
-    numdays = int(request.GET.get("numdays", 0))
-
-    return utils.get_day_range(days_ago, numdays)
+def get_all_branches(request, project):
+    """Get the full list of pushlog branches"""
+    branches = pushlog_stats.get_all_branches()
+    return HttpResponse(json.dumps(branches), mimetype=APP_JS)
 
 
 def get_db_size(request, project):

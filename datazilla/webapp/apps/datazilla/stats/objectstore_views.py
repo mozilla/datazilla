@@ -1,20 +1,21 @@
 import json
 from django.http import HttpResponse
-
 from datazilla.controller.admin.stats import objectstore_stats
-from datazilla.model import utils
+from .view_utils import get_range, REQUIRE_DAYS_AGO, APP_JS
 
-APP_JS = 'application/json'
 
 def get_error_list(request, project):
     """
     Return a list of errors for a project
     """
-    range = utils.get_day_range(5)
+    if not request.GET.get("days_ago"):
+        return HttpResponse(REQUIRE_DAYS_AGO, status=400)
+
+    date_range = get_range(request)
     stats = objectstore_stats.get_error_list(
         project,
-        range["start"],
-        range["stop"],
+        date_range["start"],
+        date_range["stop"],
         )
     return HttpResponse(json.dumps(stats), mimetype=APP_JS)
 
@@ -22,9 +23,14 @@ def get_error_list(request, project):
 def get_error_count(request, project):
     """Return a count of all objectstore entries with error"""
 
-    range = utils.get_day_range(5)
+    if not request.GET.get("days_ago"):
+        return HttpResponse(REQUIRE_DAYS_AGO, status=400)
+
+    date_range = get_range(request)
     stats = objectstore_stats.get_error_count(
         project,
+        date_range["start"],
+        date_range["stop"],
         )
     return HttpResponse(json.dumps(stats), mimetype=APP_JS)
 

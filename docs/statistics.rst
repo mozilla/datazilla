@@ -48,6 +48,14 @@ Object Store
 
     Return a list of all objectstore entries for this project that have an error.
 
+    :query days_ago: (optional) Number of days prior to this date to use as the
+        beginning of the date range for this request.  This acts on the
+        ``date_loaded`` field in the objectstore database.  If not provided,
+        return all days of data.
+    :query numdays: (optional) Number of days worth of data to return.  If not
+        provided, the date range will be from ``days_ago`` to today.
+
+
     **Example request**:
 
     .. sourcecode:: http
@@ -140,6 +148,11 @@ Performance Tests
 
     Return a list of test runs broken down by branch.
 
+    :query days_ago: (required) Number of days prior to this date to use as the
+        beginning of the date range for this request.
+    :query numdays: (optional) Number of days worth of data to return.  If not
+        provided, the date range will be from ``days_ago`` to today.
+
     **Example request**:
 
     .. sourcecode:: http
@@ -175,15 +188,10 @@ Performance Tests
         }
 
 
-    :query days_ago: (required) Number of days prior to this date to use as the
-        beginning of the date range for this request.
-    :query numdays: (optional) Number of days worth of data to return.  If not
-        provided, the date range will be from ``days_ago`` to today.
-
-
 .. http:get:: /(project)/stats/perftest/ref_data/(table)
 
-    Return a raw list of data from the ``table`` provided.
+    Return a raw list of data from the ``table`` provided.  Valid ``table``
+    values are: machines, operating_systems, options, tests, pages, products
 
     **Example request**:
 
@@ -229,13 +237,22 @@ Performance Tests
         ]
 
 
-Pushlogs
---------
+Push Logs
+---------
 
 .. http:get:: /(project)/stats/pushlog/not_referenced
 
     Return a list of pushlog entries that are not reflected in the perftest data
     for ``project``.
+
+    :query days_ago: (required) Number of days prior to this date to use as the
+        beginning of the date range for this request.
+    :query numdays: (optional) Number of days worth of data to return.  If not
+        provided, the date range will be from ``days_ago`` to today.
+    :query branches: (optional) Which branches to return un-referenced pushlogs.
+        This can be a single branch, or a comma-separated list of branches.  If not
+        provided, return data for all branches.
+
 
     **Example request**:
 
@@ -281,13 +298,29 @@ Pushlogs
             }
         }
 
-    :query days_ago: (required) Number of days prior to this date to use as the
-        beginning of the date range for this request.
-    :query numdays: (optional) Number of days worth of data to return.  If not
-        provided, the date range will be from ``days_ago`` to today.
-    :query branches: (optional) Which branches to return un-referenced pushlogs.
-        This can be a single branch, or a comma-separated list of branches.  If not
-        provided, return data for all branches.
+
+.. http:get:: /(project)/stats/pushlog/branches
+
+    Return the list of known pushlog branches.
+
+    **Example request**:
+
+    .. sourcecode:: http
+
+        GET /talos/stats/perftest/branches
+
+    **Example response**:
+
+    .. sourcecode:: http
+
+        Content-Type: application/json
+
+        [
+            "Firefox",
+            "Mozilla-Inbound",
+            ...
+        ]
+
 
 .. http:get:: /(project)/stats/pushlog/db_size
 

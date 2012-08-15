@@ -160,7 +160,7 @@ def truncate(ptm, skip_list=None):
         for table, in cur.fetchall():
             # if there is a skip_list, then skip any table with matching name
             if table.lower() not in skip_list:
-                # needed to us backticks around table name, because if the
+                # needed to use backticks around table name, because if the
                 # table name is a keyword (like "option") then this will fail
                 cur.execute("TRUNCATE TABLE `{0}`".format(table))
 
@@ -206,3 +206,30 @@ def pytest_funcarg__plm(request):
 
     request.addfinalizer(partial(truncate, plm, ["branches"]))
     return plm
+
+
+def pytest_funcarg__ptsm(request):
+    """
+    Give a test access to a PerformanceTestStatsModel instance.
+
+    """
+    from datazilla.model.stats import PerformanceTestStatsModel
+
+    return PerformanceTestStatsModel(request._pyfuncitem.session.perftest_name)
+
+
+def pytest_funcarg__plsm(request):
+    """
+    Give a test access to a PushLogStatsModel instance.
+
+    Truncate all project tables between tests in order to provide isolation.
+
+    """
+    from datazilla.model.stats import PushLogStatsModel
+
+    plsm = PushLogStatsModel(
+        request._pyfuncitem.session.pushlog_name,
+        out=sys.stdout, verbosity=2)
+
+    request.addfinalizer(partial(truncate, plsm, ["branches"]))
+    return plsm
