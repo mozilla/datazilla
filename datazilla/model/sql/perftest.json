@@ -311,6 +311,8 @@
                                         `metric_id` = ?,
                                         `test_id` = ?,
                                         `page_id` = ?,
+                                        `test_run_id` = ?,
+                                        `revision` = ?,
                                         `creation_date` = ?",
 
        "host":"master_host"

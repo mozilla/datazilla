@@ -55,13 +55,13 @@ class Command(ProjectBatchCommand):
                     default=7,
                     help="Number of days worth of pushlogs to return."),
 
-        make_option("--enddate",
+        make_option("--daysago",
                     action="store",
-                    dest="enddate",
+                    dest="daysago",
                     default=None,
-                    help="(optional) The ending date range for pushlogs in " +
-                         "the format: MM/DD/YYYY.  Default to today."),
-
+                    help=("Number of days ago to start from, "
+                          "defaults to now."),
+            )
         )
 
 

@@ -143,7 +143,12 @@ CREATE TABLE `metric` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 /*Insert default metrics*/
+LOCK TABLES `metric` WRITE;
+/*!40000 ALTER TABLE `metric` DISABLE KEYS */;
 INSERT INTO `metric` (`name`, `description`) VALUES ('welch_ttest', "one-sided Welchs t-test");
+UNLOCK TABLES;
+
+
 
 --
 -- Table structure for table `metric_value`
@@ -178,7 +183,10 @@ CREATE TABLE `metric_value` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 /*Insert metric values associated with t-test*/
-INSERT INTO `metric_value` (`metric_id`, `name`) VALUES (1, 'std'), (1, 'mean'), (1, 'p_value'), (1, 'h0_rejected'), (1, 'fdr');
+LOCK TABLES `metric_value` WRITE;
+/*!40000 ALTER TABLE `metric_value` DISABLE KEYS */;
+INSERT INTO `metric_value` (`metric_id`, `name`) VALUES (1, 'stddev'), (1, 'mean'), (1, 'p'), (1, 'h0_rejected'), (1, 'fdr');
+UNLOCK TABLES;
 
 --
 -- Table structure for table `operating_system`

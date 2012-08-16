@@ -178,13 +178,15 @@ class PushLogModel(DatazillaModelBase):
 
     def get_branch_pushlog(self, branch_id, days_ago, numdays):
 
+        day_range = utils.get_day_range(days_ago, numdays)
+
         proc = 'hgmozilla.selects.get_branch_pushlog'
 
         data_iter = self.hg_ds.dhub.execute(
             proc=proc,
             debug_show=self.DEBUG,
             return_type='tuple',
-            placeholders=[branch_id]
+            placeholders=[branch_id, day_range['start'], day_range['stop']]
             )
 
         return data_iter
@@ -1361,8 +1363,16 @@ class MetricsTestModel(DatazillaModelBase):
     # Content types that every project will have
     CONTENT_TYPES = ["perftest"]
 
-    # Used together to define a unique metrics datum
-    METRICS_KEYS = [
+    ###
+    # Metric keys are used together to define a unique Metrics Datum
+    #
+    # Metrics Datum: A target for a metrics method made up of a single set
+    # of test value replicates.
+    #
+    # Example: ttest applied to all the replicates associated with a given
+    # test suite page.
+    ###
+    METRIC_KEYS = [
         'product_id',
         'operating_system_id',
         'processor',
@@ -1370,50 +1380,70 @@ class MetricsTestModel(DatazillaModelBase):
         'page_id'
         ]
 
-    # Branches that require special handling
-    SPECIAL_HANDLING_BRANCHES = set(['Try'])
+    ###
+    # Metric summary keys are used together to define a unique Metric
+    # Summary Datum
+    #
+    # Metric Summary Datum: A target for a metrics method made up of
+    # a single set of values computed by a metrics method.
+    #
+    # Example: fdr applied to all of the p values computed
+    # in a ttest.
+    ###
+    METRIC_SUMMARY_KEYS = [
+        'product_id',
+        'operating_system_id',
+        'processor',
+        'test_id'
+        ]
 
-    def __init__(self, project=None):
+    KEY_DELIMITER = '__'
+
+    #Number of characters in a node that are
+    #used in the revision string
+    REVISION_CHAR_COUNT = 12
+
+    def __init__(self, project=None, metrics=()):
         super(MetricsTestModel, self).__init__(project)
         self.skip_revisions = set()
 
-        self.metrics = self.get_metric_collection()
+        self.metrics = metrics or self._get_metric_collection()
+
         self.mf = MetricsFactory(self.metrics)
 
     @classmethod
     def get_metrics_key(cls, data):
-        return '-'.join( map(lambda s: str( data[s] ), cls.METRICS_KEYS) )
+        return cls.KEY_DELIMITER.join(
+            map(lambda s: str( data[s] ), cls.METRIC_KEYS)
+            )
+
+    @classmethod
+    def get_metrics_summary_key(cls, data):
+        return cls.KEY_DELIMITER.join(
+            map(lambda s: str( data[s] ), cls.METRIC_SUMMARY_KEYS)
+            )
 
     @classmethod
     def extend_with_metrics_keys(cls, data, add_keys=[]):
         keys = []
-        keys.extend(cls.METRICS_KEYS)
+        keys.extend(cls.METRIC_KEYS)
         if add_keys:
             keys.extend(add_keys)
         return dict([(k, data.get(k, None)) for k in keys])
 
     @classmethod
     def get_revision_from_node(cls, node):
-        return node[0:12]
+        return node[0:cls.REVISION_CHAR_COUNT]
 
-    def skip_revision(self, revision):
+    def add_skip_revision(self, revision):
         if revision:
             self.skip_revisions.add(revision)
 
-    def get_metric_collection(self):
+    def get_metric_summary_name(self, test_name):
+        m = self.mf.get_metric_method(test_name)
+        return m.get_summary_name()
 
-        proc = 'perftest.selects.get_metric_collection'
-
-        metric_collection = self.sources["perftest"].dhub.execute(
-            proc=proc,
-            debug_show=self.DEBUG,
-            key_column='metric_name',
-            return_type='tuple',
-            )
-
-        return metric_collection
-
-    def get_test_values(self, revision, struct_type='metric_key'):
+    def get_test_values(self, revision, struct_type='metric_key_lookup'):
 
         proc = 'perftest.selects.get_test_values'
 
@@ -1424,16 +1454,12 @@ class MetricsTestModel(DatazillaModelBase):
             return_type='tuple',
             )
 
-        return self._adapt_data(struct_type, revision_data)
+        return self.adapt_data(struct_type, revision_data)
 
-    def get_summary_name(self, ref_data):
-        m = self.mf.get_metric_method(ref_data['test_name'])
-        return m.get_summary_name()
-
-    def get_threshold_data(self, ref_data, struct_type='metric_key'):
+    def get_threshold_data(self, ref_data, struct_type='metric_key_lookup'):
 
         m = self.mf.get_metric_method(ref_data['test_name'])
-        metric_id = m.metric_id
+        metric_id = m.get_metric_id()
 
         proc = 'perftest.selects.get_metric_threshold'
 
@@ -1454,9 +1480,9 @@ class MetricsTestModel(DatazillaModelBase):
             return_type='tuple',
             )
 
-        return self._adapt_data(struct_type, threshold_data)
+        return self.adapt_data(struct_type, threshold_data)
 
-    def get_metrics_data(self, revision, struct_type='metric_key'):
+    def get_metrics_data(self, revision):
 
         proc = 'perftest.selects.get_computed_metrics'
 
@@ -1467,7 +1493,9 @@ class MetricsTestModel(DatazillaModelBase):
             return_type='tuple'
             )
 
-        return self._adapt_data(struct_type, computed_metrics)
+        return self.adapt_data(
+            'metric_data_lookup', computed_metrics
+            )
 
     def get_parent_test_data(
         self, pushlog, index, key, bootstrap_data=None
@@ -1498,7 +1526,7 @@ class MetricsTestModel(DatazillaModelBase):
 
                 #no data for this revision, skip
                 if not data:
-                    self.skip_revisions.add(revision)
+                    self.add_skip_revision(revision)
 
                 if key in data:
                     if bootstrap_data:
@@ -1506,14 +1534,14 @@ class MetricsTestModel(DatazillaModelBase):
                             data[key]['ref_data']['test_name']
                             )
 
-                        test_result = m.run_test(
+                        test_result = m.run_metric_method(
                             bootstrap_data,
                             data[key]['values']
                             )
 
                         #Confirm that it passes test
-                        if m.evaluate_test_result(test_result):
-                            #make sure we pass the test
+                        if m.evaluate_metric_result(test_result):
+                            #parent found that passes bootstrap requirements
                             parent_data = data[key]
                     else:
                         #parent found
@@ -1528,24 +1556,23 @@ class MetricsTestModel(DatazillaModelBase):
             #parent with data found
             return parent_data, test_result
 
-    def run_test(self, ref_data, child_data, parent_data):
+    def run_metric_method(self, ref_data, child_data, parent_data):
 
         m = self.mf.get_metric_method(ref_data['test_name'])
-        results = m.run_test(child_data, parent_data)
+        results = m.run_metric_method(child_data, parent_data)
         return results
 
-    def run_test_summary(self, ref_data, data):
+    def run_metric_summary(self, ref_data, data):
 
         m = self.mf.get_metric_method(ref_data['test_name'])
-        results = m.run_test_summary(data)
+        results = m.run_metric_summary(data)
         return results
 
-    def store_test(self, revision, ref_data, results):
+    def store_metric_results(self, revision, ref_data, results):
 
         proc = 'perftest.inserts.set_test_page_metric'
 
         m = self.mf.get_metric_method(ref_data['test_name'])
-
         placeholders = m.get_data_for_metric_storage(ref_data, results)
 
         if placeholders:
@@ -1557,21 +1584,20 @@ class MetricsTestModel(DatazillaModelBase):
                 executemany=True,
                 )
 
-            if m.evaluate_test_result(results):
+            if m.evaluate_metric_result(results):
                 self.insert_or_update_metric_threshold(
                     revision,
                     ref_data,
-                    m.metric_id
+                    m.get_metric_id()
                     )
 
-    def store_test_summary(self, revision, ref_data, results):
+    def store_metric_summary_results(self, revision, ref_data, results):
 
         proc = 'perftest.inserts.set_test_page_metric'
 
         m = self.mf.get_metric_method(ref_data['test_name'])
 
         placeholders = m.get_data_for_summary_storage(ref_data, results)
-
         if placeholders:
 
             self.sources["perftest"].dhub.execute(
@@ -1609,6 +1635,8 @@ class MetricsTestModel(DatazillaModelBase):
             metric_id,
             ref_data['test_id'],
             ref_data['page_id'],
+            ref_data['test_run_id'],
+            revision,
             creation_date
             ]
 
@@ -1618,17 +1646,43 @@ class MetricsTestModel(DatazillaModelBase):
             placeholders=placeholders
             )
 
-    def _adapt_data(self, struct_type, data):
+    def adapt_data(self, struct_type, data):
 
         adapted_data = {}
-        if struct_type == 'test_lookup':
-            adapted_data = self._get_test_lookup(data)
+        if struct_type == 'metric_summary_lookup':
+            adapted_data = self._get_metric_summary_key_lookup(data)
+        elif struct_type == 'metric_key_lookup':
+            adapted_data = self._get_metric_key_lookup(data)
+        elif struct_type == 'metric_data_lookup':
+            adapted_data = self._get_metric_data_lookup(data)
         else:
-            adapted_data = self._get_key_lookup(data)
+            adapted_data = self._get_metric_key_lookup(data)
 
         return adapted_data
 
-    def _get_key_lookup(self, data):
+    def _get_metric_data_lookup(self, data):
+
+        key_lookup = {}
+        for d in data:
+            key = self.get_metrics_key(d)
+            if key not in key_lookup:
+                #set reference data
+                key_lookup[key] = {
+                    'values':[],
+                    'ref_data':self.extend_with_metrics_keys(
+                        d, ['test_run_id', 'test_name']
+                        )
+                    }
+            key_lookup[key]['values'].append( {
+                'value':d['value'],
+                'page_id':d['page_id'],
+                'metric_value_id':d['metric_value_id'],
+                'metric_value_name':d['metric_value_name']
+                } )
+
+        return key_lookup
+
+    def _get_metric_key_lookup(self, data):
 
         key_lookup = {}
         for d in data:
@@ -1645,11 +1699,11 @@ class MetricsTestModel(DatazillaModelBase):
 
         return key_lookup
 
-    def _get_test_lookup(self, data):
+    def _get_metric_summary_key_lookup(self, data):
 
         test_lookup = {}
         for d in data:
-            key = self._get_test_key(d)
+            key = self.get_metrics_summary_key(data)
             if key not in test_lookup:
                 #set reference data
                 test_lookup[key] = {
@@ -1662,10 +1716,16 @@ class MetricsTestModel(DatazillaModelBase):
 
         return test_lookup
 
-    def _get_test_key(self, data):
-        test_keys = ['product_id', 'operating_system_id',
-            'processor', 'test_id']
-        return '-'.join( map(lambda s: str( data[s] ), test_keys ) )
+    def _get_metric_collection(self):
+        proc = 'perftest.selects.get_metric_collection'
+
+        metric_collection = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            key_column='metric_name',
+            return_type='tuple',
+            )
+        return metric_collection
 
 
 class TestDataError(ValueError):

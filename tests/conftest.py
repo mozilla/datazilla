@@ -130,7 +130,7 @@ def pytest_runtest_teardown(item):
     transaction.leave_transaction_management()
 
     ptm = PerformanceTestModel(item.session.perftest_name)
-    truncate(ptm)
+    truncate(ptm, set(['metric', 'metric_value']))
 
 
 
@@ -143,7 +143,6 @@ def truncate(ptm, skip_list=None):
     ptm.disconnect()
 
     skip_list = set(skip_list or [])
-
     from django.conf import settings
     import MySQLdb
     for sds in ptm.sources.values():
@@ -188,7 +187,11 @@ def pytest_funcarg__ptm(request):
     """
     from datazilla.model import PerformanceTestModel
 
-    return PerformanceTestModel(request._pyfuncitem.session.perftest_name)
+    ptm = PerformanceTestModel(request._pyfuncitem.session.perftest_name)
+    request.addfinalizer(partial(truncate, ptm, ["metric", "metric_value"]))
+
+
+    return ptm
 
 
 def pytest_funcarg__plm(request):
@@ -206,3 +209,14 @@ def pytest_funcarg__plm(request):
 
     request.addfinalizer(partial(truncate, plm, ["branches"]))
     return plm
+
+def pytest_funcarg__mtm(request):
+    """
+    Give a test access to a MetricsTestModel instance.
+
+    """
+    from datazilla.model import MetricsTestModel
+
+    mtm = MetricsTestModel(request._pyfuncitem.session.perftest_name)
+    request.addfinalizer(partial(truncate, mtm, ["metric", "metric_value"]))
+    return mtm

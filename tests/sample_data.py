@@ -130,6 +130,6 @@ def results(results=None):
 
     for result, data in results.items():
         if data is None:
-            results[result] = ["789.0", "705.0", "739.0"]
+            results[result] = [789.0, 705.0, 739.0]
 
     return results

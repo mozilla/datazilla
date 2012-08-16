@@ -33,14 +33,12 @@ class MetricMethodInterface(object):
 
     MSG = 'Metric methods should implement this function'
 
-    def run_test(self):
+    def run_metric_method(self):
         raise NotImplementedError(self.MSG)
-    def run_test_summary(self):
+    def run_metric_summary(self):
         raise NotImplementedError(self.MSG)
-    def evaluate_test_result(self):
+    def evaluate_metric_result(self):
         """Should return true if the test passed false if not"""
-        raise NotImplementedError(self.MSG)
-    def get_summary_name(self):
         raise NotImplementedError(self.MSG)
     def get_data_for_metric_storage(self):
         raise NotImplementedError(self.MSG)
@@ -55,14 +53,16 @@ class MetricMethodBase(MetricMethodInterface):
         self.metric = metric
 
         self.metric_id = None
+
         self.metric_values = {}
+
+        self.set_metric_method()
 
     @classmethod
     def get_revision_from_node(cls, node):
         return node[0:12]
 
     def set_metric_method(self):
-
         for data in self.metric:
             if data['metric_name'] == self.name:
 
@@ -83,6 +83,9 @@ class MetricMethodBase(MetricMethodInterface):
     def get_summary_name(self):
         return self.summary
 
+    def get_metric_id(self):
+        return self.metric_id
+
     def _get_metric_value_name(self, datum):
         if datum['metric_value_name'] == self.metric_value_name:
             return True
@@ -93,32 +96,34 @@ class TtestMethod(MetricMethodBase):
     # Alpha value for ttests
     ALPHA = 0.05
 
+    DATA_START_INDEX = 1
+
     def __init__(self, metric):
-        super(TtestMethod, self).__init__(metric)
 
         self.name = 'welch_ttest'
+
+        super(TtestMethod, self).__init__(metric)
 
         self.summary = 'fdr'
 
         self.result_key = set(['p', 'h0_rejected', self.summary])
 
-        self.set_metric_method()
 
         #Store p value id for fdr
         self.metric_value_name = 'p'
 
-    def run_test(self, child_data, parent_data):
+    def run_metric_method(self, child_data, parent_data):
 
         #Filter out the first replicate here
         result = welchs_ttest(
-            child_data,
-            parent_data,
+            child_data[self.DATA_START_INDEX:],
+            parent_data[self.DATA_START_INDEX:],
             self.ALPHA
             )
 
         return result
 
-    def run_test_summary(self, data):
+    def run_metric_summary(self, data):
 
         filtered_data = self.filter_by_metric_value_name(data)
         rejector_data = rejector(filtered_data['values'])
@@ -135,7 +140,7 @@ class TtestMethod(MetricMethodBase):
 
         return results
 
-    def evaluate_test_result(self, test_result):
+    def evaluate_metric_result(self, test_result):
         success = False
         if not test_result['h0_rejected']:
             success = True
@@ -148,7 +153,6 @@ class TtestMethod(MetricMethodBase):
         placeholders = []
 
         for metric_value_name in self.metric_values:
-
             value = self.get_metric_value(metric_value_name, result)
 
             if metric_value_name == 'h0_rejected':
@@ -179,7 +183,6 @@ class TtestMethod(MetricMethodBase):
         placeholders = []
 
         for d in result:
-
             value = d['value']
 
             if value == False:
@@ -188,13 +191,12 @@ class TtestMethod(MetricMethodBase):
                 value = 1
 
             if value != None:
-
                 placeholders.append(
                     [
                         test_run_id,
                         self.metric_id,
                         self.metric_values[ self.summary ],
-                        d['page_id'],
+                        ref_data['page_id'],
                         value
                     ]
                 )
@@ -204,11 +206,18 @@ class TtestMethod(MetricMethodBase):
     def get_metric_value(self, metric_value_name, result):
 
         value = None
-        if metric_value_name in self.result_key:
-            value = result[metric_value_name]
-        else:
-            value = result[metric_value_name + str(1)]
 
-        return value
+        try:
+
+            if metric_value_name in self.result_key:
+                value = result[metric_value_name]
+            else:
+                value = result[metric_value_name + str(1)]
+
+        except KeyError:
+            #metric_value_name not in result, return None
+            return value
+        else:
+            return value
 
 

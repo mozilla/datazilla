@@ -7,6 +7,9 @@ import sys
 
 from datazilla.model import PushLogModel, MetricsTestModel
 
+# Branches that require special handling
+SPECIAL_HANDLING_BRANCHES = set(['Try'])
+
 def bootstrap(project, options):
 
     plm = PushLogModel('pushlog')
@@ -17,11 +20,11 @@ def bootstrap(project, options):
 
     for b in branches:
 
-        if b['name'] in mtm.SPECIAL_HANDLING_BRANCHES:
+        if b['name'] in SPECIAL_HANDLING_BRANCHES:
             continue
 
         pushlog = plm.get_branch_pushlog(
-            b['id'], options['numdays'], options['enddate']
+            b['id'], options['numdays'], options['daysago']
             )
 
         for index, node in enumerate( pushlog ):
@@ -56,11 +59,11 @@ def bootstrap(project, options):
                       This needs to be ressolved, otherwise there is a
                   chance we will be using the wrong parent.
                       The best solution would be to have enough confidence
-                  in the push log so that if the immediate parent is not
-                  available the child revision is skipped until the parent
-                  is present.
+                  in the push log coverage in the perftest schema so that if
+                  the immediate parent is not available the child revision
+                  is skipped until the parent is present.
                 """
-                mtm.skip_revision(revision)
+                mtm.add_skip_revision(revision)
                 continue
 
             #Get the thresholds for the tests associated with this changeset
@@ -89,7 +92,7 @@ def bootstrap(project, options):
 
                     if parent_data and test_result:
 
-                        mtm.store_test(
+                        mtm.store_metric_results(
                             revision,
                             child_test_data[key]['ref_data'],
                             test_result
@@ -103,13 +106,13 @@ def bootstrap(project, options):
                     #CASE 2: Threshold data exists for the metric datum.
                     #   Use it to run the test.
                     ###
-                    test_result = mtm.run_test(
+                    test_result = mtm.run_metric_method(
                         child_test_data[key]['ref_data'],
                         child_test_data[key]['values'],
                         threshold_data[key]['values']
                         )
 
-                    mtm.store_test_summary(
+                    mtm.store_metric_results(
                         revision,
                         child_test_data[key]['ref_data'],
                         test_result
@@ -128,20 +131,20 @@ def summary(project, options):
 
     for b in branches:
 
-        if b['name'] in mtm.SPECIAL_HANDLING_BRANCHES:
+        if b['name'] in SPECIAL_HANDLING_BRANCHES:
             continue
 
         pushlog = plm.get_branch_pushlog(
-            b['id'], options['numdays'], options['enddate']
+            b['id'], options['numdays'], options['daysago']
             )
 
         for index, node in enumerate( pushlog ):
 
             revision = mtm.get_revision_from_node(node['node'])
-
             #Get the metric value data for this changeset
-            metrics_data = mtm.get_metrics_data(revision, 'test_lookup')
+            metrics_data = mtm.get_metrics_data(revision)
 
+            #If there's no metric data a summary cannot be computed
             if not metrics_data:
                 continue
 
@@ -155,12 +158,12 @@ def summary(project, options):
                 # metrics data all of the metric values for each
                 # page in the test are computed.
                 ###########
-                results = mtm.run_test_summary(
+                results = mtm.run_metric_summary(
                     metrics_data[test_key]['ref_data'],
                     metrics_data[test_key]['values']
                     )
 
-                mtm.store_test_summary(
+                mtm.store_metric_summary_results(
                     revision,
                     metrics_data[test_key]['ref_data'],
                     results
@@ -175,14 +178,16 @@ def get_test_keys_for_storage(mtm, metrics_data):
 
     for test_key in metrics_data:
 
-        summary_name = mtm.get_summary_name(
-            metrics_data[test_key]['ref_data']
+        summary_name = mtm.get_metric_summary_name(
+            metrics_data[test_key]['ref_data']['test_name']
             )
 
         store = True
 
         for v in metrics_data[test_key]['values']:
             name = v.get('metric_value_name', None)
+            #If the metric_value_name matches the summary
+            #the summary has already been computed
             if summary_name in name:
                 store = False
                 break
