@@ -23,10 +23,10 @@ class Command(ProjectBatchCommand):
     option_list = ProjectBatchCommand.option_list + (
 
         make_option(
-            '-b',
-            '--bootstrap',
+            '-r',
+            '--run_metrics',
             action='store_true',
-            dest='bootstrap',
+            dest='run_metrics',
             default=False,
             type=None,
             help=(
@@ -67,8 +67,8 @@ class Command(ProjectBatchCommand):
 
     def handle_project(self, project, options):
         self.stdout.write("Processing project {0}\n".format(project))
-        if options.get("bootstrap"):
-            push_walker.bootstrap(project, options)
+        if options.get("run_metrics"):
+            push_walker.run_metrics(project, options)
         if options.get("summary"):
             push_walker.summary(project, options)
 

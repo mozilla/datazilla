@@ -49,6 +49,21 @@
                    WHERE b.id = ? AND ( p.date >= ? AND p.date <= ?)
                    ORDER BY b.name, p.date ASC",
             "host":"master_host"
+        },
+
+        "get_all_branch_pushlogs":{
+            "sql":"SELECT p.id,
+                          p.push_id,
+                          p.date,
+                          c.node,
+                          b.id,
+                          b.name
+                   FROM pushlogs AS p
+                   LEFT JOIN changesets AS c ON p.id = c.pushlog_id
+                   LEFT JOIN branches AS b ON p.branch_id = b.id
+                   WHERE b.id = ?
+                   ORDER BY b.name, p.date ASC",
+            "host":"master_host"
         }
     }
 }

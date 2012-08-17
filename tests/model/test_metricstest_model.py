@@ -6,7 +6,7 @@ import urllib
 from datazilla.model.base import TestData
 
 from ..sample_data import perftest_data
-from ..sample_pushlog import pushlog_json
+from ..sample_pushlog import pushlog_json, pushlog_json_file
 from ..sample_metric_data import *
 
 def test_metric_keys(mtm):
@@ -70,6 +70,8 @@ def test_extend_with_metrics_keys(mtm):
     model_set = set(model_data.keys())
 
     assert  reference_set == model_set
+    #make sure we extended model_data with test_run_id
+    #and test_name
     assert test_data['test_run_id'] == model_data['test_run_id']
     assert test_data['test_name'] == model_data['test_name']
 
@@ -234,6 +236,11 @@ def test_run_metric_summary(mtm, ptm):
 
 def test_store_metric_summary_results(mtm, ptm):
 
+    ######
+    #This is a functional test that tests all operations
+    #through metric summary storage.
+    ######
+
     #Get sample data
     child_sample_data = TestData(perftest_data())
     test_name = child_sample_data['testrun']['suite']
@@ -246,7 +253,6 @@ def test_store_metric_summary_results(mtm, ptm):
         )
     )
 
-    #Need to store data to satisfy foreign key requirements
     ptm.load_test_data(child_sample_data)
     ptm.load_test_data(parent_sample_data)
 
@@ -291,7 +297,7 @@ def test_store_metric_summary_results(mtm, ptm):
 
         for data in summary_metrics_data[key]['values']:
             if data['metric_value_name'] == summary_name:
-                #We should find the computed summary data in in
+                #We should find the computed summary data in
                 #the data retrieved
                 assert summary_results[0]['page_id'] == data['page_id']
                 assert summary_results[0]['value'] == data['value']
@@ -393,7 +399,7 @@ def test_insert_or_update_metric_threshold(mtm, ptm):
 
     for key in parent_model_data:
 
-        #Second pass should be updating updating not inserting
+        #Second pass should be updating not inserting
         mtm.insert_or_update_metric_threshold(
             parent_revision, parent_model_data[key]['ref_data'], metric_id
             )
@@ -410,6 +416,167 @@ def test_insert_or_update_metric_threshold(mtm, ptm):
         #second one inserted, this should now be the test_run_id associated
         #with the threshold data
         assert 2 == updated_threshold_data[key]['ref_data']['test_run_id']
+
+def test_get_parent_test_data_case_one(mtm, ptm, plm, monkeypatch):
+
+    #######
+    # Functional test for get_parent_test_data use case
+    #
+    # TEST CASE 1: If no child data is supplied the parent push should be
+    # sample_revisions[ target_revision_index - 1]
+    #######
+
+    setup_data = _setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch)
+
+    sample_revisions = setup_data['sample_revisions']
+
+    #Get the child data
+    test_one_data = mtm.get_test_values(
+        sample_revisions[setup_data['target_revision_index']],
+        'metric_key_lookup'
+        )
+
+    #Retrieve child metric key
+    test_one_key = test_one_data.keys()[0]
+
+    parent_data, results = mtm.get_parent_test_data(
+        setup_data['branch_pushlog'],
+        setup_data['target_revision_index'],
+        test_one_key, None
+        )
+
+    #Parent data should be at target_revision_index - 1
+    reference_data = mtm.get_test_values(
+        sample_revisions[setup_data['target_revision_index'] - 1],
+        'metric_key_lookup'
+        )
+
+    assert parent_data['ref_data'] == \
+        reference_data[test_one_key]['ref_data']
+
+def test_get_parent_test_data_case_two(mtm, ptm, plm, monkeypatch):
+
+    #######
+    # Functional test for get_parent_test_data use case
+    #
+    # TEST CASE 2: skip_index should have no data in perftest and should
+    #   not be selected as a parent.  The parent should be the sample
+    #   revision before the skipped index.  So setup_data['skip_index'] - 1
+    #######
+
+    setup_data = _setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch)
+
+    skip_revision = setup_data['skip_revision']
+    child_revision = setup_data['sample_revisions'][
+        setup_data['skip_index'] + 1 ]
+    #parent target should be before the skipped revision
+    target_revision = setup_data['sample_revisions'][
+        setup_data['skip_index'] - 1 ]
+
+    #Get the child data
+    test_two_data = mtm.get_test_values(
+        child_revision,
+        'metric_key_lookup'
+        )
+
+    test_two_key = test_two_data.keys()[0]
+
+    parent_data, results = mtm.get_parent_test_data(
+        setup_data['branch_pushlog'],
+        setup_data['skip_index'] + 1,
+        test_two_key, None
+        )
+
+    reference_data = mtm.get_test_values(
+        #parent should be index before skip index
+        target_revision,
+        'metric_key_lookup'
+        )
+
+    assert mtm.skip_revisions == set([skip_revision])
+    assert parent_data['ref_data'] == \
+        reference_data[test_two_key]['ref_data']
+
+def test_get_parent_test_data_case_three(mtm, ptm, plm, monkeypatch):
+
+    #########
+    # Functional test for get_parent_test_data use case
+    #
+    # TEST CASE 3: When metric_method_data is provided the metric test is
+    #   required to pass for a push to be a valid parent.  The fail_revision
+    #   in setup_data has sample data with artificially high test value
+    #   results that should cause the ttest to fail and the revision to be
+    #   passed over when looking for a parent to bootstrap from.
+    #########
+    setup_data = _setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch)
+
+    fail_revision = setup_data['fail_revision']
+    fail_index = setup_data['test_fail_index']
+    child_revision = setup_data['sample_revisions'][ fail_index + 1 ]
+    target_revision = setup_data['sample_revisions'][ fail_index - 1 ]
+
+    test_three_data = mtm.get_test_values(
+        child_revision,
+        'metric_key_lookup'
+        )
+
+    test_three_key = test_three_data.keys()[0]
+
+    parent_data, results = mtm.get_parent_test_data(
+        setup_data['branch_pushlog'],
+        fail_index + 1,
+        test_three_key,
+        test_three_data[test_three_key]['values']
+        )
+
+    reference_data = mtm.get_test_values(
+        target_revision,
+        'metric_key_lookup'
+        )
+
+    assert parent_data['ref_data'] == \
+        reference_data[test_three_key]['ref_data']
+
+def test_get_parent_test_data_case_four(mtm, ptm, plm, monkeypatch):
+
+    #########
+    # Functional test for get_parent_test_data use case
+    #
+    # TEST CASE 4: When metric_method_data is provided the metric test is
+    #   required to pass for a push to be a valid parent.  This test
+    #   provides child data that is the same as the parent.  So the ttest
+    #   should pass and the parent should be the first push found.
+    #   So sample_revisions[ target_revision_index - 1] should be the
+    #   parent.
+    #########
+    setup_data = _setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch)
+
+    sample_revisions = setup_data['sample_revisions']
+
+    #Get the child data
+    test_four_data = mtm.get_test_values(
+        sample_revisions[setup_data['target_revision_index']],
+        'metric_key_lookup'
+        )
+
+    #Retrieve child metric key
+    test_four_key = test_four_data.keys()[0]
+
+    parent_data, results = mtm.get_parent_test_data(
+        setup_data['branch_pushlog'],
+        setup_data['target_revision_index'],
+        test_four_key,
+        test_four_data[test_four_key]['values']
+        )
+
+    #Parent data should be at target_revision_index - 1
+    reference_data = mtm.get_test_values(
+        sample_revisions[setup_data['target_revision_index'] - 1],
+        'metric_key_lookup'
+        )
+
+    assert parent_data['ref_data'] == \
+        reference_data[test_four_key]['ref_data']
 
 def _test_metric_key_lookup(mtm, sample_data, model_data):
 
@@ -440,9 +607,68 @@ def _test_metric_key_lookup(mtm, sample_data, model_data):
     #the data from the model
     assert reference_value_count == model_value_count
 
-def _test_metric_summary_lookup():
+def _setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch):
 
-    pass
+    setup_data = {}
+
+    #monkey patch in sample pushlog
+    def mock_urlopen(nuttin_honey):
+        return pushlog_json_file()
+    monkeypatch.setattr(urllib, 'urlopen', mock_urlopen)
+
+    result = plm.store_pushlogs("test_host", 1, branch="Firefox")
+
+    #load perftest data that corresponds to the pushlog data
+    #store parent chain for tests
+    setup_data['skip_revision'] = ""
+    setup_data['skip_index'] = 2
+    setup_data['fail_revision'] = ""
+    setup_data['test_fail_index'] = 4
+    setup_data['sample_revisions'] = []
+
+    setup_data['branch_pushlog'] = plm.get_branch_pushlog(1)
+
+    #Build list of revisions to operate on
+    for index, node in enumerate( setup_data['branch_pushlog'] ):
+        revision = mtm.get_revision_from_node(node['node'])
+        setup_data['sample_revisions'].append(revision)
+        if index == setup_data['skip_index']:
+            setup_data['skip_revision'] = revision
+            continue
+
+    #Load sample data for all of the revisions
+    for index, revision in enumerate( setup_data['sample_revisions'] ):
+
+        if revision == setup_data['skip_revision']:
+            continue
+
+        sample_data = {}
+
+        if index == setup_data['test_fail_index']:
+            #Set up test run values to fail ttest
+            data = [10000, 20000, 30000, 40000]
+            sample_data = TestData( perftest_data(
+                results={'one.com':data,
+                         'two.com':data,
+                         'three.com':data}
+                )
+            )
+            setup_data['fail_revision'] = revision
+
+        else:
+            sample_data = TestData( perftest_data(
+                test_build={ 'revision': revision },
+                )
+            )
+
+        #Load sample data
+        ptm.load_test_data(sample_data)
+
+    revision_count = len( setup_data['sample_revisions'] )
+
+    setup_data['target_revision_index'] = revision_count - 1
+
+    return setup_data
 
 
 

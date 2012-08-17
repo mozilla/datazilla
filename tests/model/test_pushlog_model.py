@@ -223,3 +223,31 @@ def test_store_pushlogs_no_data(plm, monkeypatch):
         }
 
     assert result == exp_result
+
+def test_get_branch_pushlog(plm, monkeypatch):
+
+    data = json.loads(pushlog_json())
+
+    def mock_urlopen(nuttin_honey):
+        return pushlog_json_file()
+    monkeypatch.setattr(urllib, 'urlopen', mock_urlopen)
+
+    result = plm.store_pushlogs("test_host", 1, branch="Firefox")
+
+    branch_pushlog = plm.get_branch_pushlog(1)
+
+    data_nodes = set()
+    branch_nodes = set()
+
+    #Get nodes for sample data
+    for push_id in data:
+        for node in data[push_id]['changesets']:
+            data_nodes.add(node['node'])
+
+    #Get all branch nodes retrieved
+    for push_data in branch_pushlog:
+        branch_nodes.add( push_data['node'] )
+
+    #sample data nodes should match branch nodes retrieved
+    assert data_nodes == branch_nodes
+

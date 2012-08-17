@@ -10,7 +10,7 @@ from datazilla.model import PushLogModel, MetricsTestModel
 # Branches that require special handling
 SPECIAL_HANDLING_BRANCHES = set(['Try'])
 
-def bootstrap(project, options):
+def run_metrics(project, options):
 
     plm = PushLogModel('pushlog')
 
@@ -42,7 +42,7 @@ def bootstrap(project, options):
             computed_metrics_data = mtm.get_metrics_data(revision)
 
             ###
-            #CASE 1: No test data for the push, move on to the next push
+            #CASE: No test data for the push, move on to the next push
             ###
             if not child_test_data:
                 """
@@ -66,20 +66,21 @@ def bootstrap(project, options):
                 mtm.add_skip_revision(revision)
                 continue
 
-            #Get the thresholds for the tests associated with this changeset
-            for key in child_test_data:
+            #Test data found, get the metric thresholds for the tests
+            #associated with this changeset
+            for child_key in child_test_data:
 
-                if key in computed_metrics_data:
-                    #Metrics already computed
+                if child_key in computed_metrics_data:
+                    #Metrics already computed for the datum
                     continue
 
                 threshold_data = mtm.get_threshold_data(
-                    child_test_data[key]['ref_data']
+                    child_test_data[child_key]['ref_data']
                     )
 
                 if not threshold_data:
                     ###
-                    # CASE 3: No threshold data exists for the metric datum
+                    # CASE: No threshold data exists for the metric datum
                     #   get the first parent with data.
                     #
                     # ASSUMPTION: The first parent with data is a viable
@@ -87,14 +88,15 @@ def bootstrap(project, options):
                     #   metric datum.
                     ###
                     parent_data, test_result = mtm.get_parent_test_data(
-                        pushlog, index, key, child_test_data[key]['values']
+                        pushlog, index, child_key,
+                        child_test_data[child_key]['values']
                         )
 
                     if parent_data and test_result:
 
                         mtm.store_metric_results(
                             revision,
-                            child_test_data[key]['ref_data'],
+                            child_test_data[child_key]['ref_data'],
                             test_result
                             )
 
@@ -107,14 +109,14 @@ def bootstrap(project, options):
                     #   Use it to run the test.
                     ###
                     test_result = mtm.run_metric_method(
-                        child_test_data[key]['ref_data'],
-                        child_test_data[key]['values'],
-                        threshold_data[key]['values']
+                        child_test_data[child_key]['ref_data'],
+                        child_test_data[child_key]['values'],
+                        threshold_data[child_key]['values']
                         )
 
                     mtm.store_metric_results(
                         revision,
-                        child_test_data[key]['ref_data'],
+                        child_test_data[child_key]['ref_data'],
                         test_result
                         )
 
