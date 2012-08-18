@@ -9,6 +9,7 @@ significantly longer.
 
 """
 from optparse import make_option
+from lockfile import FileLock, AlreadyLocked
 
 from datazilla.controller.admin import push_walker
 from base import ProjectBatchCommand
@@ -18,7 +19,7 @@ class Command(ProjectBatchCommand):
 
     LOCK_FILE = "run_metrics"
 
-    help = "Populate the summary cache for a project."
+    help = "Run metric methods."
 
     option_list = ProjectBatchCommand.option_list + (
 
@@ -49,6 +50,7 @@ class Command(ProjectBatchCommand):
                 )
             ),
 
+
         make_option("--numdays",
                     action="store",
                     dest="numdays",
@@ -66,11 +68,57 @@ class Command(ProjectBatchCommand):
 
 
     def handle_project(self, project, options):
+
         self.stdout.write("Processing project {0}\n".format(project))
+
+        numdays = options.get("numdays")
+        run_metrics = options.get("run_metrics")
+        summary = options.get("summary")
+
+        if not numdays:
+            self.println("You must supply the number of days data.")
+            return
+        else:
+            try:
+                numdays = int(numdays)
+            except ValueError:
+                self.println("numdays must be an integer.")
+                return
+
         if options.get("run_metrics"):
-            push_walker.run_metrics(project, options)
+
+            #Get a lock name unique for the option
+            lock = FileLock("{0}_{1}".format(self.LOCK_FILE,"_run_metrics"))
+            try:
+                lock.acquire(timeout=0)
+                try:
+                    push_walker.run_metrics(project, options)
+                finally:
+                    lock.release()
+
+            except AlreadyLocked:
+                self.println(
+                    ("This command is already being run elsewhere.  Please "
+                     "try again later.")
+                     )
+
+
         if options.get("summary"):
-            push_walker.summary(project, options)
+            #Get a lock name unique for the option
+            lock = FileLock("{0}_{1}".format(self.LOCK_FILE,"_summary"))
+            try:
+                lock.acquire(timeout=0)
+                try:
+                    push_walker.summary(project, options)
+                finally:
+                    lock.release()
 
+            except AlreadyLocked:
+                self.println(
+                    ("This command is already being run elsewhere.  Please "
+                     "try again later.")
+                     )
 
+    def println(self, val):
+        self.stdout.write("{0}\n".format(str(val)))
 

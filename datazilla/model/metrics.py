@@ -189,9 +189,9 @@ class TtestMethod(MetricMethodBase):
     # Index to start collecting test values from
     DATA_START_INDEX = 1
 
-    def __init__(self, metric):
+    def __init__(self, metric_collection):
 
-        super(TtestMethod, self).__init__(metric)
+        super(TtestMethod, self).__init__(metric_collection)
 
         self.result_key = set([ 'p', 'h0_rejected', self.SUMMARY_NAME ])
 

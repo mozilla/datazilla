@@ -7,7 +7,13 @@ from datazilla.model.base import TestData
 
 from ..sample_data import perftest_data
 from ..sample_pushlog import pushlog_json, pushlog_json_file
-from ..sample_metric_data import *
+
+from ..sample_metric_data import (
+    get_metrics_key_data, get_metrics_summary_key_data,
+    get_metric_collection_data, get_sample_p_values,
+    get_metric_sample_data_summary, get_metric_sample_data,
+    get_sample_ref_data, get_sample_ttest_data )
+
 
 def test_metric_keys(mtm):
 
@@ -119,7 +125,7 @@ def test_get_test_values_mk(ptm, mtm):
     revision = sample_data['test_build']['revision']
     model_data = mtm.get_test_values(revision, 'metric_key_lookup')
 
-    _test_metric_key_lookup(mtm, sample_data, model_data)
+    examine_metric_key_lookup(mtm, sample_data, model_data)
 
 def test_get_test_values(mtm, ptm):
 
@@ -131,7 +137,7 @@ def test_get_test_values(mtm, ptm):
 
     model_data = mtm.get_test_values(sample_revision, 'metric_key_lookup')
 
-    _test_metric_key_lookup(mtm, sample_data, model_data)
+    examine_metric_key_lookup(mtm, sample_data, model_data)
 
 def test_get_threshold_data(ptm, mtm):
 
@@ -426,7 +432,7 @@ def test_get_parent_test_data_case_one(mtm, ptm, plm, monkeypatch):
     # sample_revisions[ target_revision_index - 1]
     #######
 
-    setup_data = _setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch)
+    setup_data = setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch)
 
     sample_revisions = setup_data['sample_revisions']
 
@@ -464,7 +470,7 @@ def test_get_parent_test_data_case_two(mtm, ptm, plm, monkeypatch):
     #   revision before the skipped index.  So setup_data['skip_index'] - 1
     #######
 
-    setup_data = _setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch)
+    setup_data = setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch)
 
     skip_revision = setup_data['skip_revision']
     child_revision = setup_data['sample_revisions'][
@@ -508,7 +514,7 @@ def test_get_parent_test_data_case_three(mtm, ptm, plm, monkeypatch):
     #   results that should cause the ttest to fail and the revision to be
     #   passed over when looking for a parent to bootstrap from.
     #########
-    setup_data = _setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch)
+    setup_data = setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch)
 
     fail_revision = setup_data['fail_revision']
     fail_index = setup_data['test_fail_index']
@@ -549,7 +555,7 @@ def test_get_parent_test_data_case_four(mtm, ptm, plm, monkeypatch):
     #   So sample_revisions[ target_revision_index - 1] should be the
     #   parent.
     #########
-    setup_data = _setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch)
+    setup_data = setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch)
 
     sample_revisions = setup_data['sample_revisions']
 
@@ -578,7 +584,7 @@ def test_get_parent_test_data_case_four(mtm, ptm, plm, monkeypatch):
     assert parent_data['ref_data'] == \
         reference_data[test_four_key]['ref_data']
 
-def _test_metric_key_lookup(mtm, sample_data, model_data):
+def examine_metric_key_lookup(mtm, sample_data, model_data):
 
     reference_data = set(mtm.METRIC_KEYS)
 
@@ -607,7 +613,7 @@ def _test_metric_key_lookup(mtm, sample_data, model_data):
     #the data from the model
     assert reference_value_count == model_value_count
 
-def _setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch):
+def setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch):
 
     setup_data = {}
 

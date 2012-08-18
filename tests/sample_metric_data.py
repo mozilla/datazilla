@@ -10,7 +10,6 @@ from datazilla.model.metrics import TtestMethod
 from dzmetrics.ttest import welchs_ttest
 from dzmetrics.fdr import rejector
 
-
 def get_metrics_key_data(**kwargs):
 
     defaults = {
@@ -106,10 +105,6 @@ def get_metric_sample_data_summary():
 
 def get_metric_sample_data(key, sample_data):
 
-    ####
-    # Assumption: The values for all of the pages
-    # in the results attribute are the same.
-    ####
     si = TtestMethod.DATA_START_INDEX
     alpha = TtestMethod.ALPHA
 
