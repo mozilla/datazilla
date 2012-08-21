@@ -103,3 +103,4 @@ def build_replacement(col_data):
             if value
             ]
         )
+

@@ -12,7 +12,7 @@ SPECIAL_HANDLING_BRANCHES = set(['Try'])
 
 def run_metrics(project, options):
 
-    plm = PushLogModel('pushlog')
+    plm = PushLogModel(options['pushlog_project'])
 
     mtm = MetricsTestModel(project)
 
@@ -27,7 +27,10 @@ def run_metrics(project, options):
             b['id'], options['numdays'], options['daysago']
             )
 
-        for index, node in enumerate( pushlog ):
+        plen = len(pushlog)
+
+        #Reverse the pushlog to iterate in reverse order
+        for index, node in enumerate(pushlog):
 
             revision = mtm.get_revision_from_node(node['node'])
 
@@ -56,8 +59,6 @@ def run_metrics(project, options):
                       How do we distinguish between when this occurs
                   and when the data has never been sent to datazilla for a
                   particular push?
-                      This needs to be ressolved, otherwise there is a
-                  chance we will be using the wrong parent.
                       The best solution would be to have enough confidence
                   in the push log coverage in the perftest schema so that if
                   the immediate parent is not available the child revision
@@ -87,6 +88,7 @@ def run_metrics(project, options):
                     #   place to bootstrap the threshold value for the
                     #   metric datum.
                     ###
+
                     parent_data, test_result = mtm.get_parent_test_data(
                         pushlog, index, child_key,
                         child_test_data[child_key]['values']
@@ -105,7 +107,7 @@ def run_metrics(project, options):
                 else:
 
                     ###
-                    #CASE 2: Threshold data exists for the metric datum.
+                    #CASE: Threshold data exists for the metric datum.
                     #   Use it to run the test.
                     ###
                     test_result = mtm.run_metric_method(
@@ -127,7 +129,7 @@ def run_metrics(project, options):
 def summary(project, options):
 
     mtm = MetricsTestModel(project)
-    plm = PushLogModel('pushlog')
+    plm = PushLogModel(options['pushlog_project'])
 
     branches = plm.get_branch_list()
 

@@ -23,6 +23,12 @@ class Command(ProjectBatchCommand):
 
     option_list = ProjectBatchCommand.option_list + (
 
+        make_option("--pushlog_project",
+                    action="store",
+                    dest="pushlog_project",
+                    default="pushlog",
+                    help="Push log project name (defaults to pushlog)"),
+
         make_option(
             '-r',
             '--run_metrics',
@@ -38,7 +44,7 @@ class Command(ProjectBatchCommand):
             ),
 
         make_option(
-            '-m',
+            '-s',
             '--summary',
             action='store_true',
             dest='summary',
@@ -54,13 +60,13 @@ class Command(ProjectBatchCommand):
         make_option("--numdays",
                     action="store",
                     dest="numdays",
-                    default=7,
+                    default=False,
                     help="Number of days worth of pushlogs to return."),
 
         make_option("--daysago",
                     action="store",
                     dest="daysago",
-                    default=None,
+                    default=False,
                     help=("Number of days ago to start from, "
                           "defaults to now."),
             )
@@ -86,38 +92,10 @@ class Command(ProjectBatchCommand):
                 return
 
         if options.get("run_metrics"):
-
-            #Get a lock name unique for the option
-            lock = FileLock("{0}_{1}".format(self.LOCK_FILE,"_run_metrics"))
-            try:
-                lock.acquire(timeout=0)
-                try:
-                    push_walker.run_metrics(project, options)
-                finally:
-                    lock.release()
-
-            except AlreadyLocked:
-                self.println(
-                    ("This command is already being run elsewhere.  Please "
-                     "try again later.")
-                     )
-
+            push_walker.run_metrics(project, options)
 
         if options.get("summary"):
-            #Get a lock name unique for the option
-            lock = FileLock("{0}_{1}".format(self.LOCK_FILE,"_summary"))
-            try:
-                lock.acquire(timeout=0)
-                try:
-                    push_walker.summary(project, options)
-                finally:
-                    lock.release()
-
-            except AlreadyLocked:
-                self.println(
-                    ("This command is already being run elsewhere.  Please "
-                     "try again later.")
-                     )
+            push_walker.summary(project, options)
 
     def println(self, val):
         self.stdout.write("{0}\n".format(str(val)))

@@ -1464,10 +1464,9 @@ class MetricsTestModel(DatazillaModelBase):
 
     def get_test_values(self, revision, struct_type='metric_key_lookup'):
         """
-        Retrieve all test values associated with a give revision.
+        Retrieve all test values associated with a givec revision.
 
-        ref_data - Dictionary containing all METRIC_KEYS and their
-            associated values.
+        revision - revision/changeset string.
 
         struct_type - Determines the structure of the data returned.
             Possible values are: metric_summary_lookup, metric_key_lookup,
@@ -1649,6 +1648,7 @@ class MetricsTestModel(DatazillaModelBase):
                 )
 
             if m.evaluate_metric_result(results):
+
                 self.insert_or_update_metric_threshold(
                     revision,
                     ref_data,

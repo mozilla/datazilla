@@ -81,6 +81,14 @@ class MetricMethodInterface(object):
         """
         raise NotImplementedError(self.MSG)
 
+    def evaluate_metric_summary_result(self, test_result):
+        """
+        Should return True if the summary test passed, False if not.
+
+        test_result - The return value from the run_metric_summary method.
+        """
+        raise NotImplementedError(self.MSG)
+
     def get_data_for_metric_storage(self, ref_data, result):
         """
         Get data for metric storage.
@@ -206,7 +214,6 @@ class TtestMethod(MetricMethodBase):
             parent_data[self.DATA_START_INDEX:],
             self.ALPHA
             )
-
         return result
 
     def run_metric_summary(self, data):
@@ -228,7 +235,23 @@ class TtestMethod(MetricMethodBase):
 
     def evaluate_metric_result(self, test_result):
         success = False
-        if not test_result['h0_rejected']:
+        ###
+        # h0_rejected will be False from welchs_ttest() output but
+        # it could also be 0 if retrieved directly from the database,
+        ###
+        if (test_result['h0_rejected'] == False) or \
+            (test_result['h0_rejected'] == 0):
+            success = True
+        return success
+
+    def evaluate_metric_summary_result(self, test_result):
+        success = False
+        ###
+        # fdr will be False from rejector() output but
+        # it could also be 0 if retrieved directly from the database,
+        ###
+        if (test_result[self.SUMMARY_NAME] == False) or \
+            (test_result[self.SUMMARY_NAME] == 0):
             success = True
         return success
 

@@ -2,6 +2,7 @@ import json
 import datetime
 import copy
 import urllib
+import time
 
 from datazilla.model.base import TestData
 
@@ -512,36 +513,36 @@ def test_get_parent_test_data_case_three(mtm, ptm, plm, monkeypatch):
     #   required to pass for a push to be a valid parent.  The fail_revision
     #   in setup_data has sample data with artificially high test value
     #   results that should cause the ttest to fail and the revision to be
-    #   passed over when looking for a parent to bootstrap from.
+    #   passed over when storing threshold data.  No parent should be found
+    #   for the fail revision if the fail data is supplied to
+    #   get_parent_test_data.
     #########
     setup_data = setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch)
 
     fail_revision = setup_data['fail_revision']
     fail_index = setup_data['test_fail_index']
-    child_revision = setup_data['sample_revisions'][ fail_index + 1 ]
-    target_revision = setup_data['sample_revisions'][ fail_index - 1 ]
 
-    test_three_data = mtm.get_test_values(
-        child_revision,
+    fail_data = mtm.get_test_values(
+        fail_revision,
         'metric_key_lookup'
         )
 
-    test_three_key = test_three_data.keys()[0]
+    for key in fail_data:
 
-    parent_data, results = mtm.get_parent_test_data(
-        setup_data['branch_pushlog'],
-        fail_index + 1,
-        test_three_key,
-        test_three_data[test_three_key]['values']
-        )
+        parent_data, results = mtm.get_parent_test_data(
+            setup_data['branch_pushlog'],
+            fail_index,
+            key,
+            fail_data[key]['values']
+            )
 
-    reference_data = mtm.get_test_values(
-        target_revision,
-        'metric_key_lookup'
-        )
+        assert parent_data == {}
 
-    assert parent_data['ref_data'] == \
-        reference_data[test_three_key]['ref_data']
+        threshold_data = mtm.get_threshold_data(
+            fail_data[key]['ref_data'], 'metric_key_lookup'
+            )
+
+        assert threshold_data == {}
 
 def test_get_parent_test_data_case_four(mtm, ptm, plm, monkeypatch):
 
@@ -616,6 +617,7 @@ def examine_metric_key_lookup(mtm, sample_data, model_data):
 def setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch):
 
     setup_data = {}
+    now = int( time.time() )
 
     #monkey patch in sample pushlog
     def mock_urlopen(nuttin_honey):
@@ -626,6 +628,7 @@ def setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch):
 
     #load perftest data that corresponds to the pushlog data
     #store parent chain for tests
+    setup_data['testsuite_name'] = ""
     setup_data['skip_revision'] = ""
     setup_data['skip_index'] = 2
     setup_data['fail_revision'] = ""
@@ -645,15 +648,21 @@ def setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch):
     #Load sample data for all of the revisions
     for index, revision in enumerate( setup_data['sample_revisions'] ):
 
-        if revision == setup_data['skip_revision']:
+        #if revision == setup_data['skip_revision']:
+        if index == setup_data['skip_index']:
             continue
 
         sample_data = {}
+        date = now + index - 10
 
         if index == setup_data['test_fail_index']:
             #Set up test run values to fail ttest
-            data = [10000, 20000, 30000, 40000]
+            data = [50000, 50000, 50000]
+
+
             sample_data = TestData( perftest_data(
+                testrun={ 'date':date },
+                test_build={ 'revision': revision },
                 results={'one.com':data,
                          'two.com':data,
                          'three.com':data}
@@ -663,9 +672,13 @@ def setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch):
 
         else:
             sample_data = TestData( perftest_data(
+                testrun={ 'date':date },
                 test_build={ 'revision': revision },
                 )
             )
+
+        if not setup_data['testsuite_name']:
+            setup_data['testsuite_name'] = sample_data['testrun']['suite']
 
         #Load sample data
         ptm.load_test_data(sample_data)
