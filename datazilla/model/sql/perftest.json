@@ -303,7 +303,7 @@
                                                 `page_id`,
                                                 `test_run_id`,
                                                 `revision`,
-                                                `creation_date`)
+                                                `push_date`)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE `product_id` = ?,
                                         `operating_system_id` = ?,
@@ -313,7 +313,7 @@
                                         `page_id` = ?,
                                         `test_run_id` = ?,
                                         `revision` = ?,
-                                        `creation_date` = ?",
+                                        `push_date` = ?",
 
        "host":"master_host"
     }
@@ -633,7 +633,8 @@
                        mt.page_id,
                        mt.test_run_id,
                        mt.revision,
-                       tv.value
+                       tv.value,
+                       mt.push_date
                    FROM `metric_threshold` AS mt
                    LEFT JOIN `test` AS t ON mt.test_id = t.id
                    LEFT JOIN `metric` AS m ON mt.metric_id = m.id

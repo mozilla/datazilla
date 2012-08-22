@@ -16,11 +16,14 @@ class MetricsMethodFactory(object):
 
     def get_metric_method(self, test_name=None):
         """
-        Metric method class instance factory.  New metric method classes
-        should be added to this conditional with their appropriate
-        test_name condition.  The TtestMethod is the current default.
+        Returns the metric method instance associated with the test name
+        provided.
         """
         metric_method = None
+
+        #New metric method classes should be added to this
+        #conditional with their appropriate test_name condition.  The
+        #TtestMethod is the current default.
         if test_name == 'Talos tp5n':
             metric_method = self.metric_method_instances.setdefault(
                 test_name, TtestMethod(self.metric_collection)
@@ -45,17 +48,14 @@ class MetricMethodInterface(object):
         """
         Run the metric method.
 
-        child_data and parent_data have the following structure:
-
-        data = [ test_value1, test_value2, test_value3, ... ]
+        child_data = [ test_value1, test_value2, test_value3, ... ]
+        parent_data = [ test_value1, test_value2, test_value3, ... ]
         """
         raise NotImplementedError(self.MSG)
 
     def run_metric_summary(self, data):
         """
         Run the metric summary method.
-
-        data has the following structure:
 
         data = [
             {
@@ -146,12 +146,15 @@ class MetricMethodBase(MetricMethodInterface):
         self.set_metric_method()
 
     def set_metric_method(self):
-        """Populates self.metric_id and self.metric_values for derived
-           classes.  Requires derived classes set cls.NAME to a metric name
-           found in the metric table in the perftest schema and
-           cls.SUMMARY_NAME to a valid metric value name found in the
-           `metric_value` table in the perftest schema or None if there is
-           no metric summary for the method."""
+        """
+        Populates self.metric_id and self.metric_values for derived
+        classes.  Requires derived classes set cls.NAME to a metric name
+        found in the metric table in the perftest schema and
+        cls.SUMMARY_NAME to a valid metric value name found in the
+        `metric_value` table in the perftest schema or None if there is
+        no metric summary for the method.
+        """
+
         for data in self.metric_collection:
             if data['metric_name'] == self.NAME:
 
@@ -184,10 +187,8 @@ class MetricMethodBase(MetricMethodInterface):
             return True
 
 class TtestMethod(MetricMethodBase):
-    """Class implements welch's ttest"""
+    """Class implements the metric method interface for welch's ttest"""
 
-    #All classes derived from MetricMethodBase must
-    #set the following class attributes
     NAME = 'welch_ttest'
     SUMMARY_NAME = 'fdr'
 

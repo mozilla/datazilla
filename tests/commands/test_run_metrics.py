@@ -31,10 +31,10 @@ def test_no_numdays(capsys, ptm):
     call_run_metrics(project=ptm.project)
 
     exp = (
-        u"Starting for projects: {0}\n".format(ptm.project) +
-        u"Processing project {0}\n".format(ptm.project) +
-        u"You must supply the number of days data.\n" +
-        u"Completed for 1 project(s).\n",
+        "Starting for projects: {0}\n".format(ptm.project) +
+        "Processing project {0}\n".format(ptm.project) +
+        "You must supply the number of days data.\n" +
+        "Completed for 1 project(s).\n",
         ""
     )
 
@@ -45,10 +45,10 @@ def test_bad_numdays(capsys, ptm):
     call_run_metrics(project=ptm.project, numdays="numdays")
 
     exp = (
-        u"Starting for projects: {0}\n".format(ptm.project) +
-        u"Processing project {0}\n".format(ptm.project) +
+        "Starting for projects: {0}\n".format(ptm.project) +
+        "Processing project {0}\n".format(ptm.project) +
         "numdays must be an integer.\n" +
-        u"Completed for 1 project(s).\n",
+        "Completed for 1 project(s).\n",
         ""
         )
 
@@ -67,8 +67,52 @@ def test_run_metrics_and_summary(capsys, mtm, ptm, plm, monkeypatch):
         cron_batch='small'
         )
 
+    #Confirm the thresholds set match what is expected
     _test_thresholds(setup_data, mtm, ptm)
-    _test_metric_evaluations(setup_data, mtm)
+
+    ############
+    #The total number of tests passing should be 12,
+    #three pages per revision and 4 revisions.  The first
+    #revision has no parent and there is no threshold that
+    #can be used so it's excluded from the number of passing
+    #tests.
+    ############
+    _test_metric_evaluations(setup_data, mtm, 12)
+
+def test_duplicate_run(capsys, mtm, ptm, plm, monkeypatch):
+
+    setup_data = setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch)
+
+    call_run_metrics(
+        project=ptm.project,
+        pushlog_project='testpushlog',
+        numdays=10,
+        run_metrics=True,
+        summary=True,
+        cron_batch='small'
+        )
+
+    call_run_metrics(
+        project=ptm.project,
+        pushlog_project='testpushlog',
+        numdays=10,
+        run_metrics=True,
+        summary=True,
+        cron_batch='small'
+        )
+
+    #Confirm the thresholds set match what is expected
+    _test_thresholds(setup_data, mtm, ptm)
+
+    ############
+    #The total number of tests passing should be 15,
+    #three pages per revision and 5 revisions.  The first
+    #revision that had no parent in the first call_run_metrics pass,
+    #now has a threshold to compare to.  The first revision's test
+    #values should not be used for threshold storage because it's
+    #push date is older than the current threshold.
+    ############
+    _test_metric_evaluations(setup_data, mtm, 15)
 
 def _test_thresholds(setup_data, mtm, ptm):
     """
@@ -89,9 +133,7 @@ def _test_thresholds(setup_data, mtm, ptm):
 
     for key in child_data:
 
-        threshold_data = mtm.get_threshold_data(
-            child_data[key]['ref_data'], 'metric_key_lookup'
-            )
+        threshold_data = mtm.get_threshold_data(child_data[key]['ref_data'])
 
         threshold_revision = threshold_data[key]['ref_data']['revision']
 
@@ -99,7 +141,7 @@ def _test_thresholds(setup_data, mtm, ptm):
         assert threshold_revision != fail_revision
         assert threshold_revision != skip_revision
 
-def _test_metric_evaluations(setup_data, mtm):
+def _test_metric_evaluations(setup_data, mtm, target_pass_count):
     """
     The metrics data associated with the fail revision should evaluate
     to test failure. All other revisions should evaluate to test success.
@@ -151,7 +193,7 @@ def _test_metric_evaluations(setup_data, mtm):
                         #all other tests should pass
                         assert revision != fail_revision
 
-                if data['metric_value_name'] == 'fdr':
+                if data['metric_value_name'] == mm.SUMMARY_NAME:
 
                     summary_evaluation = mm.evaluate_metric_summary_result(
                         test_result
@@ -168,11 +210,9 @@ def _test_metric_evaluations(setup_data, mtm):
 
 
     target_fail_count = 3
-    target_pass_count = 12
 
     assert metric_fail_count == target_fail_count
     assert metric_pass_count == target_pass_count
-
     assert metric_summary_fail_count == target_fail_count
     assert metric_summary_pass_count == target_pass_count
 

@@ -1,7 +1,6 @@
 """
 Functions for walking the push log and populating
 the metrics schema
-
 """
 import sys
 
@@ -11,7 +10,48 @@ from datazilla.model import PushLogModel, MetricsTestModel
 SPECIAL_HANDLING_BRANCHES = set(['Try'])
 
 def run_metrics(project, options):
+    """
+        This function retrieves the push log for a given branch and
+    iterates over each push in ascending order implementing the following
+    ruleset:
 
+    1.) If a revision associated with a push node has no data in the
+        perftest schema skip it.
+
+    2.) If a revision associated with a push node already has metrics
+        data associated with it in the perftest schema skip it.
+
+    3.) If test data is present for a revision assiociated with a push
+        node, implement the following for all test data metric datums
+        that have no associated metric data:
+
+        3a.) If a threshold is present for a given metric datum,
+             use the test data associated with it to compute the
+             results of the associated metric method.  Store the
+             metric test results.
+
+             If the push date associated with the revision is
+             greater than or equal to the threshold push date,
+             update the threshold.
+
+        3b.) If no threshold is present for a given metric datum,
+             walk through consequtive pushes in the push log until
+             a parent is found that passes the test associated with
+             the metric datum's metric method.  Store the test
+             results and the threshold associated with the metric
+             datum.
+
+        If the immediate parent push does not have data in datazilla this
+    could be due to the assyncronous build/test environment sending data in
+    a different order than the pushlog push order.  How do we distinguish
+    between when this occurs and when the data has never been sent to
+    datazilla for a particular push?
+        The algorithm implemented will use a metric threshold if it's
+    available for a particular metric, even if that threshold is not
+    associated with the parent push.  If the child push is from a date
+    before the metric threshold its test results will not be used to update
+    the threshold.
+    """
     plm = PushLogModel(options['pushlog_project'])
 
     mtm = MetricsTestModel(project)
@@ -34,15 +74,13 @@ def run_metrics(project, options):
 
             revision = mtm.get_revision_from_node(node['node'])
 
-            #Get the test value data for this changeset
+            #Get the test value data for this revision
             child_test_data = mtm.get_test_values(revision)
+            test_data_set = set(child_test_data.keys())
 
-            ###
-            #CASE: Revision could already have metrics associated with it.
-            #   Use computed_metrics_data as a lookup to see what has
-            #   already been calculated.
-            ###
+            #Get the computed metrics for this revision
             computed_metrics_data = mtm.get_metrics_data(revision)
+            computed_metrics_set = set(computed_metrics_data.keys())
 
             ###
             #CASE: No test data for the push, move on to the next push
@@ -51,35 +89,46 @@ def run_metrics(project, options):
                 """
                 Keep track of pushes with no data so we can skip them
                 when looking for parents
-
-                DANGER: If the immediate parent push does not
-                  have data in datazilla this could be due to the
-                  assyncronous build/test environment sending data in a
-                  different order than the pushlog push order.
-                      How do we distinguish between when this occurs
-                  and when the data has never been sent to datazilla for a
-                  particular push?
-                      The best solution would be to have enough confidence
-                  in the push log coverage in the perftest schema so that if
-                  the immediate parent is not available the child revision
-                  is skipped until the parent is present.
                 """
                 mtm.add_skip_revision(revision)
                 continue
 
-            #Test data found, get the metric thresholds for the tests
-            #associated with this changeset
-            for child_key in child_test_data:
+            ###
+            #CASE: Revision could already have metrics associated with it.
+            #   Use computed_metrics_data to exclude datums that have
+            #   already had their metrics data calculated.
+            ###
+            data_without_metrics = test_data_set.difference(
+                computed_metrics_set
+                )
 
-                if child_key in computed_metrics_data:
-                    #Metrics already computed for the datum
-                    continue
+            for child_key in data_without_metrics:
 
                 threshold_data = mtm.get_threshold_data(
                     child_test_data[child_key]['ref_data']
                     )
 
-                if not threshold_data:
+                if threshold_data:
+
+                    ###
+                    #CASE: Threshold data exists for the metric datum.
+                    #   Use it to run the test.
+                    ###
+                    test_result = mtm.run_metric_method(
+                        child_test_data[child_key]['ref_data'],
+                        child_test_data[child_key]['values'],
+                        threshold_data[child_key]['values']
+                        )
+
+                    mtm.store_metric_results(
+                        revision,
+                        child_test_data[child_key]['ref_data'],
+                        test_result,
+                        pushlog[index]['date'],
+                        threshold_data[child_key]['ref_data']['push_date']
+                        )
+                else:
+
                     ###
                     # CASE: No threshold data exists for the metric datum
                     #   get the first parent with data.
@@ -99,34 +148,27 @@ def run_metrics(project, options):
                         mtm.store_metric_results(
                             revision,
                             child_test_data[child_key]['ref_data'],
-                            test_result
+                            test_result,
+                            pushlog[index]['date'],
+                            None
                             )
-
-                    else:
-                        continue
-                else:
-
-                    ###
-                    #CASE: Threshold data exists for the metric datum.
-                    #   Use it to run the test.
-                    ###
-                    test_result = mtm.run_metric_method(
-                        child_test_data[child_key]['ref_data'],
-                        child_test_data[child_key]['values'],
-                        threshold_data[child_key]['values']
-                        )
-
-                    mtm.store_metric_results(
-                        revision,
-                        child_test_data[child_key]['ref_data'],
-                        test_result
-                        )
-
 
     plm.disconnect()
     mtm.disconnect()
 
 def summary(project, options):
+    """
+        This function retrieves the push log for a given branch and
+    iterates over each push in ascending order implementing the following
+    ruleset:
+
+    1.) If no metrics data is associated with the revision skip it.
+
+    2.) For tests associated with a given revision, retrieve metric datums
+        that do not have metric method summary data associated with them.
+
+    3.) Run the metric method summary and store the results.
+    """
 
     mtm = MetricsTestModel(project)
     plm = PushLogModel(options['pushlog_project'])
@@ -145,7 +187,7 @@ def summary(project, options):
         for index, node in enumerate( pushlog ):
 
             revision = mtm.get_revision_from_node(node['node'])
-            #Get the metric value data for this changeset
+            #Get the metric value data for this revision
             metrics_data = mtm.get_metrics_data(revision)
 
             #If there's no metric data a summary cannot be computed
@@ -158,9 +200,10 @@ def summary(project, options):
             for test_key in store_list:
 
                 ############
-                # ASSUMPTION: If we have a test_id in the
-                # metrics data all of the metric values for each
-                # page in the test are computed.
+                # ASSUMPTION: All of the metric values for each
+                # page in the test are computed.  This is currently
+                # true do to the requirements of the incoming JSON data
+                # for a given test run.
                 ###########
                 results = mtm.run_metric_summary(
                     metrics_data[test_key]['ref_data'],
@@ -177,6 +220,7 @@ def summary(project, options):
     mtm.disconnect()
 
 def get_test_keys_for_storage(mtm, metrics_data):
+
 
     store_list = set()
 
