@@ -114,6 +114,15 @@ class MetricMethodInterface(object):
         """
         Get data for metric summary storage.
 
+        ref_data = {
+            all MetricsTestModel.METRIC_SUMMARY_KEYS: associated id,
+            test_run_id:id,
+            test_name:"Talos test name",
+            revision:revision
+            }
+
+        result = The return value from run_metric_summary_method.
+
         threshold_test_run_id = test_run_id used as threshold/parent.
         """
         raise NotImplementedError(self.MSG)

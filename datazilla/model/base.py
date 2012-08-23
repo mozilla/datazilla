@@ -1464,14 +1464,13 @@ class MetricsTestModel(DatazillaModelBase):
 
     def get_test_values(self, revision, struct_type='metric_key_lookup'):
         """
-        Retrieve all test values associated with a givec revision.
+        Retrieve all test values associated with a given revision.
 
         revision - revision/changeset string.
 
         struct_type - Determines the structure of the data returned.
-            Possible values are: metric_summary_lookup, metric_key_lookup,
-            metric_data_lookup.  See adapt_data for detailed data structure
-            descriptions.
+            Possible values are: metric_summary_lookup or metric_key_lookup.
+            See adapt_data for detailed data structure descriptions.
         """
 
         proc = 'perftest.selects.get_test_values'
@@ -1492,11 +1491,6 @@ class MetricsTestModel(DatazillaModelBase):
 
         ref_data - Dictionary containing all METRIC_KEYS and their
             associated values.
-
-        struct_type - Determines the structure of the data returned.
-            Possible values are: metric_summary_lookup, metric_key_lookup,
-            metric_data_lookup.  See adapt_data for detailed data structure
-            descriptions.
         """
 
         m = self.mf.get_metric_method(ref_data['test_name'])
@@ -1660,7 +1654,7 @@ class MetricsTestModel(DatazillaModelBase):
                     # associated with this revision is from the past.
                     ####
                     if int(revision_pushlog_date) >= \
-                        (threshold_pushlog_date):
+                        int(threshold_pushlog_date):
 
                         self.insert_or_update_metric_threshold(
                             revision,

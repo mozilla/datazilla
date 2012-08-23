@@ -13,13 +13,14 @@ def run_metrics(project, options):
     """
         This function retrieves the push log for a given branch and
     iterates over each push in ascending order implementing the following
-    ruleset:
+    rule set:
 
     1.) If a revision associated with a push node has no data in the
         perftest schema skip it.
 
     2.) If a revision associated with a push node already has metrics
-        data associated with it in the perftest schema skip it.
+        data associated with it in the perftest schema skip the metrics
+        datums that already have data.
 
     3.) If test data is present for a revision assiociated with a push
         node, implement the following for all test data metric datums
@@ -30,9 +31,9 @@ def run_metrics(project, options):
              results of the associated metric method.  Store the
              metric test results.
 
-             If the push date associated with the revision is
-             greater than or equal to the threshold push date,
-             update the threshold.
+             If the metric method test succeeds and the push date
+             associated with the revision is greater than or equal
+             to the threshold push date, update the threshold.
 
         3b.) If no threshold is present for a given metric datum,
              walk through consequtive pushes in the push log until
@@ -45,12 +46,18 @@ def run_metrics(project, options):
     could be due to the assyncronous build/test environment sending data in
     a different order than the pushlog push order.  How do we distinguish
     between when this occurs and when the data has never been sent to
-    datazilla for a particular push?
-        The algorithm implemented will use a metric threshold if it's
-    available for a particular metric, even if that threshold is not
-    associated with the parent push.  If the child push is from a date
-    before the metric threshold its test results will not be used to update
-    the threshold.
+    datazilla for a particular push?  These two scenarios are
+    indistiguishable given the information this system has access to.
+        The algorithm implemented uses test run data associated with a
+    metric threshold if it's available for a particular metric datum, even
+    if that threshold is not associated with the parent push.  There are
+    several edge cases that can occur in the build environment that cause a
+    push found in the push log to never have performance test data
+    generated.  Because of this we cannot assume every push will have a
+    parent with test data.
+        If the child push is from a date before the metric threshold its
+    test results will not be used to update the threshold so the stored
+    threshold data is always moving forward in time.
     """
     plm = PushLogModel(options['pushlog_project'])
 
@@ -69,7 +76,6 @@ def run_metrics(project, options):
 
         plen = len(pushlog)
 
-        #Reverse the pushlog to iterate in reverse order
         for index, node in enumerate(pushlog):
 
             revision = mtm.get_revision_from_node(node['node'])
@@ -77,10 +83,6 @@ def run_metrics(project, options):
             #Get the test value data for this revision
             child_test_data = mtm.get_test_values(revision)
             test_data_set = set(child_test_data.keys())
-
-            #Get the computed metrics for this revision
-            computed_metrics_data = mtm.get_metrics_data(revision)
-            computed_metrics_set = set(computed_metrics_data.keys())
 
             ###
             #CASE: No test data for the push, move on to the next push
@@ -92,6 +94,10 @@ def run_metrics(project, options):
                 """
                 mtm.add_skip_revision(revision)
                 continue
+
+            #Get the computed metrics for this revision
+            computed_metrics_data = mtm.get_metrics_data(revision)
+            computed_metrics_set = set(computed_metrics_data.keys())
 
             ###
             #CASE: Revision could already have metrics associated with it.
@@ -188,6 +194,7 @@ def summary(project, options):
         for index, node in enumerate( pushlog ):
 
             revision = mtm.get_revision_from_node(node['node'])
+
             #Get the metric value data for this revision
             metrics_data = mtm.get_metrics_data(revision)
 
@@ -222,7 +229,6 @@ def summary(project, options):
     mtm.disconnect()
 
 def get_test_keys_for_storage(mtm, metrics_data):
-
 
     store_list = set()
 
