@@ -1633,13 +1633,16 @@ class MetricsTestModel(DatazillaModelBase):
 
     def store_metric_results(
         self, revision, ref_data, results,
-        revision_pushlog_date, threshold_pushlog_date
+        revision_pushlog_date, threshold_pushlog_date,
+        threshold_test_run_id
         ):
 
         proc = 'perftest.inserts.set_test_page_metric'
 
         m = self.mf.get_metric_method(ref_data['test_name'])
-        placeholders = m.get_data_for_metric_storage(ref_data, results)
+        placeholders = m.get_data_for_metric_storage(
+            ref_data, results, threshold_test_run_id
+            )
 
         if placeholders:
 
@@ -1678,13 +1681,18 @@ class MetricsTestModel(DatazillaModelBase):
                         revision_pushlog_date
                         )
 
-    def store_metric_summary_results(self, revision, ref_data, results):
+    def store_metric_summary_results(
+        self, revision, ref_data, results, threshold_test_run_id
+        ):
 
         proc = 'perftest.inserts.set_test_page_metric'
 
         m = self.mf.get_metric_method(ref_data['test_name'])
 
-        placeholders = m.get_data_for_summary_storage(ref_data, results)
+        placeholders = m.get_data_for_summary_storage(
+            ref_data, results, threshold_test_run_id
+            )
+
         if placeholders:
 
             self.sources["perftest"].dhub.execute(
@@ -1755,6 +1763,7 @@ class MetricsTestModel(DatazillaModelBase):
             { ref_data: {
                 all self.METRIC_KEYS: associated id,
                 test_run_id:id,
+                threshold_test_run_id:test_run_id of threshold used,
                 test_name:"Talos test name",
                 revision:revision
                 }
@@ -1779,7 +1788,10 @@ class MetricsTestModel(DatazillaModelBase):
                 key_lookup[key] = {
                     'values':[],
                     'ref_data':self.extend_with_metrics_keys(
-                        d, ['test_run_id', 'test_name', 'revision']
+                        d, ['test_run_id',
+                            'test_name',
+                            'revision',
+                            'threshold_test_run_id']
                         )
                     }
             key_lookup[key]['values'].append( {

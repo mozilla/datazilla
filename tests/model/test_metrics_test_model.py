@@ -157,8 +157,8 @@ def test_get_threshold_data(ptm, mtm):
     #We need to load some data so the foreign
     #key constraints for the reference data are
     #valid
-    ptm.load_test_data(child_sample_data)
     ptm.load_test_data(parent_sample_data)
+    ptm.load_test_data(child_sample_data)
 
     sample_ttest_data = get_sample_ttest_data()
 
@@ -168,7 +168,7 @@ def test_get_threshold_data(ptm, mtm):
     #causes the data to be stored as threshold data
     mtm.store_metric_results(
         child_revision, ref_data, sample_ttest_data,
-        mock_push_date, None
+        mock_push_date, None, 1
         )
 
     metric_id = 1
@@ -270,8 +270,8 @@ def test_store_metric_summary_results(mtm, ptm):
         )
     )
 
-    ptm.load_test_data(child_sample_data)
     ptm.load_test_data(parent_sample_data)
+    ptm.load_test_data(child_sample_data)
 
     child_data = mtm.get_test_values(child_revision, 'metric_key_lookup')
     parent_data = mtm.get_test_values(parent_revision, 'metric_key_lookup')
@@ -295,7 +295,8 @@ def test_store_metric_summary_results(mtm, ptm):
             child_data[key]['ref_data'],
             results,
             mock_push_date,
-            None
+            None,
+            parent_data[key]['ref_data']['test_run_id']
             )
 
         #Retrieve the metric data
@@ -310,7 +311,8 @@ def test_store_metric_summary_results(mtm, ptm):
         mtm.store_metric_summary_results(
             child_revision,
             metrics_data[key]['ref_data'],
-            summary_results
+            summary_results,
+            parent_data[key]['ref_data']['test_run_id']
             )
 
         #Metric data should contain the summary results
@@ -341,8 +343,8 @@ def test_store_metric_results(mtm, ptm):
     #We need to load some data so the foreign
     #key constraints for the reference data are
     #valid
-    ptm.load_test_data(child_sample_data)
     ptm.load_test_data(parent_sample_data)
+    ptm.load_test_data(child_sample_data)
 
     sample_ttest_data = get_sample_ttest_data()
 
@@ -350,7 +352,7 @@ def test_store_metric_results(mtm, ptm):
 
     mtm.store_metric_results(
         child_revision, ref_data, sample_ttest_data,
-        mock_push_date, None
+        mock_push_date, None, 1
         )
 
     metric_data_reference = ptm.sources["perftest"].dhub.execute(
@@ -394,8 +396,8 @@ def test_insert_or_update_metric_threshold(mtm, ptm):
     )
 
     # load sample data
-    ptm.load_test_data(sample_data)
     ptm.load_test_data(parent_sample_data)
+    ptm.load_test_data(sample_data)
 
     # retrieve loaded test values
     model_data = mtm.get_test_values(revision, 'metric_key_lookup')
@@ -441,10 +443,10 @@ def test_insert_or_update_metric_threshold(mtm, ptm):
         assert parent_model_data[key]['values'] == \
             updated_threshold_data[key]['values']
 
-        #parent model data will have a test_run_id of 2 since it's the
-        #second one inserted, this should now be the test_run_id associated
+        #parent model data will have a test_run_id of 1 since it's the
+        #first one inserted, this should now be the test_run_id associated
         #with the threshold data
-        assert 2 == updated_threshold_data[key]['ref_data']['test_run_id']
+        assert 1 == updated_threshold_data[key]['ref_data']['test_run_id']
 
 def test_get_parent_test_data_case_one(mtm, ptm, plm, monkeypatch):
 

@@ -114,6 +114,27 @@ def test_duplicate_run(capsys, mtm, ptm, plm, monkeypatch):
     ############
     _test_metric_evaluations(setup_data, mtm, 15)
 
+    ##########
+    #In the absence of a parent if a threshold is available for a
+    #particular metrics datum it will be used.
+    #
+    #After the second pass the first sample revision should have
+    #a threshold_test_run_id pointing to the last sample_revision
+    ##########
+    predicted_threshold_revision = setup_data['sample_revisions'][
+        len(setup_data['sample_revisions']) - 1]
+    threshold_data = mtm.get_test_values(predicted_threshold_revision)
+
+    no_parent_revision = setup_data['sample_revisions'][0]
+    np_data = mtm.get_metrics_data(no_parent_revision)
+
+    for key in np_data:
+
+        threshold_test_run_id = np_data[key]['ref_data']['threshold_test_run_id']
+
+        assert threshold_test_run_id == \
+            threshold_data[key]['ref_data']['test_run_id']
+
 def _test_thresholds(setup_data, mtm, ptm):
     """
     Without modification of setup_data the threshold data should be the
@@ -141,13 +162,46 @@ def _test_thresholds(setup_data, mtm, ptm):
         assert threshold_revision != fail_revision
         assert threshold_revision != skip_revision
 
+    #Retrieve test and metric data to confirm threshold_test_run_id chain
+    test_fail_index = setup_data['test_fail_index']
+
+    for index, revision in enumerate(setup_data['sample_revisions']):
+
+        if index == 0:
+            #first sample will have no parent on the first generation
+            #of the metric data
+            continue
+
+        if revision == skip_revision:
+            continue
+
+        child_metrics_data = mtm.get_metrics_data(revision)
+
+        for mkey in child_metrics_data:
+
+            threshold_test_run_id = child_metrics_data[mkey]['ref_data']['threshold_test_run_id']
+            test_run_id = child_metrics_data[mkey]['ref_data']['test_run_id']
+            predicted_threshold_id = test_run_id - 1
+
+            if index == (test_fail_index + 1):
+                #####
+                #   target_threshold_id should always be the last
+                #test_run_id, with the exception of the failed test
+                #which should not be used as a threshold.
+                #   The child push after the fail index should have
+                #a threshold_test_run_id pointing to the push before
+                #the test failure.
+                #####
+                predicted_threshold_id = test_run_id - 2
+
+            assert predicted_threshold_id == threshold_test_run_id
+
 def _test_metric_evaluations(setup_data, mtm, target_pass_count):
     """
     The metrics data associated with the fail revision should evaluate
     to test failure. All other revisions should evaluate to test success.
     """
 
-    #Test test failure
     fail_revision = setup_data['fail_revision']
     skip_revision = setup_data['skip_revision']
 

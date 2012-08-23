@@ -289,8 +289,9 @@
                                                 `metric_id`,
                                                 `metric_value_id`,
                                                 `page_id`,
-                                                `value`)
-                VALUES (?, ?, ?, ?, ?)",
+                                                `value`,
+                                                `threshold_test_run_id`)
+                VALUES (?, ?, ?, ?, ?, ?)",
 
          "host":"master_host"
       },
@@ -661,6 +662,7 @@
                           tpm.metric_value_id,
                           mv.name AS 'metric_value_name',
                           tpm.test_run_id,
+                          tpm.threshold_test_run_id,
                           tr.revision,
                           tpm.value
                    FROM `test_page_metric` AS tpm

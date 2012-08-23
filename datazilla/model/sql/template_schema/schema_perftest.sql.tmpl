@@ -455,6 +455,7 @@ metric if necessary.
 CREATE TABLE `test_page_metric` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `test_run_id` int(11) NOT NULL,
+  `threshold_test_run_id` int(11) NOT NULL,
   `metric_id` int(11) NOT NULL,
   `metric_value_id` int(11) NOT NULL,
   `page_id` int(11),
@@ -462,6 +463,7 @@ CREATE TABLE `test_page_metric` (
   `status` tinyint(4) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`),
   KEY `test_run_id_key` (`test_run_id`),
+  KEY `threshold_test_run_id_key` (`threshold_test_run_id`),
   KEY `metric_id_key` (`metric_id`),
   KEY `metric_value_id_key` (`metric_value_id`),
   CONSTRAINT `fk_test_page_metric_metric` FOREIGN KEY (`metric_id`) REFERENCES `metric` (`id`),

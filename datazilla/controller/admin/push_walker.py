@@ -125,7 +125,8 @@ def run_metrics(project, options):
                         child_test_data[child_key]['ref_data'],
                         test_result,
                         pushlog[index]['date'],
-                        threshold_data[child_key]['ref_data']['push_date']
+                        threshold_data[child_key]['ref_data']['push_date'],
+                        threshold_data[child_key]['ref_data']['test_run_id']
                         )
                 else:
 
@@ -144,13 +145,13 @@ def run_metrics(project, options):
                         )
 
                     if parent_data and test_result:
-
                         mtm.store_metric_results(
                             revision,
                             child_test_data[child_key]['ref_data'],
                             test_result,
                             pushlog[index]['date'],
-                            None
+                            None,
+                            parent_data['ref_data']['test_run_id']
                             )
 
     plm.disconnect()
@@ -213,7 +214,8 @@ def summary(project, options):
                 mtm.store_metric_summary_results(
                     revision,
                     metrics_data[test_key]['ref_data'],
-                    results
+                    results,
+                    metrics_data[test_key]['ref_data']['threshold_test_run_id'],
                     )
 
     plm.disconnect()

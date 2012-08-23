@@ -89,7 +89,9 @@ class MetricMethodInterface(object):
         """
         raise NotImplementedError(self.MSG)
 
-    def get_data_for_metric_storage(self, ref_data, result):
+    def get_data_for_metric_storage(
+        self, ref_data, result, threshold_test_run_id
+        ):
         """
         Get data for metric storage.
 
@@ -101,11 +103,19 @@ class MetricMethodInterface(object):
             }
 
         result = The return value from run_metric_method.
+
+        threshold_test_run_id = test_run_id used as threshold/parent.
         """
         raise NotImplementedError(self.MSG)
 
-    def get_data_for_summary_storage(self, ref_data, result):
-        """Get data for metric summary storage."""
+    def get_data_for_summary_storage(
+        self, ref_data, result, threshold_test_run_id
+        ):
+        """
+        Get data for metric summary storage.
+
+        threshold_test_run_id = test_run_id used as threshold/parent.
+        """
         raise NotImplementedError(self.MSG)
 
 class MetricMethodBase(MetricMethodInterface):
@@ -256,7 +266,9 @@ class TtestMethod(MetricMethodBase):
             success = True
         return success
 
-    def get_data_for_metric_storage(self, ref_data, result):
+    def get_data_for_metric_storage(
+        self, ref_data, result, threshold_test_run_id
+        ):
 
         test_run_id = ref_data['test_run_id']
 
@@ -280,13 +292,16 @@ class TtestMethod(MetricMethodBase):
                         self.metric_id,
                         self.metric_values[ metric_value_name ],
                         ref_data['page_id'],
-                        value
+                        value,
+                        threshold_test_run_id
                     ]
                 )
 
         return placeholders
 
-    def get_data_for_summary_storage(self, ref_data, result):
+    def get_data_for_summary_storage(
+        self, ref_data, result, threshold_test_run_id
+        ):
 
         test_run_id = ref_data['test_run_id']
 
@@ -307,7 +322,8 @@ class TtestMethod(MetricMethodBase):
                         self.metric_id,
                         self.metric_values[ self.SUMMARY_NAME ],
                         ref_data['page_id'],
-                        value
+                        value,
+                        threshold_test_run_id
                     ]
                 )
 
