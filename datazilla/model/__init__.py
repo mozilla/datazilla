@@ -1,3 +1,5 @@
-from .base import PerformanceTestModel, PushLogModel, MetricsTestModel
-from .metrics import MetricsMethodFactory, MetricMethodBase, TtestMethod
+from .base import DatazillaModelBase, PerformanceTestModel, PushLogModel
+from .metrics import (
+    MetricsMethodFactory, MetricMethodBase, TtestMethod, MetricsTestModel
+    )
 from .sql.models import DataSource, DatasetNotFoundError

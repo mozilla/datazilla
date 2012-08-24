@@ -215,7 +215,7 @@ def pytest_funcarg__mtm(request):
     Give a test access to a MetricsTestModel instance.
 
     """
-    from datazilla.model import MetricsTestModel
+    from datazilla.model.metrics import MetricsTestModel
 
     mtm = MetricsTestModel(request._pyfuncitem.session.perftest_name)
     request.addfinalizer(partial(truncate, mtm, ["metric", "metric_value"]))
