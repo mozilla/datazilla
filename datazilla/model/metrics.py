@@ -372,6 +372,7 @@ class MetricsTestModel(DatazillaModelBase):
     def adapt_data(self, struct_type, data):
 
         adapted_data = {}
+
         if struct_type == 'metric_summary_lookup':
             adapted_data = self._get_metric_summary_key_lookup(data)
         elif struct_type == 'metric_key_lookup':
@@ -591,7 +592,7 @@ class MetricMethodInterface(object):
 
     def run_metric_method(self, child_data, parent_data):
         """
-        Run the metric method.
+        Run the metric method and return results.
 
         child_data = [ test_value1, test_value2, test_value3, ... ]
         parent_data = [ test_value1, test_value2, test_value3, ... ]
@@ -600,7 +601,7 @@ class MetricMethodInterface(object):
 
     def run_metric_summary(self, data):
         """
-        Run the metric summary method.
+        Run the metric summary method and return results.
 
         data = [
             {
@@ -638,7 +639,8 @@ class MetricMethodInterface(object):
         self, ref_data, result, threshold_test_run_id
         ):
         """
-        Get data for metric storage.
+        Get data for metric storage.  Should return a list of
+        placeholders for perftest.inserts.set_test_page_metric
 
         ref_data = {
             all MetricsTestModel.METRIC_KEYS: associated id,
@@ -657,7 +659,8 @@ class MetricMethodInterface(object):
         self, ref_data, result, threshold_test_run_id
         ):
         """
-        Get data for metric summary storage.
+        Get data for metric summary storage.  Should return a list of
+        placeholders for perftest.inserts.set_test_page_metric
 
         ref_data = {
             all MetricsTestModel.METRIC_SUMMARY_KEYS: associated id,
