@@ -1,4 +1,3 @@
-import pytest
 from datazilla.controller.stats import objectstore_stats
 
 def test_get_error_count(monkeypatch):

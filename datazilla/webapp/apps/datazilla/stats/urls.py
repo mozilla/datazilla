@@ -22,8 +22,4 @@ urlpatterns = patterns(
     # pushlog
     (r"^pushlog/not_referenced/$", "pushlog_views.get_not_referenced"),
 
-    (r"^pushlog/branches$", "pushlog_views.get_all_branches"),
-
-    (r"^pushlog/db_size$", "pushlog_views.get_db_size"),
-
     )

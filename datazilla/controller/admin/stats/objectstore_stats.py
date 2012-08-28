@@ -31,9 +31,9 @@ def get_json_blob(project, id):
         return None
 
 
-def inspect_error_data(project):
+def get_error_detail_count(project, startdate, enddate):
     ptm = PerformanceTestStatsModel(project)
-    err_data = ptm.get_object_error_data()
+    err_data = ptm.get_parsed_object_error_data(startdate, enddate)
     ptm.disconnect()
 
     counts = {}

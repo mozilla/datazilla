@@ -3,9 +3,13 @@ from django.core.exceptions import FieldError
 from datazilla.model.stats import PerformanceTestStatsModel
 
 
+def ptsm(project):
+    return PerformanceTestStatsModel(project)
+
+
 def get_runs_by_branch(project, startdate, enddate):
     """Return a list of test runs by branch in date range"""
-    ptm = PerformanceTestStatsModel(project)
+    ptm = ptsm(project)
     test_runs = ptm.get_run_lists_by_branch(startdate, enddate)
     ptm.disconnect()
 
@@ -22,7 +26,7 @@ def get_runs_by_branch(project, startdate, enddate):
 
 def get_run_counts_by_branch(project, startdate, enddate):
     """Return a count of test runs by branch in date range"""
-    ptm = PerformanceTestStatsModel(project)
+    ptm = ptsm(project)
     test_runs = ptm.get_run_counts_by_branch(startdate, enddate)
     ptm.disconnect()
 
@@ -37,7 +41,7 @@ def get_run_counts_by_branch(project, startdate, enddate):
 
 def get_ref_data(project, table):
     """Return a simple list of data from ``table`` for ``project``."""
-    ptm = PerformanceTestStatsModel(project)
+    ptm = ptsm(project)
     result = get_ref_data_method(ptm, table)()
     ptm.disconnect()
 
@@ -45,7 +49,7 @@ def get_ref_data(project, table):
 
 
 def get_db_size(project):
-    ptm = PerformanceTestStatsModel(project)
+    ptm = ptsm(project)
     pt_size = ptm.get_db_size()
     ptm.disconnect()
 

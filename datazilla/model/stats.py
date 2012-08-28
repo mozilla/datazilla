@@ -1,10 +1,25 @@
 import json
 
-from base import PerformanceTestModel, PushLogModel
+from base import DatazillaModelBase
 
 
-class PushLogStatsModel(PushLogModel):
+class PushLogStatsModel(DatazillaModelBase):
     """Model for PushLog statistics and error information."""
+
+    CONTENT_TYPES = ["hgmozilla"]
+    DEFAULT_PROJECT = "pushlog"
+
+    # The "project" defaults to "pushlog" but you can pass in any
+    # project name you like.
+
+    def __init__(self, project=None):
+        super(PushLogStatsModel, self).__init__(project or self.DEFAULT_PROJECT)
+
+
+    @property
+    def hg_ds(self):
+        return self.sources["hgmozilla"]
+
 
     def get_db_size(self):
         """Return size of DB on disk in MB."""
@@ -78,8 +93,12 @@ class PushLogStatsModel(PushLogModel):
         return pl_dict
 
 
-class PerformanceTestStatsModel(PerformanceTestModel):
+class PerformanceTestStatsModel(DatazillaModelBase):
     """Model for PerformanceTest statistics and error information."""
+
+    # content types that every project will have
+    CONTENT_TYPES = ["perftest", "objectstore"]
+
 
     def get_db_size(self, source="perftest"):
         """Return size of DB on disk in MB."""
@@ -177,6 +196,8 @@ class PerformanceTestStatsModel(PerformanceTestModel):
 
 
     def get_object_json_blob(self, id):
+        """Return a single JSON blob for this id."""
+
         blob = self.sources["objectstore"].dhub.execute(
             proc="objectstore.selects.get_json_blob",
             debug_show=self.DEBUG,
@@ -187,10 +208,11 @@ class PerformanceTestStatsModel(PerformanceTestModel):
         return blob
 
 
-    def get_object_error_data(self):
-        """Process all the errors in the objectstore and summarize."""
+    def get_parsed_object_error_data(self, startdate, enddate):
+        """Parse error data in the objectstore and summarize."""
+
         import re
-        data_iter = self.get_all_object_errors()
+        data_iter = self.get_all_object_errors(startdate, enddate)
 
         results = []
         versions = {}

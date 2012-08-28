@@ -55,8 +55,8 @@ def get_day_range(days_ago, numdays=None):
         return (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6
 
     now = int(time.time())
-    start = now - to_seconds(timedelta(days_ago))
-    stop = start + to_seconds(timedelta(numdays))
+    start = now - to_seconds(timedelta(int(days_ago)))
+    stop = start + to_seconds(timedelta(int(numdays)))
     return {"start": int(start), "stop": int(stop)}
 
 

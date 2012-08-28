@@ -32,15 +32,15 @@ def get_not_referenced(request, project):
     return HttpResponse(json.dumps(stats), content_type=API_CONTENT_TYPE)
 
 
-def get_all_branches(request, project):
+def get_all_branches(request):
     """Get the full list of pushlog branches"""
     branches = pushlog_stats.get_all_branches()
     return HttpResponse(json.dumps(branches), content_type=API_CONTENT_TYPE)
 
 
-def get_db_size(request, project):
+def get_db_size(request):
     """Return the size of the DB on disk in MB."""
-    size_tuple = pushlog_stats.get_db_size(project)
+    size_tuple = pushlog_stats.get_db_size()
     #JSON can't serialize a decimal, so converting size_MB to string
     result = []
     for item in size_tuple:
