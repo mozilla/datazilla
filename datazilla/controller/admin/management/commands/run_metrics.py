@@ -1,5 +1,4 @@
 from optparse import make_option
-from lockfile import FileLock, AlreadyLocked
 
 from datazilla.controller.admin import push_walker
 from base import ProjectBatchCommand
