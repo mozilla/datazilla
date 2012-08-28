@@ -1,13 +1,3 @@
-"""
-This script builds the test run summary data structure for
-a 7 and 30 day period interval for every product/branch/version.
-
-These data structures are stored in the summary_cache table.  They
-need to persist if the memcache goes down, they take several minutes
-to generate.  As the quantity of data grows this will likely take
-significantly longer.
-
-"""
 from optparse import make_option
 from lockfile import FileLock, AlreadyLocked
 

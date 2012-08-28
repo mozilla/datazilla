@@ -2,8 +2,6 @@
 Functions for walking the push log and populating
 the metrics schema
 """
-import sys
-
 from datazilla.model import PushLogModel, MetricsTestModel
 
 # Branches that require special handling
@@ -36,14 +34,13 @@ def run_metrics(project, options):
              to the threshold push date, update the threshold.
 
         3b.) If no threshold is present for a given metric datum,
-             walk through consequtive pushes in the push log until
-             a parent is found that passes the test associated with
-             the metric datum's metric method.  Store the test
-             results and the threshold associated with the metric
-             datum.
+             walk through consecutive pushes in the push log until
+             a parent is found that passes the metric test with the
+             child provided.  Store the test results and the threshold
+             associated with the metric datum.
 
         If the immediate parent push does not have data in datazilla this
-    could be due to the assyncronous build/test environment sending data in
+    could be due to the asynchronous build/test environment sending data in
     a different order than the pushlog push order.  How do we distinguish
     between when this occurs and when the data has never been sent to
     datazilla for a particular push?  These two scenarios are
@@ -73,8 +70,6 @@ def run_metrics(project, options):
         pushlog = plm.get_branch_pushlog(
             b['id'], options['numdays'], options['daysago']
             )
-
-        plen = len(pushlog)
 
         for index, node in enumerate(pushlog):
 

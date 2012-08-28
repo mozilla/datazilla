@@ -13,5 +13,7 @@ DATAZILLA_HOME=/usr/local/datazilla
 # run twice every minute
 * * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --cron_batch small --cron_batch medium --cron_batch large --loadlimit 25 && $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --cron_batch small --cron_batch large --loadlimit 25
 
+* * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py update_pushlog --repo_host=hg.mozilla.org --numdays=1
+
 */10 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py run_metrics --project talos --numdays 10 --run_metrics
 */10 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py run_metrics --project talos --numdays 10 --summary

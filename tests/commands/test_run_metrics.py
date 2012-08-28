@@ -60,7 +60,7 @@ def test_run_metrics_and_summary(capsys, mtm, ptm, plm, monkeypatch):
 
     call_run_metrics(
         project=ptm.project,
-        pushlog_project='testpushlog',
+        pushlog_project=plm.project,
         numdays=10,
         run_metrics=True,
         summary=True,
@@ -85,7 +85,7 @@ def test_duplicate_run(capsys, mtm, ptm, plm, monkeypatch):
 
     call_run_metrics(
         project=ptm.project,
-        pushlog_project='testpushlog',
+        pushlog_project=plm.project,
         numdays=10,
         run_metrics=True,
         summary=True,
@@ -94,7 +94,7 @@ def test_duplicate_run(capsys, mtm, ptm, plm, monkeypatch):
 
     call_run_metrics(
         project=ptm.project,
-        pushlog_project='testpushlog',
+        pushlog_project=plm.project,
         numdays=10,
         run_metrics=True,
         summary=True,
