@@ -75,6 +75,8 @@ def pytest_sessionfinish(session):
 
     source_list = PerformanceTestModel(session.perftest_name).sources.values()
     source_list.extend(PushLogModel(project=session.pushlog_name).sources.values())
+#    return
+
     for sds in source_list:
         conn = MySQLdb.connect(
             host=sds.datasource.host,
@@ -124,6 +126,7 @@ def pytest_runtest_teardown(item):
     from django.test.testcases import restore_transaction_methods
     from django.db import transaction
     from datazilla.model import PerformanceTestModel
+#    return
 
     restore_transaction_methods()
     transaction.rollback()
@@ -228,8 +231,7 @@ def pytest_funcarg__plsm(request):
     from datazilla.model.stats import PushLogStatsModel
 
     plsm = PushLogStatsModel(
-        request._pyfuncitem.session.pushlog_name,
-        out=sys.stdout, verbosity=2)
+        request._pyfuncitem.session.pushlog_name)
 
     request.addfinalizer(partial(truncate, plsm, ["branches"]))
     return plsm

@@ -43,7 +43,7 @@ def get_error_detail_count(project, startdate, enddate):
     return counts
 
 
-def result_key(self, tb):
+def result_key(tb):
     """Build a key based on the fields of tb."""
     try:
         key = "{0} - {1} - {2}".format(

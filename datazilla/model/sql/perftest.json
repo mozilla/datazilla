@@ -336,7 +336,7 @@
             FROM test_run as tr
             LEFT JOIN build as b ON tr.build_id = b.id
             LEFT JOIN product as p ON b.product_id = p.id
-            WHERE tr.date_run >= ? AND tr.date_run <= ?",
+            WHERE tr.date_run BETWEEN ? AND ?",
 
         "host":"read_host"
 
@@ -347,8 +347,7 @@
             FROM test_run as tr
             LEFT JOIN build as b ON tr.build_id = b.id
             LEFT JOIN product as p ON b.product_id = p.id
-            WHERE tr.date_run > ?
-            AND tr.date_run < ?
+            WHERE tr.date_run BETWEEN ? AND ?
             GROUP BY p.branch",
 
         "host":"read_host"

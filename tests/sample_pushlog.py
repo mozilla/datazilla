@@ -13,18 +13,18 @@ def get_pushlog_json_readable(json_data):
     return Readable()
 
 
-def get_pushlog_json_set1():
-    return json.dumps(get_pushlog_dict_set1())
+def get_pushlog_json_set():
+    return json.dumps(get_pushlog_dict_set())
 
 
-def get_pushlog_dict_set1():
+def get_pushlog_dict_set():
     return {
 
         "23046": {
             "date": 1341451081,
             "changesets": [
                     {
-                    "node": "13897ce0f3a2a70e7b8a9d1cf6b1e939416fe6f8",
+                    "node": "785345035a3ba70e7b8a9d1cf6b1e939416fe6f8",
                     "files": [
                         "content/xbl/src/nsXBLBinding.cpp",
                         "dom/base/nsDOMClassInfo.cpp",
@@ -116,57 +116,3 @@ def get_pushlog_dict_set1():
         }
 
     }
-
-
-def get_pushlog_json_set2():
-    return """{
-
-        "21804": {
-            "date": 1325815064,
-            "changesets": [
-                {
-                    "node": "8b0437df0da3682206e3a37a43b2d49c92618442",
-                    "files": [
-                        "dom/workers/RuntimeService.cpp"
-                    ],
-                    "tags": [ ],
-                    "author": "Ben Turner <bent.mozilla@gmail.com>",
-                    "branch": "default",
-                    "desc": "Bug 715756: Workers: Enable TI and allow JIT hardening to be disabled. r=sicking."
-                }
-            ],
-            "user": "bturner@mozilla.com"
-        },
-        "21805": {
-            "date": 1325817942,
-            "changesets": [
-                {
-                    "node": "c7e27452a143c834a4d1d7acf8c202261504210c",
-                    "files": [
-                        "mobile/android/base/ui/PanZoomController.java"
-                    ],
-                    "tags": [ ],
-                    "author": "Kartikaya Gupta <kgupta@mozilla.com>",
-                    "branch": "default",
-                    "desc": "Bug 715164 - Guard against another race condition in PZC. r=pcwalton"
-                }
-            ],
-            "user": "pwalton@mozilla.com"
-        },
-        "21806": {
-            "date": 1325843913,
-            "changesets": [
-                {
-                    "node": "8ae16e346bd0c2c93711884b2a2e5db10060512d",
-                    "files": [
-                        "dom/indexedDB/Key.cpp"
-                    ],
-                    "tags": [ ],
-                    "author": "Jan Varga <jan.varga@gmail.com>",
-                    "branch": "default",
-                    "desc": "Bug 715074 - SIGBUS on unaligned access in Key::EncodeNumber. r=sicking"
-                }
-            ],
-            "user": "Jan.Varga@gmail.com"
-        }
-    }"""

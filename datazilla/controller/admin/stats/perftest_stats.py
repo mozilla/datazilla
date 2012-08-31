@@ -1,17 +1,34 @@
 from django.core.exceptions import FieldError
 
 from datazilla.model.stats import PerformanceTestStatsModel
+from datazilla.model.base import PerformanceTestModel
 
 
-def ptsm(project):
+def get_ptsm(project):
+    """
+    Shortcut to return the PerformanceTestStatsModel.
+
+    Allows the unit tests to override this to give the test version of the
+    model.
+    """
     return PerformanceTestStatsModel(project)
+
+
+def get_ptm(project):
+    """
+    Shortcut to return the PerformanceTestModel.
+
+    Allows the unit tests to override this to give the test version of the
+    model.
+    """
+    return PerformanceTestModel(project)
 
 
 def get_runs_by_branch(project, startdate, enddate):
     """Return a list of test runs by branch in date range"""
-    ptm = ptsm(project)
-    test_runs = ptm.get_run_lists_by_branch(startdate, enddate)
-    ptm.disconnect()
+    ptsm = get_ptsm(project)
+    test_runs = ptsm.get_run_lists_by_branch(startdate, enddate)
+    ptsm.disconnect()
 
     #now form the data the way we want it
     result = {}
@@ -26,9 +43,9 @@ def get_runs_by_branch(project, startdate, enddate):
 
 def get_run_counts_by_branch(project, startdate, enddate):
     """Return a count of test runs by branch in date range"""
-    ptm = ptsm(project)
-    test_runs = ptm.get_run_counts_by_branch(startdate, enddate)
-    ptm.disconnect()
+    ptsm = get_ptsm(project)
+    test_runs = ptsm.get_run_counts_by_branch(startdate, enddate)
+    ptsm.disconnect()
 
     #now form the data the way we want it
     result = {}
@@ -41,7 +58,7 @@ def get_run_counts_by_branch(project, startdate, enddate):
 
 def get_ref_data(project, table):
     """Return a simple list of data from ``table`` for ``project``."""
-    ptm = ptsm(project)
+    ptm = get_ptm(project)
     result = get_ref_data_method(ptm, table)()
     ptm.disconnect()
 
@@ -49,7 +66,7 @@ def get_ref_data(project, table):
 
 
 def get_db_size(project):
-    ptm = ptsm(project)
+    ptm = get_ptsm(project)
     pt_size = ptm.get_db_size()
     ptm.disconnect()
 
@@ -71,6 +88,7 @@ def get_ref_data_method(ptm, table):
 
     except KeyError:
         raise FieldError(
-            "Not a supported ref_data table.  Must be in: {0}".format(methods.keys()))
+            "Not a supported ref_data table.  Must be in: {0}".format(
+                methods.keys()))
 
 
