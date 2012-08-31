@@ -185,7 +185,7 @@ CREATE TABLE `metric_value` (
 /*Insert metric values associated with t-test*/
 LOCK TABLES `metric_value` WRITE;
 /*!40000 ALTER TABLE `metric_value` DISABLE KEYS */;
-INSERT INTO `metric_value` (`metric_id`, `name`) VALUES (1, 'stddev'), (1, 'mean'), (1, 'p'), (1, 'h0_rejected'), (1, 'fdr');
+INSERT INTO `metric_value` (`metric_id`, `name`) VALUES (1, 'stddev'), (1, 'mean'), (1, 'p'), (1, 'h0_rejected'), (1, 'fdr'), (1, 'trend_stddev'), (1, 'trend_mean'), (1, 'push_id'), (1, 'push_date');
 UNLOCK TABLES;
 
 --
@@ -595,7 +595,6 @@ CREATE TABLE `metric_threshold` (
   `page_id` int(11) NOT NULL,
   `test_run_id` int(11) NOT NULL,
   `revision` varchar(16) NOT NULL,
-  `push_date` int(11) NOT NULL,
   KEY `product_id_key` (`product_id`),
   KEY `operating_system_id_key` (`operating_system_id`),
   KEY `processor_key` (`processor`),

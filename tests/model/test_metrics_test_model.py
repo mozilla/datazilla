@@ -82,11 +82,11 @@ def test_extend_with_metrics_keys(mtm):
     assert test_data['test_run_id'] == model_data['test_run_id']
     assert test_data['test_name'] == model_data['test_name']
 
-def test_get_revision_from_node(mtm):
+def test_truncate_revision(mtm):
 
     reference_data = 'asdf781435quhafo8qy3lrhaos8eyajkwwehfqywralisudyf9a'
 
-    revision = mtm.get_revision_from_node(reference_data)
+    revision = mtm.truncate_revision(reference_data)
 
     assert len(revision) == mtm.REVISION_CHAR_COUNT
     #revision should start at beginning of reference_data
@@ -124,7 +124,7 @@ def test_get_test_values_mk(ptm, mtm):
     ptm.load_test_data(sample_data)
 
     revision = sample_data['test_build']['revision']
-    model_data = mtm.get_test_values(revision, 'metric_key_lookup')
+    model_data = mtm.get_test_values(revision)
 
     examine_metric_key_lookup(mtm, sample_data, model_data)
 
@@ -136,7 +136,7 @@ def test_get_test_values(mtm, ptm):
 
     ptm.load_test_data(sample_data)
 
-    model_data = mtm.get_test_values(sample_revision, 'metric_key_lookup')
+    model_data = mtm.get_test_values(sample_revision)
 
     examine_metric_key_lookup(mtm, sample_data, model_data)
 
@@ -162,14 +162,9 @@ def test_get_threshold_data(ptm, mtm):
 
     sample_ttest_data = get_sample_ttest_data()
 
-    mock_push_date = int(time.time())
-
     #The sample data ttest passes with itself this
     #causes the data to be stored as threshold data
-    mtm.store_metric_results(
-        child_revision, ref_data, sample_ttest_data,
-        mock_push_date, None, 1
-        )
+    mtm.store_metric_results(child_revision, ref_data, sample_ttest_data, 1)
 
     metric_id = 1
     placeholders = [
@@ -186,15 +181,10 @@ def test_get_threshold_data(ptm, mtm):
         proc="perftest.selects.get_metric_threshold",
         placeholders=placeholders)
 
-    adapted_reference = mtm.adapt_data(
-        'metric_key_lookup',
-        metric_data_reference
-        )
+    adapted_reference = _adapt_data(mtm, metric_data_reference)
 
     threshold_data = mtm.get_threshold_data(ref_data)
     mkey = threshold_data.keys()[0]
-
-    assert mock_push_date == threshold_data[mkey]['ref_data']['push_date']
 
     for k in mtm.METRIC_KEYS:
         assert threshold_data[mkey]['ref_data'][k] == \
@@ -273,12 +263,10 @@ def test_store_metric_summary_results(mtm, ptm):
     ptm.load_test_data(parent_sample_data)
     ptm.load_test_data(child_sample_data)
 
-    child_data = mtm.get_test_values(child_revision, 'metric_key_lookup')
-    parent_data = mtm.get_test_values(parent_revision, 'metric_key_lookup')
+    child_data = mtm.get_test_values(child_revision)
+    parent_data = mtm.get_test_values(parent_revision)
 
     summary_name = mtm.get_metric_summary_name(test_name)
-
-    mock_push_date = int(time.time())
 
     for key in child_data:
 
@@ -294,8 +282,6 @@ def test_store_metric_summary_results(mtm, ptm):
             child_revision,
             child_data[key]['ref_data'],
             results,
-            mock_push_date,
-            None,
             parent_data[key]['ref_data']['test_run_id']
             )
 
@@ -348,21 +334,13 @@ def test_store_metric_results(mtm, ptm):
 
     sample_ttest_data = get_sample_ttest_data()
 
-    mock_push_date = int(time.time())
-
-    mtm.store_metric_results(
-        child_revision, ref_data, sample_ttest_data,
-        mock_push_date, None, 1
-        )
+    mtm.store_metric_results(child_revision, ref_data, sample_ttest_data, 1)
 
     metric_data_reference = ptm.sources["perftest"].dhub.execute(
         proc="perftest.selects.get_computed_metrics",
         placeholders=[child_revision])
 
-    adapted_reference = mtm.adapt_data(
-        'metric_data_lookup',
-        metric_data_reference
-        )
+    adapted_reference = _adapt_data(mtm, metric_data_reference)
 
     child_data = mtm.get_metrics_data(child_revision)
 
@@ -400,23 +378,19 @@ def test_insert_or_update_metric_threshold(mtm, ptm):
     ptm.load_test_data(sample_data)
 
     # retrieve loaded test values
-    model_data = mtm.get_test_values(revision, 'metric_key_lookup')
-    parent_model_data = mtm.get_test_values(
-        parent_revision, 'metric_key_lookup'
-        )
+    model_data = mtm.get_test_values(revision)
+    parent_model_data = mtm.get_test_values(parent_revision)
 
     # retrieve metric id for insert_or_update_threshold
     metric_method = mtm.mf.get_metric_method(test_name)
     metric_id = metric_method.get_metric_id()
-
-    mock_push_date = int(time.time())
 
     for key in model_data:
 
         #First pass should be inserting not updating
         mtm.insert_or_update_metric_threshold(
             revision, model_data[key]['ref_data'],
-            metric_id, mock_push_date
+            metric_id
             )
 
         inserted_threshold_data = mtm.get_threshold_data(
@@ -432,7 +406,7 @@ def test_insert_or_update_metric_threshold(mtm, ptm):
         #Second pass should be updating not inserting
         mtm.insert_or_update_metric_threshold(
             parent_revision, parent_model_data[key]['ref_data'],
-            metric_id, mock_push_date
+            metric_id
             )
         #use child ref data to retrieve thresholds
         updated_threshold_data = mtm.get_threshold_data(
@@ -463,8 +437,7 @@ def test_get_parent_test_data_case_one(mtm, ptm, plm, monkeypatch):
 
     #Get the child data
     test_one_data = mtm.get_test_values(
-        sample_revisions[setup_data['target_revision_index']],
-        'metric_key_lookup'
+        sample_revisions[setup_data['target_revision_index']]
         )
 
     #Retrieve child metric key
@@ -478,8 +451,7 @@ def test_get_parent_test_data_case_one(mtm, ptm, plm, monkeypatch):
 
     #Parent data should be at target_revision_index - 1
     reference_data = mtm.get_test_values(
-        sample_revisions[setup_data['target_revision_index'] - 1],
-        'metric_key_lookup'
+        sample_revisions[setup_data['target_revision_index'] - 1]
         )
 
     assert parent_data['ref_data'] == \
@@ -505,10 +477,7 @@ def test_get_parent_test_data_case_two(mtm, ptm, plm, monkeypatch):
         setup_data['skip_index'] - 1 ]
 
     #Get the child data
-    test_two_data = mtm.get_test_values(
-        child_revision,
-        'metric_key_lookup'
-        )
+    test_two_data = mtm.get_test_values(child_revision)
 
     test_two_key = test_two_data.keys()[0]
 
@@ -518,10 +487,7 @@ def test_get_parent_test_data_case_two(mtm, ptm, plm, monkeypatch):
         test_two_key, None
         )
 
-    reference_data = mtm.get_test_values(
-        target_revision,
-        'metric_key_lookup'
-        )
+    reference_data = mtm.get_test_values(target_revision)
 
     assert mtm.skip_revisions == set([skip_revision])
     assert parent_data['ref_data'] == \
@@ -545,10 +511,7 @@ def test_get_parent_test_data_case_three(mtm, ptm, plm, monkeypatch):
     fail_revision = setup_data['fail_revision']
     fail_index = setup_data['test_fail_index']
 
-    fail_data = mtm.get_test_values(
-        fail_revision,
-        'metric_key_lookup'
-        )
+    fail_data = mtm.get_test_values(fail_revision)
 
     for key in fail_data:
 
@@ -583,8 +546,7 @@ def test_get_parent_test_data_case_four(mtm, ptm, plm, monkeypatch):
 
     #Get the child data
     test_four_data = mtm.get_test_values(
-        sample_revisions[setup_data['target_revision_index']],
-        'metric_key_lookup'
+        sample_revisions[setup_data['target_revision_index']]
         )
 
     #Retrieve child metric key
@@ -599,8 +561,7 @@ def test_get_parent_test_data_case_four(mtm, ptm, plm, monkeypatch):
 
     #Parent data should be at target_revision_index - 1
     reference_data = mtm.get_test_values(
-        sample_revisions[setup_data['target_revision_index'] - 1],
-        'metric_key_lookup'
+        sample_revisions[setup_data['target_revision_index'] - 1]
         )
 
     assert parent_data['ref_data'] == \
@@ -672,7 +633,7 @@ def setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch):
 
     #Build list of revisions to operate on
     for index, node in enumerate( setup_data['branch_pushlog'] ):
-        revision = mtm.get_revision_from_node(node['node'])
+        revision = mtm.truncate_revision(node['node'])
 
         setup_data['sample_dates'][revision] = node['date']
 
@@ -723,5 +684,22 @@ def setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch):
 
     return setup_data
 
+def _adapt_data(mtm, data):
+
+    adapted_reference = {}
+    for d in data:
+        key = mtm.get_metrics_key(d)
+        if key not in adapted_reference:
+            #set reference data
+            adapted_reference[key] = {
+                'values':[],
+                'ref_data':mtm.extend_with_metrics_keys(
+                    d, ['test_run_id', 'test_name', 'revision']
+                    )
+                }
+
+        adapted_reference[key]['values'].append( d['value'] )
+
+    return adapted_reference
 
 

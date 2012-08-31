@@ -15,7 +15,6 @@ def call_run_metrics(*args, **kwargs):
     call_command("run_metrics", *args, **kwargs)
 
 def test_no_args(capsys):
-    """Shows need for a project or cron_batch."""
     with pytest.raises(SystemExit):
         call_run_metrics()
 
@@ -26,9 +25,9 @@ def test_no_args(capsys):
 
     assert capsys.readouterr() == exp
 
-def test_no_numdays(capsys, ptm):
+def test_no_numdays(capsys, ptm, plm):
 
-    call_run_metrics(project=ptm.project)
+    call_run_metrics(project=ptm.project, pushlog_project=plm.project)
 
     exp = (
         "Starting for projects: {0}\n".format(ptm.project) +
@@ -40,9 +39,11 @@ def test_no_numdays(capsys, ptm):
 
     assert capsys.readouterr() == exp
 
-def test_bad_numdays(capsys, ptm):
+def test_bad_numdays(capsys, ptm, plm):
 
-    call_run_metrics(project=ptm.project, numdays="numdays")
+    call_run_metrics(
+        project=ptm.project, pushlog_project=plm.project, numdays="numdays"
+        )
 
     exp = (
         "Starting for projects: {0}\n".format(ptm.project) +
@@ -62,8 +63,6 @@ def test_run_metrics_and_summary(capsys, mtm, ptm, plm, monkeypatch):
         project=ptm.project,
         pushlog_project=plm.project,
         numdays=10,
-        run_metrics=True,
-        summary=True,
         cron_batch='small'
         )
 
@@ -87,8 +86,6 @@ def test_duplicate_run(capsys, mtm, ptm, plm, monkeypatch):
         project=ptm.project,
         pushlog_project=plm.project,
         numdays=10,
-        run_metrics=True,
-        summary=True,
         cron_batch='small'
         )
 
@@ -96,13 +93,16 @@ def test_duplicate_run(capsys, mtm, ptm, plm, monkeypatch):
         project=ptm.project,
         pushlog_project=plm.project,
         numdays=10,
-        run_metrics=True,
-        summary=True,
         cron_batch='small'
         )
 
     #Confirm the thresholds set match what is expected
-    _test_thresholds(setup_data, mtm, ptm)
+    _test_thresholds(
+        setup_data,
+        mtm,
+        ptm,
+        setup_data['sample_revisions'][0]
+        )
 
     ############
     #The total number of tests passing should be 15,
@@ -135,7 +135,7 @@ def test_duplicate_run(capsys, mtm, ptm, plm, monkeypatch):
         assert threshold_test_run_id == \
             threshold_data[key]['ref_data']['test_run_id']
 
-def _test_thresholds(setup_data, mtm, ptm):
+def _test_thresholds(setup_data, mtm, ptm, threshold_revision_arg=None):
     """
     Without modification of setup_data the threshold data should be the
     last sample revision in the setup data revision list.
@@ -147,6 +147,9 @@ def _test_thresholds(setup_data, mtm, ptm):
     target_threshold_revision = setup_data['sample_revisions'][
         len(setup_data['sample_revisions']) - 1]
 
+    if threshold_revision_arg:
+        target_threshold_revision = threshold_revision_arg
+
     child_data = mtm.get_test_values(last_revision)
 
     fail_revision = setup_data['fail_revision']
@@ -155,7 +158,6 @@ def _test_thresholds(setup_data, mtm, ptm):
     for key in child_data:
 
         threshold_data = mtm.get_threshold_data(child_data[key]['ref_data'])
-
         threshold_revision = threshold_data[key]['ref_data']['revision']
 
         assert threshold_revision == target_threshold_revision

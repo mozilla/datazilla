@@ -7,7 +7,7 @@ from datazilla.model import PushLogModel, MetricsTestModel
 # Branches that require special handling
 SPECIAL_HANDLING_BRANCHES = set(['Try'])
 
-def run_metrics(project, options):
+def run_metrics(project, pushlog_project, numdays, daysago):
     """
         This function retrieves the push log for a given branch and
     iterates over each push in ascending order implementing the following
@@ -56,7 +56,8 @@ def run_metrics(project, options):
     test results will not be used to update the threshold so the stored
     threshold data is always moving forward in time.
     """
-    plm = PushLogModel(options['pushlog_project'])
+
+    plm = PushLogModel(pushlog_project)
 
     mtm = MetricsTestModel(project)
 
@@ -68,12 +69,12 @@ def run_metrics(project, options):
             continue
 
         pushlog = plm.get_branch_pushlog(
-            b['id'], options['numdays'], options['daysago']
+            b['id'], numdays, daysago
             )
 
         for index, node in enumerate(pushlog):
 
-            revision = mtm.get_revision_from_node(node['node'])
+            revision = mtm.truncate_revision(node['node'])
 
             #Get the test value data for this revision
             child_test_data = mtm.get_test_values(revision)
@@ -118,15 +119,14 @@ def run_metrics(project, options):
                     test_result = mtm.run_metric_method(
                         child_test_data[child_key]['ref_data'],
                         child_test_data[child_key]['values'],
-                        threshold_data[child_key]['values']
+                        threshold_data[child_key]['values'],
+                        threshold_data[child_key]['metric_values'],
                         )
 
                     mtm.store_metric_results(
                         revision,
                         child_test_data[child_key]['ref_data'],
                         test_result,
-                        pushlog[index]['date'],
-                        threshold_data[child_key]['ref_data']['push_date'],
                         threshold_data[child_key]['ref_data']['test_run_id']
                         )
                 else:
@@ -150,15 +150,13 @@ def run_metrics(project, options):
                             revision,
                             child_test_data[child_key]['ref_data'],
                             test_result,
-                            pushlog[index]['date'],
-                            None,
                             parent_data['ref_data']['test_run_id']
                             )
 
     plm.disconnect()
     mtm.disconnect()
 
-def summary(project, options):
+def summary(project, pushlog_project, numdays, daysago):
     """
         This function retrieves the push log for a given branch and
     iterates over each push in ascending order implementing the following
@@ -171,9 +169,8 @@ def summary(project, options):
 
     3.) Run the metric method summary and store the results.
     """
-
     mtm = MetricsTestModel(project)
-    plm = PushLogModel(options['pushlog_project'])
+    plm = PushLogModel(pushlog_project)
 
     branches = plm.get_branch_list()
 
@@ -183,12 +180,12 @@ def summary(project, options):
             continue
 
         pushlog = plm.get_branch_pushlog(
-            b['id'], options['numdays'], options['daysago']
+            b['id'], numdays, daysago
             )
 
-        for index, node in enumerate( pushlog ):
+        for node in pushlog:
 
-            revision = mtm.get_revision_from_node(node['node'])
+            revision = mtm.truncate_revision(node['node'])
 
             #Get the metric value data for this revision
             metrics_data = mtm.get_metrics_data(revision)
@@ -224,7 +221,11 @@ def summary(project, options):
     mtm.disconnect()
 
 def get_test_keys_for_storage(mtm, metrics_data):
-
+    """
+    Takes the structure returned by get_metrics_data() and builds
+    a set of metrics datum keys that have not had their metric
+    summaries computed.
+    """
     store_list = set()
 
     for test_key in metrics_data:

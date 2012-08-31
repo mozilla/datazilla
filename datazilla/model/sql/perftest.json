@@ -303,9 +303,8 @@
                                                 `test_id`,
                                                 `page_id`,
                                                 `test_run_id`,
-                                                `revision`,
-                                                `push_date`)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                                `revision`)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE `product_id` = ?,
                                         `operating_system_id` = ?,
                                         `processor` = ?,
@@ -313,8 +312,7 @@
                                         `test_id` = ?,
                                         `page_id` = ?,
                                         `test_run_id` = ?,
-                                        `revision` = ?,
-                                        `push_date` = ?",
+                                        `revision` = ?",
 
        "host":"master_host"
     }
@@ -635,11 +633,17 @@
                        mt.test_run_id,
                        mt.revision,
                        tv.value,
-                       mt.push_date
+                       tpm.metric_id,
+                       tpm.metric_value_id,
+                       tpm.threshold_test_run_id,
+                       mv.name AS 'metric_value_name',
+                       tpm.value AS 'metric_value'
                    FROM `metric_threshold` AS mt
                    LEFT JOIN `test` AS t ON mt.test_id = t.id
                    LEFT JOIN `metric` AS m ON mt.metric_id = m.id
                    LEFT JOIN `test_value` AS tv ON mt.test_run_id = tv.test_run_id
+                   LEFT JOIN `test_page_metric` AS tpm ON mt.test_run_id = tpm.test_run_id
+                   LEFT JOIN `metric_value` AS mv ON tpm.metric_value_id = mv.id
                    WHERE mt.product_id = ? AND
                          mt.operating_system_id = ? AND
                          mt.processor = ? AND

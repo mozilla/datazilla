@@ -1,9 +1,11 @@
 import sys
 import copy
 
+from numpy import mean, std
+
 from django.conf import settings
 
-from dzmetrics.ttest import welchs_ttest
+from dzmetrics.ttest import welchs_ttest, welchs_ttest_internal
 from dzmetrics.fdr import rejector
 
 from base import DatazillaModelBase
@@ -87,8 +89,8 @@ class MetricsTestModel(DatazillaModelBase):
         return dict([(k, data.get(k, None)) for k in keys])
 
     @classmethod
-    def get_revision_from_node(cls, node):
-        return node[0:cls.REVISION_CHAR_COUNT]
+    def truncate_revision(cls, full_revision):
+        return full_revision[0:cls.REVISION_CHAR_COUNT]
 
     def add_skip_revision(self, revision):
         if revision:
@@ -98,17 +100,25 @@ class MetricsTestModel(DatazillaModelBase):
         m = self.mf.get_metric_method(test_name)
         return m.SUMMARY_NAME
 
-    def get_test_values(self, revision, struct_type='metric_key_lookup'):
+    def get_test_values(self, revision):
         """
         Retrieve all test values associated with a given revision.
 
         revision - revision/changeset string.
 
-        struct_type - Determines the structure of the data returned.
-            Possible values are: metric_summary_lookup or metric_key_lookup.
-            See adapt_data for detailed data structure descriptions.
-        """
+        returns the following dictionary:
 
+            metric_key : {
+                    ref_data: {
+                        all self.METRIC_KEYS: associated id,
+                        test_run_id:id,
+                        test_name:"Talos test name",
+                        revision:revision
+                    },
+
+                    values : [ test_value1, test_value2, test_value3, ... ]
+           }
+        """
         proc = 'perftest.selects.get_test_values'
 
         revision_data = self.sources["perftest"].dhub.execute(
@@ -118,7 +128,20 @@ class MetricsTestModel(DatazillaModelBase):
             return_type='tuple',
             )
 
-        return self.adapt_data(struct_type, revision_data)
+        key_lookup = {}
+        for d in revision_data:
+            key = self.get_metrics_key(d)
+            if key not in key_lookup:
+                #set reference data
+                key_lookup[key] = {
+                    'values':[],
+                    'ref_data':self.extend_with_metrics_keys(
+                        d, ['test_run_id', 'test_name', 'revision']
+                        )
+                    }
+            key_lookup[key]['values'].append( d['value'] )
+
+        return key_lookup
 
     def get_threshold_data(self, ref_data):
         """
@@ -127,6 +150,19 @@ class MetricsTestModel(DatazillaModelBase):
 
         ref_data - Dictionary containing all METRIC_KEYS and their
             associated values.
+
+        returns the following dictionary:
+
+            metric_key : {
+                ref_data: {
+                    all self.METRIC_KEYS: associated id,
+                    test_run_id:id,
+                    test_name:"Talos test name",
+                    revision:revision
+                },
+
+                values : [ test_value1, test_value2, test_value3, ... ]
+            }
         """
 
         m = self.mf.get_metric_method(ref_data['test_name'])
@@ -151,11 +187,51 @@ class MetricsTestModel(DatazillaModelBase):
             return_type='tuple',
             )
 
-        return self.adapt_data('threshold_data_lookup', threshold_data)
+        key_lookup = {}
+        for d in threshold_data:
+            key = self.get_metrics_key(d)
+            if key not in key_lookup:
+                #set reference data
+                key_lookup[key] = {
+                    'values':[],
+                    'metric_values':{},
+                    'ref_data':self.extend_with_metrics_keys(
+                        d, ['test_run_id', 'test_name', 'revision',
+                            'metric_id', 'threshold_test_run_id']
+                        )
+                    }
+
+            key_lookup[key]['values'].append( d['value'] )
+
+            key_lookup[key]['metric_values'].setdefault(
+                d['metric_value_name'], d['metric_value']
+                  )
+
+        return key_lookup
 
     def get_metrics_data(self, revision):
         """
         Retrieve all metrics data associated with a given revision.
+
+        returns the following dictionary:
+
+            metric_key : {
+                ref_data: {
+                    all self.METRIC_KEYS: associated id,
+                    test_run_id:id,
+                    threshold_test_run_id:test_run_id of threshold used,
+                    test_name:"Talos test name",
+                    revision:revision
+                },
+
+                values : [ {
+                    value:test value,
+                    page_id:page_id,
+                    metric_value_id:metric_value_id,
+                    metric_value_name:metric_value_name
+                    }, ...
+                ]
+            }
         """
 
         proc = 'perftest.selects.get_computed_metrics'
@@ -167,9 +243,28 @@ class MetricsTestModel(DatazillaModelBase):
             return_type='tuple'
             )
 
-        return self.adapt_data(
-            'metric_data_lookup', computed_metrics
-            )
+        key_lookup = {}
+        for d in computed_metrics:
+            key = self.get_metrics_key(d)
+            if key not in key_lookup:
+                #set reference data
+                key_lookup[key] = {
+                    'values':[],
+                    'ref_data':self.extend_with_metrics_keys(
+                        d, ['test_run_id',
+                            'test_name',
+                            'revision',
+                            'threshold_test_run_id']
+                        )
+                    }
+            key_lookup[key]['values'].append( {
+                'value':d['value'],
+                'page_id':d['page_id'],
+                'metric_value_id':d['metric_value_id'],
+                'metric_value_name':d['metric_value_name']
+                } )
+
+        return key_lookup
 
     def get_parent_test_data(
         self, pushlog, index, child_key, metric_method_data=None
@@ -207,7 +302,7 @@ class MetricsTestModel(DatazillaModelBase):
                     parent_index -= 1
 
                 parent_node = pushlog[ parent_index ]
-                revision = self.get_revision_from_node(parent_node['node'])
+                revision = self.truncate_revision(parent_node['node'])
 
                 #skip pushes without data
                 if revision in self.skip_revisions:
@@ -249,10 +344,14 @@ class MetricsTestModel(DatazillaModelBase):
             #parent with data found
             return parent_data, test_result
 
-    def run_metric_method(self, ref_data, child_data, parent_data):
+    def run_metric_method(
+        self, ref_data, child_data, parent_data, parent_metric_data={}
+        ):
 
         m = self.mf.get_metric_method(ref_data['test_name'])
-        results = m.run_metric_method(child_data, parent_data)
+        results = m.run_metric_method(
+            child_data, parent_data, parent_metric_data
+            )
         return results
 
     def run_metric_summary(self, ref_data, data):
@@ -262,17 +361,15 @@ class MetricsTestModel(DatazillaModelBase):
         return results
 
     def store_metric_results(
-        self, revision, ref_data, results,
-        revision_pushlog_date, threshold_pushlog_date,
-        threshold_test_run_id
+        self, revision, ref_data, results, threshold_test_run_id
         ):
-
-        proc = 'perftest.inserts.set_test_page_metric'
 
         m = self.mf.get_metric_method(ref_data['test_name'])
         placeholders = m.get_data_for_metric_storage(
             ref_data, results, threshold_test_run_id
             )
+
+        proc = 'perftest.inserts.set_test_page_metric'
 
         if placeholders:
 
@@ -282,34 +379,13 @@ class MetricsTestModel(DatazillaModelBase):
                 placeholders=placeholders,
                 executemany=True,
                 )
-
             if m.evaluate_metric_result(results):
-                if threshold_pushlog_date:
-                    #####
-                    # Don't update the threshold metric if the pushlog date
-                    # associated with this revision is from the past.
-                    ####
-                    if int(revision_pushlog_date) >= \
-                        int(threshold_pushlog_date):
 
-                        self.insert_or_update_metric_threshold(
-                            revision,
-                            ref_data,
-                            m.get_metric_id(),
-                            revision_pushlog_date
-                            )
-                else:
-                    ####
-                    # If no threshold pushlog date is provided this is an
-                    # insert, the data was derived from a direct comparison
-                    # with a pushlog parent.
-                    ####
-                    self.insert_or_update_metric_threshold(
-                        revision,
-                        ref_data,
-                        m.get_metric_id(),
-                        revision_pushlog_date
-                        )
+                self.insert_or_update_metric_threshold(
+                    revision,
+                    ref_data,
+                    m.get_metric_id()
+                    )
 
     def store_metric_summary_results(
         self, revision, ref_data, results, threshold_test_run_id
@@ -333,7 +409,7 @@ class MetricsTestModel(DatazillaModelBase):
                 )
 
     def insert_or_update_metric_threshold(
-        self, revision, ref_data, metric_id, push_date
+        self, revision, ref_data, metric_id
         ):
 
         proc = 'perftest.inserts.set_metric_threshold'
@@ -349,7 +425,6 @@ class MetricsTestModel(DatazillaModelBase):
             ref_data['page_id'],
             ref_data['test_run_id'],
             revision,
-            push_date,
 
             ##Duplicate Key Placeholders
             ref_data['product_id'],
@@ -359,8 +434,7 @@ class MetricsTestModel(DatazillaModelBase):
             ref_data['test_id'],
             ref_data['page_id'],
             ref_data['test_run_id'],
-            revision,
-            push_date
+            revision
             ]
 
         self.sources["perftest"].dhub.execute(
@@ -368,176 +442,6 @@ class MetricsTestModel(DatazillaModelBase):
             debug_show=settings.DEBUG,
             placeholders=placeholders
             )
-
-    def adapt_data(self, struct_type, data):
-
-        adapted_data = {}
-
-        if struct_type == 'metric_summary_lookup':
-            adapted_data = self._get_metric_summary_key_lookup(data)
-        elif struct_type == 'metric_key_lookup':
-            adapted_data = self._get_metric_key_lookup(data)
-        elif struct_type == 'threshold_data_lookup':
-            adapted_data = self._get_threshold_data_lookup(data)
-        elif struct_type == 'metric_data_lookup':
-            adapted_data = self._get_metric_data_lookup(data)
-        else:
-            adapted_data = self._get_metric_key_lookup(data)
-
-        return adapted_data
-
-    def _get_metric_data_lookup(self, data):
-        """
-        Converts datasource tuple to
-
-        metric_key : {
-            { ref_data: {
-                all self.METRIC_KEYS: associated id,
-                test_run_id:id,
-                threshold_test_run_id:test_run_id of threshold used,
-                test_name:"Talos test name",
-                revision:revision
-                }
-            },
-
-           { values : [ {
-                value:test value,
-                page_id:page_id,
-                metric_value_id:metric_value_id,
-                metric_value_name:metric_value_name
-                }, ...
-             ]
-           }
-        }
-        """
-
-        key_lookup = {}
-        for d in data:
-            key = self.get_metrics_key(d)
-            if key not in key_lookup:
-                #set reference data
-                key_lookup[key] = {
-                    'values':[],
-                    'ref_data':self.extend_with_metrics_keys(
-                        d, ['test_run_id',
-                            'test_name',
-                            'revision',
-                            'threshold_test_run_id']
-                        )
-                    }
-            key_lookup[key]['values'].append( {
-                'value':d['value'],
-                'page_id':d['page_id'],
-                'metric_value_id':d['metric_value_id'],
-                'metric_value_name':d['metric_value_name']
-                } )
-
-        return key_lookup
-
-    def _get_threshold_data_lookup(self, data):
-        """
-        Converts datasource tuple to
-
-        metric_key : {
-            { ref_data: {
-                all self.METRIC_KEYS: associated id,
-                test_run_id:id,
-                test_name:"Talos test name",
-                revision:revision,
-                push_date: int representing time associated with the push
-                           this datum came from.
-                }
-            },
-
-           { values : [ test_value1, test_value2, test_value3, ... ] }
-        }
-        """
-
-        key_lookup = {}
-        for d in data:
-            key = self.get_metrics_key(d)
-            if key not in key_lookup:
-                #set reference data
-                key_lookup[key] = {
-                    'values':[],
-                    'ref_data':self.extend_with_metrics_keys(
-                        d, ['test_run_id', 'test_name',
-                            'revision', 'push_date']
-                        )
-                    }
-
-            key_lookup[key]['values'].append( d['value'] )
-
-        return key_lookup
-
-    def _get_metric_key_lookup(self, data):
-        """
-        Converts datasource tuple to
-
-        metric_key : {
-            { ref_data: {
-                all self.METRIC_KEYS: associated id,
-                test_run_id:id,
-                test_name:"Talos test name",
-                revision:revision
-                }
-            },
-
-           { values : [ test_value1, test_value2, test_value3, ... ] }
-        }
-        """
-
-        key_lookup = {}
-        for d in data:
-            key = self.get_metrics_key(d)
-            if key not in key_lookup:
-                #set reference data
-                key_lookup[key] = {
-                    'values':[],
-                    'ref_data':self.extend_with_metrics_keys(
-                        d, ['test_run_id', 'test_name', 'revision']
-                        )
-                    }
-            key_lookup[key]['values'].append( d['value'] )
-
-        return key_lookup
-
-    def _get_metric_summary_key_lookup(self, data):
-        """
-        Converts datasource tuple to
-
-        metric_summary_key : {
-            { ref_data: {
-                all self.METRIC_SUMMARY_KEYS: associated id,
-                test_run_id:id,
-                test_name:"Talos test name",
-                revision:revision
-                }
-            },
-
-           { values : [ {
-                dict containing all key/value pairs from the
-                SELECT
-                }, ...
-             ]
-           }
-        }
-        """
-
-        test_lookup = {}
-        for d in data:
-            key = self.get_metrics_summary_key(data)
-            if key not in test_lookup:
-                #set reference data
-                test_lookup[key] = {
-                    'values':[],
-                    'ref_data':self.extend_with_metrics_keys(
-                        d, ['test_run_id', 'test_name', 'revision']
-                        )
-                    }
-            test_lookup[key]['values'].append(d)
-
-        return test_lookup
 
     def _get_metric_collection(self):
         proc = 'perftest.selects.get_metric_collection'
@@ -590,12 +494,15 @@ class MetricMethodInterface(object):
         "implement this function"
         )
 
-    def run_metric_method(self, child_data, parent_data):
+    def run_metric_method(
+        self, child_data, parent_data, parent_metric_data={}
+        ):
         """
         Run the metric method and return results.
 
         child_data = [ test_value1, test_value2, test_value3, ... ]
         parent_data = [ test_value1, test_value2, test_value3, ... ]
+        parent_metric_data = { metric_value_name: metric_value, ... }
         """
         raise NotImplementedError(self.MSG)
 
@@ -774,14 +681,39 @@ class TtestMethod(MetricMethodBase):
         #Store p value id for fdr
         self.metric_value_name = 'p'
 
-    def run_metric_method(self, child_data, parent_data):
+    def run_metric_method(
+        self, child_data, parent_data, parent_metric_data={}
+        ):
 
-        #Filter out the first replicate here
-        result = welchs_ttest(
-            child_data[self.DATA_START_INDEX:],
-            parent_data[self.DATA_START_INDEX:],
-            self.ALPHA
-            )
+        trend_stddev = parent_metric_data.get('trend_stddev', None)
+        trend_mean = parent_metric_data.get('trend_mean', None)
+
+        if trend_stddev and trend_mean:
+            #A trend line data is available use it
+
+            n = len(child_data)
+            s = std(child_data, ddof=1)
+            m = mean(child_data)
+
+            parent_n = len(parent_data)
+            trend_stddev = parent_metric_data['trend_stddev']
+            trend_mean = parent_metric_data['trend_mean']
+
+            result = welchs_ttest_internal(
+                n, s, m, parent_n, trend_stddev, trend_mean
+                )
+
+        else:
+            #No trend lind data is available use the parent
+            #replicate data
+
+            #Filter out the first replicate here
+            result = welchs_ttest(
+                child_data[self.DATA_START_INDEX:],
+                parent_data[self.DATA_START_INDEX:],
+                self.ALPHA
+                )
+
         return result
 
     def run_metric_summary(self, data):
