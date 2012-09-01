@@ -838,7 +838,7 @@ class PerformanceTestModel(DatazillaModelBase):
     def store_test_data(self, json_data, error=None):
         """Write the JSON to the objectstore to be queued for processing."""
 
-        date_loaded = int( time.time() )
+        date_loaded = utils.get_now_timestamp()
         error_flag = "N" if error is None else "Y"
         error_msg = error or ""
 
@@ -1115,7 +1115,7 @@ class PerformanceTestModel(DatazillaModelBase):
                 # TODO: Need to get the build type into the json
                 'opt',
                 # TODO: need to get the build date into the json
-                int(time.time()),
+                utils.get_now_timestamp(),
                 build['id']
                 ],
             debug_show=self.DEBUG
@@ -1189,7 +1189,7 @@ class PerformanceTestModel(DatazillaModelBase):
         machine = data['test_machine']
 
         # Insert the the machine name and timestamp if it doesn't exist
-        date_added = int(time.time())
+        date_added = utils.get_now_timestamp()
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_machine_ref_data',
             placeholders=[

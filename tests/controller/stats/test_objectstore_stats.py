@@ -1,7 +1,4 @@
 from decimal import Decimal
-import pytest
-
-from django.core.exceptions import FieldError
 
 from datazilla.model.utils import get_day_range
 from ...sample_data import perftest_json

@@ -1,4 +1,4 @@
 import pytest
 
-def test_anything():
+def test_get_parsed_object_error_date():
     raise NotImplementedError
