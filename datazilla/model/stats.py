@@ -126,9 +126,13 @@ class PerformanceTestStatsModel(DatazillaModelBase):
         return data_iter
 
 
-    def get_run_lists_by_branch(self, startdate, enddate):
-        """Return a list of test runs by branch in date range"""
-        placeholders = [startdate, enddate]
+    def get_run_lists_by_branch(self, startdate, enddate, branch):
+        """
+        Return a list of test runs by a single branch in date range
+
+        Limits to 100 max runs
+        """
+        placeholders = [startdate, enddate, branch]
 
         data_iter = self.sources["perftest"].dhub.execute(
             proc="perftest.selects.get_test_runs",

@@ -1,7 +1,8 @@
 from django.core.exceptions import FieldError
 
 from datazilla.model.stats import PerformanceTestStatsModel
-from datazilla.model.base import PerformanceTestModel
+from datazilla.model.base import PerformanceTestModel, PushLogModel
+from pushlog_stats import get_all_branches
 
 
 def get_ptsm(project):
@@ -24,20 +25,24 @@ def get_ptm(project):
     return PerformanceTestModel(project)
 
 
+def get_plm():
+    return PushLogModel()
+
+
 def get_runs_by_branch(project, startdate, enddate):
     """Return a list of test runs by branch in date range"""
     ptsm = get_ptsm(project)
-    test_runs = ptsm.get_run_lists_by_branch(startdate, enddate)
-    ptsm.disconnect()
-
-    #now form the data the way we want it
+    branches = [x["name"] for x in get_plm().get_all_branches()]
     result = {}
-    for tr in test_runs:
-        branch = result.setdefault(tr["branch"], {})
-        branch["count"] = branch.get("count", 0) + 1
-        runs = branch.setdefault("test_runs", [])
-        runs.append(tr)
+    for branch in branches:
+        test_runs = ptsm.get_run_lists_by_branch(startdate, enddate, branch)
+        if len(test_runs) > 0:
+            result[branch] = {
+                "count": len(test_runs),
+                "test_runs": test_runs,
+                }
 
+    ptsm.disconnect()
     return result
 
 

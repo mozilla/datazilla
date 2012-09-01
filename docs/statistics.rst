@@ -329,7 +329,7 @@ Push Logs
         }
 
 
-.. http:get:: /(project)/stats/pushlog/branches
+.. http:get:: /stats/pushlog/branches
 
     Return the list of known pushlog branches.
 
@@ -337,7 +337,7 @@ Push Logs
 
     .. sourcecode:: http
 
-        GET /talos/stats/pushlog/branches
+        GET /stats/pushlog/branches
 
     **Example response**:
 
@@ -352,7 +352,7 @@ Push Logs
         ]
 
 
-.. http:get:: /(project)/stats/pushlog/db_size
+.. http:get:: /stats/pushlog/db_size
 
     Return size (in MegaBytes) of the pushlog database for this project.
 
@@ -360,7 +360,7 @@ Push Logs
 
     .. sourcecode:: http
 
-        GET /talos/stats/pushlog/db_size
+        GET /stats/pushlog/db_size
 
     **Example response**:
 

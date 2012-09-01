@@ -1,12 +1,17 @@
 from decimal import Decimal
 import pytest
+import json
 
 from django.core.exceptions import FieldError
 
 from ...sample_data import perftest_json
 from datazilla.controller.admin.stats import perftest_stats
 
-def test_get_runs_by_branch(ptm):
+def test_get_runs_by_branch(ptm, plm, monkeypatch):
+
+    def mock_plm():
+        return plm
+    monkeypatch.setattr(perftest_stats, 'get_plm', mock_plm)
 
     blobs = [
         perftest_json(
@@ -27,30 +32,22 @@ def test_get_runs_by_branch(ptm):
         ptm.store_test_data(blob)
     ptm.process_objects(3)
 
-    exp = {
-        "Mozilla-Aurora": {
-            "count": 1,
-            "test_runs": [
-                {
-                    "status": 1,
-                    "date_run": 1330454756,
-                    "product": "two",
-                    "version": "14.0a2",
-                    "branch": "Mozilla-Aurora",
-                    "revision": "785345035a3b"
-                }
-            ]
+    exp_run = {
+        "build_id": 2,
+        "status": 1,
+        "date_run": 1330454756,
+        "test_id": 1,
+        "product": "two",
+        "version": "14.0a2",
+        "branch": "Mozilla-Aurora",
+        "machine_id": 1,
+        "id": 2,
+        "revision": "785345035a3b"
         }
-    }
-    runs = perftest_stats.get_runs_by_branch(ptm.project, 1330454756, 1330454756)
-    test_run = runs["Mozilla-Aurora"]["test_runs"][0]
 
-    # these ids are auto-incrementing, so we can't rely on the value
-    del(test_run["build_id"])
-    del(test_run["test_id"])
-    del(test_run["machine_id"])
-    del(test_run["id"])
-    assert runs == exp
+    runs = perftest_stats.get_runs_by_branch(ptm.project, 1330454756, 1330454756)
+    assert runs["Mozilla-Aurora"]["count"] == 1
+    assert runs["Mozilla-Aurora"]["test_runs"][0] == exp_run
 
 
 def test_get_run_counts_by_branch(ptm):
