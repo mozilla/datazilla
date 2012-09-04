@@ -245,7 +245,7 @@ class PushLogModel(DatazillaModelBase):
                 pushlog_dict = json.loads(json_data)
 
                 self._insert_branch_pushlogs(br["id"], pushlog_dict)
-                self.branch_count = self.branch_count + 1
+                self.branch_count += 1
 
             except ValueError as e:
                 self.println("--Skip branch {0}: push data not valid JSON: {1}".format(

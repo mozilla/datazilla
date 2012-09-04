@@ -1,13 +1,16 @@
 from datazilla.controller.admin.stats import perftest_stats
 from tests.sample_data import create_date_based_data
-from ...utils import jstr
 from datazilla.model import utils
 from datazilla.webapp.apps.datazilla.stats import view_utils
 
-def test_get_runs_by_branch_show_test_runs_true(ptm, client, monkeypatch):
+def test_get_runs_by_branch_show_test_runs_true(ptm, plm, client, monkeypatch):
     """
     Test that with show_runs=True that you get the runs and counts
     """
+    def mock_plm():
+        return plm
+    monkeypatch.setattr(perftest_stats, 'get_plm', mock_plm)
+
     dates = [
         utils.get_day_range(5)["start"],
         utils.get_day_range(4)["start"],
