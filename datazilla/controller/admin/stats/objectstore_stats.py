@@ -32,6 +32,7 @@ def get_json_blob(project, id):
 
 
 def get_error_detail_count(project, startdate, enddate):
+    """Return counts attempting to parse some of the bad JSON to extract details."""
     ptm = PerformanceTestStatsModel(project)
     err_data = ptm.get_parsed_object_error_data(startdate, enddate)
     ptm.disconnect()

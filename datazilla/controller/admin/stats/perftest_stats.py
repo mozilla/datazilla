@@ -26,6 +26,11 @@ def get_ptm(project):
 
 
 def get_plm():
+    """
+    Hook to return a pushlog model.
+
+    Handy for tests to mock out.
+    """
     return PushLogModel()
 
 
@@ -71,6 +76,7 @@ def get_ref_data(project, table):
 
 
 def get_db_size(project):
+    """Return the size of the database on disk in megabytes"""
     ptm = get_ptsm(project)
     pt_size = ptm.get_db_size()
     ptm.disconnect()

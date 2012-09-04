@@ -1,8 +1,6 @@
 from decimal import Decimal
 import json
 
-from datazilla.model.base import TestDataError, TestData
-
 from datazilla.controller.admin.stats import pushlog_stats
 
 from ...sample_pushlog import get_pushlog_dict_set
@@ -79,6 +77,7 @@ def test_get_not_referenced(plm, plsm, ptm, monkeypatch):
 
 
 def test_get_all_branches(plm, monkeypatch):
+    """Test get_all_branches method."""
 
     def mock_plm():
         return plm
@@ -120,6 +119,7 @@ def test_get_all_branches(plm, monkeypatch):
     assert set(exp_branch_list) == set(pushlog_stats.get_all_branches())
 
 def test_get_db_size(plsm, monkeypatch):
+    """Test get_db_size method."""
 
     def mock_plsm():
         return plsm

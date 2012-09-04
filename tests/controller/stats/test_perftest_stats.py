@@ -8,6 +8,7 @@ from ...sample_data import perftest_json
 from datazilla.controller.admin.stats import perftest_stats
 
 def test_get_runs_by_branch(ptm, plm, monkeypatch):
+    """Test get_runs_by_branch method."""
 
     def mock_plm():
         return plm
@@ -51,6 +52,7 @@ def test_get_runs_by_branch(ptm, plm, monkeypatch):
 
 
 def test_get_run_counts_by_branch(ptm):
+    """Test get_run_counts_by_branch method."""
 
     blobs = [
         perftest_json(
@@ -81,6 +83,7 @@ def test_get_run_counts_by_branch(ptm):
 
 
 def test_get_db_size(ptm):
+    """Test get_db_size method."""
     size = perftest_stats.get_db_size(ptm.project)
     exp = (
         {
@@ -97,6 +100,7 @@ def test_get_db_size(ptm):
 
 
 def test_get_ref_data_machines(ptm):
+    """Test get_ref_data method to get machines list."""
 
     ptm.store_test_data(perftest_json())
     ptm.process_objects(1)
@@ -110,6 +114,7 @@ def test_get_ref_data_machines(ptm):
 
 
 def test_get_ref_data_operating_systems(ptm):
+    """Test get_ref_data method to get operating systems list."""
 
     ptm.store_test_data(perftest_json())
     ptm.process_objects(1)
@@ -121,6 +126,7 @@ def test_get_ref_data_operating_systems(ptm):
 
 
 def test_get_ref_data_options(ptm):
+    """Test get_ref_data method to get options list."""
 
     ptm.store_test_data(perftest_json())
     ptm.process_objects(1)
@@ -141,6 +147,7 @@ def test_get_ref_data_options(ptm):
 
 
 def test_get_ref_data_tests(ptm):
+    """Test get_ref_data method to get tests list."""
 
     ptm.store_test_data(perftest_json())
     ptm.process_objects(1)
@@ -153,6 +160,7 @@ def test_get_ref_data_tests(ptm):
 
 
 def test_get_ref_data_pages(ptm):
+    """Test get_ref_data method to get pages list."""
 
     ptm.store_test_data(perftest_json())
     ptm.process_objects(1)
@@ -167,6 +175,7 @@ def test_get_ref_data_pages(ptm):
 
 
 def test_get_ref_data_products(ptm):
+    """Test get_ref_data method to get products list."""
 
     ptm.store_test_data(perftest_json())
     ptm.process_objects(1)
@@ -179,6 +188,7 @@ def test_get_ref_data_products(ptm):
 
 
 def test_get_ref_data_invalid(ptm):
+    """Test get_ref_data method with an invalid key."""
 
     ptm.store_test_data(perftest_json())
     ptm.process_objects(1)

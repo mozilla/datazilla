@@ -33,7 +33,7 @@ class PushLogStatsModel(DatazillaModelBase):
 
 
     def get_changeset_nodes_since_date(self, startdate, enddate, branch_names):
-
+        """Return a set of changeset nodes in a date range."""
         proc = 'hgmozilla.selects.get_changeset_nodes_since_date'
 
         data_set = self.hg_ds.dhub.execute(
@@ -48,7 +48,7 @@ class PushLogStatsModel(DatazillaModelBase):
 
 
     def get_pushlog_dict(self, startdate, enddate, branch_names):
-        # get the pushlogs in the specified date range
+        # Return the pushlogs in the specified date range
         pl_nodes = self.get_changeset_nodes_since_date(startdate, enddate, branch_names)
 
         # build a dict with pushlog_id as the keys, and changeset list as
@@ -145,7 +145,7 @@ class PerformanceTestStatsModel(DatazillaModelBase):
 
 
     def get_object_error_metadata(self, startdate, enddate):
-        """ Get all the error records metadata in the objectstore """
+        """ Get all the error records metadata in the objectstore in date range"""
 
         data_iter = self.sources["objectstore"].dhub.execute(
             proc="objectstore.selects.get_error_metadata",
@@ -158,7 +158,7 @@ class PerformanceTestStatsModel(DatazillaModelBase):
 
 
     def get_object_error_counts(self, startdate, enddate):
-        """ Get all the error records in the objectstore """
+        """ Get all the error records in the objectstore in date range"""
 
         data_iter = self.sources["objectstore"].dhub.execute(
             proc="objectstore.selects.get_error_counts",

@@ -5,9 +5,7 @@ from .view_utils import get_range, REQUIRE_DAYS_AGO, API_CONTENT_TYPE
 
 
 def get_error_list(request, project):
-    """
-    Return a list of errors for a project
-    """
+    """Return a list of errors for a project."""
     if not request.GET.get("days_ago"):
         return HttpResponse(REQUIRE_DAYS_AGO, status=400)
 

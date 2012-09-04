@@ -5,7 +5,7 @@ from ...sample_data import perftest_json
 from datazilla.controller.admin.stats import objectstore_stats
 
 def store_and_process_2_good_2_error_blobs(ptm):
-    """Store a blob that is marked as having an error"""
+    """Store 2 good blobs, and 2 that are marked as having an error"""
 
     # store the error blob
     blob = perftest_json(
@@ -42,6 +42,8 @@ def store_and_process_2_good_2_error_blobs(ptm):
 
 
 def test_get_error_count(ptm):
+    """Test the get_error_count method."""
+
     store_and_process_2_good_2_error_blobs(ptm)
     date_range = get_day_range(1)
     result = objectstore_stats.get_error_count(
@@ -57,6 +59,8 @@ def test_get_error_count(ptm):
 
 
 def test_get_error_list(ptm):
+    """Test the get_error_list method."""
+
     store_and_process_2_good_2_error_blobs(ptm)
     date_range = get_day_range(1)
     result = objectstore_stats.get_error_list(
@@ -88,6 +92,8 @@ def test_get_error_list(ptm):
 
 
 def test_get_json_blob(ptm):
+    """Test get_json_blob method"""
+
     blob = perftest_json(
         testrun={"date": 1330454756},
         test_build={"name": "one"},
@@ -101,6 +107,7 @@ def test_get_json_blob(ptm):
 
 
 def test_get_json_blob_bad_id(ptm):
+    """Test get_json_blob method with a non-existent id."""
     blob = perftest_json(
         testrun={"date": 1330454756},
         test_build={"name": "one"},
@@ -114,6 +121,8 @@ def test_get_json_blob_bad_id(ptm):
 
 
 def test_get_error_detail_count(ptm):
+    """Test get_error_detail_count method."""
+
     store_and_process_2_good_2_error_blobs(ptm)
     date_range = get_day_range(1)
     result = objectstore_stats.get_error_detail_count(
@@ -130,11 +139,13 @@ def test_get_error_detail_count(ptm):
 
 
 def test_result_key_invalid_value():
+    """Test get_result_key with an invalid key."""
     result = objectstore_stats.result_key({"mango": "food"})
     assert result == "unknown"
 
 
 def test_get_db_size(ptm):
+    """Test the get_db_size method."""
     size = objectstore_stats.get_db_size(ptm.project)
     exp = (
             {

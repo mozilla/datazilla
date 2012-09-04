@@ -14,10 +14,12 @@ def get_pushlog_json_readable(json_data):
 
 
 def get_pushlog_json_set():
+    """Return a pushlog set as JSON"""
     return json.dumps(get_pushlog_dict_set())
 
 
 def get_pushlog_dict_set():
+    """Return a single set of pushlog data"""
     return {
 
         "23046": {

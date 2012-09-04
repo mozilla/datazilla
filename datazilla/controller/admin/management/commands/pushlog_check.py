@@ -11,6 +11,8 @@ from base import ProjectCommand
 
 class Command(ProjectCommand):
     """
+    Find pushlog entries without matching test results.
+
     Compare perftest test_run.revision field with pushlog revision field
     for a project.  Anything in one and not in the other for the date range
     will be reported.

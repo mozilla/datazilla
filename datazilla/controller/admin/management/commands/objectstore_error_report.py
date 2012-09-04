@@ -8,6 +8,7 @@ from datazilla.controller.admin.stats import objectstore_stats
 from base import ProjectCommand
 
 class Command(ProjectCommand):
+    """Display a report of which objectstore entries had an error."""
 
     help = (
         "Generate a report of all the JSON data that had an error "
@@ -15,7 +16,6 @@ class Command(ProjectCommand):
         )
 
     option_list = ProjectCommand.option_list + (
-
 
         make_option(
             '-l',
