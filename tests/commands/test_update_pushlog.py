@@ -2,6 +2,7 @@
 Tests for management command to update pushlogs.
 
 """
+import pytest
 
 from django.core.management import call_command
 from datazilla.model.base import PushLogModel
@@ -14,11 +15,12 @@ def call_update_pushlog(*args, **kwargs):
 
 def test_no_args(capsys):
     """Shows need for a repo_host."""
-    call_update_pushlog()
+    with pytest.raises(SystemExit):
+        call_update_pushlog()
 
     exp = (
-        "You must supply a host name for the repo pushlogs to store: --repo_host hostname\n",
         "",
+        "Error: You must supply a host name for the repo pushlogs to store: --repo_host hostname\n",
         )
 
     assert capsys.readouterr() == exp
@@ -27,12 +29,12 @@ def test_no_args(capsys):
 def test_no_numdays(capsys):
     """Shows need for numdays."""
 
-
-    call_update_pushlog(repo_host="foo_host")
+    with pytest.raises(SystemExit):
+        call_update_pushlog(repo_host="foo_host")
 
     exp = (
-        "You must supply the number of days data.\n",
         "",
+        "Error: You must supply the number of days data.\n",
         )
 
     assert capsys.readouterr() == exp
@@ -41,12 +43,12 @@ def test_no_numdays(capsys):
 def test_bad_numdays(capsys):
     """Shows numdays must be int."""
 
-
-    call_update_pushlog(repo_host="foo_host", numdays="rats")
+    with pytest.raises(SystemExit):
+        call_update_pushlog(repo_host="foo_host", numdays="rats")
 
     exp = (
-        "numdays must be an integer.\n",
         "",
+        "Error: numdays must be an integer.\n",
         )
 
     assert capsys.readouterr() == exp

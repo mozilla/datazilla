@@ -34,6 +34,49 @@
                    LIMIT ?",
 
             "host":"master_host"
+        },
+
+        "get_all_errors":{
+
+            "sql":"SELECT   `json_blob`, `id`
+                FROM     `objectstore`
+                WHERE    `error_flag` = 'Y'
+                AND date_loaded BETWEEN ? AND ?",
+
+            "host":"read_host"
+        },
+
+        "get_error_metadata":{
+
+            "sql":"SELECT   `id`, test_run_id, date_loaded, processed_flag, error_msg, worker_id
+                FROM     `objectstore`
+                WHERE    `error_flag` = 'Y'
+                AND date_loaded BETWEEN ? AND ?",
+
+            "host":"read_host"
+        },
+
+        "get_json_blob":{
+
+            "sql":"SELECT `json_blob` FROM `objectstore` WHERE `id` = ?",
+
+            "host":"read_host"
+        },
+
+        "get_error_counts":{
+
+            "sql":"SELECT
+                (CASE
+                    WHEN error_msg LIKE 'Malformed JSON%'
+                    THEN 'Malformed JSON'
+                    ELSE 'Other'
+                END) AS message, count(id) AS count
+                FROM `objectstore`
+                WHERE `error_flag` = 'Y'
+                AND date_loaded BETWEEN REP0 AND REP1
+                GROUP BY message",
+
+            "host":"read_host"
         }
 
     },

@@ -3,8 +3,8 @@
 
                   ##Required##
                   "master_host": { "host":"localhost",
-                                   "user":"usr",
-                                   "passwd":"password" },
+                                   "user":"usrname",
+                                   "passwd":"passwd" },
 
                   ##Not required if you don't have one##
                   "read_host": { "host":"localhost",

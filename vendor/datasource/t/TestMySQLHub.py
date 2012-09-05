@@ -18,8 +18,10 @@ class TestMySQLHub(unittest.TestCase):
 
     if file_path:
         data_file = file_path + '/test_data.txt'
+        character_encode_file = file_path + '/character_encoding_data.txt'
     else:
         data_file = './test_data.txt'
+        character_encode_file = './character_encoding_data.txt'
 
 
     @staticmethod
@@ -75,7 +77,8 @@ class TestMySQLHub(unittest.TestCase):
                  'test_nocommit',
                  'test_rollback',
                  'test_drop_table',
-                 'test_exception_on_debug'
+                 'test_exception_on_debug',
+                 'test_encoding'
                  ]
 
         return unittest.TestSuite(map(TestMySQLHub, tests))
@@ -734,6 +737,31 @@ class TestMySQLHub(unittest.TestCase):
         except ProgrammingError:
             self.assertTrue(True, "expect an exception.")
 
+    def test_encoding(self):
+
+        data = ''
+        with open(TestMySQLHub.character_encode_file) as f:
+            data = unicode( f.read().decode("utf-8") )
+
+        self.dh.execute(
+            db=self.db,
+            proc="test.create_encode_test_table",
+            )
+
+        self.dh.execute(
+            db=self.db,
+            proc="test.insert_encode_data",
+            replace_quote=[data]
+            )
+        self.dh.execute(
+            db=self.db,
+            proc="test.get_encode_data",
+            return_type='tuple'
+            )
+        self.dh.execute(
+            db=self.db,
+            proc="test.drop_encode_table",
+            )
 
     def __callback_test(self, row):
         self.callback_calls += 1

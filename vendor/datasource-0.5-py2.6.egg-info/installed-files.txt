@@ -11,6 +11,7 @@
 ../datasource/t/TestMySQLHub.py
 ../datasource/procs/mysql_procs/sql.json
 ../datasource/procs/mysql_procs/test.json
+../datasource/t/character_encoding_data.txt
 ../datasource/t/test_data.txt
 ../datasource/data_sources.json
 ../datasource/__init__.pyc

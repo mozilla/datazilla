@@ -5,6 +5,8 @@ Functions for flexible generation of sample input perftest JSON.
 import json
 import os
 
+from datazilla.model import utils
+
 
 def perftest_ref_data_json():
     """Return reference data json structure"""
@@ -133,3 +135,61 @@ def results(results=None):
             results[result] = ["789.0", "705.0", "739.0"]
 
     return results
+
+
+def create_date_based_data(ptm, monkeypatch, dates=None):
+    """Store and process some good and some error blobs on specified dates"""
+
+    if not dates:
+        dates = [
+            utils.get_day_range(5)["start"],
+            utils.get_day_range(4)["start"],
+            utils.get_day_range(3)["start"],
+            ]
+
+    # 5 days ago
+    mocknow = dates[0]
+    def mock_now():
+        return mocknow
+    monkeypatch.setattr(utils, 'get_now_timestamp', mock_now)
+
+    # store the error blob
+    blob = perftest_json(
+        testrun={"date": dates[0]},
+        test_build={"name": "one"},
+        )
+    badblob = "{0}fooo".format(blob)
+    ptm.store_test_data(badblob, error="badness")
+
+    # 4 days ago
+    mocknow = dates[1]
+    # store the good blobs
+    blobs = [
+        perftest_json(
+            testrun={"date": dates[1]},
+            test_build={"name": "one"},
+            ),
+        perftest_json(
+            testrun={"date": dates[1]},
+            test_build={"name": "three"},
+            ),
+        ]
+
+    # 3 days ago
+    mocknow = dates[2]
+
+    # store another error blob
+    blob = perftest_json(
+        testrun={"date": dates[2]},
+        test_build={"name": "four"},
+        )
+    badblob = "{0}fooo".format(blob)
+    ptm.store_test_data(badblob, error="Malformed JSON")
+
+    for blob in blobs:
+        ptm.store_test_data(blob)
+
+    # now process all of them
+    ptm.process_objects(4)
+
+

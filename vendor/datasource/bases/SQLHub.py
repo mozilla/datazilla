@@ -115,6 +115,8 @@ class SQLHub(RDBSHub):
         sql = kwargs['sql']
         db = kwargs['db']
 
+        self.select_db(host_type, db)
+
         ##########
         #sql_chunks is a list of sql statements to execute.  It's built
         #by the base class when a caller requests chunking.

@@ -44,6 +44,36 @@ def get_summary_cache_key(project, item_id, item_data):
     return "_".join(map(str, [project, item_id, item_data]))
 
 
+def get_day_range(days_ago, numdays=None):
+    """Return a start and stop date based on values given in unix timestamp"""
+
+    # if numdays not given, get all since days_ago (same value)
+    numdays = numdays or days_ago
+
+    from datetime import timedelta
+    def to_seconds(td):
+        return (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6
+
+    now = int(time.time())
+    start = now - to_seconds(timedelta(int(days_ago)))
+    stop = start + to_seconds(timedelta(int(numdays)))
+    return {"start": int(start), "stop": int(stop)}
+
+
+def get_now_timestamp():
+    """
+    Return a unix timestamp for the current time.
+
+    This is useful because it can be mocked out in unit tests.
+    """
+    return int(time.time())
+
+
+def get_timestamp(timestr):
+    """Build a timestamp from a string like ``1 Aug 12`` """
+    return int(time.mktime(time.strptime(timestr, "%d %b %y")))
+
+
 def get_time_ranges():
     """
     Get a dictionary of time ranges.
