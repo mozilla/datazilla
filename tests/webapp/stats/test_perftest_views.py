@@ -20,8 +20,8 @@ def test_get_runs_by_branch_show_test_runs_true(ptm, plm, client, monkeypatch):
     url = "/{0}/stats/perftest/runs_by_branch/?show_test_runs=True&days_ago=6".format(ptm.project)
     response = client.get(url)
 
-    exp = ["count", "test_runs"]
-    assert response.json["Mozilla-Aurora"].keys() == exp
+    exp = set(["count", "limit", "total_count", "test_runs"])
+    assert set(response.json["Mozilla-Aurora"].keys()) == exp
 
 
 def test_get_runs_by_branch_show_test_runs_false(ptm, client, monkeypatch):

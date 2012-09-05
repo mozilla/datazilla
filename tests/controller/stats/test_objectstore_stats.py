@@ -149,11 +149,11 @@ def test_get_db_size(ptm):
     size = objectstore_stats.get_db_size(ptm.project)
     exp = (
             {
-            'db_name': u'cam_testproj_objectstore_1',
+            'db_name': u'{0}_objectstore_1'.format(ptm.project),
             'size_mb': Decimal('0.08')
         },
             {
-            'db_name': u'cam_testproj_perftest_1',
+            'db_name': u'{0}_perftest_1'.format(ptm.project),
             'size_mb': Decimal('1.00')
         }
 

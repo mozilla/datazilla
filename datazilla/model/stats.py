@@ -101,18 +101,30 @@ class PerformanceTestStatsModel(DatazillaModelBase):
         """
         Return a list of test runs by a single branch in date range
 
-        Limits to 100 max runs
+        Limits to 80 max runs.  This performs a second query to get the
+        number of rows that WOULD have been found if a LIMIT was not set
+        to 80.  We use this value to update the ``count`` field.
         """
         placeholders = [startdate, enddate, branch]
 
-        data_iter = self.sources["perftest"].dhub.execute(
+        data_list = self.sources["perftest"].dhub.execute(
             proc="perftest.selects.get_test_runs",
             debug_show=self.DEBUG,
             placeholders = placeholders,
             return_type='tuple',
             )
+        found_rows = self.sources["perftest"].dhub.execute(
+            proc="perftest.selects.get_found_rows",
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            )
 
-        return data_iter
+        return {
+            "count": len(data_list),
+            "total_count": found_rows[0]["FOUND_ROWS()"],
+            "limit": 80,
+            "test_runs": data_list,
+            }
 
 
     def get_run_counts_by_branch(self, startdate, enddate):

@@ -127,7 +127,7 @@ def test_get_db_size(plsm, monkeypatch):
 
     size = pushlog_stats.get_db_size()
     exp = ({
-           'db_name': u'cam_testpushlog_hgmozilla_1',
+           'db_name': u'{0}_hgmozilla_1'.format(plsm.project),
            'size_mb': Decimal('0.13'),
         },)
 

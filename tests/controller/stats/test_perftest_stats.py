@@ -8,7 +8,9 @@ from ...sample_data import perftest_json
 from datazilla.controller.admin.stats import perftest_stats
 
 def test_get_runs_by_branch(ptm, plm, monkeypatch):
-    """Test get_runs_by_branch method."""
+    """
+    Test get_runs_by_branch method.
+    """
 
     def mock_plm():
         return plm
@@ -34,21 +36,44 @@ def test_get_runs_by_branch(ptm, plm, monkeypatch):
     ptm.process_objects(3)
 
     exp_run = {
-        "build_id": 2,
         "status": 1,
         "date_run": 1330454756,
-        "test_id": 1,
         "product": "two",
         "version": "14.0a2",
         "branch": "Mozilla-Aurora",
-        "machine_id": 1,
-        "id": 2,
         "revision": "785345035a3b"
         }
 
     runs = perftest_stats.get_runs_by_branch(ptm.project, 1330454756, 1330454756)
+
     assert runs["Mozilla-Aurora"]["count"] == 1
     assert runs["Mozilla-Aurora"]["test_runs"][0] == exp_run
+
+
+def test_get_runs_by_branch_past_limit(ptm, plm, monkeypatch):
+    """
+    Test get_runs_by_branch method exceeding the 80 count limit.
+
+    Since the limit per branch is 80, create more than 80 items to test that.
+    """
+
+    def mock_plm():
+        return plm
+    monkeypatch.setattr(perftest_stats, 'get_plm', mock_plm)
+
+    for i in range(81):
+        blob = perftest_json(
+            testrun={"date": 1330454756},
+            test_build={"name": "testname{0}".format(i)}
+            )
+        ptm.store_test_data(blob)
+    ptm.process_objects(81)
+
+    runs = perftest_stats.get_runs_by_branch(ptm.project, 1330454756, 1330454756)
+
+    assert runs["Mozilla-Aurora"]["limit"] == 80
+    assert runs["Mozilla-Aurora"]["count"] == 80
+    assert runs["Mozilla-Aurora"]["total_count"] == 81
 
 
 def test_get_run_counts_by_branch(ptm):
@@ -87,11 +112,11 @@ def test_get_db_size(ptm):
     size = perftest_stats.get_db_size(ptm.project)
     exp = (
         {
-            'db_name': u'cam_testproj_objectstore_1',
+            'db_name': u'{0}_objectstore_1'.format(ptm.project),
             'size_mb': Decimal('0.08')
             },
         {
-            'db_name': u'cam_testproj_perftest_1',
+            'db_name': u'{0}_perftest_1'.format(ptm.project),
             'size_mb': Decimal('1.00')
             }
 

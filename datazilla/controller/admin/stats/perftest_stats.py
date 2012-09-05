@@ -41,11 +41,8 @@ def get_runs_by_branch(project, startdate, enddate):
     result = {}
     for branch in branches:
         test_runs = ptsm.get_run_lists_by_branch(startdate, enddate, branch)
-        if len(test_runs) > 0:
-            result[branch] = {
-                "count": len(test_runs),
-                "test_runs": test_runs,
-                }
+        if test_runs["count"] > 0:
+            result[branch] = test_runs
 
     ptsm.disconnect()
     return result

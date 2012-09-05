@@ -332,7 +332,9 @@
       },
       "get_test_runs":{
 
-        "sql":"SELECT tr.*, p.branch, p.product, p.version
+        "sql":"SELECT SQL_CALC_FOUND_ROWS
+                tr.revision, tr.date_run, tr.status,
+                p.branch, p.product, p.version
             FROM test_run as tr
             LEFT JOIN build as b ON tr.build_id = b.id
             LEFT JOIN product as p ON b.product_id = p.id
@@ -343,6 +345,12 @@
 
         "host":"read_host"
 
+      },
+      "get_found_rows":{
+
+          "sql":"SELECT FOUND_ROWS()",
+
+          "host":"read_host"
       },
       "get_test_run_counts":{
 
