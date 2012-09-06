@@ -36,6 +36,13 @@
 
       "host_type":"master_host"
    },
+   "get_encode_data":{
+      "sql":"SELECT `string_data`
+             FROM `test`.`DATA_SOURCES_ENCODE_TEST`",
+
+      "host_type":"master_host"
+
+   },
 
    "insert_test_data":{
       "sql":"INSERT INTO `test`.`DATA_SOURCES_TEST_DATA` (`auto_pfamA`,
@@ -52,6 +59,12 @@
        "host_type":"master_host"
    },
 
+   "insert_encode_data":{
+       "sql":"INSERT INTO `test`.`DATA_SOURCES_ENCODE_TEST` (`string_data`) VALUES (REP0)",
+
+       "host_type":"master_host"
+   },
+
    "create_table":{
       "sql":"CREATE TABLE IF NOT EXISTS `test`.`DATA_SOURCES_TEST_DATA` (
                `id` int(5) PRIMARY KEY NOT NULL AUTO_INCREMENT,
@@ -63,9 +76,18 @@
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
    "host_type":"master_host"
    },
-
+   "create_encode_test_table":{
+      "sql":"CREATE TABLE IF NOT EXISTS `test`.`DATA_SOURCES_ENCODE_TEST` (
+               `string_data` varchar(150) NOT NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8",
+        "host_type":"master_host"
+   },
    "drop_table":{
       "sql":"DROP TABLE IF EXISTS `test`.`DATA_SOURCES_TEST_DATA`",
+      "host_type":"master_host"
+   },
+   "drop_encode_table":{
+      "sql":"DROP TABLE IF EXISTS `test`.`DATA_SOURCES_ENCODE_TEST`",
       "host_type":"master_host"
    }
 

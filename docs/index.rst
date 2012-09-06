@@ -19,6 +19,7 @@ Contents
    installation
    development
    architecture
+   statistics
 
 * :ref:`search`
 

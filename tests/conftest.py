@@ -75,6 +75,8 @@ def pytest_sessionfinish(session):
 
     source_list = PerformanceTestModel(session.perftest_name).sources.values()
     source_list.extend(PushLogModel(project=session.pushlog_name).sources.values())
+#    return
+
     for sds in source_list:
         conn = MySQLdb.connect(
             host=sds.datasource.host,
@@ -124,6 +126,7 @@ def pytest_runtest_teardown(item):
     from django.test.testcases import restore_transaction_methods
     from django.db import transaction
     from datazilla.model import PerformanceTestModel
+#    return
 
     restore_transaction_methods()
     transaction.rollback()
@@ -160,7 +163,7 @@ def truncate(ptm, skip_list=None):
         for table, in cur.fetchall():
             # if there is a skip_list, then skip any table with matching name
             if table.lower() not in skip_list:
-                # needed to us backticks around table name, because if the
+                # needed to use backticks around table name, because if the
                 # table name is a keyword (like "option") then this will fail
                 cur.execute("TRUNCATE TABLE `{0}`".format(table))
 
@@ -206,3 +209,29 @@ def pytest_funcarg__plm(request):
 
     request.addfinalizer(partial(truncate, plm, ["branches"]))
     return plm
+
+
+def pytest_funcarg__ptsm(request):
+    """
+    Give a test access to a PerformanceTestStatsModel instance.
+
+    """
+    from datazilla.model.stats import PerformanceTestStatsModel
+
+    return PerformanceTestStatsModel(request._pyfuncitem.session.perftest_name)
+
+
+def pytest_funcarg__plsm(request):
+    """
+    Give a test access to a PushLogStatsModel instance.
+
+    Truncate all project tables between tests in order to provide isolation.
+
+    """
+    from datazilla.model.stats import PushLogStatsModel
+
+    plsm = PushLogStatsModel(
+        request._pyfuncitem.session.pushlog_name)
+
+    request.addfinalizer(partial(truncate, plsm, ["branches"]))
+    return plsm
