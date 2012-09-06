@@ -52,6 +52,17 @@ def get_not_referenced(project, startdate, enddate, branches=None):
         }
 
 
+def get_pushlogs(project, startdate, enddate, branches=None):
+    """Return a list of pushlogs with changesets. """
+    branches = branches or get_all_branches()
+
+    plsm = get_plsm()
+    pl_dict = plsm.get_pushlog_dict(startdate, enddate, branches)
+    plsm.disconnect()
+
+    return pl_dict
+
+
 def get_all_branches():
     """Return a list of all the branch names our pushlogs know about"""
     plm = get_plm()

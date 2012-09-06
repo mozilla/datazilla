@@ -32,6 +32,34 @@ def get_not_referenced(request, project):
     return HttpResponse(json.dumps(stats), content_type=API_CONTENT_TYPE)
 
 
+def get_pushlogs(request, project):
+    """
+    Get a list of pushlogs with their revisions.
+
+    branches: optional.  The comma-separated list of branches to show data
+        for.  If not provided, return data for all branches.
+    days_ago: required.  Number of days ago for the "start" of the range.
+    numdays: optional.  Number of days since days_ago.  Will default to
+        "all since days ago"
+    """
+
+    if not request.GET.get("days_ago"):
+        return HttpResponse(REQUIRE_DAYS_AGO, status=400)
+    range = get_range(request)
+    branches = request.GET.get("branches", None)
+    if branches:
+        branches = branches.split(",")
+
+    stats = pushlog_stats.get_pushlogs(
+        project,
+        range["start"],
+        range["stop"],
+        branches,
+        )
+    return HttpResponse(json.dumps(stats), content_type=API_CONTENT_TYPE)
+
+
+
 def get_all_branches(request):
     """Get the full list of pushlog branches"""
     branches = pushlog_stats.get_all_branches()

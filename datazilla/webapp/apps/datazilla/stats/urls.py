@@ -20,6 +20,8 @@ urlpatterns = patterns(
     (r"^perftest/db_size/?$", "perftest_views.get_db_size"),
 
     # pushlog
+    (r"^pushlog/list/?$", "pushlog_views.get_pushlogs"),
+
     (r"^pushlog/not_referenced/?$", "pushlog_views.get_not_referenced"),
 
     )
