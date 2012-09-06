@@ -738,6 +738,27 @@ class PerformanceTestModel(DatazillaModelBase):
         return test_run_value_table
 
 
+    def get_test_run_ids(self, branch, revision,
+        os_name=None, test_name=None):
+
+        rep = []
+        if os_name:
+            rep.append(" AND os.name='{0}'".format(os_name))
+        if test_name:
+            rep.append(" AND t.name='{0}'".format(test_name))
+        replacements = " ".join(rep)
+
+        proc = 'perftest.selects.get_test_run_ids'
+
+        id_list = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            placeholders=[branch, revision],
+            replace=[replacements] if len(replacements) else None,
+            )
+
+        return id_list
+
     def get_page_values(self, test_run_id, page_id):
 
         proc = 'perftest.selects.get_page_values'
