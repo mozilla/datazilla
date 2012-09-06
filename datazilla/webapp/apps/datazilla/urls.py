@@ -17,4 +17,7 @@ urlpatterns = patterns('',
 
                        #return statistics about Datazilla
                        (r'^stats/', include("datazilla.webapp.apps.datazilla.stats.urls")),
+
+                       #return test data for a project
+                       (r'^testdata/', include("datazilla.webapp.apps.datazilla.testdata.urls")),
                        )
