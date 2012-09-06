@@ -329,6 +329,54 @@ Push Logs
         }
 
 
+.. http:get:: /(project)/stats/pushlog/list
+
+    Return a list of pushlog entries.
+
+    :query days_ago: (required) Number of days prior to this date to use as the
+        beginning of the date range for this request.
+    :query numdays: (optional) Number of days worth of data to return.  If not
+        provided, the date range will be from ``days_ago`` to today.
+    :query branches: (optional) Which branches to return pushlogs.
+        This can be a single branch, or a comma-separated list of branches.  If not
+        provided, return data for all branches.
+
+
+    **Example request**:
+
+    .. sourcecode:: http
+
+        GET /talos/stats/pushlog/list/?days_ago=1&branches=Mozilla-Inbound
+
+    **Example response**:
+
+    .. sourcecode:: http
+
+        Content-Type: application/json
+
+        {
+            "14470": {
+                "branch_name": "Mozilla-Inbound",
+                "revisions": [
+                    "41cf3c361d9d"
+                ]
+            },
+            "14471": {
+                "branch_name": "Mozilla-Inbound",
+                "revisions": [
+                    "fd4d9c386f97",
+                    "8a11353cad22",
+                    "a027c9d63d20",
+                    "cb3dd01ba9be",
+                    "14ac87e7546b",
+                    "aa4ba0fc1f8d",
+                    "1cc49d5dcff4",
+                    "c6768c151b64"
+                ]
+            }
+        }
+
+
 .. http:get:: /stats/pushlog/branches
 
     Return the list of known pushlog branches.
