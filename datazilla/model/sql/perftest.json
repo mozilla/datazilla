@@ -382,7 +382,7 @@
 
         "sql":"SELECT distinct revision FROM test_run",
 
-          "host":"master_host"
+          "host":"read_host"
 
       },
       "get_test_run_values":{
