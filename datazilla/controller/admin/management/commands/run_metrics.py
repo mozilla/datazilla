@@ -21,7 +21,7 @@ class Command(ProjectBatchCommand):
         make_option("--numdays",
                     action="store",
                     dest="numdays",
-                    default=None,
+                    default=1,
                     help="Number of days worth of pushlogs to return."),
 
         make_option("--daysago",
@@ -43,16 +43,6 @@ class Command(ProjectBatchCommand):
         pushlog_project = options.get("pushlog_project")
 
         summary = options.get("summary")
-
-        if not numdays:
-            self.println("You must supply the number of days data.")
-            return
-        else:
-            try:
-                numdays = int(numdays)
-            except ValueError:
-                self.println("numdays must be an integer.")
-                return
 
         push_walker.run_metrics(
             project, pushlog_project, numdays, daysago
