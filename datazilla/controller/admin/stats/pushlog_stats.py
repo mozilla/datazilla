@@ -52,7 +52,7 @@ def get_not_referenced(project, startdate, enddate, branches=None):
         }
 
 
-def get_pushlogs(project, startdate, enddate, branches=None):
+def get_pushlogs(startdate, enddate, branches=None):
     """Return a list of pushlogs with changesets. """
     branches = branches or get_all_branches()
 

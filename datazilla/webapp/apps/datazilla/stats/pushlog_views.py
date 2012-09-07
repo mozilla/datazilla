@@ -32,7 +32,7 @@ def get_not_referenced(request, project):
     return HttpResponse(json.dumps(stats), content_type=API_CONTENT_TYPE)
 
 
-def get_pushlogs(request, project):
+def get_pushlogs(request):
     """
     Get a list of pushlogs with their revisions.
 
@@ -51,7 +51,6 @@ def get_pushlogs(request, project):
         branches = branches.split(",")
 
     stats = pushlog_stats.get_pushlogs(
-        project,
         range["start"],
         range["stop"],
         branches,

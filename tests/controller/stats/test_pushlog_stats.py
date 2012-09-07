@@ -67,13 +67,60 @@ def test_get_not_referenced(plm, plsm, ptm, monkeypatch):
             ]},
         ]
 
-    assert (result["with_matching_test_run"]["Firefox"]["pushlogs"] ==
-        exp_matching,
-            json.dumps(result, indent=4))
+    assert result["with_matching_test_run"]["Firefox"]["pushlogs"] == exp_matching
+    assert result["without_matching_test_run"]["Firefox"]["pushlogs"] == exp_non_matching
 
-    assert (result["without_matching_test_run"]["Firefox"]["pushlogs"] ==
-        exp_non_matching,
-            json.dumps(result, indent=4))
+
+def test_get_pushlogs(plm, plsm, monkeypatch):
+    """Test the get_pushlogs method."""
+
+    def mock_plsm():
+        return plsm
+    monkeypatch.setattr(pushlog_stats, 'get_plsm', mock_plsm)
+
+    def mock_plm():
+        return plm
+    monkeypatch.setattr(pushlog_stats, 'get_plm', mock_plm)
+
+    data1 = get_pushlog_dict_set()
+    plm._insert_branch_pushlogs(
+        get_branch_id(plm),
+        data1,
+        )
+
+    result = pushlog_stats.get_pushlogs(
+        startdate=1341451080,
+        enddate=1341494822,
+        )
+
+    exp = {
+        23049: {
+            "branch_name": "Firefox",
+            "revisions": [
+                "fbd96a0bcc00",
+                "fe305819d2f2"
+            ]
+        },
+        23052: {
+            "branch_name": "Firefox",
+            "revisions": [
+                "ea890a6eed56",
+                "bd74a2949929",
+                "5d6c06259bb1",
+                "7209f9f14a7d"
+            ]
+        },
+        23046: {
+            "branch_name": "Firefox",
+            "revisions": [
+                "785345035a3b"
+            ]
+        }
+    }
+
+
+    assert result == exp
+
 
 
 def test_get_all_branches(plm, monkeypatch):
