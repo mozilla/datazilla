@@ -77,7 +77,7 @@ def run_metrics(project, pushlog_project, numdays, daysago):
             revision = mtm.truncate_revision(node['node'])
 
             #Get the test value data for this revision
-            child_test_data = mtm.get_test_values(revision)
+            child_test_data = mtm.get_test_values_by_revision(revision)
             test_data_set = set(child_test_data.keys())
 
             ###
@@ -109,6 +109,9 @@ def run_metrics(project, pushlog_project, numdays, daysago):
                 threshold_data = mtm.get_threshold_data(
                     child_test_data[child_key]['ref_data']
                     )
+
+
+                extend_ref_data(child_test_data, child_key, node)
 
                 if threshold_data:
 
@@ -197,12 +200,36 @@ def summary(project, pushlog_project, numdays, daysago):
             #Filter out tests that have had their summary computed
             store_list = get_test_keys_for_storage(mtm, metrics_data)
 
+            cached_parent_data = {}
+
             for test_key in store_list:
+
+                extend_ref_data(metrics_data, test_key, node)
+
+                t_test_run_id = \
+                    metrics_data[test_key]['ref_data']['threshold_test_run_id']
+
+                test_id = metrics_data[test_key]['ref_data']['test_id']
+
+                lookup_key = '{0}-{1}'.format(
+                    str(t_test_run_id), str(test_id)
+                    )
+
+                if lookup_key in cached_parent_data:
+                    parent_metrics_data = cached_parent_data[lookup_key]
+                else:
+                    parent_metrics_data = cached_parent_data.setdefault(
+                        lookup_key,
+                        mtm.get_metrics_data_from_ref_data(
+                            metrics_data[test_key]['ref_data'],
+                            t_test_run_id
+                            )
+                        )
 
                 ############
                 # ASSUMPTION: All of the metric values for each
                 # page in the test are computed.  This is currently
-                # true do to the requirements of the incoming JSON data
+                # true due to the requirements of the incoming JSON data
                 # for a given test run.
                 ###########
                 results = mtm.run_metric_summary(
@@ -210,12 +237,25 @@ def summary(project, pushlog_project, numdays, daysago):
                     metrics_data[test_key]['values']
                     )
 
-                mtm.store_metric_summary_results(
-                    revision,
-                    metrics_data[test_key]['ref_data'],
-                    results,
-                    metrics_data[test_key]['ref_data']['threshold_test_run_id'],
-                    )
+                if test_key in parent_metrics_data:
+
+                    mtm.store_metric_summary_results(
+                        revision,
+                        metrics_data[test_key]['ref_data'],
+                        results,
+                        metrics_data[test_key]['values'],
+                        metrics_data[test_key]['ref_data']['threshold_test_run_id'],
+                        parent_metrics_data[test_key]['values']
+                        )
+
+                else:
+                    mtm.store_metric_summary_results(
+                        revision,
+                        metrics_data[test_key]['ref_data'],
+                        results,
+                        metrics_data[test_key]['values'],
+                        metrics_data[test_key]['ref_data']['threshold_test_run_id']
+                        )
 
     plm.disconnect()
     mtm.disconnect()
@@ -243,7 +283,19 @@ def get_test_keys_for_storage(mtm, metrics_data):
             if summary_name in name:
                 store = False
                 break
+
         if store:
             store_list.add(test_key)
 
     return store_list
+
+def extend_ref_data(data, key, node):
+    """
+    Add additional keys to reference data
+    """
+
+    #Update the ref_data required values
+    data[key]['ref_data']['pushlog_id'] = node['pushlog_id']
+    data[key]['ref_data']['push_date'] = node['date']
+    data[key]['ref_data']['n_replicates'] = len(data[key]['values'])
+

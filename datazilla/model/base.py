@@ -113,13 +113,13 @@ class PushLogModel(DatazillaModelBase):
 
         proc = 'hgmozilla.selects.get_all_branches'
 
-        data_iter = self.hg_ds.dhub.execute(
+        data = self.hg_ds.dhub.execute(
             proc=proc,
             debug_show=self.DEBUG,
             return_type='tuple',
             )
 
-        return data_iter
+        return data
 
 
     def get_branch_list(self, branch=None):
@@ -140,46 +140,46 @@ class PushLogModel(DatazillaModelBase):
 
         proc = 'hgmozilla.selects.get_all_pushlogs'
 
-        data_iter = self.hg_ds.dhub.execute(
+        data = self.hg_ds.dhub.execute(
             proc=proc,
             debug_show=self.DEBUG,
             return_type='tuple',
             )
 
-        return data_iter
+        return data
 
 
     def get_all_changesets(self):
 
         proc = 'hgmozilla.selects.get_all_changesets'
 
-        data_iter = self.hg_ds.dhub.execute(
+        data = self.hg_ds.dhub.execute(
             proc=proc,
             debug_show=self.DEBUG,
             return_type='tuple',
             )
 
-        return data_iter
+        return data
 
     def get_changesets(self, pushlog_id):
 
         placeholders = [pushlog_id]
         proc = 'hgmozilla.selects.get_changesets'
 
-        data_iter = self.hg_ds.dhub.execute(
+        data = self.hg_ds.dhub.execute(
             proc=proc,
             debug_show=self.DEBUG,
             return_type='tuple',
             placeholders=placeholders,
             )
 
-        return data_iter
+        return data
 
     def get_branch_pushlog(self, branch_id, days_ago=None, numdays=None):
         """Retrieve pushes for a given branch for time range. If no
            time range is provided return all pushlogs for the branch."""
 
-        data_iter = {}
+        data = {}
 
         if days_ago and numdays:
 
@@ -187,7 +187,7 @@ class PushLogModel(DatazillaModelBase):
 
             proc = 'hgmozilla.selects.get_branch_pushlog'
 
-            data_iter = self.hg_ds.dhub.execute(
+            data = self.hg_ds.dhub.execute(
                 proc=proc,
                 debug_show=self.DEBUG,
                 return_type='tuple',
@@ -197,14 +197,14 @@ class PushLogModel(DatazillaModelBase):
         else:
             proc = 'hgmozilla.selects.get_all_branch_pushlogs'
 
-            data_iter = self.hg_ds.dhub.execute(
+            data = self.hg_ds.dhub.execute(
                 proc=proc,
                 debug_show=self.DEBUG,
                 return_type='tuple',
                 placeholders=[branch_id]
             )
 
-        return data_iter
+        return data
 
 
     def get_params(self, numdays, enddate=None):
@@ -293,7 +293,22 @@ class PushLogModel(DatazillaModelBase):
             "changesets_skipped": self.changeset_skipped_count,
         }
 
+    def get_node_from_revision(self, revision, branch):
 
+        proc = 'hgmozilla.selects.get_node_from_revision'
+
+        data = self.hg_ds.dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            placeholders=[revision, branch]
+            )
+
+        node = {}
+        if data:
+            node = data[0]
+
+        return node
 
     def _insert_branch_pushlogs(self, branch_id, pushlog_dict):
         """Loop through all the pushlogs and insert them."""
@@ -800,7 +815,7 @@ class PerformanceTestModel(DatazillaModelBase):
 
         proc = 'perftest.selects.get_all_summary_cache_data'
 
-        data_iter = self.sources["perftest"].dhub.execute(
+        data = self.sources["perftest"].dhub.execute(
             proc=proc,
             debug_show=self.DEBUG,
             chunk_size=5,
@@ -808,7 +823,7 @@ class PerformanceTestModel(DatazillaModelBase):
             return_type='tuple',
             )
 
-        return data_iter
+        return data
 
 
     def set_default_product(self, id):
@@ -928,6 +943,7 @@ class PerformanceTestModel(DatazillaModelBase):
     def process_objects(self, loadlimit):
         """Processes JSON blobs from the objectstore into perftest schema."""
         rows = self.claim_objects(loadlimit)
+        test_run_ids_loaded = []
 
         for row in rows:
             row_id = int(row['id'])
@@ -944,7 +960,9 @@ class PerformanceTestModel(DatazillaModelBase):
                     )
             else:
                 self.mark_object_complete(row_id, test_run_id)
+                test_run_ids_loaded.append(test_run_id)
 
+        return test_run_ids_loaded
 
     def claim_objects(self, limit):
         """

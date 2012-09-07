@@ -123,7 +123,9 @@ def test_duplicate_run(capsys, mtm, ptm, plm, monkeypatch):
     ##########
     predicted_threshold_revision = setup_data['sample_revisions'][
         len(setup_data['sample_revisions']) - 1]
-    threshold_data = mtm.get_test_values(predicted_threshold_revision)
+    threshold_data = mtm.get_test_values_by_revision(
+        predicted_threshold_revision
+        )
 
     no_parent_revision = setup_data['sample_revisions'][0]
     np_data = mtm.get_metrics_data(no_parent_revision)
@@ -150,7 +152,7 @@ def _test_thresholds(setup_data, mtm, ptm, threshold_revision_arg=None):
     if threshold_revision_arg:
         target_threshold_revision = threshold_revision_arg
 
-    child_data = mtm.get_test_values(last_revision)
+    child_data = mtm.get_test_values_by_revision(last_revision)
 
     fail_revision = setup_data['fail_revision']
     skip_revision = setup_data['skip_revision']

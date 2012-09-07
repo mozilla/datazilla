@@ -71,7 +71,27 @@ def get_metric_collection_data():
          {'metric_value_name': 'fdr',
           'metric_value_id': 5,
           'metric_id': 1,
-          'metric_name': 'welch_ttest'}
+          'metric_name': 'welch_ttest'},
+
+         {'metric_value_name': 'pushlog_id',
+          'metric_value_id': 6,
+          'metric_id': 1,
+          'metric_name': 'welch_ttest'},
+
+         {'metric_value_name': 'push_date',
+          'metric_value_id': 7,
+          'metric_id': 1,
+          'metric_name': 'welch_ttest'},
+
+         {'metric_value_name': 'trend_mean',
+          'metric_value_id': 8,
+          'metric_id': 1,
+          'metric_name': 'welch_ttest'},
+
+         {'metric_value_name': 'trend_stddev',
+          'metric_value_id': 8,
+          'metric_id': 1,
+          'metric_name': 'welch_ttest'},
           )
 
     metric_collection_data = {

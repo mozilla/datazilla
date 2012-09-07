@@ -37,11 +37,11 @@
             "host":"master_host"
         },
         "get_branch_pushlog":{
-            "sql":"SELECT p.id,
+            "sql":"SELECT p.id AS 'pushlog_id',
                           p.push_id,
                           p.date,
                           c.node,
-                          b.id,
+                          b.id AS 'branch_id',
                           b.name
                    FROM pushlogs AS p
                    LEFT JOIN changesets AS c ON p.id = c.pushlog_id
@@ -52,17 +52,32 @@
         },
 
         "get_all_branch_pushlogs":{
-            "sql":"SELECT p.id,
+            "sql":"SELECT p.id AS 'pushlog_id',
                           p.push_id,
                           p.date,
                           c.node,
-                          b.id,
+                          b.id AS 'branch_id',
                           b.name
                    FROM pushlogs AS p
                    LEFT JOIN changesets AS c ON p.id = c.pushlog_id
                    LEFT JOIN branches AS b ON p.branch_id = b.id
                    WHERE b.id = ?
                    ORDER BY b.name, p.date ASC",
+            "host":"master_host"
+        },
+
+        "get_node_from_revision":{
+            "sql":"SELECT p.id AS 'pushlog_id',
+                          p.push_id,
+                          p.date,
+                          b.id AS 'branch_id',
+                          b.name,
+                          c.node
+                   FROM pushlogs AS p
+                   LEFT JOIN changesets AS c ON p.id = c.pushlog_id
+                   LEFT JOIN branches AS b ON p.branch_id = b.id
+                   WHERE INSTR(node, ?) AND b.name = ?",
+
             "host":"master_host"
         }
     }

@@ -7,6 +7,7 @@ from django.conf import settings
 
 from dzmetrics.ttest import welchs_ttest, welchs_ttest_internal
 from dzmetrics.fdr import rejector
+from dzmetrics.data_smoothing import exp_smooth
 
 from base import DatazillaModelBase
 
@@ -100,7 +101,37 @@ class MetricsTestModel(DatazillaModelBase):
         m = self.mf.get_metric_method(test_name)
         return m.SUMMARY_NAME
 
-    def get_test_values(self, revision):
+    def get_test_values_by_test_run_id(self, test_run_id):
+        """
+        Retrieve all test values associated with a given test_run_id.
+
+        test_run_id - test run id
+
+        returns the following dictionary:
+
+            metric_key : {
+                    ref_data: {
+                        all self.METRIC_KEYS: associated id,
+                        test_run_id:id,
+                        test_name:"Talos test name",
+                        revision:revision
+                    },
+
+                    values : [ test_value1, test_value2, test_value3, ... ]
+           }
+        """
+        proc = 'perftest.selects.get_test_values_by_test_run_id'
+
+        revision_data = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            placeholders=[test_run_id],
+            return_type='tuple',
+            )
+
+        return self._adapt_test_values(revision_data)
+
+    def get_test_values_by_revision(self, revision):
         """
         Retrieve all test values associated with a given revision.
 
@@ -119,7 +150,7 @@ class MetricsTestModel(DatazillaModelBase):
                     values : [ test_value1, test_value2, test_value3, ... ]
            }
         """
-        proc = 'perftest.selects.get_test_values'
+        proc = 'perftest.selects.get_test_values_by_revision'
 
         revision_data = self.sources["perftest"].dhub.execute(
             proc=proc,
@@ -127,6 +158,10 @@ class MetricsTestModel(DatazillaModelBase):
             placeholders=[revision],
             return_type='tuple',
             )
+
+        return self._adapt_test_values(revision_data)
+
+    def _adapt_test_values(self, revision_data):
 
         key_lookup = {}
         for d in revision_data:
@@ -136,7 +171,7 @@ class MetricsTestModel(DatazillaModelBase):
                 key_lookup[key] = {
                     'values':[],
                     'ref_data':self.extend_with_metrics_keys(
-                        d, ['test_run_id', 'test_name', 'revision']
+                        d, ['test_run_id', 'test_name', 'revision', 'branch']
                         )
                     }
             key_lookup[key]['values'].append( d['value'] )
@@ -164,7 +199,6 @@ class MetricsTestModel(DatazillaModelBase):
                 values : [ test_value1, test_value2, test_value3, ... ]
             }
         """
-
         m = self.mf.get_metric_method(ref_data['test_name'])
         metric_id = m.get_metric_id()
 
@@ -206,6 +240,47 @@ class MetricsTestModel(DatazillaModelBase):
             key_lookup[key]['metric_values'].setdefault(
                 d['metric_value_name'], d['metric_value']
                   )
+
+        return key_lookup
+
+    def get_metrics_data_from_ref_data(self, ref_data, test_run_id):
+
+        proc = 'perftest.selects.get_metrics_data_from_ref_data'
+
+        computed_metrics = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            placeholders=[
+                ref_data['product_id'],
+                ref_data['operating_system_id'],
+                ref_data['processor'],
+                ref_data['test_id'],
+                test_run_id
+                ],
+            return_type='tuple'
+            )
+
+        key_lookup = {}
+        for d in computed_metrics:
+            key = self.get_metrics_key(d)
+            if key not in key_lookup:
+                #set reference data
+                key_lookup[key] = {
+                    'values':[],
+                    'ref_data':self.extend_with_metrics_keys(
+                        d, ['test_run_id',
+                            'test_name',
+                            'revision',
+                            'threshold_test_run_id']
+                        )
+                    }
+
+            key_lookup[key]['values'].append({
+                'value':d['value'],
+                'page_id':d['page_id'],
+                'metric_value_id':d['metric_value_id'],
+                'metric_value_name':d['metric_value_name']
+                })
 
         return key_lookup
 
@@ -257,6 +332,7 @@ class MetricsTestModel(DatazillaModelBase):
                             'threshold_test_run_id']
                         )
                     }
+
             key_lookup[key]['values'].append( {
                 'value':d['value'],
                 'page_id':d['page_id'],
@@ -308,7 +384,7 @@ class MetricsTestModel(DatazillaModelBase):
                 if revision in self.skip_revisions:
                     continue
 
-                data = self.get_test_values(revision)
+                data = self.get_test_values_by_revision(revision)
 
                 #no data for this revision, skip
                 if not data:
@@ -388,7 +464,8 @@ class MetricsTestModel(DatazillaModelBase):
                     )
 
     def store_metric_summary_results(
-        self, revision, ref_data, results, threshold_test_run_id
+        self, revision, ref_data, results, metrics_data,
+        threshold_test_run_id, parent_metrics_data={}
         ):
 
         proc = 'perftest.inserts.set_test_page_metric'
@@ -396,7 +473,8 @@ class MetricsTestModel(DatazillaModelBase):
         m = self.mf.get_metric_method(ref_data['test_name'])
 
         placeholders = m.get_data_for_summary_storage(
-            ref_data, results, threshold_test_run_id
+            ref_data, results, metrics_data, threshold_test_run_id,
+            parent_metrics_data
             )
 
         if placeholders:
@@ -551,8 +629,19 @@ class MetricMethodInterface(object):
 
         ref_data = {
             all MetricsTestModel.METRIC_KEYS: associated id,
+
+            pushlog_id: Autoincremented id from pushlog table that
+                corresponds to this revision,
+
+            push_date: The data the push occurred,
+
+            n_replicates: Number of replicates associated with the 
+                metric datum,
+
             test_run_id:id,
+
             test_name:"Talos test name",
+
             revision:revision
             }
 
@@ -563,7 +652,8 @@ class MetricMethodInterface(object):
         raise NotImplementedError(self.MSG)
 
     def get_data_for_summary_storage(
-        self, ref_data, result, threshold_test_run_id
+        self, ref_data, results, metrics_data, threshold_test_run_id,
+        parent_metrics_data={}
         ):
         """
         Get data for metric summary storage.  Should return a list of
@@ -571,14 +661,29 @@ class MetricMethodInterface(object):
 
         ref_data = {
             all MetricsTestModel.METRIC_SUMMARY_KEYS: associated id,
+
+            pushlog_id: Autoincremented id from pushlog table that
+                corresponds to this revision,
+
+            push_date: The data the push occurred,
+
+            n_replicates: Number of replicates associated with the
+                metric datum,
+
             test_run_id:id,
+
             test_name:"Talos test name",
+
             revision:revision
             }
 
         result = The return value from run_metric_summary_method.
 
+        metrics_data = All metrics data associated with the datum.
+
         threshold_test_run_id = test_run_id used as threshold/parent.
+
+        parent_metrics_data = The parents metrics data, defaults to {}
         """
         raise NotImplementedError(self.MSG)
 
@@ -676,7 +781,10 @@ class TtestMethod(MetricMethodBase):
 
         super(TtestMethod, self).__init__(metric_collection)
 
-        self.result_key = set([ 'p', 'h0_rejected', self.SUMMARY_NAME ])
+        self.result_key = set([
+            'p', 'h0_rejected', self.SUMMARY_NAME, 'pushlog_id',
+            'push_date'
+            ])
 
         #Store p value id for fdr
         self.metric_value_name = 'p'
@@ -699,12 +807,22 @@ class TtestMethod(MetricMethodBase):
             trend_stddev = parent_metric_data['trend_stddev']
             trend_mean = parent_metric_data['trend_mean']
 
-            result = welchs_ttest_internal(
+            p_value = welchs_ttest_internal(
                 n, s, m, parent_n, trend_stddev, trend_mean
                 )
 
+            #Map results to output structure of welchs_ttest
+            result = {
+                "p": p_value,
+                "stddev1":s,
+                "stddev2":trend_stddev,
+                "mean1":m,
+                "mean2":trend_stddev,
+                "h0_rejected":p_value < self.ALPHA
+                }
+
         else:
-            #No trend lind data is available use the parent
+            #No trend line data is available use the parent
             #replicate data
 
             #Filter out the first replicate here
@@ -764,32 +882,27 @@ class TtestMethod(MetricMethodBase):
         placeholders = []
 
         for metric_value_name in self.metric_values:
-            value = self.get_metric_value(metric_value_name, result)
+            value = self.get_metric_value(
+                metric_value_name, ref_data, result
+                )
 
             if metric_value_name == 'h0_rejected':
+                #Convert booleans to 0 or 1 for database storage
+                value = int(value)
 
-                if value == False:
-                    value = 0
-                else:
-                    value = 1
+            if value == None:
+                continue
 
-            if value != None:
-
-                placeholders.append(
-                    [
-                        test_run_id,
-                        self.metric_id,
-                        self.metric_values[ metric_value_name ],
-                        ref_data['page_id'],
-                        value,
-                        threshold_test_run_id
-                    ]
-                )
+            self._append_summary_placeholders(
+                placeholders, test_run_id, metric_value_name, ref_data,
+                value, threshold_test_run_id
+            )
 
         return placeholders
 
     def get_data_for_summary_storage(
-        self, ref_data, result, threshold_test_run_id
+        self, ref_data, result, metrics_data, threshold_test_run_id,
+        parent_data={}
         ):
 
         test_run_id = ref_data['test_run_id']
@@ -797,28 +910,124 @@ class TtestMethod(MetricMethodBase):
         placeholders = []
 
         for d in result:
-            value = d['value']
+            #Convert booleans to 0 or 1 for database storage
+            value = int(d['value'])
 
-            if value == False:
-                value = 0
+            if value == None:
+                continue
+
+            #Load the summary data
+            self._append_summary_placeholders(
+                placeholders, test_run_id, self.SUMMARY_NAME, ref_data,
+                value, threshold_test_run_id
+            )
+
+            #Evaluate whether the summary passes or not
+            summary_pass = self.evaluate_metric_summary_result(
+                { d['metric_value_name']: d['value'] }
+                )
+
+            #Retrieve required values
+            lookup = self._get_summary_data_lookup(metrics_data)
+            trend_mean = lookup.get('trend_mean', None)
+            trend_stddev = lookup.get('trend_mean', None)
+            #This variable represents whether the test passes or fails,
+            #it's value is ultimately determined by the results of
+            #fdr.rejector
+            test_evaluation = 0
+
+            if summary_pass:
+                #Summary test passes, update or initialize
+                #trend line
+                m_stddev = lookup.get('stddev', None)
+                m_mean = lookup.get('mean', None)
+                test_evaluation = 1
+
+                n_replicates = ref_data['n_replicates']
+
+                if (trend_mean != None) and \
+                    (trend_stddev != None):
+
+                    #Update trend line
+                    es_result = exp_smooth(
+                        n_replicates, m_stddev, m_mean,
+                        n_replicates, trend_stddev, trend_mean
+                        )
+
+                    trend_mean = es_result['mean']
+                    trend_stddev = es_result['stddev']
+                else:
+                    #First time the t-test has been run for this metric
+                    #datum, initialize the trend line
+                    if parent_data:
+                        p_lookup = self._get_summary_data_lookup(
+                            parent_data
+                            )
+
+                        p_stddev = p_lookup.get('stddev', None)
+                        p_mean = p_lookup.get('mean', None)
+
+                        if (p_mean != None) and \
+                            (p_stddev != None):
+
+                            es_result = exp_smooth(
+                                n_replicates, m_stddev, m_mean,
+                                n_replicates, p_stddev, p_mean
+                                )
+
+                            trend_mean = es_result['mean']
+                            trend_stddev = es_result['stddev']
             else:
-                value = 1
+               #Summary fails, store the parent trend values
+               if parent_data:
+                    parent_lookup = self._get_summary_data_lookup(
+                        parent_data
+                        )
+                    trend_mean = parent_lookup['trend_mean']
+                    trend_stddev = parent_lookup['trend_stddev']
 
-            if value != None:
-                placeholders.append(
-                    [
-                        test_run_id,
-                        self.metric_id,
-                        self.metric_values[ self.SUMMARY_NAME ],
-                        ref_data['page_id'],
-                        value,
-                        threshold_test_run_id
-                    ]
+            #If the trend_mean and trend_stddev are not set at this
+            #point, there is no threshold trend to use and no parent
+            #found
+            if trend_mean and trend_stddev:
+
+                #store trend mean
+                self._append_summary_placeholders(
+                    placeholders, test_run_id, 'trend_mean', ref_data,
+                    trend_mean, threshold_test_run_id
+                )
+
+                #store trend stddev
+                self._append_summary_placeholders(
+                    placeholders, test_run_id, 'trend_stddev', ref_data,
+                    trend_stddev, threshold_test_run_id
+                )
+
+                #store test_evaluation
+                self._append_summary_placeholders(
+                    placeholders, test_run_id, 'test_evaluation', ref_data,
+                    test_evaluation, threshold_test_run_id
                 )
 
         return placeholders
 
-    def get_metric_value(self, metric_value_name, result):
+    def _append_summary_placeholders(
+        self, placeholders, test_run_id, metric_value_name, ref_data,
+        value, threshold_test_run_id
+        ):
+
+        placeholders.append(
+            [
+                test_run_id,
+                self.metric_id,
+                self.metric_values[ metric_value_name ],
+                ref_data['page_id'],
+                value,
+                threshold_test_run_id
+            ]
+        )
+
+    def get_metric_value(self, metric_value_name, ref_data, result):
 
         value = None
 
@@ -826,15 +1035,32 @@ class TtestMethod(MetricMethodBase):
 
             if metric_value_name in self.result_key:
                 value = result[metric_value_name]
+
             else:
                 value = result[metric_value_name + str(1)]
 
         except KeyError:
-            #metric_value_name not in result, return None
+
+            #metric_value_name not in result, try the ref_data
+            if metric_value_name in ref_data:
+                value = ref_data[metric_value_name]
             return value
+
         else:
             return value
 
+    def _get_summary_data_lookup(self, data):
+
+        lookup = {}
+        required_keys = set(
+            ['trend_mean', 'trend_stddev', 'stddev', 'mean']
+            )
+        for key in required_keys:
+            for d in data:
+                if key == d['metric_value_name']:
+                   lookup[key] = d['value']
+                   break
+        return lookup
 
 class MetricMethodError:
     """

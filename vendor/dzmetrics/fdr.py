@@ -1,6 +1,6 @@
 """False discovery rate control."""
 
-def rejector(p_values, q=0.1):
+def rejector(p_values, q=0.05):
     """
     Implements the Benjamini-Hochberg method of false discovery rate control.
 

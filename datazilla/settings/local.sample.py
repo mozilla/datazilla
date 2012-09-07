@@ -30,4 +30,4 @@ SECRET_KEY = os.environ.get("DATAZILLA_DJANGO_SECRET_KEY", "")
 
 # Make this unique so that if you execute the tests against a shared database,
 # you don't conflict with other people running the tests simultaneously.
-TEST_DB_PREFIX="user_"
+TEST_DB_PREFIX="test_"

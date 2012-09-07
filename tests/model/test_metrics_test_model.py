@@ -124,7 +124,7 @@ def test_get_test_values_mk(ptm, mtm):
     ptm.load_test_data(sample_data)
 
     revision = sample_data['test_build']['revision']
-    model_data = mtm.get_test_values(revision)
+    model_data = mtm.get_test_values_by_revision(revision)
 
     examine_metric_key_lookup(mtm, sample_data, model_data)
 
@@ -136,7 +136,7 @@ def test_get_test_values(mtm, ptm):
 
     ptm.load_test_data(sample_data)
 
-    model_data = mtm.get_test_values(sample_revision)
+    model_data = mtm.get_test_values_by_revision(sample_revision)
 
     examine_metric_key_lookup(mtm, sample_data, model_data)
 
@@ -263,8 +263,11 @@ def test_store_metric_summary_results(mtm, ptm):
     ptm.load_test_data(parent_sample_data)
     ptm.load_test_data(child_sample_data)
 
-    child_data = mtm.get_test_values(child_revision)
-    parent_data = mtm.get_test_values(parent_revision)
+    parent_keys = parent_sample_data['results'].keys()
+    n_replicates = len( parent_sample_data['results'][ parent_keys[0] ] )
+
+    child_data = mtm.get_test_values_by_revision(child_revision)
+    parent_data = mtm.get_test_values_by_revision(parent_revision)
 
     summary_name = mtm.get_metric_summary_name(test_name)
 
@@ -293,11 +296,16 @@ def test_store_metric_summary_results(mtm, ptm):
             metrics_data[key]['ref_data'], metrics_data[key]['values']
             )
 
+        metrics_data[key]['ref_data']['pushlog_id'] = 1
+        metrics_data[key]['ref_data']['push_date'] = 1
+        metrics_data[key]['ref_data']['n_replicates'] = n_replicates
+
         #Store the metric summary results
         mtm.store_metric_summary_results(
             child_revision,
             metrics_data[key]['ref_data'],
             summary_results,
+            metrics_data[key]['values'],
             parent_data[key]['ref_data']['test_run_id']
             )
 
@@ -378,8 +386,8 @@ def test_insert_or_update_metric_threshold(mtm, ptm):
     ptm.load_test_data(sample_data)
 
     # retrieve loaded test values
-    model_data = mtm.get_test_values(revision)
-    parent_model_data = mtm.get_test_values(parent_revision)
+    model_data = mtm.get_test_values_by_revision(revision)
+    parent_model_data = mtm.get_test_values_by_revision(parent_revision)
 
     # retrieve metric id for insert_or_update_threshold
     metric_method = mtm.mf.get_metric_method(test_name)
@@ -436,7 +444,7 @@ def test_get_parent_test_data_case_one(mtm, ptm, plm, monkeypatch):
     sample_revisions = setup_data['sample_revisions']
 
     #Get the child data
-    test_one_data = mtm.get_test_values(
+    test_one_data = mtm.get_test_values_by_revision(
         sample_revisions[setup_data['target_revision_index']]
         )
 
@@ -450,7 +458,7 @@ def test_get_parent_test_data_case_one(mtm, ptm, plm, monkeypatch):
         )
 
     #Parent data should be at target_revision_index - 1
-    reference_data = mtm.get_test_values(
+    reference_data = mtm.get_test_values_by_revision(
         sample_revisions[setup_data['target_revision_index'] - 1]
         )
 
@@ -477,7 +485,7 @@ def test_get_parent_test_data_case_two(mtm, ptm, plm, monkeypatch):
         setup_data['skip_index'] - 1 ]
 
     #Get the child data
-    test_two_data = mtm.get_test_values(child_revision)
+    test_two_data = mtm.get_test_values_by_revision(child_revision)
 
     test_two_key = test_two_data.keys()[0]
 
@@ -487,7 +495,7 @@ def test_get_parent_test_data_case_two(mtm, ptm, plm, monkeypatch):
         test_two_key, None
         )
 
-    reference_data = mtm.get_test_values(target_revision)
+    reference_data = mtm.get_test_values_by_revision(target_revision)
 
     assert mtm.skip_revisions == set([skip_revision])
     assert parent_data['ref_data'] == \
@@ -511,7 +519,7 @@ def test_get_parent_test_data_case_three(mtm, ptm, plm, monkeypatch):
     fail_revision = setup_data['fail_revision']
     fail_index = setup_data['test_fail_index']
 
-    fail_data = mtm.get_test_values(fail_revision)
+    fail_data = mtm.get_test_values_by_revision(fail_revision)
 
     for key in fail_data:
 
@@ -545,7 +553,7 @@ def test_get_parent_test_data_case_four(mtm, ptm, plm, monkeypatch):
     sample_revisions = setup_data['sample_revisions']
 
     #Get the child data
-    test_four_data = mtm.get_test_values(
+    test_four_data = mtm.get_test_values_by_revision(
         sample_revisions[setup_data['target_revision_index']]
         )
 
@@ -560,7 +568,7 @@ def test_get_parent_test_data_case_four(mtm, ptm, plm, monkeypatch):
         )
 
     #Parent data should be at target_revision_index - 1
-    reference_data = mtm.get_test_values(
+    reference_data = mtm.get_test_values_by_revision(
         sample_revisions[setup_data['target_revision_index'] - 1]
         )
 
@@ -701,5 +709,4 @@ def _adapt_data(mtm, data):
         adapted_reference[key]['values'].append( d['value'] )
 
     return adapted_reference
-
 
