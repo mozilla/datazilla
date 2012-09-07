@@ -117,34 +117,6 @@ CREATE TABLE `machine` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `method`
---
-
-DROP TABLE IF EXISTS `method`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-
-/***************
-method - Description
-
-The method associated with a metric that is associated 
-with a particular test run.  A possible example of this 
-might be a particular method for calculating whether a 
-performance regression has occurred on a test run.  The 
-code_ref column would store a reference to the actual 
-implementation of the method.
-****************/
-CREATE TABLE `method` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(25) COLLATE utf8_bin NOT NULL,
-  `description` mediumtext COLLATE utf8_bin NOT NULL,
-  `code_ref` varchar(255) COLLATE utf8_bin DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `name_UNIQUE` (`name`)
-) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
 -- Table structure for table `metric`
 --
 
@@ -155,21 +127,66 @@ DROP TABLE IF EXISTS `metric`;
 /*************
 metric - Description
 
-The metric table contains a list of metrics that can 
-be used to calculate values in test_metric.  So a metric 
-can have different methods associated with it and can also 
-be associated with any number of test values.  A metric 
-could be any type of calculation such as standard deviation,
- a t-test, or p-value etc...
+The metric table contains a list of metrics that can
+be used to calculate values in test_page_metric.  So a metric
+can have different methods associated with it and can also
+be associated with any number of test values.  A metric
+could be any type of calculation such as a t-test.
 **************/
 CREATE TABLE `metric` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(25) COLLATE utf8_bin NOT NULL,
-  `description` mediumtext COLLATE utf8_bin NOT NULL,
+  `description` mediumtext COLLATE utf8_bin NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name_UNIQUE` (`name`)
 ) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+/*Insert default metrics*/
+LOCK TABLES `metric` WRITE;
+/*!40000 ALTER TABLE `metric` DISABLE KEYS */;
+INSERT INTO `metric` (`name`, `description`) VALUES ('welch_ttest', "one-sided Welchs t-test");
+UNLOCK TABLES;
+
+
+
+--
+-- Table structure for table `metric_value`
+--
+
+DROP TABLE IF EXISTS `metric_value`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+
+/***************
+metric_value - Description
+
+The metric_value table contains the name and description of
+a particular metric stored with a test_run.  So for a t-test
+metric the associated metric_values might include a mean, std,
+and p-value.  Each of these metric values would be assigned an
+id.  Any type of metric value can be defined to meet the needs of
+a test.  A pass_fail metric value might indicate which page in a test
+run passed a t-test.
+****************/
+CREATE TABLE `metric_value` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `metric_id` int(11) NOT NULL,
+  `name` varchar(25) COLLATE utf8_bin NOT NULL,
+  `description` mediumtext COLLATE utf8_bin NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name_UNIQUE` (`name`),
+  KEY `metric_id_key` (`metric_id`),
+  KEY `name_key` (`name`),
+  CONSTRAINT `fk_metric_value_metric` FOREIGN KEY (`metric_id`) REFERENCES `metric` (`id`)
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+/*Insert metric values associated with t-test*/
+LOCK TABLES `metric_value` WRITE;
+/*!40000 ALTER TABLE `metric_value` DISABLE KEYS */;
+INSERT INTO `metric_value` (`metric_id`, `name`) VALUES (1, 'stddev'), (1, 'mean'), (1, 'p'), (1, 'h0_rejected'), (1, 'n_replicates'), (1, 'fdr'), (1, 'trend_stddev'), (1, 'trend_mean'), (1, 'pushlog_id'), (1, 'push_date'), (1, 'test_evaluation');
+UNLOCK TABLES;
 
 --
 -- Table structure for table `operating_system`
@@ -418,32 +435,41 @@ CREATE TABLE `test_collection_map` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `test_metric`
+-- Table structure for table `test_page_metric`
 --
 
-DROP TABLE IF EXISTS `test_metric`;
+DROP TABLE IF EXISTS `test_page_metric`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 
 /*************
-test_metric - Description
+test_page_metric - Description
 
-The test_metric table contains metrics associated with a 
-test run.  A metric could be any type of calculation 
+The test_page_metric table contains metrics associated with the
+pages of a given test run.  A metric could be any type of calculation
 such as standard deviation, a t-test, or p-value etc...
+The type of metric stored with a test run is determined by
+the metric_value_id.  The status column allows us to ignore a stored
+metric if necessary.
 **************/
-CREATE TABLE `test_metric` (
+CREATE TABLE `test_page_metric` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `test_run_id` int(11) NOT NULL,
-  `method_id` int(11) NOT NULL,
+  `threshold_test_run_id` int(11) NOT NULL,
   `metric_id` int(11) NOT NULL,
+  `metric_value_id` int(11) NOT NULL,
+  `page_id` int(11),
   `value` double NOT NULL,
+  `status` tinyint(4) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`),
   KEY `test_run_id_key` (`test_run_id`),
-  KEY `method_id_key` (`method_id`),
+  KEY `threshold_test_run_id_key` (`threshold_test_run_id`),
   KEY `metric_id_key` (`metric_id`),
-  CONSTRAINT `fk_test_metric_method` FOREIGN KEY (`method_id`) REFERENCES `method` (`id`),
-  CONSTRAINT `fk_test_metric_metric` FOREIGN KEY (`metric_id`) REFERENCES `metric` (`id`)
+  KEY `metric_value_id_key` (`metric_value_id`),
+  KEY `value_key` (`value`),
+  CONSTRAINT `fk_test_page_metric_metric` FOREIGN KEY (`metric_id`) REFERENCES `metric` (`id`),
+  CONSTRAINT `fk_test_page_metric_metric_value` FOREIGN KEY (`metric_value_id`) REFERENCES `metric_value` (`id`),
+  CONSTRAINT `fk_test_page_metric_page` FOREIGN KEY (`page_id`) REFERENCES `pages` (`id`)
 ) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -458,9 +484,9 @@ DROP TABLE IF EXISTS `test_option_values`;
 /***************
 test_option_values - Description
 
-This table contains options associated with a particular 
-test run.  These options could be command line options to 
-the program running the test, or any other type of option 
+This table contains options associated with a particular
+test run.  These options could be command line options to
+the program running the test, or any other type of option
 that dictates how a particular test is run or behaves.
 ****************/
 CREATE TABLE `test_option_values` (
@@ -550,32 +576,39 @@ CREATE TABLE `test_value` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `threshold`
+-- Table structure for table `metric_threshold`
 --
 
-DROP TABLE IF EXISTS `threshold`;
+DROP TABLE IF EXISTS `metric_threshold`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 
 /*********************
-threshold - Description
+metric_threshold - Description
 
-The threshold table is intended to associate a threshold value 
-with a particular test and value type combination.  When this 
-threshold is surpassed the test is considered to be a failure.
 **********************/
-CREATE TABLE `threshold` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `value_id` int(11) NOT NULL,
+CREATE TABLE `metric_threshold` (
+  `product_id` int(11) NOT NULL,
+  `operating_system_id` int(11) NOT NULL,
+  `processor` varchar(25) NOT NULL,
+  `metric_id` int(11) NOT NULL,
   `test_id` int(11) NOT NULL,
-  `standard` double NOT NULL,
-  `creation_date` datetime NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `value_id_key` (`value_id`),
-  KEY `creation_date_key` (`creation_date`),
+  `page_id` int(11) NOT NULL,
+  `test_run_id` int(11) NOT NULL,
+  `revision` varchar(16) NOT NULL,
+  KEY `product_id_key` (`product_id`),
+  KEY `operating_system_id_key` (`operating_system_id`),
+  KEY `processor_key` (`processor`),
+  KEY `metric_id_key` (`metric_id`),
   KEY `test_id_key` (`test_id`),
-  CONSTRAINT `fk_threshold_test` FOREIGN KEY (`test_id`) REFERENCES `test` (`id`),
-  CONSTRAINT `fk_threshold_value` FOREIGN KEY (`value_id`) REFERENCES `value` (`id`)
+  KEY `page_id_key` (`page_id`),
+  KEY `test_run_id_key` (`test_run_id`),
+  KEY `revision_key` (`revision`),
+  CONSTRAINT `fk_metric_threshold_product` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`),
+  CONSTRAINT `fk_metric_threshold_machine` FOREIGN KEY (`operating_system_id`) REFERENCES `machine` (`operating_system_id`),
+  CONSTRAINT `fk_metric_threshold_test` FOREIGN KEY (`test_id`) REFERENCES `test` (`id`),
+  CONSTRAINT `fk_metric_threshold_page` FOREIGN KEY (`page_id`) REFERENCES `pages` (`id`),
+  UNIQUE KEY `metric_threshold_UNIQUE` (`product_id`, `operating_system_id`, `processor`, `metric_id`, `test_id`, `page_id`)
 ) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

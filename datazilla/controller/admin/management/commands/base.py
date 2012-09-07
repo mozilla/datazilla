@@ -93,7 +93,6 @@ class ProjectBatchCommand(ProjectCommand):
 
     def handle_noargs(self, **options):
         """Handle working on a single project or looping over several."""
-
         project = options.get("project")
         del options["project"]
         cron_batches = options.get("cron_batches")

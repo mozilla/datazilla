@@ -108,38 +108,39 @@ def test_get_json_blob(ptm, client, monkeypatch):
         }}
     exp_ra = {
         u"three.com": [
-            u"789.0",
-            u"705.0",
-            u"739.0"
+            789.0,
+            705.0,
+            739.0
         ],
         u"one.com": [
-            u"789.0",
-            u"705.0",
-            u"739.0"
+            789.0,
+            705.0,
+            739.0
         ],
         u"two.com": [
-            u"789.0",
-            u"705.0",
-            u"739.0"
+            789.0,
+            705.0,
+            739.0
         ]}
     exp_res = {
         u"three.com": [
-            u"789.0",
-            u"705.0",
-            u"739.0"
+            789.0,
+            705.0,
+            739.0
         ],
         u"one.com": [
-            u"789.0",
-            u"705.0",
-            u"739.0"
+            789.0,
+            705.0,
+            739.0
         ],
         u"two.com": [
-            u"789.0",
-            u"705.0",
-            u"739.0"
+            789.0,
+            705.0,
+            739.0
         ]}
 
     rj = response.json
+
     assert rj["test_machine"] == exp_tm
     # these ids can vary
     del(rj["test_build"]["id"])
@@ -166,5 +167,5 @@ def test_get_db_size(ptm, client):
 
     assert response.json == [
         {"size_mb": "0.08", "db_name": "{0}_objectstore_1".format(ptm.project)},
-        {"size_mb": "1.00", "db_name": "{0}_perftest_1".format(ptm.project)}
+        {"size_mb": "1.16", "db_name": "{0}_perftest_1".format(ptm.project)}
         ]

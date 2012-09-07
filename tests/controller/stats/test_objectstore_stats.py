@@ -154,7 +154,7 @@ def test_get_db_size(ptm):
         },
             {
             'db_name': u'{0}_perftest_1'.format(ptm.project),
-            'size_mb': Decimal('1.00')
+            'size_mb': Decimal('1.16')
         }
 
         )

@@ -1,0 +1,10 @@
+datazilla_metrics.egg-info/PKG-INFO
+datazilla_metrics.egg-info/SOURCES.txt
+datazilla_metrics.egg-info/dependency_links.txt
+datazilla_metrics.egg-info/not-zip-safe
+datazilla_metrics.egg-info/requires.txt
+datazilla_metrics.egg-info/top_level.txt
+dzmetrics/__init__.py
+dzmetrics/data_smoothing.py
+dzmetrics/fdr.py
+dzmetrics/ttest.py
