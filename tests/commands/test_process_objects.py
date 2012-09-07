@@ -9,7 +9,7 @@ import urllib
 from datazilla.model.base import TestData
 
 from ..sample_data import perftest_data
-from ..sample_pushlog import pushlog_json, pushlog_json_file
+from ..sample_pushlog import get_pushlog_json_set, get_pushlog_json_readable
 
 from django.core.management import call_command
 from datazilla.model import PerformanceTestModel
@@ -54,7 +54,7 @@ def test_object_transfer(ptm, plm, mtm, monkeypatch):
 
     #Prepare pushlog
     def mock_urlopen(nuttin_honey):
-        return pushlog_json_file()
+        return get_pushlog_json_readable(get_pushlog_json_set())
     monkeypatch.setattr(urllib, 'urlopen', mock_urlopen)
 
     result = plm.store_pushlogs("test_host", 1, branch="Firefox")

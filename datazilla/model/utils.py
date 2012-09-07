@@ -60,6 +60,20 @@ def get_day_range(days_ago, numdays=None):
     return {"start": int(start), "stop": int(stop)}
 
 
+def get_now_timestamp():
+    """
+    Return a unix timestamp for the current time.
+
+    This is useful because it can be mocked out in unit tests.
+    """
+    return int(time.time())
+
+
+def get_timestamp(timestr):
+    """Build a timestamp from a string like ``1 Aug 12`` """
+    return int(time.mktime(time.strptime(timestr, "%d %b %y")))
+
+
 def get_time_ranges():
     """
     Get a dictionary of time ranges.

@@ -3,7 +3,7 @@ import datetime
 import copy
 import urllib
 
-from ..sample_pushlog import pushlog_json, pushlog_json_empty, pushlog_json_file
+from ..sample_pushlog import get_pushlog_json_set, get_pushlog_json_readable
 
 
 def get_branch_id(plm):
@@ -35,7 +35,7 @@ def test_single_branch_not_found(plm):
     """Test the get_branch_list method with non-existent branch."""
     branches = plm.get_branch_list("Cortexiphan")
 
-    assert branches == None
+    assert not branches
 
 
 def test_get_params(plm):
@@ -79,7 +79,7 @@ def test_get_params_no_enddate(plm):
 def test_get_all_changesets(plm):
     """Ensure that get_all_changesets returns all the changesets from all pushes"""
     branch_id = get_branch_id(plm)
-    data = json.loads(pushlog_json())
+    data = json.loads(get_pushlog_json_set())
     plm._insert_branch_pushlogs(branch_id, data)
 
     #verify that the data that was inserted matches the JSON source data.
@@ -105,7 +105,7 @@ def test_insert_branch_pushlogs_happy_path(plm):
 
     """
     branch_id = get_branch_id(plm)
-    data = json.loads(pushlog_json())
+    data = json.loads(get_pushlog_json_set())
     plm._insert_branch_pushlogs(branch_id, data)
 
     # branch count is incremented in store_pushlogs, not here, so exp 0
@@ -140,7 +140,7 @@ def test_insert_branch_pushlogs_happy_path(plm):
 def test_insert_branch_pushlogs_twice_skips(plm):
     """Trying to insert the same pushlog twice causes them to be skipped"""
     branch_id = get_branch_id(plm)
-    data = json.loads(pushlog_json())
+    data = json.loads(get_pushlog_json_set())
     plm._insert_branch_pushlogs(branch_id, data)
 
     assert plm.pushlog_count == 3
@@ -163,7 +163,7 @@ def test_insert_branch_pushlogs_dup_changeset(plm):
     """
 
     branch_id = get_branch_id(plm)
-    data = json.loads(pushlog_json())
+    data = json.loads(get_pushlog_json_set())
     cs = data["23046"]["changesets"][0]
     dup = copy.deepcopy(cs)
     data["23046"]["changesets"].append(dup)
@@ -185,7 +185,7 @@ def test_store_pushlogs_happy_path(plm, monkeypatch):
 
     """
     def mock_urlopen(nuttin_honey):
-        return pushlog_json_file()
+        return get_pushlog_json_readable(get_pushlog_json_set())
     monkeypatch.setattr(urllib, 'urlopen', mock_urlopen)
 
     result = plm.store_pushlogs("test_host", 1, branch="Firefox")
@@ -209,7 +209,7 @@ def test_store_pushlogs_no_data(plm, monkeypatch):
 
     """
     def mock_urlopen(nuttin_honey):
-        return pushlog_json_empty()
+        return get_pushlog_json_readable("")
     monkeypatch.setattr(urllib, 'urlopen', mock_urlopen)
 
     result = plm.store_pushlogs("test_host", 1, branch="Firefox")
@@ -226,10 +226,10 @@ def test_store_pushlogs_no_data(plm, monkeypatch):
 
 def test_get_branch_pushlog(plm, monkeypatch):
 
-    data = json.loads(pushlog_json())
+    data = json.loads(get_pushlog_json_set())
 
     def mock_urlopen(nuttin_honey):
-        return pushlog_json_file()
+        return get_pushlog_json_readable(get_pushlog_json_set())
     monkeypatch.setattr(urllib, 'urlopen', mock_urlopen)
 
     result = plm.store_pushlogs("test_host", 1, branch="Firefox")

@@ -34,7 +34,7 @@ class Command(ProjectBatchCommand):
         )
 
 
-    def handle_project(self, project, options):
+    def handle_project(self, project, **options):
 
         self.stdout.write("Processing project {0}\n".format(project))
 

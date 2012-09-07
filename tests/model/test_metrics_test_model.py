@@ -7,7 +7,7 @@ import time
 from datazilla.model.base import TestData
 
 from ..sample_data import perftest_data
-from ..sample_pushlog import pushlog_json, pushlog_json_file
+from ..sample_pushlog import get_pushlog_json_set, get_pushlog_json_readable
 
 from ..sample_metric_data import (
     get_metrics_key_data, get_metrics_summary_key_data,
@@ -622,7 +622,7 @@ def setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch):
 
     #monkey patch in sample pushlog
     def mock_urlopen(nuttin_honey):
-        return pushlog_json_file()
+        return get_pushlog_json_readable(get_pushlog_json_set())
     monkeypatch.setattr(urllib, 'urlopen', mock_urlopen)
 
     result = plm.store_pushlogs("test_host", 1, branch="Firefox")

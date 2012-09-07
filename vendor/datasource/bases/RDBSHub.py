@@ -433,7 +433,7 @@ class RDBSHub(BaseHub):
             msg = "%s debug message:\n\thost:%s db:%s host_type:%s proc:%s\n\tExecuting SQL:%s\n\n"\
                   %(self.__class__, host, db, host_type, proc, sql)
 
-        sys.stdout.write(msg)
+        sys.stdout.write( unicode(msg).encode("utf-8") )
         sys.stdout.flush()
 
     def escape_string(self, value):
@@ -448,15 +448,19 @@ class RDBSHub(BaseHub):
             r = kwargs[key][i]
             if quote:
 
+                r_string = u''
                 if type(r) == type([]):
-                    join_char = "%s,%s"%(self.quote_char,self.quote_char)
+                    join_char = u"%s,%s"%(self.quote_char,self.quote_char)
                     ###
                     #r could contain integers which will break join
                     #make sure we cast to strings
                     ###
-                    r = join_char.join( map(lambda s: self.escape_string(str(s)), r) )
+                    r_string = join_char.join( map(lambda s: self.escape_string(s), r) )
 
-                sql = sql.replace("%s%i"%(self.replace_string, i), "%s%s%s"%(self.quote_char, r, self.quote_char))
+                else:
+                    r_string = self.escape_string(r)
+
+                sql = sql.replace(u"%s%i"%(self.replace_string, i), u"%s%s%s"%(self.quote_char, r_string, self.quote_char))
 
             else:
 
@@ -465,15 +469,15 @@ class RDBSHub(BaseHub):
                     #r could contain integers which will break join
                     #make sure we cast to strings
                     ###
-                    r = ",".join(map(str, r))
+                    r = u",".join(map(str, r))
 
-                sql = sql.replace("%s%i"%(self.replace_string, i), r)
+                sql = sql.replace(u"%s%i"%(self.replace_string, i), r)
 
         ####
         #If any replace failed, make sure we get rid of all of
         #the REP strings
         ####
-        sql = re.sub( '%s%s' % (self.replace_string, '\d+'), '', sql)
+        sql = re.sub( u'%s%s' % (self.replace_string, u'\d+'), u'', sql)
 
         return sql
 

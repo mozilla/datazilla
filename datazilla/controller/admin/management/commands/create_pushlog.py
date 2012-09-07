@@ -1,7 +1,6 @@
 from optparse import make_option
 from django.core.management.base import BaseCommand
 from datazilla.model import PushLogModel
-from django.conf import settings
 
 class Command(BaseCommand):
     """Management command to create the pushlog database for known repos."""

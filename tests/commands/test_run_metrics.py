@@ -14,47 +14,6 @@ from ..sample_metric_data import get_metric_collection_data
 def call_run_metrics(*args, **kwargs):
     call_command("run_metrics", *args, **kwargs)
 
-def test_no_args(capsys):
-    with pytest.raises(SystemExit):
-        call_run_metrics()
-
-    exp = (
-        "",
-        "Error: You must provide either a project or cron_batch value.\n",
-        )
-
-    assert capsys.readouterr() == exp
-
-def test_no_numdays(capsys, ptm, plm):
-
-    call_run_metrics(project=ptm.project, pushlog_project=plm.project)
-
-    exp = (
-        "Starting for projects: {0}\n".format(ptm.project) +
-        "Processing project {0}\n".format(ptm.project) +
-        "You must supply the number of days data.\n" +
-        "Completed for 1 project(s).\n",
-        ""
-    )
-
-    assert capsys.readouterr() == exp
-
-def test_bad_numdays(capsys, ptm, plm):
-
-    call_run_metrics(
-        project=ptm.project, pushlog_project=plm.project, numdays="numdays"
-        )
-
-    exp = (
-        "Starting for projects: {0}\n".format(ptm.project) +
-        "Processing project {0}\n".format(ptm.project) +
-        "numdays must be an integer.\n" +
-        "Completed for 1 project(s).\n",
-        ""
-        )
-
-    assert capsys.readouterr() == exp
-
 def test_run_metrics_and_summary(capsys, mtm, ptm, plm, monkeypatch):
 
     setup_data = setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch)

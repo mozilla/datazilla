@@ -277,7 +277,7 @@ class PushLogModel(DatazillaModelBase):
                 pushlog_dict = json.loads(json_data)
 
                 self._insert_branch_pushlogs(br["id"], pushlog_dict)
-                self.branch_count = self.branch_count + 1
+                self.branch_count += 1
 
             except ValueError as e:
                 self.println("--Skip branch {0}: push data not valid JSON: {1}".format(
@@ -686,6 +686,7 @@ class PerformanceTestModel(DatazillaModelBase):
 
         return json_data
 
+
     def cache_ref_data(self, cache_key_str='reference_data'):
         #retrieve ref data
         ref_data = dict(
@@ -712,6 +713,7 @@ class PerformanceTestModel(DatazillaModelBase):
         default_project = self.get_default_product()
         cache_key = self.get_project_cache_key(cache_key_str)
         cache.set(cache_key, default_project)
+
 
     def get_test_run_summary(self,
                           start,
@@ -883,7 +885,7 @@ class PerformanceTestModel(DatazillaModelBase):
     def store_test_data(self, json_data, error=None):
         """Write the JSON to the objectstore to be queued for processing."""
 
-        date_loaded = int( time.time() )
+        date_loaded = utils.get_now_timestamp()
         error_flag = "N" if error is None else "Y"
         error_msg = error or ""
 
@@ -1163,7 +1165,7 @@ class PerformanceTestModel(DatazillaModelBase):
                 # TODO: Need to get the build type into the json
                 'opt',
                 # TODO: need to get the build date into the json
-                int(time.time()),
+                utils.get_now_timestamp(),
                 build['id']
                 ],
             debug_show=self.DEBUG
@@ -1237,7 +1239,7 @@ class PerformanceTestModel(DatazillaModelBase):
         machine = data['test_machine']
 
         # Insert the the machine name and timestamp if it doesn't exist
-        date_added = int(time.time())
+        date_added = utils.get_now_timestamp()
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_machine_ref_data',
             placeholders=[

@@ -1,8 +1,8 @@
 {
- "views":{
-      "test_runs":{
+    "views":{
+        "test_runs":{
 
-         "sql":"SELECT tr.id AS 'test_run_id',
+        "sql":"SELECT tr.id AS 'test_run_id',
                        tr.build_id,
                        tr.revision,
                        tr.date_run,
@@ -26,12 +26,12 @@
                  ORDER BY tr.id DESC
                  LIMIT 1000",
 
-         "host":"read_host"
+        "host":"read_host"
 
-      },
-      "test_run":{
+    },
+    "test_run":{
 
-         "sql":"SELECT tr.id AS 'test_run_id',
+        "sql":"SELECT tr.id AS 'test_run_id',
                        tr.build_id,
                        tr.revision,
                        tr.date_run,
@@ -55,12 +55,12 @@
                  ORDER BY tr.id DESC
                  LIMIT 1000",
 
-         "host":"read_host"
+        "host":"read_host"
 
-      },
-      "test_value":{
+    },
+    "test_value":{
 
-         "sql":"SELECT tv.test_run_id,
+        "sql":"SELECT tv.test_run_id,
                        tv.run_id,
                        p.url,
                        v.name,
@@ -341,7 +341,6 @@
           "host":"read_host"
 
       },
-
       "get_all_test_runs":{
 
          "sql":"SELECT tr.id AS 'test_run_id',
@@ -362,6 +361,47 @@
                 ORDER BY tr.date_run ASC",
 
           "host":"read_host"
+
+      },
+      "get_test_runs":{
+
+        "sql":"SELECT SQL_CALC_FOUND_ROWS
+                tr.revision, tr.date_run, tr.status,
+                p.branch, p.product, p.version
+            FROM test_run as tr
+            LEFT JOIN build as b ON tr.build_id = b.id
+            LEFT JOIN product as p ON b.product_id = p.id
+            WHERE tr.date_run BETWEEN ? AND ?
+            AND p.branch = ?
+            ORDER BY tr.date_run DESC
+            LIMIT 0, 80",
+
+        "host":"read_host"
+
+      },
+      "get_found_rows":{
+
+          "sql":"SELECT FOUND_ROWS()",
+
+          "host":"read_host"
+      },
+      "get_test_run_counts":{
+
+        "sql":"SELECT COUNT(tr.id) as count, p.branch
+            FROM test_run as tr
+            LEFT JOIN build as b ON tr.build_id = b.id
+            LEFT JOIN product as p ON b.product_id = p.id
+            WHERE tr.date_run BETWEEN ? AND ?
+            GROUP BY p.branch",
+
+        "host":"read_host"
+
+      },
+      "get_distinct_test_run_revisions":{
+
+        "sql":"SELECT distinct revision FROM test_run",
+
+          "host":"master_host"
 
       },
       "get_test_run_values":{
@@ -386,12 +426,12 @@
                WHERE tv.test_run_id = ?
                ORDER BY p.url, tv.value ASC",
 
-         "host":"read_host"
+        "host":"read_host"
 
-      },
-      "get_test_run_value_summary":{
+    },
+    "get_test_run_value_summary":{
 
-         "sql":"SELECT tv.test_run_id,
+        "sql":"SELECT tv.test_run_id,
                         tv.page_id,
                         tv.run_id,
                         tr.revision,
@@ -417,10 +457,10 @@
 
          "host":"read_host"
 
-      },
-      "get_page_values":{
+    },
+    "get_page_values":{
 
-         "sql":"SELECT tv.id AS test_value_id,
+        "sql":"SELECT tv.id AS test_value_id,
                         tv.test_run_id,
                         tv.page_id,
                         tv.run_id,
@@ -443,10 +483,10 @@
 
          "host":"read_host"
 
-      },
-      "get_product_test_os_map":{
+    },
+    "get_product_test_os_map":{
 
-         "sql":"SELECT b.product_id, tr.test_id, m.operating_system_id
+        "sql":"SELECT b.product_id, tr.test_id, m.operating_system_id
                 FROM test_run AS tr
                 LEFT JOIN machine AS m ON tr.machine_id = m.id
                 LEFT JOIN build AS b ON tr.build_id = b.id
@@ -455,84 +495,84 @@
                   FROM product )
                GROUP BY b.product_id, tr.test_id, m.operating_system_id",
 
-          "host":"read_host"
-      },
-      "get_tests":{
+        "host":"read_host"
+    },
+    "get_tests":{
 
-         "sql":"SELECT `id`, `name`, `version` FROM `test`",
+        "sql":"SELECT `id`, `name`, `version` FROM `test`",
 
-         "host":"read_host"
+        "host":"read_host"
 
-      },
-      "get_operating_systems":{
+    },
+    "get_operating_systems":{
 
-         "sql":"SELECT `id`, `name`, `version` FROM operating_system",
+        "sql":"SELECT `id`, `name`, `version` FROM operating_system",
 
-         "host":"read_host"
-      },
-      "get_aux_data":{
+        "host":"read_host"
+    },
+    "get_aux_data":{
 
-         "sql":"SELECT `id`, `test_id`, `name` FROM `aux_data`",
+        "sql":"SELECT `id`, `test_id`, `name` FROM `aux_data`",
 
-         "host":"read_host"
-      },
-      "get_product_data":{
+        "host":"read_host"
+    },
+    "get_product_data":{
 
-         "sql":"SELECT `id`, `product`, `branch`, `version`, `default_product` FROM `product`",
+        "sql":"SELECT `id`, `product`, `branch`, `version`, `default_product` FROM `product`",
 
-         "host":"read_host"
-      },
-      "get_default_product":{
+        "host":"read_host"
+    },
+    "get_default_product":{
 
-         "sql":"SELECT `id`, `product`, `branch`, `version`, `default_product`
+        "sql":"SELECT `id`, `product`, `branch`, `version`, `default_product`
                 FROM `product`
                 WHERE `default_product` = 1",
 
-         "host":"read_host"
-      },
-      "get_machines":{
+        "host":"read_host"
+    },
+    "get_machines":{
 
-         "sql":"SELECT `id`, `name` FROM `machine`",
+        "sql":"SELECT `id`, `name` FROM `machine`",
 
-         "host":"read_host"
+        "host":"read_host"
 
-      },
-      "get_options":{
+    },
+    "get_options":{
 
-         "sql":"SELECT `id`, `name` FROM `option`",
+        "sql":"SELECT `id`, `name` FROM `option`",
 
-         "host":"read_host"
-      },
-      "get_aux_data":{
+        "host":"read_host"
+    },
+    "get_aux_data":{
 
-         "sql":"SELECT `id`, `test_id`, `name` FROM `aux_data`",
+        "sql":"SELECT `id`, `test_id`, `name` FROM `aux_data`",
 
-         "host":"read_host"
-      },
-      "get_pages":{
+        "host":"read_host"
+    },
+    "get_pages":{
 
-         "sql":"SELECT `id`, `test_id`, `url` FROM `pages`",
+        "sql":"SELECT `id`, `test_id`, `url` FROM `pages`",
 
-         "host":"read_host"
-      },
-      "get_summary_cache":{
+        "host":"read_host"
+    },
+    "get_summary_cache":{
 
-         "sql":"SELECT `item_id`, `item_data`, `value`, `date`
+        "sql":"SELECT `item_id`, `item_data`, `value`, `date`
                 FROM `summary_cache`
                 WHERE `item_id` = ? AND `item_data` = ?",
 
-         "host":"read_host"
-      },
-      "get_all_summary_cache_data":{
+        "host":"read_host"
+    },
+    "get_all_summary_cache_data":{
 
-         "sql":"SELECT `item_id`, `item_data`, `value`, `date`
+        "sql":"SELECT `item_id`, `item_data`, `value`, `date`
                 FROM `summary_cache`",
 
-         "host":"read_host"
-      },
-      "get_test_collections":{
+        "host":"read_host"
+    },
+    "get_test_collections":{
 
-         "sql":"SELECT tc.id,
+        "sql":"SELECT tc.id,
                        tc.name,
                        tc.description,
                        tcm.test_id,
@@ -543,71 +583,72 @@
                 LEFT JOIN test AS t ON tcm.test_id = t.id
                 ORDER BY tc.name",
 
-         "host":"read_host"
-      },
-      "get_build_id":{
+        "host":"read_host"
+    },
+    "get_build_id":{
 
         "sql":"SELECT `id`
                FROM `build`
                WHERE `test_build_id` = ?",
 
         "host":"read_host"
-      },
-      "get_test_id":{
+    },
+    "get_test_id":{
 
         "sql":"SELECT `id`
                FROM `test`
                WHERE `name` = ? AND `version` = ?",
 
         "host":"read_host"
-      },
-      "get_option_id":{
+    },
+    "get_option_id":{
 
         "sql":"SELECT `id`
                FROM `option`
                WHERE `name` = ?",
 
         "host":"read_host"
-      },
-      "get_os_id":{
+    },
+    "get_os_id":{
 
         "sql":"SELECT `id`
                FROM `operating_system`
                WHERE `name` = ? AND `version` = ?",
 
         "host":"read_host"
-      },
-      "get_product_id":{
+    },
+    "get_product_id":{
 
         "sql":"SELECT `id`
                FROM `product`
                WHERE `product` = ? AND `branch` = ? AND `version` = ?",
 
         "host":"read_host"
-      },
-      "get_machine_id":{
+    },
+    "get_machine_id":{
 
         "sql":"SELECT `id`
                FROM `machine`
                WHERE `name` = ? AND `operating_system_id` = ?",
 
         "host":"read_host"
-      },
-      "get_page_id":{
+    },
+    "get_page_id":{
 
         "sql":"SELECT `id`
                FROM `pages`
                WHERE `test_id` = ? AND `url` = ?",
 
         "host":"read_host"
-      },
-      "get_aux_data_id":{
+    },
+    "get_aux_data_id":{
 
         "sql":"SELECT `id`
                FROM `aux_data`
                WHERE `test_id` = ? AND `name` = ?",
 
         "host":"read_host"
+
       },
       "get_metric_collection":{
 
