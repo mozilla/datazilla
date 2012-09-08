@@ -1,13 +1,5 @@
 
-from datazilla.model.stats import PushLogStatsModel, PerformanceTestStatsModel
-from datazilla.model.base import PushLogModel
-
-def get_plm():
-    return PushLogModel()
-
-
-def get_plsm():
-    return PushLogStatsModel()
+from datazilla.model import factory
 
 
 def get_not_referenced(project, startdate, enddate, branches=None):
@@ -20,11 +12,11 @@ def get_not_referenced(project, startdate, enddate, branches=None):
 
     branches = branches or get_all_branches()
 
-    ptm = PerformanceTestStatsModel(project)
+    ptm = factory.get_ptsm(project)
     tr_set = ptm.get_distinct_test_run_revisions()
     ptm.disconnect()
 
-    plsm = get_plsm()
+    plsm = factory.get_plsm()
     pl_dict = plsm.get_pushlog_dict(startdate, enddate, branches)
     plsm.disconnect()
 
@@ -56,7 +48,7 @@ def get_pushlogs(startdate, enddate, branches=None):
     """Return a list of pushlogs with changesets. """
     branches = branches or get_all_branches()
 
-    plsm = get_plsm()
+    plsm = factory.get_plsm()
     pl_dict = plsm.get_pushlog_dict(startdate, enddate, branches)
     plsm.disconnect()
 
@@ -65,7 +57,7 @@ def get_pushlogs(startdate, enddate, branches=None):
 
 def get_all_branches():
     """Return a list of all the branch names our pushlogs know about"""
-    plm = get_plm()
+    plm = factory.get_plm()
     branches = [x["name"] for x in plm.get_all_branches()]
     plm.disconnect()
     return branches
@@ -73,7 +65,7 @@ def get_all_branches():
 
 def get_db_size():
     """Return the database size, on disk in MB"""
-    plsm = get_plsm()
+    plsm = factory.get_plsm()
     size = plsm.get_db_size()
     plsm.disconnect()
     return size

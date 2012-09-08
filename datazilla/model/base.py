@@ -746,7 +746,7 @@ class PerformanceTestModel(DatazillaModelBase):
             rep.append(" AND os.name='{0}'".format(os_name))
         if test_name:
             rep.append(" AND t.name='{0}'".format(test_name))
-        replacements = " ".join(rep)
+        replace = [" ".join(rep)] if len(rep) else [" "]
 
         proc = 'perftest.selects.get_test_run_ids'
 
@@ -754,7 +754,7 @@ class PerformanceTestModel(DatazillaModelBase):
             proc=proc,
             debug_show=self.DEBUG,
             placeholders=[branch, revision],
-            replace=[replacements] if len(replacements) else None,
+            replace=replace,
             )
 
         return id_list

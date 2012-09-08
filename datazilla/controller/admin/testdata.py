@@ -4,21 +4,17 @@ Functions for fetching test data from a project.
 """
 import json
 
-from datazilla.model.base import PerformanceTestModel
-from datazilla.model.stats import PerformanceTestStatsModel
+from datazilla.model import factory
 
 def get_testdata(project, branch, revision,
     os_name=None, test_name=None):
     """Return test data based on the parameters and optional filters."""
 
-    ptm = PerformanceTestModel(project)
-    ptsm = PerformanceTestStatsModel(project)
+    ptm = factory.get_ptm(project)
+    ptsm = factory.get_ptsm(project)
 
     # get the testrun ids from perftest
     test_runs = ptm.get_test_run_ids(branch, revision, os_name, test_name)
-
-    # get the json blobs matching those testrun ids
-    id_list = [x["test_run_id"] for x in test_runs]
 
     blobs = []
     for tr in test_runs:

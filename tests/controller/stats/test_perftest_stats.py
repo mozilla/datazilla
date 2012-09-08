@@ -1,9 +1,9 @@
 from decimal import Decimal
 import pytest
-import json
 
 from django.core.exceptions import FieldError
 
+from datazilla.model import factory
 from ...sample_data import perftest_json
 from datazilla.controller.admin.stats import perftest_stats
 
@@ -11,10 +11,11 @@ def test_get_runs_by_branch(ptm, plm, monkeypatch):
     """
     Test get_runs_by_branch method.
     """
-
     def mock_plm():
         return plm
-    monkeypatch.setattr(perftest_stats, 'get_plm', mock_plm)
+    monkeypatch.setattr(factory, 'get_plm', mock_plm)
+    # don't need to monkeypatch the ptsm, because we pass the project
+    # name in for use in its construction.
 
     blobs = [
         perftest_json(
@@ -50,7 +51,7 @@ def test_get_runs_by_branch(ptm, plm, monkeypatch):
     assert runs["Mozilla-Aurora"]["test_runs"][0] == exp_run
 
 
-def test_get_runs_by_branch_past_limit(ptm, plm, monkeypatch):
+def test_get_sssruns_by_branch_past_limit(ptm, plm, monkeypatch):
     """
     Test get_runs_by_branch method exceeding the 80 count limit.
 
@@ -59,7 +60,7 @@ def test_get_runs_by_branch_past_limit(ptm, plm, monkeypatch):
 
     def mock_plm():
         return plm
-    monkeypatch.setattr(perftest_stats, 'get_plm', mock_plm)
+    monkeypatch.setattr(factory, 'get_plm', mock_plm)
 
     for i in range(81):
         blob = perftest_json(
@@ -108,20 +109,18 @@ def test_get_run_counts_by_branch(ptm):
 
 
 def test_get_db_size(ptm):
-    """Test get_db_size method."""
-    size = perftest_stats.get_db_size(ptm.project)
-    exp = (
-        {
-            'db_name': u'{0}_objectstore_1'.format(ptm.project),
-            'size_mb': Decimal('0.08')
-            },
-        {
-            'db_name': u'{0}_perftest_1'.format(ptm.project),
-            'size_mb': Decimal('1.00')
-            }
+    """Test the get_db_size method."""
+    sizes = perftest_stats.get_db_size(ptm.project)
 
-        )
-    assert size == exp
+    db_names = [x["db_name"] for x in sizes]
+    exp_db_names = [
+        u'{0}_objectstore_1'.format(ptm.project),
+        u'{0}_perftest_1'.format(ptm.project),
+        ]
+    assert set(db_names) == set(exp_db_names)
+
+    for db in sizes:
+        assert db["size_mb"] > 0
 
 
 def test_get_ref_data_machines(ptm):

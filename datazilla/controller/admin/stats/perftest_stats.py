@@ -1,56 +1,28 @@
 from django.core.exceptions import FieldError
 
-from datazilla.model.stats import PerformanceTestStatsModel
-from datazilla.model.base import PerformanceTestModel, PushLogModel
-from pushlog_stats import get_all_branches
-
-
-def get_ptsm(project):
-    """
-    Shortcut to return the PerformanceTestStatsModel.
-
-    Allows the unit tests to override this to give the test version of the
-    model.
-    """
-    return PerformanceTestStatsModel(project)
-
-
-def get_ptm(project):
-    """
-    Shortcut to return the PerformanceTestModel.
-
-    Allows the unit tests to override this to give the test version of the
-    model.
-    """
-    return PerformanceTestModel(project)
-
-
-def get_plm():
-    """
-    Hook to return a pushlog model.
-
-    Handy for tests to mock out.
-    """
-    return PushLogModel()
+from datazilla.model import factory
 
 
 def get_runs_by_branch(project, startdate, enddate):
     """Return a list of test runs by branch in date range"""
-    ptsm = get_ptsm(project)
-    branches = [x["name"] for x in get_plm().get_all_branches()]
+    ptsm = factory.get_ptsm(project)
+    plm = factory.get_plm()
+
+    branches = [x["name"] for x in plm.get_all_branches()]
     result = {}
     for branch in branches:
         test_runs = ptsm.get_run_lists_by_branch(startdate, enddate, branch)
         if test_runs["count"] > 0:
             result[branch] = test_runs
 
+    plm.disconnect()
     ptsm.disconnect()
     return result
 
 
 def get_run_counts_by_branch(project, startdate, enddate):
     """Return a count of test runs by branch in date range"""
-    ptsm = get_ptsm(project)
+    ptsm = factory.get_ptsm(project)
     test_runs = ptsm.get_run_counts_by_branch(startdate, enddate)
     ptsm.disconnect()
 
@@ -65,7 +37,7 @@ def get_run_counts_by_branch(project, startdate, enddate):
 
 def get_ref_data(project, table):
     """Return a simple list of data from ``table`` for ``project``."""
-    ptm = get_ptm(project)
+    ptm = factory.get_ptm(project)
     result = get_ref_data_method(ptm, table)()
     ptm.disconnect()
 
@@ -74,7 +46,7 @@ def get_ref_data(project, table):
 
 def get_db_size(project):
     """Return the size of the database on disk in megabytes"""
-    ptm = get_ptsm(project)
+    ptm = factory.get_ptsm(project)
     pt_size = ptm.get_db_size()
     ptm.disconnect()
 

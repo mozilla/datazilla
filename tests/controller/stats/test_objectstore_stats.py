@@ -146,16 +146,15 @@ def test_result_key_invalid_value():
 
 def test_get_db_size(ptm):
     """Test the get_db_size method."""
-    size = objectstore_stats.get_db_size(ptm.project)
-    exp = (
-            {
-            'db_name': u'{0}_objectstore_1'.format(ptm.project),
-            'size_mb': Decimal('0.08')
-        },
-            {
-            'db_name': u'{0}_perftest_1'.format(ptm.project),
-            'size_mb': Decimal('1.00')
-        }
+    sizes = objectstore_stats.get_db_size(ptm.project)
 
-        )
-    assert size == exp
+    db_names = [x["db_name"] for x in sizes]
+    exp_db_names = [
+        u'{0}_objectstore_1'.format(ptm.project),
+        u'{0}_perftest_1'.format(ptm.project),
+        ]
+    assert set(db_names) == set(exp_db_names)
+
+    for db in sizes:
+        assert db["size_mb"] > 0
+
