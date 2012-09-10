@@ -282,7 +282,40 @@
                 VALUES (?, ?)",
 
          "host":"master_host"
-      }
+      },
+      "set_test_page_metric":{
+
+         "sql":"INSERT INTO `test_page_metric` (`test_run_id`,
+                                                `metric_id`,
+                                                `metric_value_id`,
+                                                `page_id`,
+                                                `value`,
+                                                `threshold_test_run_id`)
+                VALUES (?, ?, ?, ?, ?, ?)",
+
+         "host":"master_host"
+      },
+      "set_metric_threshold":{
+         "sql":"INSERT INTO `metric_threshold` (`product_id`,
+                                                `operating_system_id`,
+                                                `processor`,
+                                                `metric_id`,
+                                                `test_id`,
+                                                `page_id`,
+                                                `test_run_id`,
+                                                `revision`)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE `product_id` = ?,
+                                        `operating_system_id` = ?,
+                                        `processor` = ?,
+                                        `metric_id` = ?,
+                                        `test_id` = ?,
+                                        `page_id` = ?,
+                                        `test_run_id` = ?,
+                                        `revision` = ?",
+
+       "host":"master_host"
+    }
   },
   "selects":{
       "get_test_run_summary":{
@@ -629,7 +662,151 @@
                WHERE `test_id` = ? AND `name` = ?",
 
         "host":"read_host"
-    }
-    }
+
+      },
+      "get_metric_collection":{
+
+            "sql":"SELECT m.id AS 'metric_id',
+                          m.name AS 'metric_name',
+                          mv.id AS 'metric_value_id',
+                          mv.name AS 'metric_value_name'
+                   FROM `metric` AS m
+                   LEFT JOIN `metric_value` AS mv ON m.id = mv.metric_id",
+
+             "host":"read_host"
+
+      },
+      "get_metric_threshold":{
+
+            "sql":"SELECT mt.product_id,
+                       mt.operating_system_id,
+                       mt.processor,
+                       mt.metric_id,
+                       mt.test_id,
+                       t.name AS 'test_name',
+                       mt.page_id,
+                       mt.test_run_id,
+                       mt.revision,
+                       tv.value,
+                       tpm.metric_id,
+                       tpm.metric_value_id,
+                       tpm.threshold_test_run_id,
+                       mv.name AS 'metric_value_name',
+                       tpm.value AS 'metric_value'
+                   FROM `metric_threshold` AS mt
+                   LEFT JOIN `test` AS t ON mt.test_id = t.id
+                   LEFT JOIN `metric` AS m ON mt.metric_id = m.id
+                   LEFT JOIN `test_value` AS tv ON mt.test_run_id = tv.test_run_id
+                   LEFT JOIN `test_page_metric` AS tpm ON mt.test_run_id = tpm.test_run_id
+                   LEFT JOIN `metric_value` AS mv ON tpm.metric_value_id = mv.id
+                   WHERE mt.product_id = ? AND
+                         mt.operating_system_id = ? AND
+                         mt.processor = ? AND
+                         m.id = ? AND
+                         mt.test_id = ? AND
+                         mt.page_id = ? AND
+                         tv.page_id = ?",
+
+            "host":"read_host"
+      },
+      "get_computed_metrics":{
+
+            "sql":"SELECT b.product_id,
+                          m.operating_system_id,
+                          b.processor,
+                          mv.metric_id,
+                          tr.test_id,
+                          t.name AS 'test_name',
+                          tpm.page_id,
+                          tpm.metric_value_id,
+                          mv.name AS 'metric_value_name',
+                          tpm.test_run_id,
+                          tpm.threshold_test_run_id,
+                          tr.revision,
+                          tpm.value
+                   FROM `test_page_metric` AS tpm
+                   LEFT JOIN `test_run` AS tr ON tpm.test_run_id = tr.id
+                   LEFT JOIN `build` AS b ON tr.build_id = b.id
+                   LEFT JOIN `test` AS t ON tr.test_id = t.id
+                   LEFT JOIN `metric_value` AS mv ON tpm.metric_value_id = mv.id
+                   LEFT JOIN `machine` AS m ON tr.machine_id = m.id
+                   WHERE tr.revision = ?",
+
+            "host":"read_host"
+        },
+        "get_metrics_data_from_ref_data":{
+
+            "sql":"SELECT b.product_id,
+                          m.operating_system_id,
+                          b.processor,
+                          mv.metric_id,
+                          tr.test_id,
+                          t.name AS 'test_name',
+                          tpm.page_id,
+                          tpm.metric_value_id,
+                          mv.name AS 'metric_value_name',
+                          tpm.test_run_id,
+                          tpm.threshold_test_run_id,
+                          tr.revision,
+                          tpm.value
+                   FROM `test_page_metric` AS tpm
+                   LEFT JOIN `test_run` AS tr ON tpm.test_run_id = tr.id
+                   LEFT JOIN `build` AS b ON tr.build_id = b.id
+                   LEFT JOIN `test` AS t ON tr.test_id = t.id
+                   LEFT JOIN `metric_value` AS mv ON tpm.metric_value_id = mv.id
+                   LEFT JOIN `machine` AS m ON tr.machine_id = m.id
+                   WHERE b.product_id = ? AND
+                         m.operating_system_id = ? AND
+                         b.processor = ? AND
+                         tr.test_id = ? AND
+                         tr.id = ?",
+
+            "host":"read_host"
+        },
+        "get_test_values_by_revision":{
+            "sql":"SELECT tr.id AS 'test_run_id',
+                          b.product_id,
+                          m.operating_system_id,
+                          b.processor,
+                          tr.test_id,
+                          t.name AS 'test_name',
+                          tr.revision,
+                          p.branch,
+                          tv.run_id,
+                          tv.page_id,
+                          tv.value
+                   FROM `test_run` AS tr
+                   LEFT JOIN `build` AS b ON tr.build_id = b.id
+                   LEFT JOIN `product` AS p ON b.product_id = p.id
+                   LEFT JOIN `machine` AS m ON tr.machine_id = m.id
+                   LEFT JOIN `test` AS t ON tr.test_id = t.id
+                   LEFT JOIN `test_value` AS tv ON tr.id = tv.test_run_id
+                   WHERE tr.revision = ?",
+
+             "host":"read_host"
+      },
+      "get_test_values_by_test_run_id":{
+            "sql":"SELECT tr.id AS 'test_run_id',
+                          b.product_id,
+                          m.operating_system_id,
+                          b.processor,
+                          tr.test_id,
+                          t.name AS 'test_name',
+                          tr.revision,
+                          p.branch,
+                          tv.run_id,
+                          tv.page_id,
+                          tv.value
+                   FROM `test_run` AS tr
+                   LEFT JOIN `build` AS b ON tr.build_id = b.id
+                   LEFT JOIN `product` AS p ON b.product_id = p.id
+                   LEFT JOIN `machine` AS m ON tr.machine_id = m.id
+                   LEFT JOIN `test` AS t ON tr.test_id = t.id
+                   LEFT JOIN `test_value` AS tv ON tr.id = tv.test_run_id
+                   WHERE tr.id = ?",
+
+             "host":"read_host"
+      }
+   }
 }
 

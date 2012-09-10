@@ -72,5 +72,5 @@ def test_get_db_size(ptm, client):
 
     assert response.json == [
             {"size_mb": "0.08", "db_name": "{0}_objectstore_1".format(ptm.project)},
-            {"size_mb": "1.00", "db_name": "{0}_perftest_1".format(ptm.project)}
+            {"size_mb": "1.16", "db_name": "{0}_perftest_1".format(ptm.project)}
     ]

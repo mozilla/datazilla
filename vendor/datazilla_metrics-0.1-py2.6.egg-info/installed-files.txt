@@ -1,0 +1,15 @@
+../dzmetrics/ttest.py
+../dzmetrics/data_smoothing.py
+../dzmetrics/__init__.py
+../dzmetrics/fdr.py
+../dzmetrics/ttest.pyc
+../dzmetrics/data_smoothing.pyc
+../dzmetrics/__init__.pyc
+../dzmetrics/fdr.pyc
+./
+SOURCES.txt
+dependency_links.txt
+requires.txt
+not-zip-safe
+top_level.txt
+PKG-INFO
