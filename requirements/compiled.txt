@@ -3,3 +3,5 @@
 
 MySQL-python
 simplejson
+numpy
+scipy
