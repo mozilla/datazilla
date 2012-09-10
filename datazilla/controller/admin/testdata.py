@@ -6,8 +6,7 @@ import json
 
 from datazilla.model import factory
 
-def get_testdata(project, branch, revision,
-    os_name=None, test_name=None):
+def get_testdata(project, branch, revision, os_name=None, test_name=None):
     """Return test data based on the parameters and optional filters."""
 
     ptm = factory.get_ptm(project)
@@ -30,3 +29,17 @@ def get_testdata(project, branch, revision,
 
     result = blobs
     return result
+
+
+def get_metrics_data(project, branch, revision, os_name=None, test_name=None):
+    """Return test data based on the parameters and optional filters."""
+
+    ptm = factory.get_ptm(project)
+    ptsm = factory.get_ptsm(project)
+
+    # get the testrun ids from perftest
+    test_runs = ptm.get_test_run_ids(branch, revision, os_name, test_name)
+
+    #test page metric
+
+    return {"CAUTION": "The metrics data you're about to enjoy may be hot."}

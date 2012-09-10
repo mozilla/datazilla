@@ -8,7 +8,7 @@ for a given project.
 Test Data
 ---------
 
-.. http:get:: /(project)/testdata/(branch)/(revision)/
+.. http:get:: /(project)/testdata/raw/(branch)/(revision)/
 
     Return a list of the test data for the ``branch`` and ``revision`` for
     the specified ``project``.
@@ -24,8 +24,8 @@ Test Data
 
     .. sourcecode:: http
 
-        GET http://localhost:8000/talos/testdata/Mozilla-Beta/ebfad1bf8749/
-        GET http://localhost:8000/talos/testdata/Mozilla-Beta/ebfad1bf8749/?os_name=mac&test_name=Talos%20tpaint
+        GET http://localhost:8000/talos/testdata/raw/Mozilla-Beta/ebfad1bf8749/
+        GET http://localhost:8000/talos/testdata/raw/Mozilla-Beta/ebfad1bf8749/?os_name=mac&test_name=Talos%20tpaint
 
     **Example response**:
 
@@ -83,3 +83,27 @@ Test Data
             { … }
 
         ]
+
+.. http:get:: /(project)/testdata/metrics/(branch)/(revision)/
+
+    Return metrics data for the ``branch`` and ``revision`` for
+    the specified ``project``.
+
+    :query test_name: (optional) The name of the test to filter on.
+    :query os_name: (optional) The name of the operating system to
+        filter on.
+
+    **Example request**:
+
+    .. sourcecode:: http
+
+        GET http://localhost:8000/talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749/
+        GET http://localhost:8000/talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749/?os_name=mac&test_name=Talos%20tpaint
+
+    **Example response**:
+
+    .. sourcecode:: http
+
+        Content-Type: application/json
+
+        {"stuff": "things"}
