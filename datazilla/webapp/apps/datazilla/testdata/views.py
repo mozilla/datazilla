@@ -25,7 +25,7 @@ def get_testdata(request, project, branch, revision):
         )
 
 
-def get__metricsdata(request, project, branch, revision):
+def get_metrics_data(request, project, branch, revision):
     """
 
     """

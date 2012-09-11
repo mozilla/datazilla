@@ -63,6 +63,13 @@
             "host":"read_host"
         },
 
+        "get_json_blob_for_test_run":{
+
+            "sql":"SELECT json_blob, error_msg, error_flag FROM `objectstore` WHERE `test_run_id` = ?",
+
+            "host":"read_host"
+        },
+
         "get_error_counts":{
 
             "sql":"SELECT

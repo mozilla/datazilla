@@ -4142,4 +4142,4 @@ dependency_links.txt
 PKG-INFO
 SOURCES.txt
 top_level.txt
-../../../../../../var/folders/hx/5kknyd_114s5s1vf4pmx08140000gn/T/tmp4tRJhC-generate-vendor-lib/bin/django-admin.py
+../../../../../../var/folders/hx/5kknyd_114s5s1vf4pmx08140000gn/T/tmpCtxXDl-generate-vendor-lib/bin/django-admin.py

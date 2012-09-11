@@ -18,7 +18,7 @@ def get_testdata(project, branch, revision, os_name=None, test_name=None):
     blobs = []
     for tr in test_runs:
         trid = tr["test_run_id"]
-        blob = ptsm.get_object_json_blob(trid)[0]
+        blob = ptsm.get_object_json_blob_for_test_run(trid)[0]
         if blob["error_flag"] == "Y":
             blobs.append({"bad_test_data": {
                 "test_run_id": trid,
