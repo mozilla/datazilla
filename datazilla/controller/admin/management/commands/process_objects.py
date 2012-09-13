@@ -46,11 +46,17 @@ class Command(ProjectBatchCommand):
 
         pushlog_project = options.get("pushlog_project", 'pushlog')
         loadlimit = int(options.get("loadlimit", 1))
+        debug = options.get("debug", None)
 
         ptm = PerformanceTestModel(project)
         test_run_ids = ptm.process_objects(loadlimit)
         ptm.disconnect()
 
-        if test_run_ids:
-            compute_test_run_metrics(project, pushlog_project, test_run_ids)
+        metrics_exclude_projects = set(['b2g', 'stoneridge'])
+
+        if project not in metrics_exclude_projects:
+
+            compute_test_run_metrics(
+                project, pushlog_project, test_run_ids, debug
+                )
 

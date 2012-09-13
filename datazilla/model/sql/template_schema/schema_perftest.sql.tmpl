@@ -23,6 +23,30 @@
 -- Table structure for table `aux_data`
 --
 
+DROP TABLE IF EXISTS `application_log`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+
+/***********
+application_log - description
+
+A table used for logging critical messages from applications.
+************/
+CREATE TABLE `application_log` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `revision` varchar(16) NULL,
+  `test_run_id` int(11) NULL,
+  `msg_type` varchar(50) NULL,
+  `msg` mediumtext NULL,
+  `msg_date` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `revision_key` (`revision`),
+  KEY `test_run_id_key` (`test_run_id`),
+  KEY `msg_type_key` (`msg_type`),
+  KEY `msg_date_key` (`msg_date`)
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
 DROP TABLE IF EXISTS `aux_data`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -78,7 +102,7 @@ CREATE TABLE `build` (
   PRIMARY KEY (`id`),
   KEY `build_type_key` (`build_type`),
   KEY `build_date_key` (`build_date`),
-  KEY `changeset_key` (`revision`),
+  KEY `revision_key` (`revision`),
   KEY `fk_build_product` (`product_id`),
   UNIQUE KEY `unique_build` (`test_build_id`),
   CONSTRAINT `fk_build_product` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`)
@@ -645,5 +669,6 @@ CREATE TABLE `value` (
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
 
 -- Dump completed on 2012-05-01 11:02:48

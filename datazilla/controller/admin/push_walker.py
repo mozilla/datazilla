@@ -293,9 +293,8 @@ def extend_ref_data(data, key, node):
     """
     Add additional keys to reference data
     """
-
     #Update the ref_data required values
-    data[key]['ref_data']['pushlog_id'] = node['pushlog_id']
-    data[key]['ref_data']['push_date'] = node['date']
+    data[key]['ref_data']['pushlog_id'] = node.get('pushlog_id', None)
+    data[key]['ref_data']['push_date'] = node.get('date', None)
     data[key]['ref_data']['n_replicates'] = len(data[key]['values'])
 

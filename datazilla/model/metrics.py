@@ -1,7 +1,8 @@
 import sys
 import copy
+import time
 
-from numpy import mean, std
+from numpy import mean, std, isnan, nan
 
 from django.conf import settings
 
@@ -197,32 +198,60 @@ class MetricsTestModel(DatazillaModelBase):
                 },
 
                 values : [ test_value1, test_value2, test_value3, ... ]
+
+                metric_values:{ metric_value_name: metric_value, ... }
             }
         """
         m = self.mf.get_metric_method(ref_data['test_name'])
         metric_id = m.get_metric_id()
 
-        proc = 'perftest.selects.get_metric_threshold'
+        #Get the threshold test run id
+        test_run_proc = 'perftest.selects.get_metric_threshold_test_run'
 
-        placeholders = [
+        test_run_placeholders = [
             ref_data['product_id'],
             ref_data['operating_system_id'],
             ref_data['processor'],
             metric_id,
             ref_data['test_id'],
-            ref_data['page_id'],
             ref_data['page_id']
             ]
 
-        threshold_data = self.sources["perftest"].dhub.execute(
-            proc=proc,
+        test_run_data = self.sources["perftest"].dhub.execute(
+            proc=test_run_proc,
             debug_show=self.DEBUG,
-            placeholders=placeholders,
+            placeholders=test_run_placeholders,
+            return_type='iter',
+            )
+
+        test_run_id =  test_run_data.get_column_data('test_run_id')
+
+        #Get the test values for the test run and page
+        test_data_proc = \
+            'perftest.selects.get_test_values_by_test_run_id_and_page_id'
+
+        test_data = self.sources["perftest"].dhub.execute(
+            proc=test_data_proc,
+            debug_show=self.DEBUG,
+            placeholders=[ test_run_id, ref_data['page_id'] ],
+            return_type='tuple',
+            )
+
+        #Get the metric values for the test run and page
+        metric_data_proc = \
+            'perftest.selects.get_metrics_data_from_test_run_id_and_page_id'
+
+        metrics_data = self.sources["perftest"].dhub.execute(
+            proc=metric_data_proc,
+            debug_show=self.DEBUG,
+            placeholders=[ test_run_id, ref_data['page_id'] ],
             return_type='tuple',
             )
 
         key_lookup = {}
-        for d in threshold_data:
+
+        #Load metrics data
+        for d in metrics_data:
             key = self.get_metrics_key(d)
             if key not in key_lookup:
                 #set reference data
@@ -235,11 +264,15 @@ class MetricsTestModel(DatazillaModelBase):
                         )
                     }
 
-            key_lookup[key]['values'].append( d['value'] )
-
             key_lookup[key]['metric_values'].setdefault(
                 d['metric_value_name'], d['metric_value']
-                  )
+                )
+
+        #Load associated test data
+        for d in test_data:
+            key = self.get_metrics_key(d)
+            if key in key_lookup:
+                key_lookup[key]['values'].append( d['value'] )
 
         return key_lookup
 
@@ -362,7 +395,6 @@ class MetricsTestModel(DatazillaModelBase):
             MetricMethod.evaluate_metric_result test to be considered a
             viable parent.
         """
-
         parent_data = {}
         test_result = {}
         parent_index = index
@@ -385,7 +417,6 @@ class MetricsTestModel(DatazillaModelBase):
                     continue
 
                 data = self.get_test_values_by_revision(revision)
-
                 #no data for this revision, skip
                 if not data:
                     self.add_skip_revision(revision)
@@ -521,6 +552,24 @@ class MetricsTestModel(DatazillaModelBase):
             placeholders=placeholders
             )
 
+    def log_msg(self, revision, test_run_id, msg_type, msg):
+
+        proc = 'perftest.inserts.set_application_msg'
+
+        placeholders = [ revision,
+                         test_run_id,
+                         msg_type,
+                         msg,
+                         int( time.time() )
+                        ]
+
+
+        self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            placeholders=placeholders,
+            )
+
     def _get_metric_collection(self):
         proc = 'perftest.selects.get_metric_collection'
 
@@ -561,6 +610,8 @@ class MetricsMethodFactory(object):
             metric_method = self.metric_method_instances.setdefault(
                 test_name, TtestMethod(self.metric_collection)
                 )
+
+        metric_method.set_test_name(test_name)
 
         return metric_method
 
@@ -722,6 +773,8 @@ class MetricMethodBase(MetricMethodInterface):
 
         self.metric_values = {}
 
+        self.test_name = ""
+
         self.set_metric_method()
 
     def set_metric_method(self):
@@ -754,6 +807,9 @@ class MetricMethodBase(MetricMethodInterface):
                    "class, {1}").format(self.NAME, self.__class__.__name__)
             raise MetricMethodError(msg)
 
+    def set_test_name(self, test_name):
+        self.test_name = test_name
+
     def filter_by_metric_value_name(self, data):
         flist = filter(self._get_metric_value_name, data)
         return { 'values':map(lambda d: d['value'], flist), 'list':flist }
@@ -771,11 +827,8 @@ class TtestMethod(MetricMethodBase):
     NAME = 'welch_ttest'
     SUMMARY_NAME = 'fdr'
 
-    # Alpha value for ttests
+    #Alpha value for ttests
     ALPHA = 0.05
-
-    # Index to start collecting test values from
-    DATA_START_INDEX = 1
 
     def __init__(self, metric_collection):
 
@@ -789,6 +842,12 @@ class TtestMethod(MetricMethodBase):
         #Store p value id for fdr
         self.metric_value_name = 'p'
 
+    def get_start_index(self):
+        start_index = 0
+        if 'tp5' in self.test_name:
+            start_index = 1
+        return start_index
+
     def run_metric_method(
         self, child_data, parent_data, parent_metric_data={}
         ):
@@ -797,8 +856,7 @@ class TtestMethod(MetricMethodBase):
         trend_mean = parent_metric_data.get('trend_mean', None)
 
         if trend_stddev and trend_mean:
-            #A trend line data is available use it
-
+            #trend line data is available use it
             n = len(child_data)
             s = std(child_data, ddof=1)
             m = mean(child_data)
@@ -824,13 +882,29 @@ class TtestMethod(MetricMethodBase):
         else:
             #No trend line data is available use the parent
             #replicate data
+            start_index = self.get_start_index()
 
             #Filter out the first replicate here
             result = welchs_ttest(
-                child_data[self.DATA_START_INDEX:],
-                parent_data[self.DATA_START_INDEX:],
+                child_data[start_index:],
+                parent_data[start_index:],
                 self.ALPHA
                 )
+
+        #####
+        #If a divide by zero event occured the subsequent p value
+        #will be numpy.nan, this will then be propagated through
+        #all subsequent numerical treatments and stored in the database.
+        #To prevent this from happening, raise a MetricMethodError for
+        #any caller to catch.
+        #####
+        if isnan( result['p'] ):
+            #p value is not a number
+            msg = "p value is not a number, result:{0}".format(
+                str(result)
+                )
+
+            raise MetricMethodError(msg)
 
         return result
 
@@ -838,6 +912,8 @@ class TtestMethod(MetricMethodBase):
 
         filtered_data = self.filter_by_metric_value_name(data)
         rejector_data = rejector(filtered_data['values'])
+
+        filtered_data['values']
 
         results = []
         for s, d in zip( rejector_data['status'], filtered_data['list'] ):
@@ -931,9 +1007,12 @@ class TtestMethod(MetricMethodBase):
             lookup = self._get_summary_data_lookup(metrics_data)
             trend_mean = lookup.get('trend_mean', None)
             trend_stddev = lookup.get('trend_mean', None)
+
             #This variable represents whether the test passes or fails,
             #it's value is ultimately determined by the results of
-            #fdr.rejector
+            #fdr.rejector.
+            #
+            #A test_evaluation of 0 indicates failure and 1 success
             test_evaluation = 0
 
             if summary_pass:
@@ -941,6 +1020,8 @@ class TtestMethod(MetricMethodBase):
                 #trend line
                 m_stddev = lookup.get('stddev', None)
                 m_mean = lookup.get('mean', None)
+
+                #Test passes set evaluation to success
                 test_evaluation = 1
 
                 n_replicates = ref_data['n_replicates']
@@ -954,8 +1035,8 @@ class TtestMethod(MetricMethodBase):
                         n_replicates, trend_stddev, trend_mean
                         )
 
-                    trend_mean = es_result['mean']
-                    trend_stddev = es_result['stddev']
+                    trend_mean = es_result.get('mean', None)
+                    trend_stddev = es_result.get('stddev', None)
                 else:
                     #First time the t-test has been run for this metric
                     #datum, initialize the trend line
@@ -975,21 +1056,22 @@ class TtestMethod(MetricMethodBase):
                                 n_replicates, p_stddev, p_mean
                                 )
 
-                            trend_mean = es_result['mean']
-                            trend_stddev = es_result['stddev']
+                            trend_mean = es_result.get('mean', None)
+                            trend_stddev = es_result.get('stddev', None)
+
             else:
                #Summary fails, store the parent trend values
                if parent_data:
                     parent_lookup = self._get_summary_data_lookup(
                         parent_data
                         )
-                    trend_mean = parent_lookup['trend_mean']
-                    trend_stddev = parent_lookup['trend_stddev']
+                    trend_mean = parent_lookup.get('trend_mean', None)
+                    trend_stddev = parent_lookup.get('trend_stddev', None)
 
             #If the trend_mean and trend_stddev are not set at this
             #point, there is no threshold trend to use and no parent
             #found
-            if trend_mean and trend_stddev:
+            if (trend_mean != None) and (trend_stddev != None):
 
                 #store trend mean
                 self._append_summary_placeholders(
@@ -1003,11 +1085,11 @@ class TtestMethod(MetricMethodBase):
                     trend_stddev, threshold_test_run_id
                 )
 
-                #store test_evaluation
-                self._append_summary_placeholders(
-                    placeholders, test_run_id, 'test_evaluation', ref_data,
-                    test_evaluation, threshold_test_run_id
-                )
+            #store test_evaluation
+            self._append_summary_placeholders(
+                placeholders, test_run_id, 'test_evaluation', ref_data,
+                test_evaluation, threshold_test_run_id
+            )
 
         return placeholders
 
@@ -1062,13 +1144,13 @@ class TtestMethod(MetricMethodBase):
                    break
         return lookup
 
-class MetricMethodError:
+class MetricMethodError(Exception):
     """
     Base class for all MetricMethod errors.  Takes an error message and
     returns string representation in __repr__.
     """
     def __init__(self, msg):
         self.msg = msg
-    def __repr__(self):
-        return self.msg
+    def __unicode__(self):
+        return unicode(self.msg)
 
