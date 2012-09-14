@@ -35,7 +35,7 @@ class Command(ProjectBatchCommand):
             '--pushlog_project',
             action='store',
             dest='pushlog_project',
-            default="pushlog",
+            default=None,
             help="Push log project name (defaults to pushlog)"),
 
         )
@@ -48,6 +48,7 @@ class Command(ProjectBatchCommand):
         loadlimit = int(options.get("loadlimit", 1))
         debug = options.get("debug", None)
 
+        test_run_ids = []
         ptm = PerformanceTestModel(project)
         test_run_ids = ptm.process_objects(loadlimit)
         ptm.disconnect()
@@ -57,6 +58,6 @@ class Command(ProjectBatchCommand):
         if project not in metrics_exclude_projects:
 
             compute_test_run_metrics(
-                project, pushlog_project, test_run_ids, debug
+                project, pushlog_project, debug, test_run_ids
                 )
 

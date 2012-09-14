@@ -125,10 +125,9 @@ def get_metric_sample_data_summary():
 
 def get_metric_sample_data(key, sample_data):
 
-    si = TtestMethod.DATA_START_INDEX
     alpha = TtestMethod.ALPHA
 
-    values = sample_data['results'][key][si:]
+    values = sample_data['results'][key][1:]
     results = welchs_ttest( values, values, alpha )
 
     return results

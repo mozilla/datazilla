@@ -271,8 +271,20 @@ class MetricsTestModel(DatazillaModelBase):
         #Load associated test data
         for d in test_data:
             key = self.get_metrics_key(d)
-            if key in key_lookup:
-                key_lookup[key]['values'].append( d['value'] )
+            #The key should be defined at this point but if
+            #not be sure to return any values
+            if key not in key_lookup:
+                #set reference data
+                key_lookup[key] = {
+                    'values':[],
+                    'metric_values':{},
+                    'ref_data':self.extend_with_metrics_keys(
+                        d, ['test_run_id', 'test_name', 'revision',
+                        'threshold_test_run_id']
+                        )
+                    }
+
+            key_lookup[key]['values'].append( d['value'] )
 
         return key_lookup
 

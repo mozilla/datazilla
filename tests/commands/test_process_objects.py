@@ -32,7 +32,7 @@ def test_no_args(capsys):
     assert capsys.readouterr() == exp
 
 
-def test_successful_populate(monkeypatch, ptm):
+def test_successful_populate(monkeypatch, ptm, plm):
     """Successful populate_test_collections."""
 
     calls = []
@@ -43,6 +43,7 @@ def test_successful_populate(monkeypatch, ptm):
     call_process_objects(
         project=ptm.project,
         loadlimit=25,
+        pushlog_project=plm.project
         )
 
     assert set(calls) == set([25])
@@ -72,11 +73,10 @@ def test_object_transfer(ptm, plm, mtm, monkeypatch):
         )
         #Simulate test failure for this index
         if index == fail_index:
-            data = [50000, 50000, 50000]
+            data = [50000, 60000, 70000]
             sample_data['results'] = {
                 'one.com':data, 'two.com':data, 'three.com':data
                 }
-
         serialized_data = json.dumps( sample_data )
         ptm.store_test_data(serialized_data)
 
@@ -86,7 +86,7 @@ def test_object_transfer(ptm, plm, mtm, monkeypatch):
     call_process_objects(
         project=ptm.project,
         pushlog_project=plm.project,
-        loadlimit=25,
+        loadlimit=25
         )
 
     trend_keys = set([ 'trend_mean', 'trend_stddev', 'test_evaluation' ])
@@ -105,15 +105,10 @@ def test_object_transfer(ptm, plm, mtm, monkeypatch):
 
             metric_value_names_set = set( metric_value_names.keys() )
 
-            #All revisions should have extended keys
-            assert  metric_value_names_set.issuperset(extended_keys) == True
+            if index != 0:
+                assert  metric_value_names_set.issuperset(extended_keys) == \
+                    True
 
-            #Every revision should have a set of trend keys except for the
-            #first which has no parent
-            if index == 1:
-                assert metric_value_names_set.difference(trend_keys) == \
-                    metric_value_names_set
-            else:
                 assert  metric_value_names_set.issuperset(trend_keys) == \
                     True
 
@@ -124,7 +119,7 @@ def test_object_transfer(ptm, plm, mtm, monkeypatch):
                     assert metric_value_names['test_evaluation'] == 1
 
 
-def test_no_load(monkeypatch, ptm):
+def test_no_load(monkeypatch, plm, ptm):
     """Successful populate_test_collections."""
 
     calls = []
@@ -136,6 +131,7 @@ def test_no_load(monkeypatch, ptm):
 
     call_process_objects(
         project=ptm.project,
+        pushlog_project=plm.project,
     )
 
     assert set(calls) == set([1])

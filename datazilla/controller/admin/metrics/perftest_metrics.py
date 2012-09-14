@@ -9,10 +9,19 @@ SAFE_TESTS = set([
     'tsvgr'
     ])
 
-def compute_test_run_metrics(project, pushlog_project, test_run_ids, debug):
+def compute_test_run_metrics(
+    project, pushlog_project, debug, test_run_ids=[]
+    ):
     """
     Runs all metric tests and associated summaries on a list of test run ids
     """
+
+    ###
+    #Insure that test_run_ids is iterable, if process objects generates
+    #an error it's possible that test_run_ids will be explicitly set to
+    #None
+    ###
+    test_run_ids = test_run_ids or []
 
     ##
     #Get test data for test run ids

@@ -166,29 +166,11 @@ def test_get_threshold_data(ptm, mtm):
     #causes the data to be stored as threshold data
     mtm.store_metric_results(child_revision, ref_data, sample_ttest_data, 1)
 
-    metric_id = 1
-    placeholders = [
-        ref_data['product_id'],
-        ref_data['operating_system_id'],
-        ref_data['processor'],
-        metric_id,
-        ref_data['test_id'],
-        ref_data['page_id'],
-        ref_data['page_id']
-        ]
-
-    metric_data_reference = ptm.sources["perftest"].dhub.execute(
-        proc="perftest.selects.get_metric_threshold",
-        placeholders=placeholders)
-
-    adapted_reference = _adapt_data(mtm, metric_data_reference)
-
     threshold_data = mtm.get_threshold_data(ref_data)
     mkey = threshold_data.keys()[0]
 
     for k in mtm.METRIC_KEYS:
-        assert threshold_data[mkey]['ref_data'][k] == \
-            adapted_reference[mkey]['ref_data'][k]
+        assert threshold_data[mkey]['ref_data'][k] == ref_data[k]
 
 def test_run_metric_method(mtm, ptm):
     #Get sample data
@@ -386,8 +368,8 @@ def test_insert_or_update_metric_threshold(mtm, ptm):
     ptm.load_test_data(sample_data)
 
     # retrieve loaded test values
-    model_data = mtm.get_test_values_by_revision(revision)
     parent_model_data = mtm.get_test_values_by_revision(parent_revision)
+    model_data = mtm.get_test_values_by_revision(revision)
 
     # retrieve metric id for insert_or_update_threshold
     metric_method = mtm.mf.get_metric_method(test_name)
@@ -661,7 +643,7 @@ def setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch):
 
         if index == setup_data['test_fail_index']:
             #Set up test run values to fail ttest
-            data = [50000, 50000, 50000]
+            data = [50000, 60000, 70000]
 
             sample_data = TestData( perftest_data(
                 testrun={ 'date':setup_data['sample_dates'][revision] },
