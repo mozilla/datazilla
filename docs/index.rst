@@ -20,6 +20,7 @@ Contents
    development
    architecture
    statistics
+   testdata
 
 * :ref:`search`
 

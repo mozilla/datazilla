@@ -2,6 +2,7 @@ from decimal import Decimal
 import json
 
 from datazilla.controller.admin.stats import pushlog_stats
+from datazilla.model import factory
 
 from ...sample_pushlog import get_pushlog_dict_set
 from ...sample_data import perftest_data, testrun, perftest_json
@@ -22,11 +23,11 @@ def test_get_not_referenced(plm, plsm, ptm, monkeypatch):
 
     def mock_plsm():
         return plsm
-    monkeypatch.setattr(pushlog_stats, 'get_plsm', mock_plsm)
+    monkeypatch.setattr(factory, 'get_plsm', mock_plsm)
 
     def mock_plm():
         return plm
-    monkeypatch.setattr(pushlog_stats, 'get_plm', mock_plm)
+    monkeypatch.setattr(factory, 'get_plm', mock_plm)
 
     data1 = get_pushlog_dict_set()
     plm._insert_branch_pushlogs(
@@ -67,13 +68,60 @@ def test_get_not_referenced(plm, plsm, ptm, monkeypatch):
             ]},
         ]
 
-    assert (result["with_matching_test_run"]["Firefox"]["pushlogs"] ==
-        exp_matching,
-            json.dumps(result, indent=4))
+    assert result["with_matching_test_run"]["Firefox"]["pushlogs"] == exp_matching
+    assert result["without_matching_test_run"]["Firefox"]["pushlogs"] == exp_non_matching
 
-    assert (result["without_matching_test_run"]["Firefox"]["pushlogs"] ==
-        exp_non_matching,
-            json.dumps(result, indent=4))
+
+def test_get_pushlogs(plm, plsm, monkeypatch):
+    """Test the get_pushlogs method."""
+
+    def mock_plsm():
+        return plsm
+    monkeypatch.setattr(factory, 'get_plsm', mock_plsm)
+
+    def mock_plm():
+        return plm
+    monkeypatch.setattr(factory, 'get_plm', mock_plm)
+
+    data1 = get_pushlog_dict_set()
+    plm._insert_branch_pushlogs(
+        get_branch_id(plm),
+        data1,
+        )
+
+    result = pushlog_stats.get_pushlogs(
+        startdate=1341451080,
+        enddate=1341494822,
+        )
+
+    exp = {
+        23049: {
+            "branch_name": "Firefox",
+            "revisions": [
+                "fbd96a0bcc00",
+                "fe305819d2f2"
+            ]
+        },
+        23052: {
+            "branch_name": "Firefox",
+            "revisions": [
+                "ea890a6eed56",
+                "bd74a2949929",
+                "5d6c06259bb1",
+                "7209f9f14a7d"
+            ]
+        },
+        23046: {
+            "branch_name": "Firefox",
+            "revisions": [
+                "785345035a3b"
+            ]
+        }
+    }
+
+
+    assert result == exp
+
 
 
 def test_get_all_branches(plm, monkeypatch):
@@ -118,17 +166,14 @@ def test_get_all_branches(plm, monkeypatch):
 
     assert set(exp_branch_list) == set(pushlog_stats.get_all_branches())
 
-def test_get_db_size(plsm, monkeypatch):
-    """Test get_db_size method."""
 
+def test_get_db_size(ptm, monkeypatch):
+    """Test the get_db_size method."""
     def mock_plsm():
-        return plsm
-    monkeypatch.setattr(pushlog_stats, 'get_plsm', mock_plsm)
+        return ptm
+    monkeypatch.setattr(factory, 'get_plsm', mock_plsm)
 
-    size = pushlog_stats.get_db_size()
-    exp = ({
-           'db_name': u'{0}_hgmozilla_1'.format(plsm.project),
-           'size_mb': Decimal('0.13'),
-        },)
+    size = pushlog_stats.get_db_size(ptm.project)
 
-    assert size == exp
+    assert size["db_name"] == u'{0}_hgmozilla_1'.format(ptm.project)
+    assert size["size_mb"] > 0

@@ -407,11 +407,25 @@
         "host":"read_host"
 
       },
+      "get_test_run_ids":{
+        "sql":"SELECT tr.id AS test_run_id, os.name AS os_name, t.name AS test_name
+            FROM test_run AS tr
+            LEFT JOIN build AS b ON b.id = tr.build_id
+            LEFT JOIN product AS p ON p.id = b.product_id
+            LEFT JOIN machine AS m ON m.id = tr.machine_id
+            LEFT JOIN operating_system as os on os.id = m.operating_system_id
+            LEFT JOIN test as t on t.id = tr.test_id
+            WHERE p.branch = ?
+            AND tr.revision = ?
+            REP0",
+
+        "host":"read_host"
+      },
       "get_distinct_test_run_revisions":{
 
         "sql":"SELECT distinct revision FROM test_run",
 
-          "host":"master_host"
+          "host":"read_host"
 
       },
       "get_test_run_values":{

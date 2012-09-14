@@ -1,6 +1,5 @@
 from django.conf.urls.defaults import *
 from datazilla.webapp.apps.datazilla import views
-from datazilla.webapp.apps.datazilla import stats
 
 urlpatterns = patterns('',
                        #UI Application
@@ -17,4 +16,7 @@ urlpatterns = patterns('',
 
                        #return statistics about Datazilla
                        (r'^stats/', include("datazilla.webapp.apps.datazilla.stats.urls")),
+
+                       #return test data for a project
+                       (r'^testdata/', include("datazilla.webapp.apps.datazilla.testdata.urls")),
                        )

@@ -1,5 +1,3 @@
-import json
-
 from datazilla.model.stats import PerformanceTestStatsModel
 
 
