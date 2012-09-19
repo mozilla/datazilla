@@ -35,6 +35,7 @@ class MetricsTestModel(DatazillaModelBase):
         'product_id',
         'operating_system_id',
         'processor',
+        'build_type',
         'test_id',
         'page_id'
         ]
@@ -53,6 +54,7 @@ class MetricsTestModel(DatazillaModelBase):
         'product_id',
         'operating_system_id',
         'processor',
+        'build_type',
         'test_id'
         ]
 
@@ -212,6 +214,7 @@ class MetricsTestModel(DatazillaModelBase):
             ref_data['product_id'],
             ref_data['operating_system_id'],
             ref_data['processor'],
+            ref_data['build_type'],
             metric_id,
             ref_data['test_id'],
             ref_data['page_id']
@@ -299,6 +302,7 @@ class MetricsTestModel(DatazillaModelBase):
                 ref_data['product_id'],
                 ref_data['operating_system_id'],
                 ref_data['processor'],
+                ref_data['build_type'],
                 ref_data['test_id'],
                 test_run_id
                 ],
@@ -328,6 +332,399 @@ class MetricsTestModel(DatazillaModelBase):
                 })
 
         return key_lookup
+
+    def get_metrics_data_from_test_run_ids(self, test_run_ids, page_name):
+        """
+        Retrieve all metrics data associated with a given revision.
+
+        returns the following list of dictionaries:
+
+        [
+            {
+                test_machine: {
+                    "platform": "x86_64",
+                    "osversion": "fedora 12",
+                    "os": "linux",
+                    "name": "talos-r3-fed64-011"
+                },
+                testrun: {
+                    "date": "1342730435",
+                    "suite": "Talos tsspider.2",
+                    "test_run_id":"1827313"
+                },
+                test_build: {
+                    "id": "20120719120951",
+                    "version": "15.0",
+                    "name": "Firefox",
+                    "branch": "Mozilla-Beta",
+                    "revision": "ebfad1bf8749"
+                },
+                push_info: {
+                    "push_date":123412341234,
+                    "pushlog_id":12341234
+                },
+                pages: {
+                    "layers1.html": {
+                        stddev: value,
+                        mean: value
+                        p: value,
+                        h0_rejected: value,
+                        n_replicates: value,
+                        fdr: value,
+                        trend_stddev: value,
+                        trend_mean: value,
+                        push_date: value,
+                        test_evaluation: value,
+                    },
+
+                    ...
+                },
+
+                ...
+        [
+        """
+        if not test_run_ids:
+            return []
+
+        r_string = ','.join( map( lambda tr_id: '%s', test_run_ids ) )
+
+        proc = 'perftest.selects.get_computed_metrics_from_test_run_ids'
+
+        computed_metrics = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            replace=[r_string],
+            placeholders=test_run_ids,
+            return_type='tuple'
+            )
+
+        key_lookup = {}
+        push_value_names = set(['push_date', 'pushlog_id'])
+        format_values = set(
+            ['mean', 'stddev', 'trend_mean', 'trend_stddev', 'p']
+            )
+
+        #Build a page lookup to filter by
+        page_names = set()
+        if page_name:
+            map(
+                lambda page:page_names.add(page.strip()),
+                page_name.split(',')
+                )
+
+        for d in computed_metrics:
+            summary_key = self.get_metrics_summary_key(d)
+
+            if page_names and (d['page_name'] not in page_names):
+                continue
+
+            if summary_key not in key_lookup:
+                #set reference data
+
+                key_lookup[summary_key] = {
+                    'test_machine':{
+                        "platform": d['processor'],
+                        "osversion": d['operating_system_version'],
+                        "os": d['operating_system_name'],
+                        "name": d['machine_name']
+                    },
+                    'testrun':{
+                        "date": d['date'],
+                        "suite": d['test_name'],
+                        "test_run_id": d['test_run_id']
+                    },
+                    'test_build': {
+                        "id": d['test_build_id'],
+                        "type": d['build_type'],
+                        "version": d['product_version'],
+                        "name": d['product_name'],
+                        "branch": d['product_branch'],
+                        "revision": d['revision'],
+                    },
+                    'push_info': {},
+                    'pages':{}
+                    }
+
+            if d['page_name'] not in key_lookup[summary_key]['pages']:
+                key_lookup[summary_key]['pages'][ d['page_name'] ] = {}
+
+            value_name = d['metric_value_name']
+            value = d['value']
+
+            if value_name in format_values:
+                value = format(value, '.1f')
+
+            if value_name in push_value_names:
+                key_lookup[summary_key]['push_info'][value_name] = value
+
+            key_lookup[summary_key]['pages'][ d['page_name'] ][value_name] = \
+                value
+
+        return key_lookup.values()
+
+    def get_metrics_summary(self, test_run_ids):
+        """
+        Retrieve all metrics test evaluations associated with a given
+        revision.
+
+        returns the following dictionary:
+
+            {
+                product_info: {
+                    "version": "15.0",
+                    "name": "Firefox",
+                    "branch": "Mozilla-Beta",
+                    "revision": "ebfad1bf8749"
+                    "push_date":123412341234,
+                    "pushlog_id":12341234
+                },
+
+                summary: {
+                    "total_tests": 2000,
+                    "tests_missing_metrics": 3,
+                    "pass":{value:1850, percent:"92.5%"},
+                    "fail":{value:150, percent:"7.5%"}
+                },
+                "summary_by_test": {
+                    "Talos Tp5row":{
+                        total_tests:500,
+                        pass:{
+                            value:450, percent:"90%"
+                            },
+                        fail:{
+                            value:50, percent:"10%"
+                            },
+                        }
+                    },
+                    ...
+                },
+                "summary_by_platform": {
+
+                    "Linux x86_64 fedora 12": {
+                        total_tests:500,
+                        pass:{
+                            value:450, percent:"90%"
+                            },
+                        fail:{
+                            value:50, percent:"10%"
+                            },
+                        },
+                        ...
+                    }
+                },
+
+                tests:{
+
+                    "Talos Tp5row":{
+                                        "Linux x86_64 fedora 12": {
+                                            total_tests:500,
+                                            pass:{
+                                                value:450, percent:"90%"
+                                                },
+                                            fail:{
+                                                value:50, percent:"10%"
+                                                },
+                                            pages:[ { layers1.html:0,
+                                                      layers2.html:1,
+                                                      ... } ]
+                                            }
+                                   },
+                        ...
+                    }
+             }
+        """
+        if not test_run_ids:
+            return []
+
+        r_string = ','.join( map( lambda tr_id: '%s', test_run_ids ) )
+
+        proc = 'perftest.selects.get_test_evaluations_from_test_run_ids'
+
+        computed_metrics = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            replace=[r_string],
+            placeholders=test_run_ids,
+            return_type='tuple'
+            )
+
+
+        summary_data = {}
+        key_lookup = set()
+        push_value_names = set(['push_date', 'pushlog_id'])
+
+        #Build summary data structure
+        for index, d in enumerate(computed_metrics):
+
+            key = self.get_metrics_key(d)
+
+            if index == 0:
+                summary_data = {
+                    'summary':self._get_counter_struct(),
+                    'product_info': {
+                        'version': d['product_version'],
+                        'name': d['product_name'],
+                        'branch': d['product_branch'],
+                        'revision': d['revision']
+                    },
+                    'summary_by_test':{},
+                    'summary_by_platform':{},
+                    'tests':{}
+                }
+
+            pname = "{0} {1} {2}".format(
+                d['operating_system_name'],
+                d['operating_system_version'],
+                d['processor'],
+                d['build_type'],
+                )
+
+            tname = d['test_name']
+
+            value_name = d['metric_value_name']
+            value = int(d['value'])
+
+            if tname not in summary_data['tests']:
+                summary_data['tests'][tname] = {}
+
+            if pname not in summary_data['tests'][tname]:
+                cstruct = self._get_counter_struct()
+                cstruct['pages'] = []
+                cstruct['platform_info'] = {}
+                summary_data['tests'][tname][pname] = cstruct
+
+            if pname not in summary_data['summary_by_platform']:
+                summary_data['summary_by_platform'][pname] = \
+                    self._get_counter_struct()
+
+            if tname not in summary_data['summary_by_test']:
+                summary_data['summary_by_test'][tname] = \
+                    self._get_counter_struct()
+
+            summary_data['summary']['total_tests'] += 1
+            summary_data['summary_by_platform'][pname]['total_tests'] += 1
+            summary_data['summary_by_test'][tname]['total_tests'] += 1
+            summary_data['tests'][tname][pname]['total_tests'] += 1
+
+            summary_data['tests'][tname][pname]['platform_info'] = {
+                'operating_system_name':d['operating_system_name'],
+                'processor':d['processor'],
+                'type':d['build_type'],
+                'operating_system_version':d['operating_system_version']
+                }
+
+            if value == 1:
+                summary_data['summary_by_platform'][pname]['pass']['value'] += 1
+                summary_data['summary_by_test'][tname]['pass']['value'] += 1
+                summary_data['tests'][tname][pname]['pass']['value'] += 1
+                summary_data['summary']['pass']['value'] += 1
+
+            if value == 0:
+                summary_data['summary_by_platform'][pname]['fail']['value'] += 1
+                summary_data['summary_by_test'][tname]['fail']['value'] += 1
+                summary_data['tests'][tname][pname]['fail']['value'] += 1
+                summary_data['summary']['fail']['value'] += 1
+
+            summary_data['tests'][tname][pname]['pages'].append(
+                { d['page_name']:value }
+                )
+
+        #Calculate percentages
+        summary_data['summary']['fail']['percent'] = \
+            self._calculate_percentage(
+                summary_data['summary']['fail']['value'],
+                summary_data['summary']['total_tests']
+                )
+
+        summary_data['summary']['pass']['percent'] = \
+            self._calculate_percentage(
+                summary_data['summary']['pass']['value'],
+                summary_data['summary']['total_tests']
+                )
+
+        for test in summary_data['summary_by_test']:
+
+            summary_data['summary_by_test'][test]['fail']['percent'] = \
+                self._calculate_percentage(
+                    summary_data['summary_by_test'][test]['fail']['value'],
+                    summary_data['summary_by_test'][test]['total_tests']
+                    )
+
+            summary_data['summary_by_test'][test]['pass']['percent'] = \
+                self._calculate_percentage(
+                    summary_data['summary_by_test'][test]['pass']['value'],
+                    summary_data['summary_by_test'][test]['total_tests']
+                    )
+
+        for test in summary_data['summary_by_platform']:
+
+            summary_data['summary_by_platform'][test]['fail']['percent'] = \
+                self._calculate_percentage(
+                    summary_data['summary_by_platform'][test]['fail']['value'],
+                    summary_data['summary_by_platform'][test]['total_tests']
+                    )
+
+            summary_data['summary_by_platform'][test]['pass']['percent'] = \
+                self._calculate_percentage(
+                    summary_data['summary_by_platform'][test]['pass']['value'],
+                    summary_data['summary_by_platform'][test]['total_tests']
+                    )
+
+        for test in summary_data['tests']:
+            for platform in summary_data['tests'][test]:
+                summary_data['tests'][test][platform]['fail']['percent'] = \
+                    self._calculate_percentage(
+                        summary_data['tests'][test][platform]['fail']['value'],
+                        summary_data['tests'][test][platform]['total_tests']
+                        )
+
+                summary_data['tests'][test][platform]['pass']['percent'] = \
+                    self._calculate_percentage(
+                        summary_data['tests'][test][platform]['pass']['value'],
+                        summary_data['tests'][test][platform]['total_tests']
+                        )
+
+        return summary_data
+
+    def get_test_run_ids_from_pushlog_ids(self, pushlog_ids=[]):
+
+        rep = []
+        placeholders = []
+        placeholders.extend(pushlog_ids)
+
+        replace = ','.join( map( lambda pushlog_id: '%s', pushlog_ids ) )
+        rep.append(replace)
+        replace = [" ".join(rep)] if len(rep) else [" "]
+
+        proc = 'perftest.selects.get_test_run_ids_from_pushlog_ids'
+
+        #assert False, [rep, placeholders]
+        id_list = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            replace=replace,
+            placeholders=placeholders,
+            return_type='tuple'
+            )
+
+        test_run_ids = [ test_data['test_run_id'] for test_data in id_list ]
+
+        return test_run_ids
+
+    def _calculate_percentage(self, value, total):
+
+        percentage = 0.00
+        if total > 0:
+            percentage = round( (float(value)/float(total))*100.00 )
+        return percentage
+
+    def _get_counter_struct(self):
+
+        return {
+            'total_tests':0,
+            'pass':{'value':0, 'percent':""},
+            'fail':{'value':0, 'percent':""}
+            }
 
     def get_metrics_data(self, revision):
         """
@@ -541,6 +938,7 @@ class MetricsTestModel(DatazillaModelBase):
             ref_data['product_id'],
             ref_data['operating_system_id'],
             ref_data['processor'],
+            ref_data['build_type'],
             metric_id,
             ref_data['test_id'],
             ref_data['page_id'],
@@ -551,6 +949,7 @@ class MetricsTestModel(DatazillaModelBase):
             ref_data['product_id'],
             ref_data['operating_system_id'],
             ref_data['processor'],
+            ref_data['build_type'],
             metric_id,
             ref_data['test_id'],
             ref_data['page_id'],
@@ -575,12 +974,25 @@ class MetricsTestModel(DatazillaModelBase):
                          int( time.time() )
                         ]
 
-
         self.sources["perftest"].dhub.execute(
             proc=proc,
             debug_show=self.DEBUG,
             placeholders=placeholders,
             )
+
+    def get_application_log(self, revision):
+
+        proc = 'perftest.inserts.get_application_log'
+
+        placeholders = [ revision ]
+
+        log = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            placeholders=placeholders,
+            )
+
+        return log
 
     def _get_metric_collection(self):
         proc = 'perftest.selects.get_metric_collection'
@@ -832,6 +1244,7 @@ class MetricMethodBase(MetricMethodInterface):
     def _get_metric_value_name(self, datum):
         if datum['metric_value_name'] == self.metric_value_name:
             return True
+
 
 class TtestMethod(MetricMethodBase):
     """Class implements the metric method interface for welch's ttest"""

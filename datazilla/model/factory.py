@@ -7,6 +7,7 @@ in instantiating models.
 
 from base import PerformanceTestModel, PushLogModel
 from stats import PerformanceTestStatsModel, PushLogStatsModel
+from metrics import MetricsTestModel
 
 
 def get_ptsm(project):
@@ -27,5 +28,9 @@ def get_plm():
 def get_plsm():
     """Shortcut to return the PushLogStatsModel."""
     return PushLogStatsModel()
+
+def get_mtm(project):
+    """Shortcut to return the MetricsTestModel."""
+    return MetricsTestModel(project)
 
 

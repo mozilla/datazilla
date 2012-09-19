@@ -38,9 +38,7 @@ def test_metric_summary_keys(mtm):
 
 def test_get_metrics_key_value(mtm):
 
-    data = get_metrics_key_data(
-        key_delimiter=mtm.KEY_DELIMITER
-        )
+    data = get_metrics_key_data(key_delimiter=mtm.KEY_DELIMITER)
 
     key = mtm.get_metrics_key( data['key_data'] )
 
@@ -142,15 +140,14 @@ def test_get_test_values(mtm, ptm):
 
 def test_get_threshold_data(ptm, mtm):
 
-    child_sample_data = TestData( perftest_data() )
+    child_sample_data = TestData( perftest_data())
     child_revision = child_sample_data['test_build']['revision']
 
     parent_revision = 'a461b5f53b20'
 
-    parent_sample_data = TestData( perftest_data(
-        test_build={ 'revision': parent_revision }
+    parent_sample_data = TestData(
+        perftest_data(test_build={ 'revision': parent_revision })
         )
-    )
 
     ref_data = get_sample_ref_data()
 
@@ -173,6 +170,7 @@ def test_get_threshold_data(ptm, mtm):
         assert threshold_data[mkey]['ref_data'][k] == ref_data[k]
 
 def test_run_metric_method(mtm, ptm):
+
     #Get sample data
     child_sample_data = TestData(perftest_data())
     parent_sample_data = TestData(perftest_data())
@@ -232,15 +230,15 @@ def test_store_metric_summary_results(mtm, ptm):
 
     #Get sample data
     child_sample_data = TestData(perftest_data())
+
     test_name = child_sample_data['testrun']['suite']
     child_revision = child_sample_data['test_build']['revision']
 
     parent_revision = 'a461b5f53b20'
 
-    parent_sample_data = TestData( perftest_data(
-        test_build={ 'revision': parent_revision }
+    parent_sample_data = TestData(
+        perftest_data(test_build={ 'revision': parent_revision })
         )
-    )
 
     ptm.load_test_data(parent_sample_data)
     ptm.load_test_data(child_sample_data)
@@ -304,15 +302,14 @@ def test_store_metric_summary_results(mtm, ptm):
 
 def test_store_metric_results(mtm, ptm):
 
-    child_sample_data = TestData( perftest_data() )
+    child_sample_data = TestData(perftest_data())
     child_revision = child_sample_data['test_build']['revision']
 
     parent_revision = 'a461b5f53b20'
 
-    parent_sample_data = TestData( perftest_data(
-        test_build={ 'revision': parent_revision }
+    parent_sample_data = TestData(
+        perftest_data(test_build={ 'revision': parent_revision })
         )
-    )
 
     ref_data = get_sample_ref_data()
 
@@ -348,10 +345,9 @@ def test_store_metric_results(mtm, ptm):
 def test_insert_or_update_metric_threshold(mtm, ptm):
 
     # get sample data
-    sample_data = TestData( perftest_data(
-        results={'one.com':[10,20,30,40]}
+    sample_data = TestData(
+        perftest_data(results={'one.com':[10,20,30,40]})
         )
-    )
 
     test_name = sample_data['testrun']['suite']
     revision = sample_data['test_build']['revision']

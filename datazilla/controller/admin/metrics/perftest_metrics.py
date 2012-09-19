@@ -279,7 +279,7 @@ def _run_metrics(
 
             if branch_id not in pushlog:
                 pushlog[ branch_id ] = plm.get_branch_pushlog(
-                    branch_id, 10, 0
+                    branch_id, 5, 0
                     )
 
                 _build_push_lookup(

@@ -615,6 +615,7 @@ CREATE TABLE `metric_threshold` (
   `product_id` int(11) NOT NULL,
   `operating_system_id` int(11) NOT NULL,
   `processor` varchar(25) NOT NULL,
+  `build_type` varchar(25) NOT NULL,
   `metric_id` int(11) NOT NULL,
   `test_id` int(11) NOT NULL,
   `page_id` int(11) NOT NULL,
@@ -623,6 +624,7 @@ CREATE TABLE `metric_threshold` (
   KEY `product_id_key` (`product_id`),
   KEY `operating_system_id_key` (`operating_system_id`),
   KEY `processor_key` (`processor`),
+  KEY `build_type_key` (`build_type`),
   KEY `metric_id_key` (`metric_id`),
   KEY `test_id_key` (`test_id`),
   KEY `page_id_key` (`page_id`),
@@ -632,7 +634,7 @@ CREATE TABLE `metric_threshold` (
   CONSTRAINT `fk_metric_threshold_machine` FOREIGN KEY (`operating_system_id`) REFERENCES `machine` (`operating_system_id`),
   CONSTRAINT `fk_metric_threshold_test` FOREIGN KEY (`test_id`) REFERENCES `test` (`id`),
   CONSTRAINT `fk_metric_threshold_page` FOREIGN KEY (`page_id`) REFERENCES `pages` (`id`),
-  UNIQUE KEY `metric_threshold_UNIQUE` (`product_id`, `operating_system_id`, `processor`, `metric_id`, `test_id`, `page_id`)
+  UNIQUE KEY `metric_threshold_UNIQUE` (`product_id`, `operating_system_id`, `processor`, `build_type`, `metric_id`, `test_id`, `page_id`)
 ) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

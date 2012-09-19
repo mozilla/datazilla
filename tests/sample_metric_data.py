@@ -16,14 +16,15 @@ def get_metrics_key_data(**kwargs):
         "product_id": kwargs.pop("product_id", 1),
         "operating_system_id": kwargs.pop("operating_system_id", 1),
         "processor": kwargs.pop("processor", 'x86_64'),
+        "build_type": kwargs.pop("build_type", 'opt'),
         "test_id": kwargs.pop("test_id", 1),
         "page_id": kwargs.pop("page_id", 1),
         }
 
     defaults.update(kwargs)
 
-    default_value = '1{0}1{0}x86_64{0}1{0}1'.format(
-        kwargs.pop('key_delimiter', '-')
+    default_value = '1{0}1{0}x86_64{0}opt{0}1{0}1'.format(
+        kwargs.pop('key_delimiter', '__')
         )
 
     return { 'key_data':defaults, 'default_value':default_value }
@@ -34,13 +35,14 @@ def get_metrics_summary_key_data(**kwargs):
         "product_id": kwargs.pop("product_id", 1),
         "operating_system_id": kwargs.pop("operating_system_id", 1),
         "processor": kwargs.pop("processor", 'x86_64'),
+        "build_type": kwargs.pop("build_type", 'opt'),
         "test_id": kwargs.pop("test_id", 1),
         }
 
     defaults.update(kwargs)
 
-    default_value = '1{0}1{0}x86_64{0}1'.format(
-        kwargs.pop('key_delimiter', '-')
+    default_value = '1{0}1{0}x86_64{0}opt{0}1'.format(
+        kwargs.pop('key_delimiter', '__')
         )
 
     return { 'key_data':defaults, 'default_value':default_value }
@@ -138,6 +140,7 @@ def get_sample_ref_data():
              'product_id':1,
              'operating_system_id':1,
              'processor':'x86_64',
+             'build_type':'opt',
              'test_id':1,
              'page_id':1}
 

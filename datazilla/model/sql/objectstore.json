@@ -65,7 +65,9 @@
 
         "get_json_blob_for_test_run":{
 
-            "sql":"SELECT json_blob, error_msg, error_flag FROM `objectstore` WHERE `test_run_id` = ?",
+            "sql":"SELECT json_blob, error_msg, error_flag
+                   FROM `objectstore`
+                   WHERE `test_run_id` IN (REP0)",
 
             "host":"read_host"
         },
