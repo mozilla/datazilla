@@ -570,21 +570,21 @@ class PerformanceTestModel(DatazillaModelBase):
         return products
 
 
-    def get_default_product(self):
+    def get_default_products(self):
 
-        proc = 'perftest.selects.get_default_product'
+        proc = 'perftest.selects.get_default_products'
 
-        default_product = self.sources["perftest"].dhub.execute(
+        products = self.sources["perftest"].dhub.execute(
                 proc=proc,
                 debug_show=self.DEBUG,
                 return_type='tuple'
                 )
 
-        product_data = {}
-        if default_product:
-            product_data = default_product[0]
+        default_products = ','.join(
+            [ str(d['id']) for d in products ]
+            )
 
-        return product_data
+        return default_products
 
 
     def get_machines(self):
@@ -727,7 +727,7 @@ class PerformanceTestModel(DatazillaModelBase):
 
     def cache_default_project(self, cache_key_str='default_product'):
 
-        default_project = self.get_default_product()
+        default_project = self.get_default_products()
         cache_key = self.get_project_cache_key(cache_key_str)
         cache.set(cache_key, default_project)
 
@@ -916,13 +916,13 @@ class PerformanceTestModel(DatazillaModelBase):
         return data
 
 
-    def set_default_product(self, id):
+    def set_default_product(self, id, value):
 
         proc = 'perftest.inserts.set_default_product'
 
         default_product = self.sources["perftest"].dhub.execute(
                 proc=proc,
-                placeholders=[id],
+                placeholders=[value, id],
                 debug_show=self.DEBUG,
                 )
 
