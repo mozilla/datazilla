@@ -10,6 +10,10 @@ DATAZILLA_HOME=/usr/local/datazilla
 */10 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --load --cron_batch medium
 0,30 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --load --cron_batch large
 
+*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py set_default_product --cron_batch small
+*/10 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py set_default_product --cron_batch medium
+0,30 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py set_default_product --cron_batch large
+
 # run twice every minute
 * * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --cron_batch small --cron_batch medium --cron_batch large --loadlimit 25 && $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --cron_batch small --cron_batch large --loadlimit 25
 

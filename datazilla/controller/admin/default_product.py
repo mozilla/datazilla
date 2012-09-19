@@ -20,17 +20,19 @@ def set_default_products(project):
         key=lambda s: map(numeric_prefix, s.split('.')), reverse=True
         )
 
-    current_version = versions[0]
+    if versions:
 
-    default_products = []
-    for id in products:
-        default = 0
-        if current_version == products[id]['version']:
-            default = 1
+        current_version = versions[0]
+
+        default_products = []
+        for id in products:
+            default = 0
+            if current_version == products[id]['version']:
+                default = 1
 
         ptm.set_default_product(id, default)
 
-    ptm.cache_default_project()
+        ptm.cache_default_project()
 
 def numeric_prefix(s):
     n = 0
