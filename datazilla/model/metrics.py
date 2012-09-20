@@ -1,7 +1,8 @@
 import sys
 import copy
+import time
 
-from numpy import mean, std
+from numpy import mean, std, isnan, nan
 
 from django.conf import settings
 
@@ -34,6 +35,7 @@ class MetricsTestModel(DatazillaModelBase):
         'product_id',
         'operating_system_id',
         'processor',
+        'build_type',
         'test_id',
         'page_id'
         ]
@@ -52,6 +54,7 @@ class MetricsTestModel(DatazillaModelBase):
         'product_id',
         'operating_system_id',
         'processor',
+        'build_type',
         'test_id'
         ]
 
@@ -197,32 +200,61 @@ class MetricsTestModel(DatazillaModelBase):
                 },
 
                 values : [ test_value1, test_value2, test_value3, ... ]
+
+                metric_values:{ metric_value_name: metric_value, ... }
             }
         """
         m = self.mf.get_metric_method(ref_data['test_name'])
         metric_id = m.get_metric_id()
 
-        proc = 'perftest.selects.get_metric_threshold'
+        #Get the threshold test run id
+        test_run_proc = 'perftest.selects.get_metric_threshold_test_run'
 
-        placeholders = [
+        test_run_placeholders = [
             ref_data['product_id'],
             ref_data['operating_system_id'],
             ref_data['processor'],
+            ref_data['build_type'],
             metric_id,
             ref_data['test_id'],
-            ref_data['page_id'],
             ref_data['page_id']
             ]
 
-        threshold_data = self.sources["perftest"].dhub.execute(
-            proc=proc,
+        test_run_data = self.sources["perftest"].dhub.execute(
+            proc=test_run_proc,
             debug_show=self.DEBUG,
-            placeholders=placeholders,
+            placeholders=test_run_placeholders,
+            return_type='iter',
+            )
+
+        test_run_id =  test_run_data.get_column_data('test_run_id')
+
+        #Get the test values for the test run and page
+        test_data_proc = \
+            'perftest.selects.get_test_values_by_test_run_id_and_page_id'
+
+        test_data = self.sources["perftest"].dhub.execute(
+            proc=test_data_proc,
+            debug_show=self.DEBUG,
+            placeholders=[ test_run_id, ref_data['page_id'] ],
+            return_type='tuple',
+            )
+
+        #Get the metric values for the test run and page
+        metric_data_proc = \
+            'perftest.selects.get_metrics_data_from_test_run_id_and_page_id'
+
+        metrics_data = self.sources["perftest"].dhub.execute(
+            proc=metric_data_proc,
+            debug_show=self.DEBUG,
+            placeholders=[ test_run_id, ref_data['page_id'] ],
             return_type='tuple',
             )
 
         key_lookup = {}
-        for d in threshold_data:
+
+        #Load metrics data
+        for d in metrics_data:
             key = self.get_metrics_key(d)
             if key not in key_lookup:
                 #set reference data
@@ -235,11 +267,27 @@ class MetricsTestModel(DatazillaModelBase):
                         )
                     }
 
-            key_lookup[key]['values'].append( d['value'] )
-
             key_lookup[key]['metric_values'].setdefault(
                 d['metric_value_name'], d['metric_value']
-                  )
+                )
+
+        #Load associated test data
+        for d in test_data:
+            key = self.get_metrics_key(d)
+            #The key should be defined at this point but if
+            #not be sure to return any values
+            if key not in key_lookup:
+                #set reference data
+                key_lookup[key] = {
+                    'values':[],
+                    'metric_values':{},
+                    'ref_data':self.extend_with_metrics_keys(
+                        d, ['test_run_id', 'test_name', 'revision',
+                        'threshold_test_run_id']
+                        )
+                    }
+
+            key_lookup[key]['values'].append( d['value'] )
 
         return key_lookup
 
@@ -254,6 +302,7 @@ class MetricsTestModel(DatazillaModelBase):
                 ref_data['product_id'],
                 ref_data['operating_system_id'],
                 ref_data['processor'],
+                ref_data['build_type'],
                 ref_data['test_id'],
                 test_run_id
                 ],
@@ -283,6 +332,399 @@ class MetricsTestModel(DatazillaModelBase):
                 })
 
         return key_lookup
+
+    def get_metrics_data_from_test_run_ids(self, test_run_ids, page_name):
+        """
+        Retrieve all metrics data associated with a given revision.
+
+        returns the following list of dictionaries:
+
+        [
+            {
+                test_machine: {
+                    "platform": "x86_64",
+                    "osversion": "fedora 12",
+                    "os": "linux",
+                    "name": "talos-r3-fed64-011"
+                },
+                testrun: {
+                    "date": "1342730435",
+                    "suite": "Talos tsspider.2",
+                    "test_run_id":"1827313"
+                },
+                test_build: {
+                    "id": "20120719120951",
+                    "version": "15.0",
+                    "name": "Firefox",
+                    "branch": "Mozilla-Beta",
+                    "revision": "ebfad1bf8749"
+                },
+                push_info: {
+                    "push_date":123412341234,
+                    "pushlog_id":12341234
+                },
+                pages: {
+                    "layers1.html": {
+                        stddev: value,
+                        mean: value
+                        p: value,
+                        h0_rejected: value,
+                        n_replicates: value,
+                        fdr: value,
+                        trend_stddev: value,
+                        trend_mean: value,
+                        push_date: value,
+                        test_evaluation: value,
+                    },
+
+                    ...
+                },
+
+                ...
+        [
+        """
+        if not test_run_ids:
+            return []
+
+        r_string = ','.join( map( lambda tr_id: '%s', test_run_ids ) )
+
+        proc = 'perftest.selects.get_computed_metrics_from_test_run_ids'
+
+        computed_metrics = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            replace=[r_string],
+            placeholders=test_run_ids,
+            return_type='tuple'
+            )
+
+        key_lookup = {}
+        push_value_names = set(['push_date', 'pushlog_id'])
+        format_values = set(
+            ['mean', 'stddev', 'trend_mean', 'trend_stddev', 'p']
+            )
+
+        #Build a page lookup to filter by
+        page_names = set()
+        if page_name:
+            map(
+                lambda page:page_names.add(page.strip()),
+                page_name.split(',')
+                )
+
+        for d in computed_metrics:
+            summary_key = self.get_metrics_summary_key(d)
+
+            if page_names and (d['page_name'] not in page_names):
+                continue
+
+            if summary_key not in key_lookup:
+                #set reference data
+
+                key_lookup[summary_key] = {
+                    'test_machine':{
+                        "platform": d['processor'],
+                        "osversion": d['operating_system_version'],
+                        "os": d['operating_system_name'],
+                        "name": d['machine_name']
+                    },
+                    'testrun':{
+                        "date": d['date'],
+                        "suite": d['test_name'],
+                        "test_run_id": d['test_run_id']
+                    },
+                    'test_build': {
+                        "id": d['test_build_id'],
+                        "type": d['build_type'],
+                        "version": d['product_version'],
+                        "name": d['product_name'],
+                        "branch": d['product_branch'],
+                        "revision": d['revision'],
+                    },
+                    'push_info': {},
+                    'pages':{}
+                    }
+
+            if d['page_name'] not in key_lookup[summary_key]['pages']:
+                key_lookup[summary_key]['pages'][ d['page_name'] ] = {}
+
+            value_name = d['metric_value_name']
+            value = d['value']
+
+            if value_name in format_values:
+                value = format(value, '.1f')
+
+            if value_name in push_value_names:
+                key_lookup[summary_key]['push_info'][value_name] = value
+
+            key_lookup[summary_key]['pages'][ d['page_name'] ][value_name] = \
+                value
+
+        return key_lookup.values()
+
+    def get_metrics_summary(self, test_run_ids):
+        """
+        Retrieve all metrics test evaluations associated with a given
+        revision.
+
+        returns the following dictionary:
+
+            {
+                product_info: {
+                    "version": "15.0",
+                    "name": "Firefox",
+                    "branch": "Mozilla-Beta",
+                    "revision": "ebfad1bf8749"
+                    "push_date":123412341234,
+                    "pushlog_id":12341234
+                },
+
+                summary: {
+                    "total_tests": 2000,
+                    "tests_missing_metrics": 3,
+                    "pass":{value:1850, percent:"92.5%"},
+                    "fail":{value:150, percent:"7.5%"}
+                },
+                "summary_by_test": {
+                    "Talos Tp5row":{
+                        total_tests:500,
+                        pass:{
+                            value:450, percent:"90%"
+                            },
+                        fail:{
+                            value:50, percent:"10%"
+                            },
+                        }
+                    },
+                    ...
+                },
+                "summary_by_platform": {
+
+                    "Linux x86_64 fedora 12": {
+                        total_tests:500,
+                        pass:{
+                            value:450, percent:"90%"
+                            },
+                        fail:{
+                            value:50, percent:"10%"
+                            },
+                        },
+                        ...
+                    }
+                },
+
+                tests:{
+
+                    "Talos Tp5row":{
+                                        "Linux x86_64 fedora 12": {
+                                            total_tests:500,
+                                            pass:{
+                                                value:450, percent:"90%"
+                                                },
+                                            fail:{
+                                                value:50, percent:"10%"
+                                                },
+                                            pages:[ { layers1.html:0,
+                                                      layers2.html:1,
+                                                      ... } ]
+                                            }
+                                   },
+                        ...
+                    }
+             }
+        """
+        if not test_run_ids:
+            return []
+
+        r_string = ','.join( map( lambda tr_id: '%s', test_run_ids ) )
+
+        proc = 'perftest.selects.get_test_evaluations_from_test_run_ids'
+
+        computed_metrics = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            replace=[r_string],
+            placeholders=test_run_ids,
+            return_type='tuple'
+            )
+
+
+        summary_data = {}
+        key_lookup = set()
+        push_value_names = set(['push_date', 'pushlog_id'])
+
+        #Build summary data structure
+        for index, d in enumerate(computed_metrics):
+
+            key = self.get_metrics_key(d)
+
+            if index == 0:
+                summary_data = {
+                    'summary':self._get_counter_struct(),
+                    'product_info': {
+                        'version': d['product_version'],
+                        'name': d['product_name'],
+                        'branch': d['product_branch'],
+                        'revision': d['revision']
+                    },
+                    'summary_by_test':{},
+                    'summary_by_platform':{},
+                    'tests':{}
+                }
+
+            pname = "{0} {1} {2}".format(
+                d['operating_system_name'],
+                d['operating_system_version'],
+                d['processor'],
+                d['build_type'],
+                )
+
+            tname = d['test_name']
+
+            value_name = d['metric_value_name']
+            value = int(d['value'])
+
+            if tname not in summary_data['tests']:
+                summary_data['tests'][tname] = {}
+
+            if pname not in summary_data['tests'][tname]:
+                cstruct = self._get_counter_struct()
+                cstruct['pages'] = []
+                cstruct['platform_info'] = {}
+                summary_data['tests'][tname][pname] = cstruct
+
+            if pname not in summary_data['summary_by_platform']:
+                summary_data['summary_by_platform'][pname] = \
+                    self._get_counter_struct()
+
+            if tname not in summary_data['summary_by_test']:
+                summary_data['summary_by_test'][tname] = \
+                    self._get_counter_struct()
+
+            summary_data['summary']['total_tests'] += 1
+            summary_data['summary_by_platform'][pname]['total_tests'] += 1
+            summary_data['summary_by_test'][tname]['total_tests'] += 1
+            summary_data['tests'][tname][pname]['total_tests'] += 1
+
+            summary_data['tests'][tname][pname]['platform_info'] = {
+                'operating_system_name':d['operating_system_name'],
+                'processor':d['processor'],
+                'type':d['build_type'],
+                'operating_system_version':d['operating_system_version']
+                }
+
+            if value == 1:
+                summary_data['summary_by_platform'][pname]['pass']['value'] += 1
+                summary_data['summary_by_test'][tname]['pass']['value'] += 1
+                summary_data['tests'][tname][pname]['pass']['value'] += 1
+                summary_data['summary']['pass']['value'] += 1
+
+            if value == 0:
+                summary_data['summary_by_platform'][pname]['fail']['value'] += 1
+                summary_data['summary_by_test'][tname]['fail']['value'] += 1
+                summary_data['tests'][tname][pname]['fail']['value'] += 1
+                summary_data['summary']['fail']['value'] += 1
+
+            summary_data['tests'][tname][pname]['pages'].append(
+                { d['page_name']:value }
+                )
+
+        #Calculate percentages
+        summary_data['summary']['fail']['percent'] = \
+            self._calculate_percentage(
+                summary_data['summary']['fail']['value'],
+                summary_data['summary']['total_tests']
+                )
+
+        summary_data['summary']['pass']['percent'] = \
+            self._calculate_percentage(
+                summary_data['summary']['pass']['value'],
+                summary_data['summary']['total_tests']
+                )
+
+        for test in summary_data['summary_by_test']:
+
+            summary_data['summary_by_test'][test]['fail']['percent'] = \
+                self._calculate_percentage(
+                    summary_data['summary_by_test'][test]['fail']['value'],
+                    summary_data['summary_by_test'][test]['total_tests']
+                    )
+
+            summary_data['summary_by_test'][test]['pass']['percent'] = \
+                self._calculate_percentage(
+                    summary_data['summary_by_test'][test]['pass']['value'],
+                    summary_data['summary_by_test'][test]['total_tests']
+                    )
+
+        for test in summary_data['summary_by_platform']:
+
+            summary_data['summary_by_platform'][test]['fail']['percent'] = \
+                self._calculate_percentage(
+                    summary_data['summary_by_platform'][test]['fail']['value'],
+                    summary_data['summary_by_platform'][test]['total_tests']
+                    )
+
+            summary_data['summary_by_platform'][test]['pass']['percent'] = \
+                self._calculate_percentage(
+                    summary_data['summary_by_platform'][test]['pass']['value'],
+                    summary_data['summary_by_platform'][test]['total_tests']
+                    )
+
+        for test in summary_data['tests']:
+            for platform in summary_data['tests'][test]:
+                summary_data['tests'][test][platform]['fail']['percent'] = \
+                    self._calculate_percentage(
+                        summary_data['tests'][test][platform]['fail']['value'],
+                        summary_data['tests'][test][platform]['total_tests']
+                        )
+
+                summary_data['tests'][test][platform]['pass']['percent'] = \
+                    self._calculate_percentage(
+                        summary_data['tests'][test][platform]['pass']['value'],
+                        summary_data['tests'][test][platform]['total_tests']
+                        )
+
+        return summary_data
+
+    def get_test_run_ids_from_pushlog_ids(self, pushlog_ids=[]):
+
+        rep = []
+        placeholders = []
+        placeholders.extend(pushlog_ids)
+
+        replace = ','.join( map( lambda pushlog_id: '%s', pushlog_ids ) )
+        rep.append(replace)
+        replace = [" ".join(rep)] if len(rep) else [" "]
+
+        proc = 'perftest.selects.get_test_run_ids_from_pushlog_ids'
+
+        #assert False, [rep, placeholders]
+        id_list = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            replace=replace,
+            placeholders=placeholders,
+            return_type='tuple'
+            )
+
+        test_run_ids = [ test_data['test_run_id'] for test_data in id_list ]
+
+        return test_run_ids
+
+    def _calculate_percentage(self, value, total):
+
+        percentage = 0.00
+        if total > 0:
+            percentage = round( (float(value)/float(total))*100.00 )
+        return percentage
+
+    def _get_counter_struct(self):
+
+        return {
+            'total_tests':0,
+            'pass':{'value':0, 'percent':""},
+            'fail':{'value':0, 'percent':""}
+            }
 
     def get_metrics_data(self, revision):
         """
@@ -362,7 +804,6 @@ class MetricsTestModel(DatazillaModelBase):
             MetricMethod.evaluate_metric_result test to be considered a
             viable parent.
         """
-
         parent_data = {}
         test_result = {}
         parent_index = index
@@ -385,7 +826,6 @@ class MetricsTestModel(DatazillaModelBase):
                     continue
 
                 data = self.get_test_values_by_revision(revision)
-
                 #no data for this revision, skip
                 if not data:
                     self.add_skip_revision(revision)
@@ -498,6 +938,7 @@ class MetricsTestModel(DatazillaModelBase):
             ref_data['product_id'],
             ref_data['operating_system_id'],
             ref_data['processor'],
+            ref_data['build_type'],
             metric_id,
             ref_data['test_id'],
             ref_data['page_id'],
@@ -508,6 +949,7 @@ class MetricsTestModel(DatazillaModelBase):
             ref_data['product_id'],
             ref_data['operating_system_id'],
             ref_data['processor'],
+            ref_data['build_type'],
             metric_id,
             ref_data['test_id'],
             ref_data['page_id'],
@@ -520,6 +962,37 @@ class MetricsTestModel(DatazillaModelBase):
             debug_show=settings.DEBUG,
             placeholders=placeholders
             )
+
+    def log_msg(self, revision, test_run_id, msg_type, msg):
+
+        proc = 'perftest.inserts.set_application_msg'
+
+        placeholders = [ revision,
+                         test_run_id,
+                         msg_type,
+                         msg,
+                         int( time.time() )
+                        ]
+
+        self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            placeholders=placeholders,
+            )
+
+    def get_application_log(self, revision):
+
+        proc = 'perftest.inserts.get_application_log'
+
+        placeholders = [ revision ]
+
+        log = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            placeholders=placeholders,
+            )
+
+        return log
 
     def _get_metric_collection(self):
         proc = 'perftest.selects.get_metric_collection'
@@ -561,6 +1034,8 @@ class MetricsMethodFactory(object):
             metric_method = self.metric_method_instances.setdefault(
                 test_name, TtestMethod(self.metric_collection)
                 )
+
+        metric_method.set_test_name(test_name)
 
         return metric_method
 
@@ -722,6 +1197,8 @@ class MetricMethodBase(MetricMethodInterface):
 
         self.metric_values = {}
 
+        self.test_name = ""
+
         self.set_metric_method()
 
     def set_metric_method(self):
@@ -754,6 +1231,9 @@ class MetricMethodBase(MetricMethodInterface):
                    "class, {1}").format(self.NAME, self.__class__.__name__)
             raise MetricMethodError(msg)
 
+    def set_test_name(self, test_name):
+        self.test_name = test_name
+
     def filter_by_metric_value_name(self, data):
         flist = filter(self._get_metric_value_name, data)
         return { 'values':map(lambda d: d['value'], flist), 'list':flist }
@@ -765,17 +1245,15 @@ class MetricMethodBase(MetricMethodInterface):
         if datum['metric_value_name'] == self.metric_value_name:
             return True
 
+
 class TtestMethod(MetricMethodBase):
     """Class implements the metric method interface for welch's ttest"""
 
     NAME = 'welch_ttest'
     SUMMARY_NAME = 'fdr'
 
-    # Alpha value for ttests
+    #Alpha value for ttests
     ALPHA = 0.05
-
-    # Index to start collecting test values from
-    DATA_START_INDEX = 1
 
     def __init__(self, metric_collection):
 
@@ -789,6 +1267,12 @@ class TtestMethod(MetricMethodBase):
         #Store p value id for fdr
         self.metric_value_name = 'p'
 
+    def get_start_index(self):
+        start_index = 0
+        if 'tp5' in self.test_name:
+            start_index = 1
+        return start_index
+
     def run_metric_method(
         self, child_data, parent_data, parent_metric_data={}
         ):
@@ -797,8 +1281,7 @@ class TtestMethod(MetricMethodBase):
         trend_mean = parent_metric_data.get('trend_mean', None)
 
         if trend_stddev and trend_mean:
-            #A trend line data is available use it
-
+            #trend line data is available use it
             n = len(child_data)
             s = std(child_data, ddof=1)
             m = mean(child_data)
@@ -824,13 +1307,29 @@ class TtestMethod(MetricMethodBase):
         else:
             #No trend line data is available use the parent
             #replicate data
+            start_index = self.get_start_index()
 
             #Filter out the first replicate here
             result = welchs_ttest(
-                child_data[self.DATA_START_INDEX:],
-                parent_data[self.DATA_START_INDEX:],
+                child_data[start_index:],
+                parent_data[start_index:],
                 self.ALPHA
                 )
+
+        #####
+        #If a divide by zero event occured the subsequent p value
+        #will be numpy.nan, this will then be propagated through
+        #all subsequent numerical treatments and stored in the database.
+        #To prevent this from happening, raise a MetricMethodError for
+        #any caller to catch.
+        #####
+        if isnan( result['p'] ):
+            #p value is not a number
+            msg = "p value is not a number, result:{0}".format(
+                str(result)
+                )
+
+            raise MetricMethodError(msg)
 
         return result
 
@@ -838,6 +1337,8 @@ class TtestMethod(MetricMethodBase):
 
         filtered_data = self.filter_by_metric_value_name(data)
         rejector_data = rejector(filtered_data['values'])
+
+        filtered_data['values']
 
         results = []
         for s, d in zip( rejector_data['status'], filtered_data['list'] ):
@@ -931,9 +1432,12 @@ class TtestMethod(MetricMethodBase):
             lookup = self._get_summary_data_lookup(metrics_data)
             trend_mean = lookup.get('trend_mean', None)
             trend_stddev = lookup.get('trend_mean', None)
+
             #This variable represents whether the test passes or fails,
             #it's value is ultimately determined by the results of
-            #fdr.rejector
+            #fdr.rejector.
+            #
+            #A test_evaluation of 0 indicates failure and 1 success
             test_evaluation = 0
 
             if summary_pass:
@@ -941,6 +1445,8 @@ class TtestMethod(MetricMethodBase):
                 #trend line
                 m_stddev = lookup.get('stddev', None)
                 m_mean = lookup.get('mean', None)
+
+                #Test passes set evaluation to success
                 test_evaluation = 1
 
                 n_replicates = ref_data['n_replicates']
@@ -954,8 +1460,8 @@ class TtestMethod(MetricMethodBase):
                         n_replicates, trend_stddev, trend_mean
                         )
 
-                    trend_mean = es_result['mean']
-                    trend_stddev = es_result['stddev']
+                    trend_mean = es_result.get('mean', None)
+                    trend_stddev = es_result.get('stddev', None)
                 else:
                     #First time the t-test has been run for this metric
                     #datum, initialize the trend line
@@ -975,21 +1481,22 @@ class TtestMethod(MetricMethodBase):
                                 n_replicates, p_stddev, p_mean
                                 )
 
-                            trend_mean = es_result['mean']
-                            trend_stddev = es_result['stddev']
+                            trend_mean = es_result.get('mean', None)
+                            trend_stddev = es_result.get('stddev', None)
+
             else:
                #Summary fails, store the parent trend values
                if parent_data:
                     parent_lookup = self._get_summary_data_lookup(
                         parent_data
                         )
-                    trend_mean = parent_lookup['trend_mean']
-                    trend_stddev = parent_lookup['trend_stddev']
+                    trend_mean = parent_lookup.get('trend_mean', None)
+                    trend_stddev = parent_lookup.get('trend_stddev', None)
 
             #If the trend_mean and trend_stddev are not set at this
             #point, there is no threshold trend to use and no parent
             #found
-            if trend_mean and trend_stddev:
+            if (trend_mean != None) and (trend_stddev != None):
 
                 #store trend mean
                 self._append_summary_placeholders(
@@ -1003,11 +1510,11 @@ class TtestMethod(MetricMethodBase):
                     trend_stddev, threshold_test_run_id
                 )
 
-                #store test_evaluation
-                self._append_summary_placeholders(
-                    placeholders, test_run_id, 'test_evaluation', ref_data,
-                    test_evaluation, threshold_test_run_id
-                )
+            #store test_evaluation
+            self._append_summary_placeholders(
+                placeholders, test_run_id, 'test_evaluation', ref_data,
+                test_evaluation, threshold_test_run_id
+            )
 
         return placeholders
 
@@ -1062,13 +1569,13 @@ class TtestMethod(MetricMethodBase):
                    break
         return lookup
 
-class MetricMethodError:
+class MetricMethodError(Exception):
     """
     Base class for all MetricMethod errors.  Takes an error message and
     returns string representation in __repr__.
     """
     def __init__(self, msg):
         self.msg = msg
-    def __repr__(self):
-        return self.msg
+    def __unicode__(self):
+        return unicode(self.msg)
 

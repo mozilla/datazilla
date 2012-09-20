@@ -25,6 +25,7 @@ def cache_test_summaries(project):
 
     data_iter = ptm.get_all_summary_cache()
 
+    key_test = []
     for d in data_iter:
         for data in d:
             key = utils.get_summary_cache_key(
@@ -32,7 +33,6 @@ def cache_test_summaries(project):
                 data['item_id'],
                 data['item_data'],
                 )
-
             rv = cache.set(key, zlib.compress( data['value'] ))
             if not rv:
                 msg = "ERROR: Failed to store object in memcache: %s, %s\n" % \

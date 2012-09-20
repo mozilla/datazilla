@@ -9,6 +9,7 @@ Model-layer utility functions.
 """
 import time
 import datetime
+import sys
 
 
 
@@ -117,4 +118,8 @@ def build_replacement(col_data):
             if value
             ]
         )
+
+def println(val, debug):
+    if debug:
+        sys.stdout.write("{0}\n".format(str(val)))
 

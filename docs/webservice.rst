@@ -1,14 +1,132 @@
-Statistics
+Web Service
 ==========
 
-These are a set of webservice endpoints for getting data about a Datazilla
+The web services available in datazilla can be grouped into the following categories.
+
+Test Data
+---------
+
+These are a set of webservice endpoints for getting the actual raw test data
+for a given project.
+
+.. http:get:: /(project)/testdata/raw/(branch)/(revision)/
+
+    Return a list of the test data for the ``branch`` and ``revision`` for
+    the specified ``project``.
+
+    If a JSON blob of test data is malformed, or has an error, then
+    a placeholder with the error message is returned.
+
+    :query test_name: (optional) The name of the test to filter on.
+    :query os_name: (optional) The name of the operating system to
+        filter on.
+
+    **Example request**:
+
+    .. sourcecode:: http
+
+        GET http://localhost:8000/talos/testdata/raw/Mozilla-Beta/ebfad1bf8749/
+        GET http://localhost:8000/talos/testdata/raw/Mozilla-Beta/ebfad1bf8749/?os_name=mac&test_name=Talos%20tpaint
+
+    **Example response**:
+
+    .. sourcecode:: http
+
+        Content-Type: application/json
+
+        [
+
+            {
+                "results_aux": { },
+                "test_machine": {
+                    "platform": "x86_64",
+                    "osversion": "OS X 10.6.8",
+                    "os": "mac",
+                    "name": "talos-r4-snow-074"
+                },
+                "testrun": {
+                    "date": "1342729660",
+                    "suite": "Talos tscroll.2",
+                    "options": {
+                        "responsiveness": false,
+                        "tpmozafterpaint": false,
+                        ...
+                    }
+                },
+                "results": {
+                    "tiled.html": [
+                        14522,
+                        10408,
+                        10414,
+                        10414,
+                        10372
+                    ],
+                    "iframe.svg": [
+                        11941,
+                        11474,
+                        12153,
+                        12451,
+                        11686
+                    ],
+                    ...
+                },
+                "test_build": {
+                    "id": "20120719120951",
+                    "version": "15.0",
+                    "name": "Firefox",
+                    "branch": "Mozilla-Beta",
+                    "revision": "ebfad1bf8749"
+                }
+            },
+            { … },
+            { … },
+            { … },
+            { … }
+
+        ]
+
+.. http:get:: /(project)/testdata/metrics/(branch)/(revision)/
+
+    Return metrics data for the ``branch`` and ``revision`` for
+    the specified ``project``.
+
+    :query test_name: (optional) The name of the test to filter on.
+    :query os_name: (optional) The name of the operating system to
+        filter on.
+
+    **Example request**:
+
+    .. sourcecode:: http
+
+        GET http://localhost:8000/talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749/
+        GET http://localhost:8000/talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749/?os_name=mac&test_name=Talos%20tpaint
+
+    **Example response**:
+
+    .. sourcecode:: http
+
+        Content-Type: application/json
+
+        {"stuff": "things"}
+
+Metrics Data
+------------
+These are a set of web service endpoints for retrieving metrics data.
+
+
+
+
+Reference Data
+----------
+
+These are a set of webservice endpoints for getting reference data about a Datazilla
 project.
 
 
 Object Store
-------------
+^^^^^^^^^^^^
 
-.. http:get:: /(project)/stats/objectstore/error_count
+.. http:get:: /(project)/refdata/objectstore/error_count
 
     Return a count of all objectstore entries that have an error.  The return
     value is broken down by two types:
@@ -26,7 +144,7 @@ Object Store
 
     .. sourcecode:: http
 
-        GET /talos/stats/objectstore/error_count?days_ago=10
+        GET /talos/refdata/objectstore/error_count?days_ago=10
 
     **Example response**:
 
@@ -48,7 +166,7 @@ Object Store
         ]
 
 
-.. http:get:: /(project)/stats/objectstore/error_list
+.. http:get:: /(project)/refdata/objectstore/error_list
 
     Return a list of all objectstore entries for this project that have an error.
 
@@ -63,7 +181,7 @@ Object Store
 
     .. sourcecode:: http
 
-        GET /talos/stats/objectstore/error_list?days_ago=10
+        GET /talos/refdata/objectstore/error_list?days_ago=10
 
     **Example response**:
 
@@ -93,10 +211,10 @@ Object Store
         ]
 
 
-.. http:get:: /(project)/stats/objectstore/json_blob/(int:id)
+.. http:get:: /(project)/refdata/objectstore/json_blob/(int:id)
 
     Return the full JSON blob for ``id`` as retrieved by the
-    ``/(project)/stats/objectstore/error_list`` endpoint.  Often this JSON is
+    ``/(project)/refdata/objectstore/error_list`` endpoint.  Often this JSON is
     in a non-parseable state.  So the information you're looking for may
     require you to dig into the poorly formed JSON without a parser.
 
@@ -104,7 +222,7 @@ Object Store
 
     .. sourcecode:: http
 
-        GET /talos/stats/objectstore/json_blob/12845
+        GET /talos/refdata/objectstore/json_blob/12845
 
     **Example response**:
 
@@ -118,7 +236,7 @@ Object Store
         ...
 
 
-.. http:get:: /(project)/stats/objectstore/db_size
+.. http:get:: /(project)/refdata/objectstore/db_size
 
     Return size (in MegaBytes) of the objectstore database for this project.
 
@@ -126,7 +244,7 @@ Object Store
 
     .. sourcecode:: http
 
-        GET /talos/stats/objectstore/db_size
+        GET /talos/refdata/objectstore/db_size
 
     **Example response**:
 
@@ -145,9 +263,9 @@ Object Store
 
 
 Performance Tests
------------------
+^^^^^^^^^^^^^^^^^^
 
-.. http:get:: /(project)/stats/perftest/runs_by_branch
+.. http:get:: /(project)/refdata/perftest/runs_by_branch
 
     Return a list of test runs broken down by branch.
 
@@ -163,7 +281,7 @@ Performance Tests
 
     .. sourcecode:: http
 
-        GET /talos/stats/perftest/runs_by_branch?days_ago=5
+        GET /talos/refdata/perftest/runs_by_branch?days_ago=5
 
     **Example response**:
 
@@ -186,7 +304,7 @@ Performance Tests
 
     .. sourcecode:: http
 
-        GET /talos/stats/perftest/runs_by_branch?days_ago=5&show_test_runs=true
+        GET /talos/refdata/perftest/runs_by_branch?days_ago=5&show_test_runs=true
 
     **Example response**:
 
@@ -217,7 +335,7 @@ Performance Tests
         }
 
 
-.. http:get:: /(project)/stats/perftest/ref_data/(table)
+.. http:get:: /(project)/refdata/perftest/ref_data/(table)
 
     Return a raw list of data from the ``table`` provided.  Valid ``table``
     values are: ``machines``, ``operating_systems``, ``options``,
@@ -227,7 +345,7 @@ Performance Tests
 
     .. sourcecode:: http
 
-        GET /talos/stats/perftest/ref_data/operating_systems
+        GET /talos/refdata/perftest/ref_data/operating_systems
 
     **Example response**:
 
@@ -243,7 +361,7 @@ Performance Tests
         }
 
 
-.. http:get:: /(project)/stats/perftest/db_size
+.. http:get:: /(project)/refdata/perftest/db_size
 
     Return size (in MegaBytes) of the perftest database for this project.
 
@@ -251,7 +369,7 @@ Performance Tests
 
     .. sourcecode:: http
 
-        GET /talos/stats/perftest/db_size
+        GET /talos/refdata/perftest/db_size
 
     **Example response**:
 
@@ -268,9 +386,9 @@ Performance Tests
 
 
 Push Logs
----------
+^^^^^^^^^
 
-.. http:get:: /(project)/stats/pushlog/not_referenced
+.. http:get:: /(project)/refdata/pushlog/not_referenced
 
     Return a list of pushlog entries that are not reflected in the perftest data
     for ``project``.
@@ -288,7 +406,7 @@ Push Logs
 
     .. sourcecode:: http
 
-        GET /talos/stats/pushlog/not_referenced/?days_ago=100&branches=Mozilla-Inbound
+        GET /talos/refdata/pushlog/not_referenced/?days_ago=100&branches=Mozilla-Inbound
 
     **Example response**:
 
@@ -329,7 +447,55 @@ Push Logs
         }
 
 
-.. http:get:: /stats/pushlog/branches
+.. http:get:: /(project)/refdata/pushlog/list
+
+    Return a list of pushlog entries.
+
+    :query days_ago: (required) Number of days prior to this date to use as the
+        beginning of the date range for this request.
+    :query numdays: (optional) Number of days worth of data to return.  If not
+        provided, the date range will be from ``days_ago`` to today.
+    :query branches: (optional) Which branches to return pushlogs.
+        This can be a single branch, or a comma-separated list of branches.  If not
+        provided, return data for all branches.
+
+
+    **Example request**:
+
+    .. sourcecode:: http
+
+        GET /talos/refdata/pushlog/list/?days_ago=1&branches=Mozilla-Inbound
+
+    **Example response**:
+
+    .. sourcecode:: http
+
+        Content-Type: application/json
+
+        {
+            "14470": {
+                "branch_name": "Mozilla-Inbound",
+                "revisions": [
+                    "41cf3c361d9d"
+                ]
+            },
+            "14471": {
+                "branch_name": "Mozilla-Inbound",
+                "revisions": [
+                    "fd4d9c386f97",
+                    "8a11353cad22",
+                    "a027c9d63d20",
+                    "cb3dd01ba9be",
+                    "14ac87e7546b",
+                    "aa4ba0fc1f8d",
+                    "1cc49d5dcff4",
+                    "c6768c151b64"
+                ]
+            }
+        }
+
+
+.. http:get:: /refdata/pushlog/branches
 
     Return the list of known pushlog branches.
 
@@ -337,7 +503,7 @@ Push Logs
 
     .. sourcecode:: http
 
-        GET /stats/pushlog/branches
+        GET /refdata/pushlog/branches
 
     **Example response**:
 
@@ -352,7 +518,7 @@ Push Logs
         ]
 
 
-.. http:get:: /stats/pushlog/db_size
+.. http:get:: /refdata/pushlog/db_size
 
     Return size (in MegaBytes) of the pushlog database for this project.
 
@@ -360,7 +526,7 @@ Push Logs
 
     .. sourcecode:: http
 
-        GET /stats/pushlog/db_size
+        GET /refdata/pushlog/db_size
 
     **Example response**:
 

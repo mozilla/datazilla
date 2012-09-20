@@ -18,6 +18,6 @@ urlpatterns = patterns('',
     (r'^(?P<project>\w+)/?', include('datazilla.webapp.apps.datazilla.urls')),
 
     # return statistics about Datazilla not particular to a project
-    (r'^stats/', include("datazilla.webapp.apps.datazilla.stats.urls_no_project")),
+    (r'^refdata/', include("datazilla.webapp.apps.datazilla.stats.urls_no_project")),
 
     )

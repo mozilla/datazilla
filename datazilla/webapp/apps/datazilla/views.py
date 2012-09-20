@@ -5,6 +5,8 @@ import zlib
 
 import oauth2 as oauth
 
+import memcache
+
 from django.shortcuts import render_to_response
 from django.conf import settings
 from django.core.cache import cache
@@ -268,11 +270,12 @@ def _get_test_run_summary(project, method, request, dm):
 
         ##Set default product_id
         pck = dm.get_project_cache_key('default_product')
-        default_product = cache.get(pck)
+        default_products = cache.get(pck)
+        default_products = dm.get_default_products()
 
         ##If we have one use it
-        if default_product:
-            product_ids = [ int(default_product['id']) ]
+        if default_products:
+            product_ids = map( int, default_products.split(',') )
 
     json_data = '{}'
 
@@ -282,6 +285,7 @@ def _get_test_run_summary(project, method, request, dm):
             extend_list = { 'data':[], 'columns':[] }
             for id in product_ids:
                 key = utils.get_summary_cache_key(project, str(id), time_key)
+
                 compressed_json_data = cache.get(key)
 
                 if compressed_json_data:
@@ -291,6 +295,7 @@ def _get_test_run_summary(project, method, request, dm):
                     extend_list['columns'] = data['columns']
 
             json_data = json.dumps(extend_list)
+
 
         else:
             key = utils.get_summary_cache_key(

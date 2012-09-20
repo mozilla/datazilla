@@ -637,7 +637,7 @@ def test_get_test_reference_data(ptm):
     assert json_data == ref_data_json
 
 
-def test_get_default_product(ptm):
+def test_get_default_products(ptm):
 
     data = TestData(
         {
@@ -650,13 +650,11 @@ def test_get_default_product(ptm):
 
     id = ptm._get_or_create_product_id(data)
 
-    ptm.set_default_product(id)
+    ptm.set_default_product(id, 1)
 
-    default_product = ptm.get_default_product()
+    default_products = ptm.get_default_products()
 
-    assert default_product['product'] == 'Firefox'
-    assert default_product['branch'] == 'Mozilla-Aurora'
-    assert default_product['version'] == '14.0a2'
+    assert int(default_products) == 1
 
 
 # TODO fill in the following tests:
