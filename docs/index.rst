@@ -14,13 +14,12 @@ Contents
 ---------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
+   Web Services <webservice>
    installation
    development
    architecture
-   statistics
-   testdata
 
 * :ref:`search`
 
