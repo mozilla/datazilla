@@ -1,6 +1,6 @@
 from datazilla.controller.admin.stats import perftest_stats
 from tests.sample_data import create_date_based_data
-from datazilla.model import utils
+from datazilla.model import utils, factory
 from datazilla.webapp.apps.datazilla.stats import view_utils
 
 def test_get_runs_by_branch_show_test_runs_true(ptm, plm, client, monkeypatch):
@@ -9,7 +9,7 @@ def test_get_runs_by_branch_show_test_runs_true(ptm, plm, client, monkeypatch):
     """
     def mock_plm():
         return plm
-    monkeypatch.setattr(perftest_stats, 'get_plm', mock_plm)
+    monkeypatch.setattr(factory, 'get_plm', mock_plm)
 
     dates = [
         utils.get_day_range(5)["start"],
@@ -17,7 +17,7 @@ def test_get_runs_by_branch_show_test_runs_true(ptm, plm, client, monkeypatch):
         utils.get_day_range(3)["start"],
         ]
     create_date_based_data(ptm, monkeypatch, dates)
-    url = "/{0}/stats/perftest/runs_by_branch/?show_test_runs=True&days_ago=6".format(ptm.project)
+    url = "/{0}/refdata/perftest/runs_by_branch/?show_test_runs=True&days_ago=6".format(ptm.project)
     response = client.get(url)
 
     exp = set(["count", "limit", "total_count", "test_runs"])
@@ -34,7 +34,7 @@ def test_get_runs_by_branch_show_test_runs_false(ptm, client, monkeypatch):
         utils.get_day_range(3)["start"],
         ]
     create_date_based_data(ptm, monkeypatch, dates)
-    url = "/{0}/stats/perftest/runs_by_branch/?days_ago=6".format(ptm.project)
+    url = "/{0}/refdata/perftest/runs_by_branch/?days_ago=6".format(ptm.project)
     response = client.get(url)
 
     exp = ["count"]
@@ -45,7 +45,7 @@ def test_get_runs_by_branch_missing_days_ago_param(ptm, client):
     """
     Test that 400 is returned when no days_ago param is used
     """
-    url = "/{0}/stats/perftest/runs_by_branch/".format(ptm.project)
+    url = "/{0}/refdata/perftest/runs_by_branch/".format(ptm.project)
     response = client.get(url, status=400)
 
     assert response.text == view_utils.REQUIRE_DAYS_AGO
@@ -57,7 +57,7 @@ def test_get_ref_data(ptm, client, monkeypatch):
         return {"result": "{0} - {1}".format(project, table)}
     monkeypatch.setattr(perftest_stats, 'get_ref_data', mock_get_ref_data)
 
-    url = "/{0}/stats/perftest/ref_data/machines/".format(ptm.project)
+    url = "/{0}/refdata/perftest/ref_data/machines/".format(ptm.project)
     response = client.get(url)
 
     assert response.json == {"result": "{0} - {1}".format(
@@ -68,9 +68,15 @@ def test_get_ref_data(ptm, client, monkeypatch):
 
 def test_get_db_size(ptm, client):
     """Get the database size from the objectstore."""
-    response = client.get("/{0}/stats/perftest/db_size/".format(ptm.project))
+    response = client.get("/{0}/refdata/perftest/db_size/".format(ptm.project))
 
-    assert response.json == [
-            {"size_mb": "0.08", "db_name": "{0}_objectstore_1".format(ptm.project)},
-            {"size_mb": "1.16", "db_name": "{0}_perftest_1".format(ptm.project)}
-    ]
+    db_names = set([
+        "{0}_objectstore_1".format(ptm.project),
+        "{0}_perftest_1".format(ptm.project)]
+        )
+
+    for d in response.json:
+        assert d['db_name'] in db_names
+
+        size_mb = float(d['size_mb'])
+        assert size_mb > 0

@@ -195,6 +195,25 @@ class PerformanceTestStatsModel(DatazillaModelBase):
         return blob
 
 
+    def get_object_json_blob_for_test_run(self, test_run_ids):
+        """Return a list of JSON blobs for this list of test_run_ids."""
+
+        blobs = []
+
+        if test_run_ids:
+            r_string = ','.join( map( lambda tr_id: '%s', test_run_ids ) )
+
+            blobs = self.sources["objectstore"].dhub.execute(
+                proc="objectstore.selects.get_json_blob_for_test_run",
+                debug_show=self.DEBUG,
+                replace = [r_string],
+                placeholders = test_run_ids,
+                return_type='tuple',
+                )
+
+        return blobs
+
+
     def get_parsed_object_error_data(self, startdate, enddate):
         """Parse error data in the objectstore and summarize."""
 

@@ -1,0 +1,135 @@
+import json
+
+from datazilla.model import factory
+
+from ...sample_pushlog import get_pushlog_dict_set
+from ...sample_data import perftest_data, testrun, perftest_json
+from datazilla.controller.admin import testdata
+
+def add_test_data(ptm):
+    """Add some test runs with filterable values."""
+    blobs = [
+        perftest_json(
+            testrun={"suite": "truth"},
+            test_machine={"os": "mac"},
+            ),
+        perftest_json(
+            testrun={"suite": "myth"},
+            ),
+        perftest_json(
+            testrun={"suite": "myth"},
+            test_machine={"os": "mac"},
+            ),
+        perftest_json(
+            test_build={"branch": "spam"},
+            testrun={"suite": "fact"},
+            ),
+        perftest_json(
+            test_build={"branch": "tactical bacon"},
+            testrun={"suite": "fiction"},
+            ),
+        ]
+
+    for blob in blobs:
+        ptm.store_test_data(blob)
+    ptm.process_objects(5)
+
+
+def test_get_testdata_no_filter(ptm, ptsm, monkeypatch):
+    """
+    Test getting json blobs for tests by branch and revision
+
+    """
+
+    def mock_ptsm(project):
+        return ptsm
+    monkeypatch.setattr(factory, 'get_ptsm', mock_ptsm)
+
+    def mock_ptm(project):
+        return ptm
+    monkeypatch.setattr(factory, 'get_ptm', mock_ptm)
+
+    add_test_data(ptm)
+
+    result = testdata.get_testdata(
+        ptm.project,
+        "Mozilla-Aurora",
+        "785345035a3b",
+        )
+
+    assert len(result) == 3
+
+    suites = [x["testrun"]["suite"] for x in result]
+    assert set(suites) == set(["truth", "myth", "myth"])
+
+
+def test_get_testdata_filter_os_name(ptm, ptsm, monkeypatch):
+    def mock_ptsm(project):
+        return ptsm
+    monkeypatch.setattr(factory, 'get_ptsm', mock_ptsm)
+
+    def mock_ptm(project):
+        return ptm
+    monkeypatch.setattr(factory, 'get_ptm', mock_ptm)
+
+    add_test_data(ptm)
+
+    result = testdata.get_testdata(
+        ptm.project,
+        "Mozilla-Aurora",
+        "785345035a3b",
+        os_name="mac"
+        )
+
+    assert len(result) == 2
+
+    suites = [x["testrun"]["suite"] for x in result]
+    assert set(suites) == set(["truth", "myth"])
+
+
+def test_get_testdata_filter_test_name(ptm, ptsm, monkeypatch):
+    def mock_ptsm(project):
+        return ptsm
+    monkeypatch.setattr(factory, 'get_ptsm', mock_ptsm)
+
+    def mock_ptm(project):
+        return ptm
+    monkeypatch.setattr(factory, 'get_ptm', mock_ptm)
+
+    add_test_data(ptm)
+
+    result = testdata.get_testdata(
+        ptm.project,
+        "Mozilla-Aurora",
+        "785345035a3b",
+        test_name="truth"
+    )
+
+    assert len(result) == 1
+    assert result[0]["testrun"]["suite"] == "truth"
+
+
+def test_get_testdata_filter_os_and_test_name(ptm, ptsm, monkeypatch):
+    def mock_ptsm(project):
+        return ptsm
+    monkeypatch.setattr(factory, 'get_ptsm', mock_ptsm)
+
+    def mock_ptm(project):
+        return ptm
+    monkeypatch.setattr(factory, 'get_ptm', mock_ptm)
+
+    add_test_data(ptm)
+
+    result = testdata.get_testdata(
+        ptm.project,
+        "Mozilla-Aurora",
+        "785345035a3b",
+        test_name="myth",
+        os_name="mac"
+    )
+
+    assert len(result) == 1
+    assert result[0]["testrun"]["suite"] == "myth"
+    assert result[0]["test_machine"]["os"] == "mac"
+
+

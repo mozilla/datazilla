@@ -175,13 +175,28 @@ class PushLogModel(DatazillaModelBase):
 
         return data
 
-    def get_branch_pushlog(self, branch_id, days_ago=None, numdays=None):
+    def get_branch_pushlog(
+        self, branch_id, days_ago=None, numdays=None, branch_name=None
+        ):
         """Retrieve pushes for a given branch for time range. If no
            time range is provided return all pushlogs for the branch."""
 
         data = {}
 
+        replace = ""
+        placeholders = []
+
+        if branch_id:
+            replace = " b.id=%s "
+            placeholders.append(branch_id)
+        elif branch_name:
+            replace = " b.name=%s "
+            placeholders.append(branch_name)
+
         if days_ago and numdays:
+
+            placeholders.append( day_range['start'] )
+            placeholders.append( day_range['stop'] )
 
             day_range = utils.get_day_range(days_ago, numdays)
 
@@ -191,7 +206,8 @@ class PushLogModel(DatazillaModelBase):
                 proc=proc,
                 debug_show=self.DEBUG,
                 return_type='tuple',
-                placeholders=[branch_id, day_range['start'], day_range['stop']]
+                replace=[replace],
+                placeholders=placeholders
             )
 
         else:
@@ -201,7 +217,8 @@ class PushLogModel(DatazillaModelBase):
                 proc=proc,
                 debug_show=self.DEBUG,
                 return_type='tuple',
-                placeholders=[branch_id]
+                replace=[replace],
+                placeholders=placeholders
             )
 
         return data
@@ -553,21 +570,21 @@ class PerformanceTestModel(DatazillaModelBase):
         return products
 
 
-    def get_default_product(self):
+    def get_default_products(self):
 
-        proc = 'perftest.selects.get_default_product'
+        proc = 'perftest.selects.get_default_products'
 
-        default_product = self.sources["perftest"].dhub.execute(
+        products = self.sources["perftest"].dhub.execute(
                 proc=proc,
                 debug_show=self.DEBUG,
                 return_type='tuple'
                 )
 
-        product_data = {}
-        if default_product:
-            product_data = default_product[0]
+        default_products = ','.join(
+            [ str(d['id']) for d in products ]
+            )
 
-        return product_data
+        return default_products
 
 
     def get_machines(self):
@@ -710,7 +727,7 @@ class PerformanceTestModel(DatazillaModelBase):
 
     def cache_default_project(self, cache_key_str='default_product'):
 
-        default_project = self.get_default_product()
+        default_project = self.get_default_products()
         cache_key = self.get_project_cache_key(cache_key_str)
         cache.set(cache_key, default_project)
 
@@ -785,6 +802,77 @@ class PerformanceTestModel(DatazillaModelBase):
         return test_run_value_table
 
 
+    def get_test_run_ids(
+        self, branch, revision, os_name=None, os_version=None,
+        processor=None, build_type=None, test_name=None, page_name=None):
+
+        proc = 'perftest.selects.get_test_run_ids'
+        placeholders = [branch]
+        rep = []
+
+        if page_name and (not revision):
+            proc = 'perftest.selects.get_test_run_ids_no_revision'
+            self.get_replace_and_placeholders(
+                rep, placeholders, 'pg.url', page_name
+                )
+        else:
+            placeholders.append(revision)
+
+        if os_name:
+            self.get_replace_and_placeholders(
+                rep, placeholders, 'os.name', os_name
+                )
+        if os_version:
+            self.get_replace_and_placeholders(
+                rep, placeholders, 'os.version', os_version
+                )
+        if processor:
+            self.get_replace_and_placeholders(
+                rep, placeholders, 'b.processor', processor
+                )
+        if build_type:
+            self.get_replace_and_placeholders(
+                rep, placeholders, 'b.build_type', build_type
+                )
+        if test_name:
+            self.get_replace_and_placeholders(
+                rep, placeholders, 't.name', test_name
+                )
+
+        replace = [" ".join(rep)] if len(rep) else [" "]
+
+        id_list = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            placeholders=placeholders,
+            replace=replace,
+            )
+
+        test_run_ids = [ d['test_run_id'] for d in id_list ]
+
+        return test_run_ids
+
+    def get_replace_and_placeholders(
+        self, replace, placeholders, col_name, value
+        ):
+        """
+        Build dynamic sql WHERE IN clause with parameterized values
+        """
+
+        #clean up leading/ending whitspace
+        values = map(lambda v:v.strip(), value.split(','))
+
+        #add the values to list of placeholders
+        placeholders.extend(values)
+
+        #build the sql WHERE IN clause
+        where_in_clause = ','.join( map( lambda v:'%s', values ) )
+
+        #add the dynamic sql to the replace list
+        replace.append(
+            " AND {0} IN ({1})".format(col_name, where_in_clause)
+            )
+
     def get_page_values(self, test_run_id, page_id):
 
         proc = 'perftest.selects.get_page_values'
@@ -828,13 +916,13 @@ class PerformanceTestModel(DatazillaModelBase):
         return data
 
 
-    def set_default_product(self, id):
+    def set_default_product(self, id, value):
 
         proc = 'perftest.inserts.set_default_product'
 
         default_product = self.sources["perftest"].dhub.execute(
                 proc=proc,
-                placeholders=[id],
+                placeholders=[value, id],
                 debug_show=self.DEBUG,
                 )
 

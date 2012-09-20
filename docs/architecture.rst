@@ -45,7 +45,7 @@ If you're thinking why not just use an ORM?  I direct you to [seldo.com] [9] whe
 
 The approach used here keeps SQL out of your application and provides re-usability by allowing you to store SQL statements with an assigned name and statement grouping.  If the data structure retrieved from datasource requires further munging, it can be managed in the model without removing fine grained control over the SQL execution and optimization.
 
-Web Service
+Default User Interface
 -------------
 The web service is a django application, found in `/datazilla/webapp/apps/datazilla <https://github.com/mozilla/datazilla/tree/master/datazilla/webapp/apps>`_.  The interface needs to be formalized further. One possible way of doing this would be to convert the methods and global data structures described below into OOP attributes and methods using a django plugin like `piston <https://bitbucket.org/jespern/django-piston/wiki/Home>`_.
 
@@ -194,7 +194,7 @@ To cache the structures in memcached, run:  ::
 
     python /datazilla/controller/admin/populate_summary_cache.py --cache
 
-User Interface
+Javascript
 ---------------
 The javascript responsible for the data view behavior is located in `/datazilla/webapp/static/js/data_views <https://github.com/mozilla/datazilla/tree/master/datazilla/webapp/static/js/data_views>`_.  The HTML associated with a single data view is described in `/datazilla/webapp/templates/graphs.views.html <https://github.com/mozilla/datazilla/blob/master/datazilla/webapp/templates/graphs.views.html>`_.
 
