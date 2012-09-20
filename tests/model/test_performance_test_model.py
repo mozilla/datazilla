@@ -654,7 +654,7 @@ def test_get_default_products(ptm):
 
     default_products = ptm.get_default_products()
 
-    assert default_products == 1
+    assert int(default_products) == 1
 
 
 # TODO fill in the following tests:

@@ -129,7 +129,7 @@ def test_get_all_branches(plm, monkeypatch):
 
     def mock_plm():
         return plm
-    monkeypatch.setattr(pushlog_stats, 'get_plm', mock_plm)
+    monkeypatch.setattr(factory, 'get_plm', mock_plm)
 
     exp_branch_list = [
         u"Firefox",
@@ -167,13 +167,13 @@ def test_get_all_branches(plm, monkeypatch):
     assert set(exp_branch_list) == set(pushlog_stats.get_all_branches())
 
 
-def test_get_db_size(ptm, monkeypatch):
+def test_get_db_size(plsm, monkeypatch):
     """Test the get_db_size method."""
     def mock_plsm():
-        return ptm
+        return plsm
     monkeypatch.setattr(factory, 'get_plsm', mock_plsm)
 
-    size = pushlog_stats.get_db_size(ptm.project)
+    size = pushlog_stats.get_db_size()
 
-    assert size["db_name"] == u'{0}_hgmozilla_1'.format(ptm.project)
-    assert size["size_mb"] > 0
+    assert size[0]["db_name"] == u'{0}_hgmozilla_1'.format(plsm.project)
+    assert size[0]["size_mb"] > 0

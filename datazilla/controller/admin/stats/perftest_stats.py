@@ -46,9 +46,9 @@ def get_ref_data(project, table):
 
 def get_db_size(project):
     """Return the size of the database on disk in megabytes"""
-    ptm = factory.get_ptsm(project)
-    pt_size = ptm.get_db_size()
-    ptm.disconnect()
+    ptsm = factory.get_ptsm(project)
+    pt_size = ptsm.get_db_size()
+    ptsm.disconnect()
 
     return pt_size
 

@@ -13,7 +13,7 @@ def test_get_error_list(ptm, client, monkeypatch):
         utils.get_day_range(3)["start"],
         ]
     create_date_based_data(ptm, monkeypatch, dates)
-    url = "/{0}/stats/objectstore/error_list/?days_ago=4".format(ptm.project)
+    url = "/{0}/refdata/objectstore/error_list/?days_ago=4".format(ptm.project)
     response = client.get(url)
 
     exp = [{
@@ -30,7 +30,7 @@ def test_get_error_list(ptm, client, monkeypatch):
 def test_get_error_list_no_days_ago(ptm, client):
     """Get a 400 when omitting required param of days_ago."""
 
-    url = "/{0}/stats/objectstore/error_list/".format(ptm.project)
+    url = "/{0}/refdata/objectstore/error_list/".format(ptm.project)
     response = client.get(url, status=400)
     assert response.text == view_utils.REQUIRE_DAYS_AGO
 
@@ -44,7 +44,7 @@ def test_get_error_count(ptm, client, monkeypatch):
         utils.get_day_range(3)["start"],
         ]
     create_date_based_data(ptm, monkeypatch, dates)
-    url = "/{0}/stats/objectstore/error_count/?days_ago=6".format(ptm.project)
+    url = "/{0}/refdata/objectstore/error_count/?days_ago=6".format(ptm.project)
     response = client.get(url)
 
     exp = [
@@ -63,7 +63,7 @@ def test_get_error_count(ptm, client, monkeypatch):
 def test_get_error_count_no_days_ago(ptm, client):
     """Get a 400 when omitting required param of days_ago."""
 
-    url = "/{0}/stats/objectstore/error_count/".format(ptm.project)
+    url = "/{0}/refdata/objectstore/error_count/".format(ptm.project)
     response = client.get(url, status=400)
     assert response.text == view_utils.REQUIRE_DAYS_AGO
 
@@ -76,7 +76,7 @@ def test_get_json_blob(ptm, client, monkeypatch):
         utils.get_day_range(3)["start"],
         ]
     create_date_based_data(ptm, monkeypatch, dates)
-    url = "/{0}/stats/objectstore/json_blob/3/".format(ptm.project)
+    url = "/{0}/refdata/objectstore/json_blob/3/".format(ptm.project)
     response = client.get(url)
 
     exp_tm = {
@@ -142,8 +142,10 @@ def test_get_json_blob(ptm, client, monkeypatch):
     rj = response.json
 
     assert rj["test_machine"] == exp_tm
+
     # these ids can vary
     del(rj["test_build"]["id"])
+
     assert rj["test_build"] == exp_tb
     assert rj["testrun"] == exp_tr
     assert rj["results_aux"] == exp_ra
@@ -153,7 +155,7 @@ def test_get_json_blob(ptm, client, monkeypatch):
 def test_get_json_blob_bad_id(ptm, client, monkeypatch):
     """Attempt to fetch the JSON for an ID that doesn't exist."""
     create_date_based_data(ptm, monkeypatch)
-    url = "/{0}/stats/objectstore/json_blob/22/".format(ptm.project)
+    url = "/{0}/refdata/objectstore/json_blob/22/".format(ptm.project)
     response = client.get(url, status=404)
 
     exp = "Id not found: 22"
@@ -163,9 +165,17 @@ def test_get_json_blob_bad_id(ptm, client, monkeypatch):
 
 def test_get_db_size(ptm, client):
     """Get the database size from the objectstore."""
-    response = client.get("/{0}/stats/objectstore/db_size/".format(ptm.project))
+    response = client.get("/{0}/refdata/objectstore/db_size/".format(ptm.project))
 
-    assert response.json == [
-        {"size_mb": "0.08", "db_name": "{0}_objectstore_1".format(ptm.project)},
-        {"size_mb": "1.16", "db_name": "{0}_perftest_1".format(ptm.project)}
-        ]
+    db_names = set(
+        ["{0}_objectstore_1".format(ptm.project),
+         "{0}_perftest_1".format(ptm.project) ]
+        )
+
+    for data in response.json:
+
+       assert data['db_name'] in db_names
+
+       size_mb = float(data['size_mb'])
+
+       assert size_mb > 0
