@@ -1,4 +1,4 @@
-from datazilla.controller.admin.stats import pushlog_stats
+from datazilla.controller.admin.refdata import pushlog_refdata
 from tests.sample_data import create_date_based_data
 from ...utils import jstr
 from datazilla.model import utils, factory
@@ -16,7 +16,7 @@ def test_get_not_referenced(ptm, client, monkeypatch):
             "branches": branches,
             }
     monkeypatch.setattr(
-        pushlog_stats,
+        pushlog_refdata,
         'get_not_referenced',
         mock_get_not_referenced,
         )
@@ -52,7 +52,7 @@ def test_get_not_referenced_with_branches(ptm, client, monkeypatch):
             "branches": branches,
             }
     monkeypatch.setattr(
-        pushlog_stats,
+        pushlog_refdata,
         'get_not_referenced',
         mock_get_not_referenced,
         )
@@ -86,7 +86,7 @@ def test_get_branches(client, monkeypatch):
     """Simple passthrough test."""
     def mock_get_all_branches():
         return ["foo", "bar"]
-    monkeypatch.setattr(pushlog_stats, 'get_all_branches', mock_get_all_branches)
+    monkeypatch.setattr(pushlog_refdata, 'get_all_branches', mock_get_all_branches)
 
     url = "/refdata/pushlog/branches/"
     response = client.get(url)

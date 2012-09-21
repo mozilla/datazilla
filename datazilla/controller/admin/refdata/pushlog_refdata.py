@@ -12,7 +12,7 @@ def get_not_referenced(project, startdate, enddate, branches=None):
 
     branches = branches or get_all_branches()
 
-    ptm = factory.get_ptsm(project)
+    ptm = factory.get_ptrdm(project)
     tr_set = ptm.get_distinct_test_run_revisions()
     ptm.disconnect()
 

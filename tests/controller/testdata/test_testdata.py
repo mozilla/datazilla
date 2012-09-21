@@ -43,7 +43,7 @@ def test_get_testdata_no_filter(ptm, ptsm, monkeypatch):
 
     def mock_ptsm(project):
         return ptsm
-    monkeypatch.setattr(factory, 'get_ptsm', mock_ptsm)
+    monkeypatch.setattr(factory, 'get_ptrdm', mock_ptsm)
 
     def mock_ptm(project):
         return ptm
@@ -66,7 +66,7 @@ def test_get_testdata_no_filter(ptm, ptsm, monkeypatch):
 def test_get_testdata_filter_os_name(ptm, ptsm, monkeypatch):
     def mock_ptsm(project):
         return ptsm
-    monkeypatch.setattr(factory, 'get_ptsm', mock_ptsm)
+    monkeypatch.setattr(factory, 'get_ptrdm', mock_ptsm)
 
     def mock_ptm(project):
         return ptm
@@ -90,7 +90,7 @@ def test_get_testdata_filter_os_name(ptm, ptsm, monkeypatch):
 def test_get_testdata_filter_test_name(ptm, ptsm, monkeypatch):
     def mock_ptsm(project):
         return ptsm
-    monkeypatch.setattr(factory, 'get_ptsm', mock_ptsm)
+    monkeypatch.setattr(factory, 'get_ptrdm', mock_ptsm)
 
     def mock_ptm(project):
         return ptm
@@ -112,7 +112,7 @@ def test_get_testdata_filter_test_name(ptm, ptsm, monkeypatch):
 def test_get_testdata_filter_os_and_test_name(ptm, ptsm, monkeypatch):
     def mock_ptsm(project):
         return ptsm
-    monkeypatch.setattr(factory, 'get_ptsm', mock_ptsm)
+    monkeypatch.setattr(factory, 'get_ptrdm', mock_ptsm)
 
     def mock_ptm(project):
         return ptm

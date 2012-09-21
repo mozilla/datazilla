@@ -1,7 +1,7 @@
 from decimal import Decimal
 import json
 
-from datazilla.controller.admin.stats import pushlog_stats
+from datazilla.controller.admin.refdata import pushlog_refdata
 from datazilla.model import factory
 
 from ...sample_pushlog import get_pushlog_dict_set
@@ -39,7 +39,7 @@ def test_get_not_referenced(plm, plsm, ptm, monkeypatch):
     ptm.store_test_data(blob)
     ptm.process_objects(1)
 
-    result = pushlog_stats.get_not_referenced(
+    result = pushlog_refdata.get_not_referenced(
         ptm.project,
         startdate=1341451080,
         enddate=1341494822,
@@ -89,7 +89,7 @@ def test_get_pushlogs(plm, plsm, monkeypatch):
         data1,
         )
 
-    result = pushlog_stats.get_pushlogs(
+    result = pushlog_refdata.get_pushlogs(
         startdate=1341451080,
         enddate=1341494822,
         )
@@ -164,7 +164,7 @@ def test_get_all_branches(plm, monkeypatch):
         u"Mozilla-Inbound"
     ]
 
-    assert set(exp_branch_list) == set(pushlog_stats.get_all_branches())
+    assert set(exp_branch_list) == set(pushlog_refdata.get_all_branches())
 
 
 def test_get_db_size(plsm, monkeypatch):
@@ -173,7 +173,7 @@ def test_get_db_size(plsm, monkeypatch):
         return plsm
     monkeypatch.setattr(factory, 'get_plsm', mock_plsm)
 
-    size = pushlog_stats.get_db_size()
+    size = pushlog_refdata.get_db_size()
 
     assert size[0]["db_name"] == u'{0}_hgmozilla_1'.format(plsm.project)
     assert size[0]["size_mb"] > 0

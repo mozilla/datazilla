@@ -1,4 +1,4 @@
-from datazilla.controller.admin.stats import perftest_stats
+from datazilla.controller.admin.refdata import perftest_refdata
 from tests.sample_data import create_date_based_data
 from datazilla.model import utils, factory
 from datazilla.webapp.apps.datazilla.stats import view_utils
@@ -55,7 +55,7 @@ def test_get_ref_data(ptm, client, monkeypatch):
     """Test that we're hitting the right controller method"""
     def mock_get_ref_data(project, table):
         return {"result": "{0} - {1}".format(project, table)}
-    monkeypatch.setattr(perftest_stats, 'get_ref_data', mock_get_ref_data)
+    monkeypatch.setattr(perftest_refdata, 'get_ref_data', mock_get_ref_data)
 
     url = "/{0}/refdata/perftest/ref_data/machines/".format(ptm.project)
     response = client.get(url)

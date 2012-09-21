@@ -4,7 +4,7 @@ from optparse import make_option
 from django.core.management.base import CommandError
 
 from datazilla.model import PerformanceTestModel, PushLogModel, utils
-from datazilla.controller.admin.stats import pushlog_stats
+from datazilla.controller.admin.refdata import pushlog_refdata
 from base import ProjectCommand
 
 
@@ -70,10 +70,10 @@ class Command(ProjectCommand):
         if branches:
             branches = branches.split(",")
         else:
-            branches = pushlog_stats.get_all_branches()
+            branches = pushlog_refdata.get_all_branches()
 
 
-        stats = pushlog_stats.get_not_referenced(
+        stats = pushlog_refdata.get_not_referenced(
             project,
             range["start"],
             range["stop"],

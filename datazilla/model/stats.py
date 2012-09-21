@@ -3,7 +3,7 @@ import json
 from base import DatazillaModelBase
 
 
-class PushLogStatsModel(DatazillaModelBase):
+class PushLogRefDataModel(DatazillaModelBase):
     """Model for PushLog statistics and error information."""
 
     CONTENT_TYPES = ["hgmozilla"]
@@ -13,7 +13,7 @@ class PushLogStatsModel(DatazillaModelBase):
     # project name you like.
 
     def __init__(self, project=None):
-        super(PushLogStatsModel, self).__init__(project or self.DEFAULT_PROJECT)
+        super(PushLogRefDataModel, self).__init__(project or self.DEFAULT_PROJECT)
 
 
     @property
@@ -64,7 +64,7 @@ class PushLogStatsModel(DatazillaModelBase):
         return pl_dict
 
 
-class PerformanceTestStatsModel(DatazillaModelBase):
+class PerformanceTestRefDataModel(DatazillaModelBase):
     """Model for PerformanceTest statistics and error information."""
 
     # content types that every project will have

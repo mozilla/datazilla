@@ -1,9 +1,9 @@
-from datazilla.model.stats import PerformanceTestStatsModel
+from datazilla.model.stats import PerformanceTestRefDataModel
 
 
 def get_error_count(project, startdate, enddate):
     """Return a count of all objectstore entries with error"""
-    ptm = PerformanceTestStatsModel(project)
+    ptm = PerformanceTestRefDataModel(project)
     err_counts = ptm.get_object_error_counts(startdate, enddate)
     ptm.disconnect()
 
@@ -12,7 +12,7 @@ def get_error_count(project, startdate, enddate):
 
 def get_error_list(project, startdate, enddate):
     """Return a list of all objectstore entries with errors in a date range"""
-    ptm = PerformanceTestStatsModel(project)
+    ptm = PerformanceTestRefDataModel(project)
     err_list = ptm.get_object_error_metadata(startdate, enddate)
     ptm.disconnect()
     return err_list
@@ -20,7 +20,7 @@ def get_error_list(project, startdate, enddate):
 
 def get_json_blob(project, id):
     """Based on the ID passed in, return the JSON blob"""
-    ptm = PerformanceTestStatsModel(project)
+    ptm = PerformanceTestRefDataModel(project)
     blob = ptm.get_object_json_blob(id)
     ptm.disconnect()
     if blob:
@@ -31,7 +31,7 @@ def get_json_blob(project, id):
 
 def get_error_detail_count(project, startdate, enddate):
     """Return counts attempting to parse some of the bad JSON to extract details."""
-    ptm = PerformanceTestStatsModel(project)
+    ptm = PerformanceTestRefDataModel(project)
     err_data = ptm.get_parsed_object_error_data(startdate, enddate)
     ptm.disconnect()
 
@@ -59,7 +59,7 @@ def result_key(tb):
 
 def get_db_size(project):
     """Return the size of the objectstore database on disk in MB."""
-    ptm = PerformanceTestStatsModel(project)
+    ptm = PerformanceTestRefDataModel(project)
     size = ptm.get_db_size(source="objectstore")
     ptm.disconnect()
     return size

@@ -6,13 +6,13 @@ in instantiating models.
 """
 
 from base import PerformanceTestModel, PushLogModel
-from stats import PerformanceTestStatsModel, PushLogStatsModel
+from stats import PerformanceTestRefDataModel, PushLogRefDataModel
 from metrics import MetricsTestModel
 
 
-def get_ptsm(project):
+def get_ptrdm(project):
     """Shortcut to return the PerformanceTestStatsModel."""
-    return PerformanceTestStatsModel(project)
+    return PerformanceTestRefDataModel(project)
 
 
 def get_ptm(project):
@@ -27,7 +27,8 @@ def get_plm():
 
 def get_plsm():
     """Shortcut to return the PushLogStatsModel."""
-    return PushLogStatsModel()
+    return PushLogRefDataModel()
+
 
 def get_mtm(project):
     """Shortcut to return the MetricsTestModel."""

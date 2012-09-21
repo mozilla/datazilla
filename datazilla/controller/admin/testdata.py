@@ -12,7 +12,7 @@ def get_testdata(
     """Return test data based on the parameters and optional filters."""
 
     ptm = factory.get_ptm(project)
-    ptsm = factory.get_ptsm(project)
+    ptsm = factory.get_ptrdm(project)
 
     # get the testrun ids from perftest
     test_run_ids = ptm.get_test_run_ids(
