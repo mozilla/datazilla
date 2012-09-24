@@ -413,7 +413,15 @@ class MetricsTestModel(DatazillaModelBase):
                 )
 
         for d in computed_metrics:
-            summary_key = self.get_metrics_summary_key(d)
+            ####
+            #Add revision to summary key to handle getting a mix of test
+            #run ids from different revisions
+            ####
+            summary_key = "{0}{1}{2}".format(
+                self.get_metrics_summary_key(d),
+                self.KEY_DELIMITER,
+                d['revision']
+                )
 
             if page_names and (d['page_name'] not in page_names):
                 continue
@@ -455,7 +463,8 @@ class MetricsTestModel(DatazillaModelBase):
                 value = format(value, '.1f')
 
             if value_name in push_value_names:
-                key_lookup[summary_key]['push_info'][value_name] = value
+                if value:
+                    key_lookup[summary_key]['push_info'][value_name] = value
 
             key_lookup[summary_key]['pages'][ d['page_name'] ][value_name] = \
                 value

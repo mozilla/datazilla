@@ -11,9 +11,6 @@ REQUIRE_DAYS_AGO = """Invalid Request: Require days_ago parameter.
 REQUIRE_TEST_NAME = """Invalid Request: Require test_name parameter.
                      This specifies the name of the test."""
 
-REQUIRE_PAGE_NAME = """Invalid Request: Require page_name parameter.
-                     This specifies the name of a page found in a test."""
-
 API_CONTENT_TYPE = 'application/json; charset=utf-8'
 
 
@@ -96,7 +93,7 @@ def get_metrics_summary(request, project, branch, revision):
         content_type=API_CONTENT_TYPE,
         )
 
-def get_metrics_trend(request, project, branch):
+def get_metrics_pushlog(request, project, branch):
     """
     Apply filters and return trend line data for the time period requested.
     """
@@ -111,13 +108,9 @@ def get_metrics_trend(request, project, branch):
 
     if not days_ago:
         return HttpResponse(REQUIRE_DAYS_AGO, status=400)
-    if not test_name:
-        return HttpResponse(REQUIRE_TEST_NAME, status=400)
-    if not page_name:
-        return HttpResponse(REQUIRE_PAGE_NAME, status=400)
 
     return HttpResponse(
-        json.dumps(testdata.get_metrics_trend(
+        json.dumps(testdata.get_metrics_pushlog(
             project,
             branch,
             os_name=os_name,

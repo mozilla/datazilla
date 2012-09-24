@@ -6,27 +6,46 @@ The web services available in datazilla can be grouped into the following catego
 Test Data
 ---------
 
-These are a set of webservice endpoints for getting the actual raw test data
+These are a set of webservice endpoints for getting the raw test data
 for a given project.
 
 .. http:get:: /(project)/testdata/raw/(branch)/(revision)/
 
-    Return a list of the test data for the ``branch`` and ``revision`` for
-    the specified ``project``.
+    Return a list of the test data for the ``project``, ``branch`` and ``revision`` specified.
 
     If a JSON blob of test data is malformed, or has an error, then
     a placeholder with the error message is returned.
 
-    :query test_name: (optional) The name of the test to filter on.
-    :query os_name: (optional) The name of the operating system to
-        filter on.
+    :query os_name: (optional) The name of the operating system to filter on.
+        *Examples:* ``win``, ``mac``, ``linux``
+
+    :query os_version: (optional) The operating system version associated with an ``os_name`` to filter on.
+        *Examples:* ``OSX 10.5.8``, ``fedora 12``, ``5.1.2600``
+
+    :query processor: (optional) The name of the processor associated with the test run.
+        *Examples:* ``x86_64``, ``x86``, ``arm``
+
+    :query build_type: (optional) The type of build.
+        *Examples:* ``opt``, ``debug``
+
+    :query test_name: (optional) The name of the test to filter on.  Test names are prefixed with their type.
+        *Examples:* ``Talos tp5row``, ``Talos tsvg``, ``Talos tdhtml``
+
+    :query page_name: (optional) The page name associated with the test.
+        *Examples:* ``scrolling.html``, ``layers6.html``, ``digg.com``
+
+
+        **All parameters can take a comma delimited list of arguments.**
+
 
     **Example request**:
 
     .. sourcecode:: http
 
-        GET http://localhost:8000/talos/testdata/raw/Mozilla-Beta/ebfad1bf8749/
-        GET http://localhost:8000/talos/testdata/raw/Mozilla-Beta/ebfad1bf8749/?os_name=mac&test_name=Talos%20tpaint
+        GET /talos/testdata/raw/Mozilla-Beta/ebfad1bf8749/
+        GET /talos/testdata/raw/Mozilla-Beta/ebfad1bf8749?os_name=mac&test_name=Talos%20tp5row
+        GET /talos/testdata/raw/Mozilla-Beta/ebfad1bf8749?os_name=mac,linux
+        GET /talos/testdata/raw/Mozilla-Beta/ebfad1bf8749?page_name=digg.com,alipay.com,tmall.com
 
     **Example response**:
 
@@ -85,21 +104,43 @@ for a given project.
 
         ]
 
-.. http:get:: /(project)/testdata/metrics/(branch)/(revision)/
+Metrics Data
+------------
+These are a set of web service endpoints for retrieving metrics data.
 
-    Return metrics data for the ``branch`` and ``revision`` for
-    the specified ``project``.
+.. http:get:: /(project)/testdata/metrics/(branch)/(revision)
 
-    :query test_name: (optional) The name of the test to filter on.
-    :query os_name: (optional) The name of the operating system to
-        filter on.
+    Return all metrics data for the ``project``, ``branch`` and ``revision`` specified.
+
+    :query os_name: (optional) The name of the operating system to filter on.
+        *Examples:* ``win``, ``mac``, ``linux``
+
+    :query os_version: (optional) The operating system version associated with an ``os_name`` to filter on.
+        *Examples:* ``OSX 10.5.8``, ``fedora 12``, ``5.1.2600``
+
+    :query processor: (optional) The name of the processor associated with the test run.
+        *Examples:* ``x86_64``, ``x86``, ``arm``
+
+    :query build_type: (optional) The type of build.
+        *Examples:* ``opt``, ``debug``
+
+    :query test_name: (optional) The name of the test to filter on.  Test names are prefixed with their type.
+        *Examples:* ``Talos tp5row``, ``Talos tsvg``, ``Talos tdhtml``
+
+    :query page_name: (optional) The page name associated with the test.
+        *Examples:* ``scrolling.html``, ``layers6.html``, ``digg.com``
+
+
+        **All parameters can take a comma delimited list of arguments.**
 
     **Example request**:
 
     .. sourcecode:: http
 
-        GET http://localhost:8000/talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749/
-        GET http://localhost:8000/talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749/?os_name=mac&test_name=Talos%20tpaint
+        GET /talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749/
+        GET /talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749?os_name=mac&test_name=Talos%20tp5row
+        GET /talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749?os_name=mac,linux
+        GET /talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749?page_name=digg.com,alipay.com,tmall.com
 
     **Example response**:
 
@@ -107,19 +148,423 @@ for a given project.
 
         Content-Type: application/json
 
-        {"stuff": "things"}
+        [
+            {
+                "pages": {
 
-Metrics Data
-------------
-These are a set of web service endpoints for retrieving metrics data.
+                    "icanhascheezburger.com": {
+                        "push_date": 1345523670,
+                        "trend_stddev": "49.8",
+                        "h0_rejected": 0,
+                        "p": "0.6",
+                        "fdr": 0,
+                        "stddev": "12.3",
+                        "pushlog_id": 6077315,
+                        "trend_mean": "268.5",
+                        "mean": "265.7",
+                        "test_evaluation": 1,
+                        "n_replicates": 25
+                    },
+                    "ucoz.ru": {
+                        "push_date": 1345523670,
+                        "trend_stddev": "2.4",
+                        "h0_rejected": 0,
+                        "p": "0.6",
+                        "fdr": 0,
+                        "stddev": "1.9",
+                        "pushlog_id": 6077315,
+                        "trend_mean": "73.7",
+                        "mean": "73.5",
+                        "test_evaluation": 1,
+                        "n_replicates": 25
+                    },
+                    "digg.com": {
+                        "push_date": 1345523670,
+                        "trend_stddev": "3.1",
+                        "h0_rejected": 0,
+                        "p": "0.2",
+                        "fdr": 0,
+                        "stddev": "3.3",
+                        "pushlog_id": 6077315,
+                        "trend_mean": "151.6",
+                        "mean": "152.2",
+                        "test_evaluation": 1,
+                        "n_replicates": 25
+                    },
+                    { … },
+                    { … },
+                    { … },
+                    ...
+                },
+
+                "test_machine": {
+                    "platform": "x86",
+                    "osversion": "6.1.7600",
+                    "os": "win",
+                    "name": "talos-r3-w7-060"
+                },
+                "testrun": {
+                    "date": 1348091605,
+                    "suite": "Talos tp5row",
+                    "test_run_id": 417
+                },
+                "push_info": {
+                    "pushlog_id": 6077315,
+                    "push_date": 1345523670
+                },
+                "test_build": {
+                    "name": "Firefox",
+                    "version": "15.0",
+                    "branch": "Mozilla-Beta",
+                    "type": "opt",
+                    "id": "20120820213501",
+                    "revision": "7d3fc54fb002"
+                }
+
+            },
+            { … },
+            { … },
+            { … },
+            ...
+        ]
+
+.. http:get:: /(project)/testdata/metrics/(branch)/(revision)/summary
+
+    Return a summary of all test evaluation results for all metrics data associated
+    with the ``project``, ``branch`` and ``revision`` specified.  A test evaluation is a generic
+    representation of test sucess or failure.  A test evaluation of 0 indicates failure and 1 indicates
+    sucess.  All metric methods available implement a generic test evaluation that can be accessed
+    as the metric value ``test_evaluation``.
+
+    :query os_name: (optional) The name of the operating system to filter on.
+        *Examples:* ``win``, ``mac``, ``linux``
+
+    :query os_version: (optional) The operating system version associated with an ``os_name`` to filter on.
+        *Examples:* ``OSX 10.5.8``, ``fedora 12``, ``5.1.2600``
+
+    :query processor: (optional) The name of the processor associated with the test run.
+        *Examples:* ``x86_64``, ``x86``, ``arm``
+
+    :query build_type: (optional) The type of build.
+        *Examples:* ``opt``, ``debug``
+
+    :query test_name: (optional) The name of the test to filter on.  Test names are prefixed with their type.
+        *Examples:* ``Talos tp5row``, ``Talos tsvg``, ``Talos tdhtml``
+
+    :query page_name: (optional) The page name associated with the test.
+        *Examples:* ``scrolling.html``, ``layers6.html``, ``digg.com``
 
 
+        **All parameters can take a comma delimited list of arguments.**
 
+    **Example request**:
+
+    .. sourcecode:: http
+
+        GET /talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749/summary
+        GET /talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749/summary?os_name=mac&test_name=Talos%20tp5row
+        GET /talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749/summary?os_name=mac,linux
+        GET /talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749/smmary?page_name=digg.com,alipay.com,tmall.com
+
+    **Example response**:
+
+    .. sourcecode:: http
+
+        Content-Type: application/json
+
+        {
+            product_info": {
+                "version": "15.0",
+                "name": "Firefox",
+                "branch": "Mozilla-Beta",
+                "revision": "7d3fc54fb002"
+            },
+            summary": {
+                "fail": {
+                    "percent": 3,
+                    "value": 25
+                },
+                "total_tests": 977,
+                "pass": {
+                    "percent": 97,
+                    "value": 952
+                }
+            },
+            summary_by_platform": {
+                "linux fedora 12 x86": {
+                    "fail": {
+                        "percent": 1,
+                        "value": 2
+                    },
+                    "total_tests": 140,
+                    "pass": {
+                        "percent": 99,
+                        "value": 138
+                    }
+                },
+                "linux redhat 12 x86": {
+                    "fail": {
+                        "percent": 0,
+                        "value": 0
+                    },
+                    "total_tests": 131,
+                    "pass": {
+                        "percent": 100,
+                        "value": 131
+                    }
+                },
+                { ... },
+                { ... },
+                { ... },
+            },
+            summary_by_test": {
+                "Talos tp5row": {
+                    "fail": {
+                        "percent": 1,
+                        "value": 9
+                    },
+                    "total_tests": 660,
+                    "pass": {
+                        "percent": 99,
+                        "value": 651
+                    }
+                },
+                "Talos tsvg_opacity": {
+                    "fail": {
+                        "percent": 0,
+                        "value": 0
+                    },
+                    "total_tests": 14,
+                    "pass": {
+                        "percent": 100,
+                        "value": 14
+                    }
+                },
+                { ... },
+                { ... },
+                { ... },
+                ...
+            },
+            tests": {
+
+                "Talos tp5row": {
+                    "linux fedora 12 x86": {
+                        "fail": {
+                            "percent": 0,
+                            "value": 0
+                        },
+                        "pass": {
+                            "percent": 100,
+                            "value": 91
+                        }
+                        "total_tests": 91,
+                        "pages": [
+                            { "telegraph.co.uk": 1 },
+                            { "web.de": 1 },
+                            { "tudou.com": 1 },
+                            { "nicovideo.jp": 1 },
+                            { "rakuten.co.jp": 1 },
+                            { "store.apple.com": 1 },
+                            { ... },
+                            ...
+                        ],
+                        "platform_info": {
+                            "operating_system_version": "fedora 12",
+                            "type": "opt",
+                            "processor": "x86",
+                            "operating_system_name": "linux"
+                        },
+                    },
+                    win 6.1.7600 x86": {
+                        "fail": {
+                            "percent": 7,
+                            "value": 7
+                        },
+                        "pass": {
+                            "percent": 93,
+                            "value": 93
+                        }
+                        "total_tests": 100,
+                        "pages": [
+                            { "telegraph.co.uk": 1 },
+                            { "web.de": 1 },
+                            { "tudou.com": 1 },
+                            { "nicovideo.jp": 1 },
+                            { "rakuten.co.jp": 1 },
+                            { "store.apple.com": 1 },
+                            { ... },
+                            ...
+                        ],
+                        "platform_info": {
+                            "operating_system_version": "6.1.7600",
+                            "type": "opt",
+                            "processor": "x86",
+                            "operating_system_name": "win"
+                        },
+                    },
+                    { ... },
+                     ...
+                },
+                "Talos tsvg_opacity": { ... },
+                "Talos tsvg": { ... },
+                "Talos tdhtml": { ... }
+            }
+
+.. http:get:: /(project)/testdata/metrics/(branch)/pushlog
+
+    Return a pushlog data structure for the given ``project`` and ``branch`` combination
+    decorated with all of the metrics data associated with each push.
+
+    :query days_ago: (required) Number of days prior to this date to use as the
+        beginning of the date range for this request.  This acts on the
+        ``date_loaded`` field in the objectstore database.
+
+    :query numdays: (optional) Number of days worth of data to return.  If not
+        provided, the date range will be from ``days_ago`` to today.
+
+    :query os_name: (optional) The name of the operating system to filter on.
+        *Examples:* ``win``, ``mac``, ``linux``
+
+    :query os_version: (optional) The operating system version associated with an ``os_name`` to filter on.
+        *Examples:* ``OSX 10.5.8``, ``fedora 12``, ``5.1.2600``
+
+    :query processor: (optional) The name of the processor associated with the test run.
+        *Examples:* ``x86_64``, ``x86``, ``arm``
+
+    :query build_type: (optional) The type of build.
+        *Examples:* ``opt``, ``debug``
+
+    :query test_name: (optional) The name of the test to filter on.  Test names are prefixed with their type.
+        *Examples:* ``Talos tp5row``, ``Talos tsvg``, ``Talos tdhtml``
+
+    :query page_name: (optional) The page name associated with the test.
+        *Examples:* ``scrolling.html``, ``layers6.html``, ``digg.com``
+
+
+        **All parameters can take a comma delimited list of arguments.**
+
+    **Example request**:
+
+    .. sourcecode:: http
+
+        GET /talos/testdata/metrics/Mozilla-Beta/pushlog
+        GET /talos/testdata/metrics/Mozilla-Beta/pushlog?os_name=mac&test_name=Talos%20tp5row
+        GET /talos/testdata/metrics/Mozilla-Beta/pushlog?os_name=mac,linux
+        GET /talos/testdata/metrics/Mozilla-Beta/pushlog?page_name=digg.com,alipay.com,tmall.com
+
+    **Example response**:
+
+    .. sourcecode:: http
+
+        Content-Type: application/json
+
+        [
+            {
+                "branch_name": "Mozilla-Beta",
+                "pushlog_id": 6004901,
+                "metrics_data": [ ... ],
+                "date": 1345500867,
+                "dz_revision": "6fc9e89951a9",
+                "push_id": 1303,
+                "revisions": [
+                    "6fc9e89951a9"
+                ]
+            },
+            {
+                "branch_name": "Mozilla-Beta",
+                "pushlog_id": 6034235,
+                "metrics_data": [
+                    {
+                        "pages": {
+                            "icanhascheezburger.com": {
+                                "push_date": 1345510991,
+                                "trend_stddev": "20.2",
+                                "h0_rejected": 0,
+                                "p": "0.4",
+                                "fdr": 0,
+                                "stddev": "23.7",
+                                "pushlog_id": 6034235,
+                                "trend_mean": "237.9",
+                                "mean": "238.8",
+                                "test_evaluation": 1,
+                                "n_replicates": 25
+                            },
+                            "ucoz.ru": {
+                                "push_date": 1345510991,
+                                "trend_stddev": "3.1",
+                                "h0_rejected": 0,
+                                "p": "0.8",
+                                "fdr": 0,
+                                "stddev": "1.6",
+                                "pushlog_id": 6034235,
+                                "trend_mean": "68.4",
+                                "mean": "67.9",
+                                "test_evaluation": 1,
+                                "n_replicates": 25
+                            },
+                            { ... },
+                            { ... },
+                            { ... },
+                        },
+                        "test_machine": {
+                            "platform": "x86",
+                            "osversion": "5.1.2600",
+                            "os": "win",
+                            "name": "talos-r3-xp-053"
+                        },
+                        "testrun": {
+                            "date": 1348091605,
+                            "suite": "Talos tp5row",
+                            "test_run_id": 289
+                        },
+                        "push_info": {
+                            "pushlog_id": 6034235,
+                            "push_date": 1345510991
+                        },
+                        "test_build": {
+                            "name": "Firefox",
+                            "version": "15.0",
+                            "branch": "Mozilla-Beta",
+                            "type": "opt",
+                            "id": "20120820180351",
+                            "revision": "b691cd9c10dd"
+                        }
+
+                    },
+                    { ... },
+                    { ... },
+                    { ... },
+                ],
+                "date": 1345510991,
+                "dz_revision": "b691cd9c10dd",
+                "push_id": 1304,
+                "revisions": [
+                    "31aacbde98ad",
+                    "b691cd9c10dd"
+                ]
+            },
+            {
+                "branch_name": "Mozilla-Beta",
+                "pushlog_id": 6077315,
+                "metrics_data": [ ... ],
+                "date": 1345523670,
+                "dz_revision": "7d3fc54fb002",
+                "push_id": 1305,
+                "revisions": [
+                    "7d3fc54fb002"
+                ]
+            },
+            { ... },
+            { ... },
+            { ... },
+        ]
+
+},
 
 Reference Data
 ----------
 
-These are a set of webservice endpoints for getting reference data about a Datazilla
+These are a set of web service endpoints for getting reference data about a Datazilla
 project.
 
 
@@ -335,11 +780,11 @@ Performance Tests
         }
 
 
-.. http:get:: /(project)/refdata/perftest/ref_data/(table)
+.. http:get:: /(project)/refdata/perftest/ref_data/(data_type)
 
-    Return a raw list of data from the ``table`` provided.  Valid ``table``
+    Return a raw list of data from the ``data_type`` provided.  Valid ``data_type``
     values are: ``machines``, ``operating_systems``, ``options``,
-    ``tests, pages``, ``products``
+    ``tests``, ``pages``, ``products``
 
     **Example request**:
 
