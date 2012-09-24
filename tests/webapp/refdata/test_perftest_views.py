@@ -1,7 +1,7 @@
 from datazilla.controller.admin.refdata import perftest_refdata
 from tests.sample_data import create_date_based_data
 from datazilla.model import utils, factory
-from datazilla.webapp.apps.datazilla.stats import view_utils
+from datazilla.webapp.apps.datazilla.refdata import view_utils
 
 def test_get_runs_by_branch_show_test_runs_true(ptm, plm, client, monkeypatch):
     """

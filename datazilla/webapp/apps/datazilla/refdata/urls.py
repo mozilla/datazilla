@@ -1,7 +1,7 @@
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns(
-    "datazilla.webapp.apps.datazilla.stats",
+    "datazilla.webapp.apps.datazilla.refdata",
 
     # objectstore
     (r"^objectstore/error_count/?$", "objectstore_views.get_error_count"),

@@ -15,7 +15,7 @@ urlpatterns = patterns('',
                        (r'^api/(?P<method>\w+)/?$', views.dataview),
 
                        #return statistics about Datazilla
-                       (r'^refdata/', include("datazilla.webapp.apps.datazilla.stats.urls")),
+                       (r'^refdata/', include("datazilla.webapp.apps.datazilla.refdata.urls")),
 
                        #return test data for a project
                        (r'^testdata/', include("datazilla.webapp.apps.datazilla.testdata.urls")),

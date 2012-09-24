@@ -1,7 +1,7 @@
 from tests.sample_data import create_date_based_data
 from ...utils import jstr
 from datazilla.model import utils
-from datazilla.webapp.apps.datazilla.stats import view_utils
+from datazilla.webapp.apps.datazilla.refdata import view_utils
 
 
 def test_get_error_list(ptm, client, monkeypatch):
