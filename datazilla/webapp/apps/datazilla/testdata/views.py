@@ -108,6 +108,8 @@ def get_metrics_pushlog(request, project, branch):
 
     if not days_ago:
         return HttpResponse(REQUIRE_DAYS_AGO, status=400)
+    if not test_name:
+        return HttpResponse(REQUIRE_TEST_NAME, status=400)
 
     return HttpResponse(
         json.dumps(testdata.get_metrics_pushlog(

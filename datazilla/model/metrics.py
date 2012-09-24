@@ -701,22 +701,26 @@ class MetricsTestModel(DatazillaModelBase):
         placeholders = []
         placeholders.extend(pushlog_ids)
 
-        replace = ','.join( map( lambda pushlog_id: '%s', pushlog_ids ) )
-        rep.append(replace)
-        replace = [" ".join(rep)] if len(rep) else [" "]
 
         proc = 'perftest.selects.get_test_run_ids_from_pushlog_ids'
 
-        #assert False, [rep, placeholders]
-        id_list = self.sources["perftest"].dhub.execute(
-            proc=proc,
-            debug_show=self.DEBUG,
-            replace=replace,
-            placeholders=placeholders,
-            return_type='tuple'
-            )
+        test_run_ids = []
 
-        test_run_ids = [ test_data['test_run_id'] for test_data in id_list ]
+        if pushlog_ids:
+
+            replace = ','.join( map( lambda pushlog_id: '%s', pushlog_ids ) )
+            rep.append(replace)
+            replace = [" ".join(rep)] if len(rep) else [" "]
+
+            id_list = self.sources["perftest"].dhub.execute(
+                proc=proc,
+                debug_show=self.DEBUG,
+                replace=replace,
+                placeholders=placeholders,
+                return_type='tuple'
+                )
+
+            test_run_ids = [ test_data['test_run_id'] for test_data in id_list ]
 
         return test_run_ids
 
