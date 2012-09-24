@@ -413,7 +413,15 @@ class MetricsTestModel(DatazillaModelBase):
                 )
 
         for d in computed_metrics:
-            summary_key = self.get_metrics_summary_key(d)
+            ####
+            #Add revision to summary key to handle getting a mix of test
+            #run ids from different revisions
+            ####
+            summary_key = "{0}{1}{2}".format(
+                self.get_metrics_summary_key(d),
+                self.KEY_DELIMITER,
+                d['revision']
+                )
 
             if page_names and (d['page_name'] not in page_names):
                 continue
@@ -455,7 +463,8 @@ class MetricsTestModel(DatazillaModelBase):
                 value = format(value, '.1f')
 
             if value_name in push_value_names:
-                key_lookup[summary_key]['push_info'][value_name] = value
+                if value:
+                    key_lookup[summary_key]['push_info'][value_name] = value
 
             key_lookup[summary_key]['pages'][ d['page_name'] ][value_name] = \
                 value
@@ -692,22 +701,26 @@ class MetricsTestModel(DatazillaModelBase):
         placeholders = []
         placeholders.extend(pushlog_ids)
 
-        replace = ','.join( map( lambda pushlog_id: '%s', pushlog_ids ) )
-        rep.append(replace)
-        replace = [" ".join(rep)] if len(rep) else [" "]
 
         proc = 'perftest.selects.get_test_run_ids_from_pushlog_ids'
 
-        #assert False, [rep, placeholders]
-        id_list = self.sources["perftest"].dhub.execute(
-            proc=proc,
-            debug_show=self.DEBUG,
-            replace=replace,
-            placeholders=placeholders,
-            return_type='tuple'
-            )
+        test_run_ids = []
 
-        test_run_ids = [ test_data['test_run_id'] for test_data in id_list ]
+        if pushlog_ids:
+
+            replace = ','.join( map( lambda pushlog_id: '%s', pushlog_ids ) )
+            rep.append(replace)
+            replace = [" ".join(rep)] if len(rep) else [" "]
+
+            id_list = self.sources["perftest"].dhub.execute(
+                proc=proc,
+                debug_show=self.DEBUG,
+                replace=replace,
+                placeholders=placeholders,
+                return_type='tuple'
+                )
+
+            test_run_ids = [ test_data['test_run_id'] for test_data in id_list ]
 
         return test_run_ids
 

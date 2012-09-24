@@ -178,8 +178,10 @@ class PushLogModel(DatazillaModelBase):
     def get_branch_pushlog(
         self, branch_id, days_ago=None, numdays=None, branch_name=None
         ):
-        """Retrieve pushes for a given branch for time range. If no
-           time range is provided return all pushlogs for the branch."""
+        """
+        Retrieve pushes for a given branch for time range. If no
+        time range is provided return all pushlogs for the branch.
+        """
 
         data = {}
 
@@ -195,10 +197,10 @@ class PushLogModel(DatazillaModelBase):
 
         if days_ago and numdays:
 
+            day_range = utils.get_day_range(days_ago, numdays)
+
             placeholders.append( day_range['start'] )
             placeholders.append( day_range['stop'] )
-
-            day_range = utils.get_day_range(days_ago, numdays)
 
             proc = 'hgmozilla.selects.get_branch_pushlog'
 
@@ -810,14 +812,15 @@ class PerformanceTestModel(DatazillaModelBase):
         placeholders = [branch]
         rep = []
 
-        if page_name and (not revision):
+        if not revision:
             proc = 'perftest.selects.get_test_run_ids_no_revision'
-            self.get_replace_and_placeholders(
-                rep, placeholders, 'pg.url', page_name
-                )
         else:
             placeholders.append(revision)
 
+        if page_name:
+            self.get_replace_and_placeholders(
+                rep, placeholders, 'pg.url', page_name
+                )
         if os_name:
             self.get_replace_and_placeholders(
                 rep, placeholders, 'os.name', os_name
