@@ -5,26 +5,26 @@ from datazilla.model import factory
 
 def get_runs_by_branch(project, startdate, enddate):
     """Return a list of test runs by branch in date range"""
-    ptsm = factory.get_ptrdm(project)
+    ptrdm = factory.get_ptrdm(project)
     plm = factory.get_plm()
 
     branches = [x["name"] for x in plm.get_all_branches()]
     result = {}
     for branch in branches:
-        test_runs = ptsm.get_run_lists_by_branch(startdate, enddate, branch)
+        test_runs = ptrdm.get_run_lists_by_branch(startdate, enddate, branch)
         if test_runs["count"] > 0:
             result[branch] = test_runs
 
     plm.disconnect()
-    ptsm.disconnect()
+    ptrdm.disconnect()
     return result
 
 
 def get_run_counts_by_branch(project, startdate, enddate):
     """Return a count of test runs by branch in date range"""
-    ptsm = factory.get_ptrdm(project)
-    test_runs = ptsm.get_run_counts_by_branch(startdate, enddate)
-    ptsm.disconnect()
+    ptrdm = factory.get_ptrdm(project)
+    test_runs = ptrdm.get_run_counts_by_branch(startdate, enddate)
+    ptrdm.disconnect()
 
     #now form the data the way we want it
     result = {}
@@ -46,9 +46,9 @@ def get_ref_data(project, table):
 
 def get_db_size(project):
     """Return the size of the database on disk in megabytes"""
-    ptsm = factory.get_ptrdm(project)
-    pt_size = ptsm.get_db_size()
-    ptsm.disconnect()
+    ptrdm = factory.get_ptrdm(project)
+    pt_size = ptrdm.get_db_size()
+    ptrdm.disconnect()
 
     return pt_size
 

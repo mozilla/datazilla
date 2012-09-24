@@ -1,4 +1,4 @@
-from datazilla.model.stats import PerformanceTestRefDataModel
+from datazilla.model.refdata import PerformanceTestRefDataModel
 
 
 def get_error_count(project, startdate, enddate):

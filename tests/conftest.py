@@ -75,7 +75,6 @@ def pytest_sessionfinish(session):
 
     source_list = PerformanceTestModel(session.perftest_name).sources.values()
     source_list.extend(PushLogModel(project=session.pushlog_name).sources.values())
-#    return
 
     for sds in source_list:
         conn = MySQLdb.connect(
@@ -126,7 +125,6 @@ def pytest_runtest_teardown(item):
     from django.test.testcases import restore_transaction_methods
     from django.db import transaction
     from datazilla.model import PerformanceTestModel
-#    return
 
     restore_transaction_methods()
     transaction.rollback()
@@ -230,7 +228,7 @@ def pytest_funcarg__ptrdm(request):
     Give a test access to a PerformanceTestStatsModel instance.
 
     """
-    from datazilla.model.stats import PerformanceTestRefDataModel
+    from datazilla.model.refdata import PerformanceTestRefDataModel
 
     return PerformanceTestRefDataModel(request._pyfuncitem.session.perftest_name)
 
@@ -242,7 +240,7 @@ def pytest_funcarg__plrdm(request):
     Truncate all project tables between tests in order to provide isolation.
 
     """
-    from datazilla.model.stats import PushLogRefDataModel
+    from datazilla.model.refdata import PushLogRefDataModel
 
     plrdm = PushLogRefDataModel(
         request._pyfuncitem.session.pushlog_name)

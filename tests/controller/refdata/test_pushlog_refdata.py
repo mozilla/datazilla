@@ -14,16 +14,16 @@ def get_branch_id(plm, branch_name="Firefox"):
     return branch[0]["id"]
 
 
-def test_get_not_referenced(plm, plsm, ptm, monkeypatch):
+def test_get_not_referenced(plm, plrdm, ptm, monkeypatch):
     """
     Test for runs that have matching revisions in the pushlogs.
 
     First one has a match, the other two don't
     """
 
-    def mock_plsm():
-        return plsm
-    monkeypatch.setattr(factory, 'get_plsm', mock_plsm)
+    def mock_plrdm():
+        return plrdm
+    monkeypatch.setattr(factory, 'get_plrdm', mock_plrdm)
 
     def mock_plm():
         return plm
@@ -72,12 +72,12 @@ def test_get_not_referenced(plm, plsm, ptm, monkeypatch):
     assert result["without_matching_test_run"]["Firefox"]["pushlogs"] == exp_non_matching
 
 
-def test_get_pushlogs(plm, plsm, monkeypatch):
+def test_get_pushlogs(plm, plrdm, monkeypatch):
     """Test the get_pushlogs method."""
 
-    def mock_plsm():
-        return plsm
-    monkeypatch.setattr(factory, 'get_plsm', mock_plsm)
+    def mock_plrdm():
+        return plrdm
+    monkeypatch.setattr(factory, 'get_plrdm', mock_plrdm)
 
     def mock_plm():
         return plm
@@ -167,13 +167,13 @@ def test_get_all_branches(plm, monkeypatch):
     assert set(exp_branch_list) == set(pushlog_refdata.get_all_branches())
 
 
-def test_get_db_size(plsm, monkeypatch):
+def test_get_db_size(plrdm, monkeypatch):
     """Test the get_db_size method."""
-    def mock_plsm():
-        return plsm
-    monkeypatch.setattr(factory, 'get_plsm', mock_plsm)
+    def mock_plrdm():
+        return plrdm
+    monkeypatch.setattr(factory, 'get_plrdm', mock_plrdm)
 
     size = pushlog_refdata.get_db_size()
 
-    assert size[0]["db_name"] == u'{0}_hgmozilla_1'.format(plsm.project)
+    assert size[0]["db_name"] == u'{0}_hgmozilla_1'.format(plrdm.project)
     assert size[0]["size_mb"] > 0

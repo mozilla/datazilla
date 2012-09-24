@@ -94,14 +94,14 @@ def test_get_branches(client, monkeypatch):
     assert response.json == ["foo", "bar"]
 
 
-def test_get_db_size(plsm, client, monkeypatch):
+def test_get_db_size(plrdm, client, monkeypatch):
     """Get the database size from the objectstore."""
-    def mock_plsm():
-        return plsm
-    monkeypatch.setattr(factory, 'get_plsm', mock_plsm)
+    def mock_plrdm():
+        return plrdm
+    monkeypatch.setattr(factory, 'get_plrdm', mock_plrdm)
 
     response = client.get("/refdata/pushlog/db_size/")
 
     assert response.json == [
-            {"size_mb": "0.13", "db_name": "{0}_hgmozilla_1".format(plsm.project)},
+            {"size_mb": "0.13", "db_name": "{0}_hgmozilla_1".format(plrdm.project)},
             ]

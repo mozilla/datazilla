@@ -14,7 +14,7 @@ def test_get_runs_by_branch(ptm, plm, monkeypatch):
     def mock_plm():
         return plm
     monkeypatch.setattr(factory, 'get_plm', mock_plm)
-    # don't need to monkeypatch the ptsm, because we pass the project
+    # don't need to monkeypatch the ptrdm, because we pass the project
     # name in for use in its construction.
 
     blobs = [
@@ -51,7 +51,7 @@ def test_get_runs_by_branch(ptm, plm, monkeypatch):
     assert runs["Mozilla-Aurora"]["test_runs"][0] == exp_run
 
 
-def test_get_sssruns_by_branch_past_limit(ptm, plm, monkeypatch):
+def test_get_runs_by_branch_past_limit(ptm, plm, monkeypatch):
     """
     Test get_runs_by_branch method exceeding the 80 count limit.
 

@@ -6,7 +6,7 @@ in instantiating models.
 """
 
 from base import PerformanceTestModel, PushLogModel
-from stats import PerformanceTestRefDataModel, PushLogRefDataModel
+from refdata import PerformanceTestRefDataModel, PushLogRefDataModel
 from metrics import MetricsTestModel
 
 
@@ -25,7 +25,7 @@ def get_plm():
     return PushLogModel()
 
 
-def get_plsm():
+def get_plrdm():
     """Shortcut to return the PushLogStatsModel."""
     return PushLogRefDataModel()
 
