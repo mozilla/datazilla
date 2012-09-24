@@ -102,7 +102,7 @@ def get_metrics_summary(
 
     return metrics_data
 
-def get_metrics_trend(
+def get_metrics_pushlog(
     project, branch, os_name=None, os_version=None, processor=None,
     build_type=None, test_name=None, page_name=None, days_ago=None,
     numdays=None
@@ -119,7 +119,6 @@ def get_metrics_trend(
     pushlog_id_index_map = {}
 
     for node in pushlog:
-        revision = mtm.truncate_revision(node['node'])
         if node['pushlog_id'] not in pushlog_id_index_map:
             node_struct = {
                     'revisions':[],
@@ -127,15 +126,18 @@ def get_metrics_trend(
                     'branch_name':node['name'],
                     'date':node['date'],
                     'push_id':node['push_id'],
-                    'metrics_data':[]
+                    'pushlog_id':node['pushlog_id'],
+                    'metrics_data':[],
                     }
 
             aggregate_pushlog.append(node_struct)
             index = len(aggregate_pushlog) - 1
+
             pushlog_id_index_map[node['pushlog_id']] = index
 
         pushlog_index = pushlog_id_index_map[ node['pushlog_id'] ]
-        aggregate_pushlog[index]['revisions'].append(revision)
+        revision = mtm.truncate_revision(node['node'])
+        aggregate_pushlog[pushlog_index]['revisions'].append(revision)
 
     pushlog_id_list = pushlog_id_index_map.keys()
 
@@ -156,12 +158,12 @@ def get_metrics_trend(
         test_run_ids, page_name
         )
 
-    #decorate aggregate_pushlog with the trend data
+    #decorate aggregate_pushlog with the metrics data
     for d in metrics_data:
         pushlog_id = d['push_info']['pushlog_id']
-        index = pushlog_id_index_map[pushlog_id]
-        aggregate_pushlog[index]['metrics_data'].append(d)
-        aggregate_pushlog[index]['dz_revision'] = d['test_build']['revision']
+        pushlog_index = pushlog_id_index_map[pushlog_id]
+        aggregate_pushlog[pushlog_index]['metrics_data'].append(d)
+        aggregate_pushlog[pushlog_index]['dz_revision'] = d['test_build']['revision']
 
     plm.disconnect()
     ptm.disconnect()
