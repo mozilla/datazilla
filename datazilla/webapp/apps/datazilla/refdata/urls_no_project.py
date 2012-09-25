@@ -1,7 +1,7 @@
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns(
-    "datazilla.webapp.apps.datazilla.stats",
+    "datazilla.webapp.apps.datazilla.refdata",
 
     # pushlog
     (r"^pushlog/list/?$", "pushlog_views.get_pushlogs"),

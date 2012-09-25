@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from datazilla.model.utils import get_day_range
 from ...sample_data import perftest_json
-from datazilla.controller.admin.stats import objectstore_stats
+from datazilla.controller.admin.refdata import objectstore_refdata
 
 def store_and_process_2_good_2_error_blobs(ptm):
     """Store 2 good blobs, and 2 that are marked as having an error"""
@@ -46,7 +46,7 @@ def test_get_error_count(ptm):
 
     store_and_process_2_good_2_error_blobs(ptm)
     date_range = get_day_range(1)
-    result = objectstore_stats.get_error_count(
+    result = objectstore_refdata.get_error_count(
         ptm.project,
         date_range["start"],
         date_range["stop"],
@@ -63,7 +63,7 @@ def test_get_error_list(ptm):
 
     store_and_process_2_good_2_error_blobs(ptm)
     date_range = get_day_range(1)
-    result = objectstore_stats.get_error_list(
+    result = objectstore_refdata.get_error_list(
         ptm.project,
         date_range["start"],
         date_range["stop"],
@@ -101,7 +101,7 @@ def test_get_json_blob(ptm):
     badblob = "fooo{0}".format(blob)
     ptm.store_test_data(badblob, error="badness")
 
-    result = objectstore_stats.get_json_blob(ptm.project, 1)
+    result = objectstore_refdata.get_json_blob(ptm.project, 1)
 
     assert badblob == result
 
@@ -115,7 +115,7 @@ def test_get_json_blob_bad_id(ptm):
     badblob = "fooo{0}".format(blob)
     ptm.store_test_data(badblob, error="badness")
 
-    result = objectstore_stats.get_json_blob(ptm.project, 10)
+    result = objectstore_refdata.get_json_blob(ptm.project, 10)
 
     assert not result
 
@@ -125,7 +125,7 @@ def test_get_error_detail_count(ptm):
 
     store_and_process_2_good_2_error_blobs(ptm)
     date_range = get_day_range(1)
-    result = objectstore_stats.get_error_detail_count(
+    result = objectstore_refdata.get_error_detail_count(
         ptm.project,
         date_range["start"],
         date_range["stop"],
@@ -140,13 +140,13 @@ def test_get_error_detail_count(ptm):
 
 def test_result_key_invalid_value():
     """Test get_result_key with an invalid key."""
-    result = objectstore_stats.result_key({"mango": "food"})
+    result = objectstore_refdata.result_key({"mango": "food"})
     assert result == "unknown"
 
 
 def test_get_db_size(ptm):
     """Test the get_db_size method."""
-    sizes = objectstore_stats.get_db_size(ptm.project)
+    sizes = objectstore_refdata.get_db_size(ptm.project)
 
     db_names = [x["db_name"] for x in sizes]
     exp_db_names = [

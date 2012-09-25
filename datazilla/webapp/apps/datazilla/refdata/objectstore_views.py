@@ -1,6 +1,6 @@
 import json
 from django.http import HttpResponse
-from datazilla.controller.admin.stats import objectstore_stats
+from datazilla.controller.admin.refdata import objectstore_refdata
 from .view_utils import get_range, REQUIRE_DAYS_AGO, API_CONTENT_TYPE
 
 
@@ -10,7 +10,7 @@ def get_error_list(request, project):
         return HttpResponse(REQUIRE_DAYS_AGO, status=400)
 
     date_range = get_range(request)
-    stats = objectstore_stats.get_error_list(
+    stats = objectstore_refdata.get_error_list(
         project,
         date_range["start"],
         date_range["stop"],
@@ -25,7 +25,7 @@ def get_error_count(request, project):
         return HttpResponse(REQUIRE_DAYS_AGO, status=400)
 
     date_range = get_range(request)
-    stats = objectstore_stats.get_error_count(
+    stats = objectstore_refdata.get_error_count(
         project,
         date_range["start"],
         date_range["stop"],
@@ -36,7 +36,7 @@ def get_error_count(request, project):
 def get_json_blob(request, project, id):
     """Return a count of all objectstore entries with error"""
 
-    blob = objectstore_stats.get_json_blob(project, id)
+    blob = objectstore_refdata.get_json_blob(project, id)
     if blob:
         return HttpResponse(blob, content_type=API_CONTENT_TYPE)
     else:
@@ -45,7 +45,7 @@ def get_json_blob(request, project, id):
 
 def get_db_size(request, project):
     """Return the size of the DB on disk in MB."""
-    size_tuple = objectstore_stats.get_db_size(project)
+    size_tuple = objectstore_refdata.get_db_size(project)
     #JSON can't serialize a decimal, so converting size_MB to string
     result = []
     for item in size_tuple:
