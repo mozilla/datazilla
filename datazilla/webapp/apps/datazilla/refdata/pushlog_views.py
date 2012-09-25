@@ -2,7 +2,7 @@ import json
 
 from django.http import HttpResponse
 
-from datazilla.controller.admin.stats import pushlog_stats
+from datazilla.controller.admin.refdata import pushlog_refdata
 from .view_utils import get_range, REQUIRE_DAYS_AGO, API_CONTENT_TYPE
 
 def get_not_referenced(request, project):
@@ -23,7 +23,7 @@ def get_not_referenced(request, project):
     if branches:
         branches = branches.split(",")
 
-    stats = pushlog_stats.get_not_referenced(
+    stats = pushlog_refdata.get_not_referenced(
         project,
         range["start"],
         range["stop"],
@@ -50,7 +50,7 @@ def get_pushlogs(request):
     if branches:
         branches = branches.split(",")
 
-    stats = pushlog_stats.get_pushlogs(
+    stats = pushlog_refdata.get_pushlogs(
         range["start"],
         range["stop"],
         branches,
@@ -61,13 +61,13 @@ def get_pushlogs(request):
 
 def get_all_branches(request):
     """Get the full list of pushlog branches"""
-    branches = pushlog_stats.get_all_branches()
+    branches = pushlog_refdata.get_all_branches()
     return HttpResponse(json.dumps(branches), content_type=API_CONTENT_TYPE)
 
 
 def get_db_size(request):
     """Return the size of the DB on disk in MB."""
-    size_tuple = pushlog_stats.get_db_size()
+    size_tuple = pushlog_refdata.get_db_size()
     #JSON can't serialize a decimal, so converting size_MB to string
     result = []
     for item in size_tuple:

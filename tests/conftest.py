@@ -75,7 +75,6 @@ def pytest_sessionfinish(session):
 
     source_list = PerformanceTestModel(session.perftest_name).sources.values()
     source_list.extend(PushLogModel(project=session.pushlog_name).sources.values())
-#    return
 
     for sds in source_list:
         conn = MySQLdb.connect(
@@ -126,7 +125,6 @@ def pytest_runtest_teardown(item):
     from django.test.testcases import restore_transaction_methods
     from django.db import transaction
     from datazilla.model import PerformanceTestModel
-#    return
 
     restore_transaction_methods()
     transaction.rollback()
@@ -193,7 +191,6 @@ def pytest_funcarg__ptm(request):
     ptm = PerformanceTestModel(request._pyfuncitem.session.perftest_name)
     request.addfinalizer(partial(truncate, ptm, ["metric", "metric_value"]))
 
-
     return ptm
 
 
@@ -213,6 +210,7 @@ def pytest_funcarg__plm(request):
     request.addfinalizer(partial(truncate, plm, ["branches"]))
     return plm
 
+
 def pytest_funcarg__mtm(request):
     """
     Give a test access to a MetricsTestModel instance.
@@ -224,27 +222,28 @@ def pytest_funcarg__mtm(request):
     request.addfinalizer(partial(truncate, mtm, ["metric", "metric_value"]))
     return mtm
 
-def pytest_funcarg__ptsm(request):
+
+def pytest_funcarg__ptrdm(request):
     """
     Give a test access to a PerformanceTestStatsModel instance.
 
     """
-    from datazilla.model.stats import PerformanceTestStatsModel
+    from datazilla.model.refdata import PerformanceTestRefDataModel
 
-    return PerformanceTestStatsModel(request._pyfuncitem.session.perftest_name)
+    return PerformanceTestRefDataModel(request._pyfuncitem.session.perftest_name)
 
 
-def pytest_funcarg__plsm(request):
+def pytest_funcarg__plrdm(request):
     """
     Give a test access to a PushLogStatsModel instance.
 
     Truncate all project tables between tests in order to provide isolation.
 
     """
-    from datazilla.model.stats import PushLogStatsModel
+    from datazilla.model.refdata import PushLogRefDataModel
 
-    plsm = PushLogStatsModel(
+    plrdm = PushLogRefDataModel(
         request._pyfuncitem.session.pushlog_name)
 
-    request.addfinalizer(partial(truncate, plsm, ["branches"]))
-    return plsm
+    request.addfinalizer(partial(truncate, plrdm, ["branches"]))
+    return plrdm

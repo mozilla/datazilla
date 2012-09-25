@@ -1,7 +1,7 @@
 from decimal import Decimal
 import json
 
-from datazilla.controller.admin.stats import pushlog_stats
+from datazilla.controller.admin.refdata import pushlog_refdata
 from datazilla.model import factory
 
 from ...sample_pushlog import get_pushlog_dict_set
@@ -14,16 +14,16 @@ def get_branch_id(plm, branch_name="Firefox"):
     return branch[0]["id"]
 
 
-def test_get_not_referenced(plm, plsm, ptm, monkeypatch):
+def test_get_not_referenced(plm, plrdm, ptm, monkeypatch):
     """
     Test for runs that have matching revisions in the pushlogs.
 
     First one has a match, the other two don't
     """
 
-    def mock_plsm():
-        return plsm
-    monkeypatch.setattr(factory, 'get_plsm', mock_plsm)
+    def mock_plrdm():
+        return plrdm
+    monkeypatch.setattr(factory, 'get_plrdm', mock_plrdm)
 
     def mock_plm():
         return plm
@@ -39,7 +39,7 @@ def test_get_not_referenced(plm, plsm, ptm, monkeypatch):
     ptm.store_test_data(blob)
     ptm.process_objects(1)
 
-    result = pushlog_stats.get_not_referenced(
+    result = pushlog_refdata.get_not_referenced(
         ptm.project,
         startdate=1341451080,
         enddate=1341494822,
@@ -72,12 +72,12 @@ def test_get_not_referenced(plm, plsm, ptm, monkeypatch):
     assert result["without_matching_test_run"]["Firefox"]["pushlogs"] == exp_non_matching
 
 
-def test_get_pushlogs(plm, plsm, monkeypatch):
+def test_get_pushlogs(plm, plrdm, monkeypatch):
     """Test the get_pushlogs method."""
 
-    def mock_plsm():
-        return plsm
-    monkeypatch.setattr(factory, 'get_plsm', mock_plsm)
+    def mock_plrdm():
+        return plrdm
+    monkeypatch.setattr(factory, 'get_plrdm', mock_plrdm)
 
     def mock_plm():
         return plm
@@ -89,7 +89,7 @@ def test_get_pushlogs(plm, plsm, monkeypatch):
         data1,
         )
 
-    result = pushlog_stats.get_pushlogs(
+    result = pushlog_refdata.get_pushlogs(
         startdate=1341451080,
         enddate=1341494822,
         )
@@ -164,16 +164,16 @@ def test_get_all_branches(plm, monkeypatch):
         u"Mozilla-Inbound"
     ]
 
-    assert set(exp_branch_list) == set(pushlog_stats.get_all_branches())
+    assert set(exp_branch_list) == set(pushlog_refdata.get_all_branches())
 
 
-def test_get_db_size(plsm, monkeypatch):
+def test_get_db_size(plrdm, monkeypatch):
     """Test the get_db_size method."""
-    def mock_plsm():
-        return plsm
-    monkeypatch.setattr(factory, 'get_plsm', mock_plsm)
+    def mock_plrdm():
+        return plrdm
+    monkeypatch.setattr(factory, 'get_plrdm', mock_plrdm)
 
-    size = pushlog_stats.get_db_size()
+    size = pushlog_refdata.get_db_size()
 
-    assert size[0]["db_name"] == u'{0}_hgmozilla_1'.format(plsm.project)
+    assert size[0]["db_name"] == u'{0}_hgmozilla_1'.format(plrdm.project)
     assert size[0]["size_mb"] > 0

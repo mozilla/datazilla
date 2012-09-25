@@ -35,15 +35,15 @@ def add_test_data(ptm):
     ptm.process_objects(5)
 
 
-def test_get_testdata_no_filter(ptm, ptsm, monkeypatch):
+def test_get_testdata_no_filter(ptm, ptrdm, monkeypatch):
     """
     Test getting json blobs for tests by branch and revision
 
     """
 
-    def mock_ptsm(project):
-        return ptsm
-    monkeypatch.setattr(factory, 'get_ptsm', mock_ptsm)
+    def mock_ptrdm(project):
+        return ptrdm
+    monkeypatch.setattr(factory, 'get_ptrdm', mock_ptrdm)
 
     def mock_ptm(project):
         return ptm
@@ -63,10 +63,10 @@ def test_get_testdata_no_filter(ptm, ptsm, monkeypatch):
     assert set(suites) == set(["truth", "myth", "myth"])
 
 
-def test_get_testdata_filter_os_name(ptm, ptsm, monkeypatch):
-    def mock_ptsm(project):
-        return ptsm
-    monkeypatch.setattr(factory, 'get_ptsm', mock_ptsm)
+def test_get_testdata_filter_os_name(ptm, ptrdm, monkeypatch):
+    def mock_ptrdm(project):
+        return ptrdm
+    monkeypatch.setattr(factory, 'get_ptrdm', mock_ptrdm)
 
     def mock_ptm(project):
         return ptm
@@ -87,10 +87,10 @@ def test_get_testdata_filter_os_name(ptm, ptsm, monkeypatch):
     assert set(suites) == set(["truth", "myth"])
 
 
-def test_get_testdata_filter_test_name(ptm, ptsm, monkeypatch):
-    def mock_ptsm(project):
-        return ptsm
-    monkeypatch.setattr(factory, 'get_ptsm', mock_ptsm)
+def test_get_testdata_filter_test_name(ptm, ptrdm, monkeypatch):
+    def mock_ptrdm(project):
+        return ptrdm
+    monkeypatch.setattr(factory, 'get_ptrdm', mock_ptrdm)
 
     def mock_ptm(project):
         return ptm
@@ -109,10 +109,10 @@ def test_get_testdata_filter_test_name(ptm, ptsm, monkeypatch):
     assert result[0]["testrun"]["suite"] == "truth"
 
 
-def test_get_testdata_filter_os_and_test_name(ptm, ptsm, monkeypatch):
-    def mock_ptsm(project):
-        return ptsm
-    monkeypatch.setattr(factory, 'get_ptsm', mock_ptsm)
+def test_get_testdata_filter_os_and_test_name(ptm, ptrdm, monkeypatch):
+    def mock_ptrdm(project):
+        return ptrdm
+    monkeypatch.setattr(factory, 'get_ptrdm', mock_ptrdm)
 
     def mock_ptm(project):
         return ptm

@@ -4,7 +4,7 @@ from optparse import make_option
 from django.core.management.base import CommandError
 
 from datazilla.model import utils
-from datazilla.controller.admin.stats import objectstore_stats
+from datazilla.controller.admin.refdata import objectstore_refdata
 from base import ProjectCommand
 
 class Command(ProjectCommand):
@@ -83,7 +83,7 @@ class Command(ProjectCommand):
 
         range = utils.get_day_range(days_ago, numdays)
         if options.get("show_list"):
-            err_list = objectstore_stats.get_error_list(
+            err_list = objectstore_refdata.get_error_list(
                 project,
                 range["start"],
                 range["stop"],
@@ -91,7 +91,7 @@ class Command(ProjectCommand):
             self.stdout.write(json.dumps(err_list, indent=4))
 
         if options.get("show_simple_count"):
-            err_count = objectstore_stats.get_error_count(
+            err_count = objectstore_refdata.get_error_count(
                 project,
                 range["start"],
                 range["stop"],
@@ -100,7 +100,7 @@ class Command(ProjectCommand):
 
 
         if options.get("show_detail_count"):
-            err_count = objectstore_stats.get_error_detail_count(
+            err_count = objectstore_refdata.get_error_detail_count(
                 project,
                 range["start"],
                 range["stop"],
