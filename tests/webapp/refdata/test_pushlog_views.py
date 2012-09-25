@@ -1,8 +1,8 @@
-from datazilla.controller.admin.stats import pushlog_stats
+from datazilla.controller.admin.refdata import pushlog_refdata
 from tests.sample_data import create_date_based_data
 from ...utils import jstr
 from datazilla.model import utils, factory
-from datazilla.webapp.apps.datazilla.stats import view_utils
+from datazilla.webapp.apps.datazilla.refdata import view_utils
 
 def test_get_not_referenced(ptm, client, monkeypatch):
     """
@@ -16,7 +16,7 @@ def test_get_not_referenced(ptm, client, monkeypatch):
             "branches": branches,
             }
     monkeypatch.setattr(
-        pushlog_stats,
+        pushlog_refdata,
         'get_not_referenced',
         mock_get_not_referenced,
         )
@@ -52,7 +52,7 @@ def test_get_not_referenced_with_branches(ptm, client, monkeypatch):
             "branches": branches,
             }
     monkeypatch.setattr(
-        pushlog_stats,
+        pushlog_refdata,
         'get_not_referenced',
         mock_get_not_referenced,
         )
@@ -86,7 +86,7 @@ def test_get_branches(client, monkeypatch):
     """Simple passthrough test."""
     def mock_get_all_branches():
         return ["foo", "bar"]
-    monkeypatch.setattr(pushlog_stats, 'get_all_branches', mock_get_all_branches)
+    monkeypatch.setattr(pushlog_refdata, 'get_all_branches', mock_get_all_branches)
 
     url = "/refdata/pushlog/branches/"
     response = client.get(url)
@@ -94,14 +94,14 @@ def test_get_branches(client, monkeypatch):
     assert response.json == ["foo", "bar"]
 
 
-def test_get_db_size(plsm, client, monkeypatch):
+def test_get_db_size(plrdm, client, monkeypatch):
     """Get the database size from the objectstore."""
-    def mock_plsm():
-        return plsm
-    monkeypatch.setattr(factory, 'get_plsm', mock_plsm)
+    def mock_plrdm():
+        return plrdm
+    monkeypatch.setattr(factory, 'get_plrdm', mock_plrdm)
 
     response = client.get("/refdata/pushlog/db_size/")
 
     assert response.json == [
-            {"size_mb": "0.13", "db_name": "{0}_hgmozilla_1".format(plsm.project)},
+            {"size_mb": "0.13", "db_name": "{0}_hgmozilla_1".format(plrdm.project)},
             ]

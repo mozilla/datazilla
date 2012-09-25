@@ -5,7 +5,7 @@ from django.core.exceptions import FieldError
 
 from datazilla.model import factory
 from ...sample_data import perftest_json
-from datazilla.controller.admin.stats import perftest_stats
+from datazilla.controller.admin.refdata import perftest_refdata
 
 def test_get_runs_by_branch(ptm, plm, monkeypatch):
     """
@@ -14,7 +14,7 @@ def test_get_runs_by_branch(ptm, plm, monkeypatch):
     def mock_plm():
         return plm
     monkeypatch.setattr(factory, 'get_plm', mock_plm)
-    # don't need to monkeypatch the ptsm, because we pass the project
+    # don't need to monkeypatch the ptrdm, because we pass the project
     # name in for use in its construction.
 
     blobs = [
@@ -45,13 +45,13 @@ def test_get_runs_by_branch(ptm, plm, monkeypatch):
         "revision": "785345035a3b"
         }
 
-    runs = perftest_stats.get_runs_by_branch(ptm.project, 1330454756, 1330454756)
+    runs = perftest_refdata.get_runs_by_branch(ptm.project, 1330454756, 1330454756)
 
     assert runs["Mozilla-Aurora"]["count"] == 1
     assert runs["Mozilla-Aurora"]["test_runs"][0] == exp_run
 
 
-def test_get_sssruns_by_branch_past_limit(ptm, plm, monkeypatch):
+def test_get_runs_by_branch_past_limit(ptm, plm, monkeypatch):
     """
     Test get_runs_by_branch method exceeding the 80 count limit.
 
@@ -70,7 +70,7 @@ def test_get_sssruns_by_branch_past_limit(ptm, plm, monkeypatch):
         ptm.store_test_data(blob)
     ptm.process_objects(81)
 
-    runs = perftest_stats.get_runs_by_branch(ptm.project, 1330454756, 1330454756)
+    runs = perftest_refdata.get_runs_by_branch(ptm.project, 1330454756, 1330454756)
 
     assert runs["Mozilla-Aurora"]["limit"] == 80
     assert runs["Mozilla-Aurora"]["count"] == 80
@@ -100,7 +100,7 @@ def test_get_run_counts_by_branch(ptm):
     ptm.process_objects(3)
 
     exp = {'Mozilla-Aurora': {'count': 1L}}
-    runs = perftest_stats.get_run_counts_by_branch(
+    runs = perftest_refdata.get_run_counts_by_branch(
         ptm.project,
         1330454756,
         1330454756,
@@ -110,7 +110,7 @@ def test_get_run_counts_by_branch(ptm):
 
 def test_get_db_size(ptm):
     """Test the get_db_size method."""
-    sizes = perftest_stats.get_db_size(ptm.project)
+    sizes = perftest_refdata.get_db_size(ptm.project)
 
     db_names = [x["db_name"] for x in sizes]
     exp_db_names = [
@@ -129,7 +129,7 @@ def test_get_ref_data_machines(ptm):
     ptm.store_test_data(perftest_json())
     ptm.process_objects(1)
 
-    ref_data = perftest_stats.get_ref_data(ptm.project, "machines")
+    ref_data = perftest_refdata.get_ref_data(ptm.project, "machines")
     for item in ref_data.itervalues():
         del(item["id"])
 
@@ -143,7 +143,7 @@ def test_get_ref_data_operating_systems(ptm):
     ptm.store_test_data(perftest_json())
     ptm.process_objects(1)
 
-    ref_data = perftest_stats.get_ref_data(ptm.project, "operating_systems")
+    ref_data = perftest_refdata.get_ref_data(ptm.project, "operating_systems")
 
     exp = {'linuxUbuntu 11.10': 1L}
     assert exp == ref_data
@@ -155,7 +155,7 @@ def test_get_ref_data_options(ptm):
     ptm.store_test_data(perftest_json())
     ptm.process_objects(1)
 
-    ref_data = perftest_stats.get_ref_data(ptm.project, "options")
+    ref_data = perftest_refdata.get_ref_data(ptm.project, "options")
 
     exp = {'responsiveness': {'id': 1L, 'name': 'responsiveness'},
            'rss': {'id': 9L, 'name': 'rss'},
@@ -176,7 +176,7 @@ def test_get_ref_data_tests(ptm):
     ptm.store_test_data(perftest_json())
     ptm.process_objects(1)
 
-    ref_data = perftest_stats.get_ref_data(ptm.project, "tests")
+    ref_data = perftest_refdata.get_ref_data(ptm.project, "tests")
 
     exp = {'Talos tp5r': {'id': 1L, 'name': 'Talos tp5r', 'version': 1L}}
 
@@ -189,7 +189,7 @@ def test_get_ref_data_pages(ptm):
     ptm.store_test_data(perftest_json())
     ptm.process_objects(1)
 
-    ref_data = perftest_stats.get_ref_data(ptm.project, "pages")
+    ref_data = perftest_refdata.get_ref_data(ptm.project, "pages")
 
     exp = {'one.com': {'id': 2L, 'test_id': 1L, 'url': 'one.com'},
            'three.com': {'id': 1L, 'test_id': 1L, 'url': 'three.com'},
@@ -204,7 +204,7 @@ def test_get_ref_data_products(ptm):
     ptm.store_test_data(perftest_json())
     ptm.process_objects(1)
 
-    ref_data = perftest_stats.get_ref_data(ptm.project, "products")
+    ref_data = perftest_refdata.get_ref_data(ptm.project, "products")
 
     exp = {'FirefoxMozilla-Aurora14.0a2': 1L}
 
@@ -218,7 +218,7 @@ def test_get_ref_data_invalid(ptm):
     ptm.process_objects(1)
 
     with pytest.raises(FieldError) as e:
-        perftest_stats.get_ref_data(ptm.project, "not a valid table name")
+        perftest_refdata.get_ref_data(ptm.project, "not a valid table name")
 
     exp = ("FieldError: Not a supported ref_data table.  Must be in: "
         "['tests', 'pages', 'products', 'operating_systems', "

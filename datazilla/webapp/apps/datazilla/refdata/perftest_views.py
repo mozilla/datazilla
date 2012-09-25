@@ -2,7 +2,7 @@ import json
 
 from django.http import HttpResponse
 
-from datazilla.controller.admin.stats import perftest_stats
+from datazilla.controller.admin.refdata import perftest_refdata
 from .view_utils import get_range, REQUIRE_DAYS_AGO, API_CONTENT_TYPE
 
 
@@ -22,13 +22,13 @@ def get_runs_by_branch(request, project):
 
     show_tr = request.GET.get("show_test_runs")
     if show_tr and show_tr.lower() == "true":
-        stats = perftest_stats.get_runs_by_branch(
+        stats = perftest_refdata.get_runs_by_branch(
             project,
             range["start"],
             range["stop"],
             )
     else:
-        stats = perftest_stats.get_run_counts_by_branch(
+        stats = perftest_refdata.get_run_counts_by_branch(
             project,
             range["start"],
             range["stop"],
@@ -39,13 +39,13 @@ def get_runs_by_branch(request, project):
 
 def get_ref_data(request, project, table):
     """Get simple list of ref_data for ``table`` in ``project``"""
-    stats = perftest_stats.get_ref_data(project, table)
+    stats = perftest_refdata.get_ref_data(project, table)
     return HttpResponse(json.dumps(stats), content_type=API_CONTENT_TYPE)
 
 
 def get_db_size(request, project):
     """Return the size of the DB on disk in MB."""
-    size_tuple = perftest_stats.get_db_size(project)
+    size_tuple = perftest_refdata.get_db_size(project)
     #JSON can't serialize a decimal, so converting size_MB to string
     result = []
     for item in size_tuple:

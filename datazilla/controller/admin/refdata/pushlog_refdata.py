@@ -12,13 +12,13 @@ def get_not_referenced(project, startdate, enddate, branches=None):
 
     branches = branches or get_all_branches()
 
-    ptm = factory.get_ptsm(project)
-    tr_set = ptm.get_distinct_test_run_revisions()
-    ptm.disconnect()
+    ptrdm = factory.get_ptrdm(project)
+    tr_set = ptrdm.get_distinct_test_run_revisions()
+    ptrdm.disconnect()
 
-    plsm = factory.get_plsm()
-    pl_dict = plsm.get_pushlog_dict(startdate, enddate, branches)
-    plsm.disconnect()
+    plrdm = factory.get_plrdm()
+    pl_dict = plrdm.get_pushlog_dict(startdate, enddate, branches)
+    plrdm.disconnect()
 
     # gather matching and non-matching sets
     branch_wo_match = {}
@@ -48,9 +48,9 @@ def get_pushlogs(startdate, enddate, branches=None):
     """Return a list of pushlogs with changesets. """
     branches = branches or get_all_branches()
 
-    plsm = factory.get_plsm()
-    pl_dict = plsm.get_pushlog_dict(startdate, enddate, branches)
-    plsm.disconnect()
+    plrdm = factory.get_plrdm()
+    pl_dict = plrdm.get_pushlog_dict(startdate, enddate, branches)
+    plrdm.disconnect()
 
     return pl_dict
 
@@ -65,7 +65,7 @@ def get_all_branches():
 
 def get_db_size():
     """Return the database size, on disk in MB"""
-    plsm = factory.get_plsm()
-    size = plsm.get_db_size()
-    plsm.disconnect()
+    plrdm = factory.get_plrdm()
+    size = plrdm.get_db_size()
+    plrdm.disconnect()
     return size

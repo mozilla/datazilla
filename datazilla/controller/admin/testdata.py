@@ -12,7 +12,7 @@ def get_testdata(
     """Return test data based on the parameters and optional filters."""
 
     ptm = factory.get_ptm(project)
-    ptsm = factory.get_ptsm(project)
+    ptrdm = factory.get_ptrdm(project)
 
     # get the testrun ids from perftest
     test_run_ids = ptm.get_test_run_ids(
@@ -20,7 +20,7 @@ def get_testdata(
         test_name
         )
 
-    blobs = ptsm.get_object_json_blob_for_test_run(test_run_ids)
+    blobs = ptrdm.get_object_json_blob_for_test_run(test_run_ids)
 
     filtered_blobs = []
 
@@ -49,7 +49,7 @@ def get_testdata(
             filtered_blobs.append( filtered_blob )
 
     ptm.disconnect()
-    ptsm.disconnect()
+    ptrdm.disconnect()
 
     return filtered_blobs
 
