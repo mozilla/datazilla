@@ -15,6 +15,8 @@ from ..sample_metric_data import (
     get_metric_sample_data_summary, get_metric_sample_data,
     get_sample_ref_data, get_sample_ttest_data )
 
+from datazilla.controller.admin.metrics.perftest_metrics import compute_test_run_metrics
+
 
 def test_metric_keys(mtm):
 
@@ -582,7 +584,9 @@ def examine_metric_key_lookup(mtm, sample_data, model_data):
     #the data from the model
     assert reference_value_count == model_value_count
 
-def setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch):
+def setup_pushlog_walk_tests(
+    mtm, ptm, plm, monkeypatch, load_objects=False
+    ):
     """
     Builds the sample pushlog, iterates through each push storing
     a modified version of perftest_data where the testrun.date is
@@ -603,10 +607,12 @@ def setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch):
         return get_pushlog_json_readable(get_pushlog_json_set())
     monkeypatch.setattr(urllib, 'urlopen', mock_urlopen)
 
-    result = plm.store_pushlogs("test_host", 1, branch="Firefox")
+    branch = 'Firefox'
+    result = plm.store_pushlogs("test_host", 1, branch=branch)
 
     #load perftest data that corresponds to the pushlog data
     #store parent chain for tests
+    setup_data['branch'] = branch
     setup_data['testsuite_name'] = ""
     setup_data['skip_revision'] = ""
     setup_data['skip_index'] = 2
@@ -643,7 +649,7 @@ def setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch):
 
             sample_data = TestData( perftest_data(
                 testrun={ 'date':setup_data['sample_dates'][revision] },
-                test_build={ 'revision': revision },
+                test_build={ 'revision': revision, 'branch':branch },
                 results={'one.com':data,
                          'two.com':data,
                          'three.com':data}
@@ -654,15 +660,24 @@ def setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch):
         else:
             sample_data = TestData( perftest_data(
                 testrun={ 'date':setup_data['sample_dates'][revision] },
-                test_build={ 'revision': revision },
+                test_build={ 'revision': revision, 'branch':branch },
                 )
             )
 
         if not setup_data['testsuite_name']:
             setup_data['testsuite_name'] = sample_data['testrun']['suite']
 
-        #Load sample data
-        ptm.load_test_data(sample_data)
+        if load_objects:
+            ptm.store_test_data( json.dumps( sample_data ) )
+            test_run_ids = ptm.process_objects(2)
+
+            compute_test_run_metrics(
+                ptm.project, plm.project, False, test_run_ids
+            )
+
+        else:
+            #Load sample data
+            ptm.load_test_data(sample_data)
 
     revision_count = len( setup_data['sample_revisions'] )
 
