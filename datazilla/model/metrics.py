@@ -400,8 +400,11 @@ class MetricsTestModel(DatazillaModelBase):
 
         key_lookup = {}
         push_value_names = set(['push_date', 'pushlog_id'])
-        format_values = set(
+        format_float_values = set(
             ['mean', 'stddev', 'trend_mean', 'trend_stddev', 'p']
+            )
+        format_boolean_values = set(
+            ['fdr', 'h0_rejected', 'test_evaluation']
             )
 
         #Build a page lookup to filter by
@@ -459,8 +462,10 @@ class MetricsTestModel(DatazillaModelBase):
             value_name = d['metric_value_name']
             value = d['value']
 
-            if value_name in format_values:
-                value = format(value, '.1f')
+            if value_name in format_float_values:
+                value = float( format(value, '.1f') )
+            if value_name in format_boolean_values:
+                value = bool(value)
 
             if value_name in push_value_names:
                 if value:
@@ -542,8 +547,10 @@ class MetricsTestModel(DatazillaModelBase):
                     }
              }
         """
+        summary_data = {}
+
         if not test_run_ids:
-            return []
+            return summary_data
 
         r_string = ','.join( map( lambda tr_id: '%s', test_run_ids ) )
 
@@ -558,7 +565,9 @@ class MetricsTestModel(DatazillaModelBase):
             )
 
 
-        summary_data = {}
+        if not computed_metrics:
+            return summary_data
+
         key_lookup = set()
         push_value_names = set(['push_date', 'pushlog_id'])
 
@@ -635,7 +644,7 @@ class MetricsTestModel(DatazillaModelBase):
                 summary_data['summary']['fail']['value'] += 1
 
             summary_data['tests'][tname][pname]['pages'].append(
-                { d['page_name']:value }
+                { d['page_name']:bool(value) }
                 )
 
         #Calculate percentages
