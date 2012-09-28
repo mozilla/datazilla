@@ -13,7 +13,7 @@ from ..sample_metric_data import (
     get_metrics_key_data, get_metrics_summary_key_data,
     get_metric_collection_data, get_sample_p_values,
     get_metric_sample_data_summary, get_metric_sample_data,
-    get_sample_ref_data, get_sample_ttest_data )
+    get_sample_ref_data, get_sample_ttest_data, get_metric_values )
 
 from datazilla.controller.admin.metrics.perftest_metrics import compute_test_run_metrics
 
@@ -555,6 +555,98 @@ def test_get_parent_test_data_case_four(mtm, ptm, plm, monkeypatch):
     assert parent_data['ref_data'] == \
         reference_data[test_four_key]['ref_data']
 
+def test_get_metrics_data_from_test_run_ids(mtm, ptm, plm, monkeypatch):
+
+    setup_data = setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch, True)
+
+    metric_values = get_metric_values()
+
+    fail_revision = setup_data['fail_revision']
+    skip_revision = setup_data['skip_revision']
+
+    for index, revision in enumerate(setup_data['sample_revisions']):
+
+        test_run_ids = setup_data['test_run_ids'].get(revision, [])
+
+        metrics_data = mtm.get_metrics_data_from_test_run_ids(
+            test_run_ids, None
+            )
+
+        if revision == fail_revision:
+            #All tests should fail
+            for page in metrics_data[0]['pages']:
+
+                metric_struct = metrics_data[0]
+
+                h0_rejected = metric_struct['pages'][page]['h0_rejected']
+                fdr = metric_struct['pages'][page]['fdr']
+                teval = metric_struct['pages'][page]['test_evaluation']
+
+                assert h0_rejected == 1
+                assert fdr == 1
+                assert teval == 0
+
+        elif revision == skip_revision:
+
+            assert metrics_data == []
+
+        else:
+            #All tests should pass
+            if index > 0:
+
+                for page in metrics_data[0]['pages']:
+
+                    metric_struct = metrics_data[0]
+
+                    h0_rejected = metric_struct['pages'][page]['h0_rejected']
+                    fdr = metric_struct['pages'][page]['fdr']
+                    teval = metric_struct['pages'][page]['test_evaluation']
+
+                    assert h0_rejected == 0
+                    assert fdr == 0
+                    assert teval == 1
+
+                    revision_metric_values = \
+                        set(metric_struct['pages'][page].keys())
+
+                    assert metric_values.issubset(revision_metric_values)
+
+def test_get_metrics_summary(mtm, ptm, plm, monkeypatch):
+
+    setup_data = setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch, True)
+
+    metric_values = get_metric_values()
+
+    fail_revision = setup_data['fail_revision']
+    skip_revision = setup_data['skip_revision']
+
+    total_tests = 3
+
+    for index, revision in enumerate(setup_data['sample_revisions']):
+
+        test_run_ids = setup_data['test_run_ids'].get(revision, [])
+
+        metrics_data = mtm.get_metrics_summary(test_run_ids)
+
+        if revision == fail_revision:
+
+            assert metrics_data['summary']['fail']['value'] == total_tests
+            assert metrics_data['summary']['fail']['percent'] == 100
+
+            assert metrics_data['summary']['pass']['value'] == 0
+            assert metrics_data['summary']['pass']['percent'] == 0
+
+        elif revision == skip_revision:
+            assert metrics_data == {}
+        else:
+            if index > 0:
+                assert metrics_data['summary']['fail']['value'] == 0
+                assert metrics_data['summary']['fail']['percent'] == 0
+
+                assert metrics_data['summary']['pass']['value'] == \
+                    total_tests
+                assert metrics_data['summary']['pass']['percent'] == 100
+
 def examine_metric_key_lookup(mtm, sample_data, model_data):
 
     reference_data = set(mtm.METRIC_KEYS)
@@ -621,6 +713,9 @@ def setup_pushlog_walk_tests(
     setup_data['sample_revisions'] = []
     setup_data['sample_dates'] = {}
 
+    #This is only populated if caller requests load_objects
+    setup_data['test_run_ids'] = {}
+
     setup_data['branch_pushlog'] = plm.get_branch_pushlog(1)
 
     #Build list of revisions to operate on
@@ -674,6 +769,8 @@ def setup_pushlog_walk_tests(
             compute_test_run_metrics(
                 ptm.project, plm.project, False, test_run_ids
             )
+
+            setup_data['test_run_ids'][revision] = test_run_ids
 
         else:
             #Load sample data

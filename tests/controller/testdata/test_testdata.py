@@ -4,6 +4,10 @@ from datazilla.model import factory
 
 from ...sample_pushlog import get_pushlog_dict_set
 from ...sample_data import perftest_data, testrun, perftest_json
+from ...sample_metric_data import get_metric_values
+
+from tests.model.test_metrics_test_model import setup_pushlog_walk_tests
+
 from datazilla.controller.admin import testdata
 
 def add_test_data(ptm):
@@ -131,5 +135,38 @@ def test_get_testdata_filter_os_and_test_name(ptm, ptrdm, monkeypatch):
     assert len(result) == 1
     assert result[0]["testrun"]["suite"] == "myth"
     assert result[0]["test_machine"]["os"] == "mac"
+
+def test_get_metrics_pushlog(mtm, ptm, plm, monkeypatch ):
+
+    setup_data = setup_pushlog_walk_tests(mtm, ptm, plm, monkeypatch, True)
+
+    fail_revision = setup_data['fail_revision']
+    skip_revision = setup_data['skip_revision']
+
+    match_count = 0
+
+    metric_values = get_metric_values()
+
+    metrics_pushlog = testdata.get_metrics_pushlog(
+        ptm.project, setup_data['branch'], pushlog_project=plm.project,
+        days_ago=5, test_name='Talos tp5r'
+        )
+
+    for push in metrics_pushlog:
+
+        if push['dz_revision']:
+
+            match_count += 1
+
+            assert push['revisions'][0] == push['dz_revision']
+
+            for data in push['metrics_data']:
+                for page_data in data['pages']:
+                    metric_data_keys = data['pages'][page_data].keys()
+                    assert metric_values.issubset(metric_data_keys)
+
+    assert match_count == 2
+
+
 
 
