@@ -620,6 +620,33 @@ def test_get_metrics_summary(mtm, ptm, plm, monkeypatch):
     fail_revision = setup_data['fail_revision']
     skip_revision = setup_data['skip_revision']
 
+    total_tests = 3
+
+    for index, revision in enumerate(setup_data['sample_revisions']):
+
+        test_run_ids = setup_data['test_run_ids'].get(revision, [])
+
+        metrics_data = mtm.get_metrics_summary(test_run_ids)
+
+        if revision == fail_revision:
+
+            assert metrics_data['summary']['fail']['value'] == total_tests
+            assert metrics_data['summary']['fail']['percent'] == 100
+
+            assert metrics_data['summary']['pass']['value'] == 0
+            assert metrics_data['summary']['pass']['percent'] == 0
+
+        elif revision == skip_revision:
+            assert metrics_data == {}
+        else:
+            if index > 0:
+                assert metrics_data['summary']['fail']['value'] == 0
+                assert metrics_data['summary']['fail']['percent'] == 0
+
+                assert metrics_data['summary']['pass']['value'] == \
+                    total_tests
+                assert metrics_data['summary']['pass']['percent'] == 100
+
 def examine_metric_key_lookup(mtm, sample_data, model_data):
 
     reference_data = set(mtm.METRIC_KEYS)
