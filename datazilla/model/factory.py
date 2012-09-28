@@ -20,9 +20,9 @@ def get_ptm(project):
     return PerformanceTestModel(project)
 
 
-def get_plm():
+def get_plm(project=None):
     """Shortcut to return the PushLogModel."""
-    return PushLogModel()
+    return PushLogModel(project)
 
 
 def get_plrdm():
