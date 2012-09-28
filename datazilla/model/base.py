@@ -806,7 +806,8 @@ class PerformanceTestModel(DatazillaModelBase):
 
     def get_test_run_ids(
         self, branch, revision, os_name=None, os_version=None,
-        processor=None, build_type=None, test_name=None, page_name=None):
+        branch_version=None, processor=None, build_type=None,
+        test_name=None, page_name=None):
 
         proc = 'perftest.selects.get_test_run_ids'
         placeholders = [branch]
@@ -828,6 +829,10 @@ class PerformanceTestModel(DatazillaModelBase):
         if os_version:
             self.get_replace_and_placeholders(
                 rep, placeholders, 'os.version', os_version
+                )
+        if branch_version:
+            self.get_replace_and_placeholders(
+                rep, placeholders, 'p.version', branch_version
                 )
         if processor:
             self.get_replace_and_placeholders(

@@ -47,6 +47,12 @@ def get_metrics_summary_key_data(**kwargs):
 
     return { 'key_data':defaults, 'default_value':default_value }
 
+def get_metric_values():
+
+    return set(['stddev', 'mean', 'p', 'h0_rejected', 'n_replicates',
+                'fdr', 'trend_stddev', 'trend_mean', 'pushlog_id',
+                'push_date', 'test_evaluation'])
+
 def get_metric_collection_data():
 
     defaults = (
@@ -60,7 +66,7 @@ def get_metric_collection_data():
          'metric_id': 1,
          'metric_name': 'welch_ttest'},
 
-         {'metric_value_name': 'p_value',
+         {'metric_value_name': 'p',
           'metric_value_id': 3,
           'metric_id': 1,
           'metric_name':'welch_ttest'},

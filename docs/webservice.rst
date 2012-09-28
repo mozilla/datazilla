@@ -22,6 +22,9 @@ for a given project.
     :query os_version: (optional) The operating system version associated with an ``os_name`` to filter on.
         *Examples:* ``OSX 10.5.8``, ``fedora 12``, ``5.1.2600``
 
+    :query branch_version: (optional) The branch version associated with ``brach_version`` to filter on.
+        *Examples:* ``15.0``, ``16.0a1``, ``15.0.1``
+
     :query processor: (optional) The name of the processor associated with the test run.
         *Examples:* ``x86_64``, ``x86``, ``arm``
 
@@ -118,6 +121,9 @@ These are a set of web service endpoints for retrieving metrics data.
     :query os_version: (optional) The operating system version associated with an ``os_name`` to filter on.
         *Examples:* ``OSX 10.5.8``, ``fedora 12``, ``5.1.2600``
 
+    :query branch_version: (optional) The branch version associated with ``brach_version`` to filter on.
+        *Examples:* ``15.0``, ``16.0a1``, ``15.0.1``
+
     :query processor: (optional) The name of the processor associated with the test run.
         *Examples:* ``x86_64``, ``x86``, ``arm``
 
@@ -154,41 +160,41 @@ These are a set of web service endpoints for retrieving metrics data.
 
                     "icanhascheezburger.com": {
                         "push_date": 1345523670,
-                        "trend_stddev": "49.8",
-                        "h0_rejected": 0,
-                        "p": "0.6",
-                        "fdr": 0,
-                        "stddev": "12.3",
+                        "trend_stddev": 49.8,
+                        "h0_rejected": false,
+                        "p": 0.6,
+                        "fdr": false,
+                        "stddev": 12.3,
                         "pushlog_id": 6077315,
-                        "trend_mean": "268.5",
-                        "mean": "265.7",
-                        "test_evaluation": 1,
+                        "trend_mean": 268.5,
+                        "mean": 265.7,
+                        "test_evaluation": true,
                         "n_replicates": 25
                     },
                     "ucoz.ru": {
                         "push_date": 1345523670,
-                        "trend_stddev": "2.4",
-                        "h0_rejected": 0,
-                        "p": "0.6",
-                        "fdr": 0,
-                        "stddev": "1.9",
+                        "trend_stddev": 2.4,
+                        "h0_rejected": false,
+                        "p": 0.6,
+                        "fdr": false,
+                        "stddev": 1.9,
                         "pushlog_id": 6077315,
-                        "trend_mean": "73.7",
-                        "mean": "73.5",
-                        "test_evaluation": 1,
+                        "trend_mean": 73.7,
+                        "mean": 73.5,
+                        "test_evaluation": true,
                         "n_replicates": 25
                     },
                     "digg.com": {
                         "push_date": 1345523670,
-                        "trend_stddev": "3.1",
-                        "h0_rejected": 0,
-                        "p": "0.2",
-                        "fdr": 0,
-                        "stddev": "3.3",
+                        "trend_stddev": 3.1,
+                        "h0_rejected": false,
+                        "p": 0.2,
+                        "fdr": false,
+                        "stddev": 3.3,
                         "pushlog_id": 6077315,
-                        "trend_mean": "151.6",
-                        "mean": "152.2",
-                        "test_evaluation": 1,
+                        "trend_mean": 151.6,
+                        "mean": 152.2,
+                        "test_evaluation": true,
                         "n_replicates": 25
                     },
                     { … },
@@ -232,7 +238,7 @@ These are a set of web service endpoints for retrieving metrics data.
 
     Return a summary of all test evaluation results for all metrics data associated
     with the ``project``, ``branch`` and ``revision`` specified.  A test evaluation is a generic
-    representation of test sucess or failure.  A test evaluation of 0 indicates failure and 1 indicates
+    representation of test sucess or failure.  A test evaluation of ``false`` indicates failure and ``true`` indicates
     sucess.  All metric methods available implement a generic test evaluation that can be accessed
     as the metric value ``test_evaluation``.
 
@@ -241,6 +247,9 @@ These are a set of web service endpoints for retrieving metrics data.
 
     :query os_version: (optional) The operating system version associated with an ``os_name`` to filter on.
         *Examples:* ``OSX 10.5.8``, ``fedora 12``, ``5.1.2600``
+
+    :query branch_version: (optional) The branch version associated with ``brach_version`` to filter on.
+        *Examples:* ``15.0``, ``16.0a1``, ``15.0.1``
 
     :query processor: (optional) The name of the processor associated with the test run.
         *Examples:* ``x86_64``, ``x86``, ``arm``
@@ -359,12 +368,12 @@ These are a set of web service endpoints for retrieving metrics data.
                         }
                         "total_tests": 91,
                         "pages": [
-                            { "telegraph.co.uk": 1 },
-                            { "web.de": 1 },
-                            { "tudou.com": 1 },
-                            { "nicovideo.jp": 1 },
-                            { "rakuten.co.jp": 1 },
-                            { "store.apple.com": 1 },
+                            { "telegraph.co.uk": true },
+                            { "web.de": true },
+                            { "tudou.com": true },
+                            { "nicovideo.jp": true },
+                            { "rakuten.co.jp": true },
+                            { "store.apple.com": true },
                             { ... },
                             ...
                         ],
@@ -386,12 +395,12 @@ These are a set of web service endpoints for retrieving metrics data.
                         }
                         "total_tests": 100,
                         "pages": [
-                            { "telegraph.co.uk": 1 },
-                            { "web.de": 1 },
-                            { "tudou.com": 1 },
-                            { "nicovideo.jp": 1 },
-                            { "rakuten.co.jp": 1 },
-                            { "store.apple.com": 1 },
+                            { "telegraph.co.uk": true },
+                            { "web.de": true },
+                            { "tudou.com": true },
+                            { "nicovideo.jp": false },
+                            { "rakuten.co.jp": true },
+                            { "store.apple.com": false },
                             { ... },
                             ...
                         ],
@@ -427,6 +436,9 @@ These are a set of web service endpoints for retrieving metrics data.
 
     :query os_version: (optional) The operating system version associated with an ``os_name`` to filter on.
         *Examples:* ``OSX 10.5.8``, ``fedora 12``, ``5.1.2600``
+
+    :query branch_version: (optional) The branch version associated with ``brach_version`` to filter on.
+        *Examples:* ``15.0``, ``16.0a1``, ``15.0.1``
 
     :query processor: (optional) The name of the processor associated with the test run.
         *Examples:* ``x86_64``, ``x86``, ``arm``
@@ -478,28 +490,28 @@ These are a set of web service endpoints for retrieving metrics data.
                         "pages": {
                             "icanhascheezburger.com": {
                                 "push_date": 1345510991,
-                                "trend_stddev": "20.2",
-                                "h0_rejected": 0,
-                                "p": "0.4",
-                                "fdr": 0,
-                                "stddev": "23.7",
+                                "trend_stddev": 20.2,
+                                "h0_rejected": false,
+                                "p": 0.4,
+                                "fdr": false,
+                                "stddev": 23.7,
                                 "pushlog_id": 6034235,
-                                "trend_mean": "237.9",
-                                "mean": "238.8",
-                                "test_evaluation": 1,
+                                "trend_mean": 237.9,
+                                "mean": 238.8,
+                                "test_evaluation": true,
                                 "n_replicates": 25
                             },
                             "ucoz.ru": {
                                 "push_date": 1345510991,
-                                "trend_stddev": "3.1",
-                                "h0_rejected": 0,
-                                "p": "0.8",
-                                "fdr": 0,
-                                "stddev": "1.6",
+                                "trend_stddev": 3.1,
+                                "h0_rejected": false,
+                                "p": 0.8,
+                                "fdr": false,
+                                "stddev": 1.6,
                                 "pushlog_id": 6034235,
-                                "trend_mean": "68.4",
-                                "mean": "67.9",
-                                "test_evaluation": 1,
+                                "trend_mean": 68.4,
+                                "mean": 67.9,
+                                "test_evaluation": true,
                                 "n_replicates": 25
                             },
                             { ... },
