@@ -15,9 +15,19 @@ urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     # url(r'^admin/', include(admin.site.urls)),
 
+    #default UI
+    (r'^(?P<project>\w+)/?$', include('datazilla.webapp.apps.dataviews.urls')),
+
+    #dataview application
+    (r'^(?P<project>\w+)/dataviews/?', include('datazilla.webapp.apps.dataviews.urls')),
+
+    #datazilla web service
     (r'^(?P<project>\w+)/?', include('datazilla.webapp.apps.datazilla.urls')),
 
-    # return statistics about Datazilla not particular to a project
+    #api for data ingestion
+    (r'^(?P<project>\w+)/api/?', include('datazilla.webapp.apps.datazilla.urls')),
+
+    # return reference data about Datazilla, not particular to a project
     (r'^refdata/', include("datazilla.webapp.apps.datazilla.refdata.urls_no_project")),
 
     )
