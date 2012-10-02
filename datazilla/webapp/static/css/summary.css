@@ -1,0 +1,40 @@
+div.su-toppanel {
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  border: 0 solid #000;
+  background: -moz-linear-gradient(-90deg, #74D435, #43AA00);
+  background: -webkit-gradient(linear, left top, left bottom, from(#74D435), to(#43AA00));
+
+  height: 50px;
+  width: 95%;
+  margin-top: 20px;
+  padding-top: 10px;
+}
+div.su-panel-base {
+
+    width: 93%;
+    margin-left: auto;
+    margin-right: auto;
+
+    background: white;
+
+}
+
+div.su-progressbar-contianer {
+}
+
+div.su-progressbar-title {
+    width: 150px;
+    float: left;
+    margin-right: 10px;
+    margin-bottom: 5px;
+}
+div.su-progressbar {
+    width: 50px;
+    float: left;
+    margin-left: 10px;
+    margin-bottom: 5px;
+    background: #FF7700;
+    color: #44AA00;
+
+}

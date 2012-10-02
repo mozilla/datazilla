@@ -1,0 +1,93 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>Perf-o-Matic</title>
+    <link rel="stylesheet" href="/static/css/Aristo/jquery-ui-1.8.7.custom.css" type="text/css"/>
+    <link rel="stylesheet" href="/static/css/datatables.css" type="text/css"/>
+    <link rel="stylesheet" href="/static/css/fg.menu.css" type="text/css"/>
+    <link rel="stylesheet" href="/static/css/ColVisAlt.css" type="text/css"/>
+    <link rel="stylesheet" href="/static/css/dataviews.css" type="text/css"/>
+    <link rel="stylesheet" href="/static/css/summary.css" type="text/css"/>
+
+</head>
+
+<body>
+
+<div id="dv_legend" class="ui-state-highlight ui-corner-all dv-vis-detail-panel" style="display:none;">
+   <div style="margin-bottom:5px;">
+      <div name="dv_dataset_title" class="dv-wordwrap css-left" style="width:130px;"></div>
+      <a name="dv_dataset_close" title="close" href="#closedataset"><div class="ui-icon ui-icon-close css-right" style="margin-left:2px; margin-right:2px;"></div></a>
+   </div>
+   <div name="dv_dataset_cb" class="css-left" style="margin-top:10px;"></div>
+</div>
+
+<!--Toppanel-->
+<div class="ui-widget ui-widget-header ui-corner-top dv-toolbar-base su-toppanel">
+   <div class="pm-title">
+        <a href=""><span id="logo"></span></a>
+   </div>
+</div>
+
+<!-- Main attachment site for all bh views -->
+<div id="dv_view_container">
+   <div class="ui-widget ui-widget-header ui-corner-all dv-toolpanel su-panel-base" style="height:400px;">
+        <div style="display:inline;">
+
+            <div id="su_summary_by_test" style="float:left; margin-top:40px;">
+                <div>Talos Test Results</div>
+                <hr class="dv-light-horz-line"></hr>
+            </div>
+
+            <div id="su_gauge_1" style="float:left; width:250px; margin-left:50px;"></div>
+
+            <div id="su_summary_by_platform" style="float:right; margin-top:40px;">
+                <div>Platform Test Results</div>
+                <hr class="dv-light-horz-line"></hr>
+            </div>
+
+        <div>
+   </div>
+</div>
+
+<div id="su_progressbar_container">
+</div>
+
+<script type="text/javascript" src="/static/js/plugins/jquery-1.6.3.min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/jquery-ui-1.8.13.custom.min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/jquery.url.js"></script>
+
+<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.selection.min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.crosshair.min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.fillbetween.min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.orderBars.js"></script>
+
+<script type="text/javascript" src="/static/js/plugins/underscore-min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/d3.v2.min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/box.js"></script>
+
+<!-- Gives core mootools class functionality to jQuery -->
+<script type="text/javascript" src="/static/js/plugins/mootools-core-1.4.0.js"></script>
+<script type="text/javascript" src="/static/js/plugins/moo4q/Source/Class.Mutators.jQuery.js"></script>
+
+<script type="text/javascript" src="/static/js/plugins/datatables/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/datatables/ColVis.js"></script>
+
+
+<!-- This version of fg.menu.js has been heavily modified to work in bughunter -->
+<script type="text/javascript" src="/static/js/plugins/fg.menu.js"></script>
+<script type="text/javascript" src="/static/js/plugins/json2.js"></script>
+
+<!-- gages -->
+<script type="text/javascript" src="/static/js/plugins/raphael.2.1.0.min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/justgage.1.0.1.min.js"></script>
+
+<!-- Metric summary classes -->
+<script type="text/javascript" src="/static/js/data_views/Bases.js"></script>
+<script type="text/javascript" src="/static/js/metric_summary/MetricSummaryPage.js"></script>
+<script type="text/javascript" src="/static/js/metric_summary/MetricGaugeComponent.js"></script>
+
+
+</body>
+</html>

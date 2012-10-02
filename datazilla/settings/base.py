@@ -118,6 +118,7 @@ INSTALLED_APPS = [
     "datazilla.model.sql",
     "datazilla.webapp.apps.datazilla",
     "datazilla.webapp.apps.dataviews",
+    "datazilla.webapp.apps.summary",
 ]
 
 # A sample logging configuration. The only tangible logging
