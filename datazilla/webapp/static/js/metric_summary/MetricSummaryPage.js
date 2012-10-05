@@ -15,6 +15,9 @@ var MetricSummaryPage = new Class( {
     initialize: function(selector, options){
 
         this.parent(options);
+
+        this.failColor = '#FF7700';
+        this.passColor = '#44AA00';
     },
 
     setRefData: function(){
@@ -34,9 +37,8 @@ $(document).ready(function() {
 
     MS_PAGE.setRefData();
 
-
-    console.log(MS_PAGE.urlObj.data);
-
-    MS_PAGE.metricGaugeComponent = new MetricGaugeComponent();
+    MS_PAGE.metricGridComponent = new MetricGridComponent();
+    MS_PAGE.testPagesComponent = new TestPagesComponent();
+    MS_PAGE.metricDashboardComponent = new MetricDashboardComponent();
 
 });

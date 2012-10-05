@@ -101,5 +101,16 @@ var View = new Class({
             newId = '#' + id + '_' + dviewIndex;
         }
         return newId;
+    },
+    getAlphabeticalSortKeys: function(sortTarget){
+
+        var key = "";
+        var keys = [];
+        for (key in sortTarget){
+            if (sortTarget.hasOwnProperty(key)){
+               keys.push(key);
+            }
+        }
+        return keys.sort();
     }
 });
