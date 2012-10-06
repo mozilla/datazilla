@@ -14,13 +14,7 @@
 
 <body>
 
-<div id="dv_legend" class="ui-state-highlight ui-corner-all dv-vis-detail-panel" style="display:none;">
-   <div style="margin-bottom:5px;">
-      <div name="dv_dataset_title" class="dv-wordwrap css-left" style="width:130px;"></div>
-      <a name="dv_dataset_close" title="close" href="#closedataset"><div class="ui-icon ui-icon-close css-right" style="margin-left:2px; margin-right:2px;"></div></a>
-   </div>
-   <div name="dv_dataset_cb" class="css-left" style="margin-top:10px;"></div>
-</div>
+<div id="dv_legend" class="ui-state-highlight ui-corner-all dv-vis-detail-panel" style="display:none;"></div>
 
 <!--Toppanel-->
 <div class="ui-widget ui-widget-header ui-corner-top dv-toolbar-base su-toppanel">
@@ -29,35 +23,70 @@
    </div>
 </div>
 
-<!-- Main attachment site for all bh views -->
-<div id="dv_view_container">
-   <div class="ui-widget ui-widget-header ui-corner-all dv-toolpanel su-panel-base" style="height:400px;">
-        <div style="display:inline;">
+<div id="su_container">
+   <!-- Dashboard -->
+   <div class="ui-widget ui-widget-header ui-corner-all dv-toolpanel su-panel-base">
+        <div id="su_dashboard_spinner" class="su-spinner ui-widget"></div>
 
-            <div id="su_summary_by_test" style="float:left; margin-top:40px;">
-                <div>Talos Test Results</div>
-                <hr class="dv-light-horz-line"></hr>
+        <div id="su_no_data" style="display:none;" class="ui-widget su-no-data">No metrics data available for <span id="su_no_data_message"></span></div>
+
+        <div id="su_dashboard" style="display:hidden;">
+
+            <div style="display:none;" class="su-dashboard-panel">
+                <div class="su-light-text">Results By Test</div>
+                 <hr class="dv-light-horz-line su-light-text" />
+                <div class="su-scroll-panel">
+                    <div id="su_summary_by_test"></div>
+                </div>
             </div>
 
-            <div id="su_gauge_1" style="float:left; width:250px; margin-left:50px;"></div>
-
-            <div id="su_summary_by_platform" style="float:right; margin-top:40px;">
-                <div>Platform Test Results</div>
-                <hr class="dv-light-horz-line"></hr>
+            <div id="su_main_gauge_container" class="su-main-gauge">
+                <div id="su_gauge_1"></div>
+                <div class="su-reference-info" style="width:200px; display:none;">
+                    <div><span class="su-light-text2">Product:</span>&nbsp;<span id="su_product_tested" style="float:right;" class="su-light-text"></span></div>
+                    <div><span class="su-light-text2">Revision:</span>&nbsp;<span id="su_revision_tested" style="float:right;" class="su-light-text"></span></div>
+                    <div><span class="su-light-text2">Talos Test Count:</span>&nbsp;<span id="su_total_count" style="float:right;" class="su-light-text"></span></div>
+                    <div><span class="su-light-text2">Results:</span>&nbsp;<span style="float:right;"><span id="su_pass_count" class="su-pass-color"></span>,&nbsp;<span id="su_fail_count" class="su-fail-color"></span></span></div>
+                </div>
             </div>
 
-        <div>
+            <div style="display:none;" class="su-dashboard-panel">
+                <div class="su-light-text">Results By Platform</div>
+                <hr class="dv-light-horz-line su-light-text" />
+                <div class="su-scroll-panel">
+                    <div id="su_summary_by_platform"></div>
+                </div>
+            </div>
+        </div>
+    </div> <!-- End Dashboard -->
+
+   <div class="ui-helper-clearfix"></div>
+
+   <div style="height:400px;" class="ui-widget ui-widget-header ui-corner-all dv-toolpanel su-panel-base">
+        <!--<div id="su_grid_spinner" class="su-spinner ui-widget"></div>-->
+        <div id="su_grid" style="width:420px; float:left;" class="su-light-text">
+            <div style="width:420px;">
+                <div class="su-column-headers"></div>
+                <div style="width:420px; height:175px; margin-top:125px; overflow-y:auto;">
+                    <div class="su-row-headers"></div>
+                    <div class="su-grid-values"></div>
+                </div>
+            </div>
+        </div>
+        <div id="su_table_container" style="float:left; width:600px; height:380px; margin-top:25px; margin-left:100px;">
+            <span style="font-size:13px;"><span class="su-light-text2">Test Suite:</span><span id="su_test_suite" class="su-light-text"></span><span style="margin-left:35px;" class="su-light-text2">Platform:</span><span id="su_platform" class="su-light-text"></span><span class="su-light-text" style="margin-left:35px;">Lock Table:<input id="su_lock_table" type="checkbox"></span></span>
+            <table id="su_test_pages" cellpadding="0" cellspacing="0" border="0" class="display"></table>
+        </div>
    </div>
-</div>
 
-<div id="su_progressbar_container">
-</div>
+</div> <!-- End su_container -->
 
 <script type="text/javascript" src="/static/js/plugins/jquery-1.6.3.min.js"></script>
 <script type="text/javascript" src="/static/js/plugins/jquery-ui-1.8.13.custom.min.js"></script>
 <script type="text/javascript" src="/static/js/plugins/jquery.url.js"></script>
 
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.min.js"></script>
+<!--[if lte IE 8]><script language="javascript" type="text/javascript" src="/static/js/plugins/flot-0.7/excanvas.min.js"></script><![endif]-->
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.selection.min.js"></script>
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.crosshair.min.js"></script>
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.fillbetween.min.js"></script>
@@ -86,7 +115,9 @@
 <!-- Metric summary classes -->
 <script type="text/javascript" src="/static/js/data_views/Bases.js"></script>
 <script type="text/javascript" src="/static/js/metric_summary/MetricSummaryPage.js"></script>
-<script type="text/javascript" src="/static/js/metric_summary/MetricGaugeComponent.js"></script>
+<script type="text/javascript" src="/static/js/metric_summary/MetricDashboardComponent.js"></script>
+<script type="text/javascript" src="/static/js/metric_summary/MetricGridComponent.js"></script>
+<script type="text/javascript" src="/static/js/metric_summary/TestPagesComponent.js"></script>
 
 
 </body>

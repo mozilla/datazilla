@@ -88,14 +88,21 @@ div.su-progressbar-value {
 .su-light-text2 {
     opacity: 0.5;
 }
-span.su-pass-color {
+.su-pass-color {
     color: #44AA00;
 }
-span.su-fail-color {
+.su-fail-color {
     color: #FF7700;
 }
-span.su-fail-color {
-
+tr.su-pass-background-color {
+    /*background-color: #44AA00;*/
+    background-color: #8ED460;
+    opacity: 0.8;
+}
+tr.su-fail-background-color {
+    /*background-color: #FF7700;*/
+    background-color: #FF9A40;
+    opacity: 0.8;
 }
 
 
@@ -145,4 +152,9 @@ div.su-grid-value {
 
     border-bottom: thin solid;
     border-right: thin solid;
+}
+.tickLabel {
+    -webkit-transform:rotate(325deg);
+    -moz-transform:rotate(325deg);
+    -o-transform: rotate(325deg);
 }

@@ -41,7 +41,14 @@ var TestPagesView = new Class({
         this.parent(options);
 
         this.eventContainerSel = '#su_container';
-        this.barChartContainerSel = '#su_test_pages';
+        this.tableContainerSel = '#su_table_container';
+        this.tableSel = '#su_test_pages';
+        this.testSuiteSel = '#su_test_suite';
+        this.platformSel = '#su_platform';
+
+        this.scrollHeight = parseInt($(this.tableContainerSel).css('height')) - 125;
+
+        this.datatable = {};
 
         this.gridClickEvent = 'GRID_CLICK_EVENT';
         this.gridMouseoverEvent = 'GRID_MOUSEOVER_EVENT';
@@ -53,46 +60,97 @@ var TestPagesView = new Class({
 
     },
 
-    initializeTestPages: function(event, data){
+    initializeTestPages: function(event, eventData){
 
-        console.log(data);
+        console.log(eventData);
 
-        //var columns = this.getAlphabeticalSortKeys(
-         //   data.summary_by_platform
-          //  );
+        $(this.testSuiteSel).text(eventData.test);
+        $(this.platformSel).text(eventData.platform);
 
-    },
-    _updatePlot: function(data){
+        var datatableOptions = {
+            'bJQueryUI': true,
+            'sScrollY':this.scrollHeight,
+            //bScrollCollapse:true,
+            'sScrollX':"100%",
+            'bPaginate': false,
+            'bDestroy': true,
 
-        if(this.plot){
-            this.plot.shutdown();
-            $(this.barChartContainerSel).unbind('plotclick');
-            $(this.barChartContainerSel).unbind('plothover');
+            //Double, Double Toil and Trouble
+            //see http://www.datatables.net/usage/options sDom for an
+            //explanation of the follow line
+            //sDom:'<"H"lfr>tC<"F"ip>',
+
+            //bScrollAutoCss: false,
+            //bRetrieve:true,
+
+            //Treat search string as regexes
+            'oSearch':{ sSearch:"", bRegex:true },
+            'xScrollInner':true,
+            //iDisplayLength:100,
+            'aaData':[],
+            'aoColumns':[
+                { "sTitle":'page' },
+                { "sTitle":'pass/fail' },
+                { "sTitle":'mean' },
+                { "sTitle":'trend mean' },
+                { "sTitle":'std' },
+                { "sTitle":'trend std' },
+                ],
+
+            'aaSorting':[ [1, 'asc'] ]
+        };
+
+        this._adaptData(datatableOptions, eventData.data);
+
+        if(this.datatable){
+            $(this.tableSel).die();
+            //destroy the table
+            //this.datatable.fnClearTable();
+            //this.datatable.fnDestroy();
         }
-        this.plot = $.plot(
-            $(this.barChartContainerSel), data, this.plotOptions
-            );
+        console.log(datatableOptions);
+        this.dataTable = $(this.tableSel).dataTable( datatableOptions );
 
-        this.barChartContainerSel = '#su_test_pages';
-
-        this._setYaxisLabel(this.yAxisLabel);
-
-        $(this.barChartContainerSel).bind(
-            'plotclick', _.bind(this._clickPlot, this)
-            );
-        $(this.barChartContainerSel).bind(
-            'plothover', _.bind(this._hoverPlot, this)
-            );
     },
-    _setYaxisLabel: function(label){
-        /*
-        var labelEl = $('<div class="css-left dv-verticaltext" style="position:absolute;' + 
-                             ' top:235px; right:' + this.width + 'px;">' + label + '</div>');
-        var yaxisLabelContainer = $(this.selectors.graph_container).find(this.flotLabelClassSel);
+    _adaptData: function(datatableOptions, data){
 
-        $(yaxisLabelContainer).append(labelEl);
-        */
-    },
+        var adaptedData = [];
+
+        var bars = this.getAlphabeticalSortKeys(data);
+
+        var w = this.minWidth*(bars.length/8);
+        $(this.barChartContainerSel).css('width', w);
+
+        for(var i=0; i<bars.length; i++){
+
+            var datum = data[ bars[i] ];
+
+            //page name
+            var row = {};
+            row['0'] = bars[i];
+
+            var passFail = 'fail';
+
+            if(datum.test_evaluation){
+                passFail = 'pass';
+
+                row['DT_RowClass'] = 'su-pass-background-color';
+
+            }else{
+
+                row['DT_RowClass'] = 'su-fail-background-color';
+
+            }
+
+            row['1'] = passFail;
+            row['2'] = datum.mean;
+            row['3'] = datum.trend_mean;
+            row['4'] = datum.stddev;
+            row['5'] = datum.trend_stddev;
+
+            datatableOptions.aaData.push( row );
+        }
+    }
 });
 
 var TestPagesModel = new Class({
