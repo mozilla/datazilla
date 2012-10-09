@@ -1,4 +1,5 @@
 from django.conf.urls.defaults import patterns, include
+from django.http import HttpResponse
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
@@ -14,6 +15,9 @@ urlpatterns = patterns('',
 
     # Uncomment the next line to enable the admin:
     # url(r'^admin/', include(admin.site.urls)),
+    (r'^robots\.txt$', lambda r: HttpResponse(
+        "User-agent: *\nDisallow: /", mimetype="text/plain"
+        )),
 
     #default UI
     (r'^(?P<project>\w+)/?$', include('datazilla.webapp.apps.dataviews.urls')),

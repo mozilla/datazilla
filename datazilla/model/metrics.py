@@ -1330,7 +1330,10 @@ class TtestMethod(MetricMethodBase):
         trend_stddev = parent_metric_data.get('trend_stddev', None)
         trend_mean = parent_metric_data.get('trend_mean', None)
 
-        if trend_stddev and trend_mean:
+        if (trend_mean != None) and \
+           (trend_mean > 0) and \
+           (trend_stddev != None):
+
             #trend line data is available use it
             n = len(child_data)
             s = std(child_data, ddof=1)
@@ -1502,6 +1505,7 @@ class TtestMethod(MetricMethodBase):
                 n_replicates = ref_data['n_replicates']
 
                 if (trend_mean != None) and \
+                    (trend_mean > 0) and \
                     (trend_stddev != None):
 
                     #Update trend line
@@ -1546,7 +1550,9 @@ class TtestMethod(MetricMethodBase):
             #If the trend_mean and trend_stddev are not set at this
             #point, there is no threshold trend to use and no parent
             #found
-            if (trend_mean != None) and (trend_stddev != None):
+            if (trend_mean != None) and \
+               (trend_mean > 0) and \
+               (trend_stddev != None):
 
                 #store trend mean
                 self._append_summary_placeholders(
