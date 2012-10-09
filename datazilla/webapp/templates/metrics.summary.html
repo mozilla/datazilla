@@ -64,17 +64,24 @@
 
    <div style="height:400px;" class="ui-widget ui-widget-header ui-corner-all dv-toolpanel su-panel-base">
         <!--<div id="su_grid_spinner" class="su-spinner ui-widget"></div>-->
-        <div id="su_grid" style="width:420px; float:left;" class="su-light-text">
-            <div style="width:420px;">
+        <div style="width:250px; position:absolute; left:170px; top:440px; opacity:0.6;" class="ui-widget ui-corner-all arrow_box">
+            <div style="font-size:13px; margin-top:10px; margin-bottom:10px; margin-left:10px; margin-right:10px;">Tip: Mouse over grid to load a test suite table.  Click cell to lock.</div>
+        </div>
+
+        <div id="su_grid" style="float:left; margin-top:80px;" class="su-light-text">
+            <div style="width:430px;">
                 <div class="su-column-headers"></div>
-                <div style="width:420px; height:175px; margin-top:125px; overflow-y:auto;">
+                <div style="float:left; width:420px; height:175px; overflow-y:auto;">
                     <div class="su-row-headers"></div>
                     <div class="su-grid-values"></div>
                 </div>
             </div>
         </div>
-        <div id="su_table_container" style="float:left; width:600px; height:380px; margin-top:25px; margin-left:100px;">
-            <span style="font-size:13px;"><span class="su-light-text2">Test Suite:</span><span id="su_test_suite" class="su-light-text"></span><span style="margin-left:35px;" class="su-light-text2">Platform:</span><span id="su_platform" class="su-light-text"></span><span class="su-light-text" style="margin-left:35px;">Lock Table:<input id="su_lock_table" type="checkbox"></span></span>
+        <div style="float:left; margin-top:190px; margin-right:25px;" class='su-guidearrow-box'>
+            <div style="margin-left:5px; margin-top:5px;" class="su-light-text">Lock Table:<input id="su_lock_table" type="checkbox" /></div>
+        </div>
+        <div id="su_table_container" style="float:left; width:400px; height:380px; margin-top:25px;">
+            <div style="font-size:13px; float:left;"><span class="su-light-text2">Test Suite:</span><span id="su_test_suite" class="su-light-text"></span><span style="margin-left:15px;" class="su-light-text2">Platform:</span><span id="su_platform" class="su-light-text"></span></div>
             <table id="su_test_pages" cellpadding="0" cellspacing="0" border="0" class="display"></table>
         </div>
    </div>

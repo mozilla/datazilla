@@ -46,6 +46,10 @@ var TestPagesView = new Class({
         this.testSuiteSel = '#su_test_suite';
         this.platformSel = '#su_platform';
 
+        this.platformSel = '#su_platform';
+
+        this.lockTableSel = '#su_lock_table';
+
         this.scrollHeight = parseInt($(this.tableContainerSel).css('height')) - 125;
 
         this.datatable = {};
@@ -58,43 +62,59 @@ var TestPagesView = new Class({
             _.bind(this.initializeTestPages, this)
         );
 
+        $(this.eventContainerSel).bind(
+            this.gridClickEvent,
+            _.bind(this.lockTable, this)
+        );
+
+        $(this.lockTableSel).bind('click', function(event){
+            var checked = $(event.eventTarget).attr('checked');
+            console.log('checked:' + checked);
+        });
+
+        $(this.tableSel).live(
+            'click mouseover', _.bind(this.tableEventHandler, this)
+        );
     },
 
     initializeTestPages: function(event, eventData){
 
-        console.log(eventData);
+        var checked = $(this.lockTableSel).attr('checked');
+
+        //User has locked the table
+        if(checked){
+            return;
+        }
 
         $(this.testSuiteSel).text(eventData.test);
         $(this.platformSel).text(eventData.platform);
 
         var datatableOptions = {
+
             'bJQueryUI': true,
             'sScrollY':this.scrollHeight,
-            //bScrollCollapse:true,
             'sScrollX':"100%",
             'bPaginate': false,
             'bDestroy': true,
 
-            //Double, Double Toil and Trouble
-            //see http://www.datatables.net/usage/options sDom for an
-            //explanation of the follow line
-            //sDom:'<"H"lfr>tC<"F"ip>',
-
-            //bScrollAutoCss: false,
-            //bRetrieve:true,
-
-            //Treat search string as regexes
+            //search string is interpreted as a regex
             'oSearch':{ sSearch:"", bRegex:true },
             'xScrollInner':true,
-            //iDisplayLength:100,
+
+            'iDisplayLength':100,
+
             'aaData':[],
+
             'aoColumns':[
-                { "sTitle":'page' },
-                { "sTitle":'pass/fail' },
-                { "sTitle":'mean' },
-                { "sTitle":'trend mean' },
-                { "sTitle":'std' },
-                { "sTitle":'trend std' },
+                { "sTitle":'page', "sWidth":"75px" },
+                { "sTitle":'p/f', "sWidth":"30px" },
+                { "sTitle":'mean', "sWidth":"45px" },
+                { "sTitle":'trend mean', "sWidth":"70px" },
+                { "sTitle":'std', "sWidth":"40px" },
+                { "sTitle":'trend std', "sWidth":"70px" },
+                { "sTitle":'p value', "sWidth":"60px" },
+                { "sTitle":'h0 rejected', "sWidth":"75px" },
+                { "sTitle":'replicates', "sWidth":"75px" },
                 ],
 
             'aaSorting':[ [1, 'asc'] ]
@@ -102,24 +122,23 @@ var TestPagesView = new Class({
 
         this._adaptData(datatableOptions, eventData.data);
 
-        if(this.datatable){
-            $(this.tableSel).die();
-            //destroy the table
-            //this.datatable.fnClearTable();
-            //this.datatable.fnDestroy();
-        }
-        console.log(datatableOptions);
         this.dataTable = $(this.tableSel).dataTable( datatableOptions );
 
+    },
+    lockTable: function(event, eventData){
+        $(this.lockTableSel).click();
+    },
+    tableEventHandler: function(event){
+console.log(event);
+        if(event.type == 'mouseover'){
+
+        }
     },
     _adaptData: function(datatableOptions, data){
 
         var adaptedData = [];
 
         var bars = this.getAlphabeticalSortKeys(data);
-
-        var w = this.minWidth*(bars.length/8);
-        $(this.barChartContainerSel).css('width', w);
 
         for(var i=0; i<bars.length; i++){
 
@@ -147,6 +166,9 @@ var TestPagesView = new Class({
             row['3'] = datum.trend_mean;
             row['4'] = datum.stddev;
             row['5'] = datum.trend_stddev;
+            row['6'] = datum.p;
+            row['7'] = datum.h0_rejected;
+            row['8'] = datum.n_replicates;
 
             datatableOptions.aaData.push( row );
         }

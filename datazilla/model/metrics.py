@@ -75,7 +75,7 @@ class MetricsTestModel(DatazillaModelBase):
         self.push_value_names = set(['push_date', 'pushlog_id'])
 
         self.format_float_values = set(
-            ['mean', 'stddev', 'trend_mean', 'trend_stddev', 'p']
+            ['mean', 'stddev', 'trend_mean', 'trend_stddev']
             )
         self.format_boolean_values = set(
             ['fdr', 'h0_rejected', 'test_evaluation']
@@ -629,11 +629,14 @@ class MetricsTestModel(DatazillaModelBase):
             if d['page_name'] not in summary_data['tests'][tname][pname]['pages']:
                 summary_data['tests'][tname][pname]['pages'][ d['page_name'] ] = \
                     {
-                        'test_evaluation':0,
-                        'mean':0,
-                        'stddev':0,
-                        'trend_mean':0,
-                        'trend_stddev':0
+                        'test_evaluation':None,
+                        'mean':None,
+                        'stddev':None,
+                        'trend_mean':None,
+                        'trend_stddev':None,
+                        'p':None,
+                        'h0_rejected':None,
+                        'n_replicates':None
                     }
 
             summary_data['tests'][tname][pname]['pages'][ d['page_name'] ][
@@ -749,6 +752,8 @@ class MetricsTestModel(DatazillaModelBase):
 
     def _format_value(self, value_name, value):
 
+        if value_name == 'p':
+            value = float( format(value, '.5f') )
         if value_name in self.format_float_values:
             value = float( format(value, '.1f') )
         if value_name in self.format_boolean_values:

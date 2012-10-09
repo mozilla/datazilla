@@ -1482,15 +1482,19 @@ var SideBarPlot = new Class({
                 var a = $(data[i].test_run_id).find('a');
                 var testRunId = parseInt( a.text() );
 
-                this.datasets[ key ] = { label:label, 
-                                                 data:[],
-                                                 key_data:{ revision:revision,
-                                                                product_id:productId,
-                                                                test_id:testId,
-                                                                test_run_id:testRunId,
-                                                                page_id:pageId,
-                                                                operating_system_id:operatingSystemId },
-                                                 label_displayed:false };
+                this.datasets[ key ] = {
+                    label:label,
+                    data:[],
+                    key_data:{
+                        revision:revision,
+                        product_id:productId,
+                        test_id:testId,
+                        test_run_id:testRunId,
+                        page_id:pageId,
+                        operating_system_id:operatingSystemId
+                        },
+                    label_displayed:false
+                    };
 
             } else if( datasetDetector[key] === true ){
                 //Dataset is already loaded, first time
@@ -1508,12 +1512,14 @@ var SideBarPlot = new Class({
     },
     _getAdaptedDataStruct: function(data){
 
-        var displayObj = { test_run_id:data.test_run_id,
-                                 revision:this.getRevision(data.revision), 
-                                 value:data.value, 
-                                 run_id:data.run_id, 
-                                 date_run:this.formatTimestamp(  new Date(data.date_run*1000) ),
-                                 url:data.url };
+        var displayObj = {
+            test_run_id:data.test_run_id,
+            revision:this.getRevision(data.revision),
+            value:data.value,
+            run_id:data.run_id,
+            date_run:this.formatTimestamp(  new Date(data.date_run*1000) ),
+            url:data.url
+            };
 
         return displayObj;
 
@@ -1529,7 +1535,7 @@ var SideBarPlot = new Class({
             color = this.datasets[key]['color'];
         }
 
-        this.datasets[key]['dataset'] = [ 
+        this.datasets[key]['dataset'] = [
                     { data:this.datasets[key]['data'],
                       color:color,
                       bars:{ show:true, order:1 },
@@ -1568,6 +1574,7 @@ var SideBarPlot = new Class({
             $(this.selectors.graph_container).unbind('plotclick');
             $(this.selectors.graph_container).unbind('plothover');
         }
+console.log([this.data, this.plotOptions]);
         this.plot = $.plot( $(this.selectors.graph_container), this.data, this.plotOptions);
 
         this._setYaxisLabel(this.yAxisLabel);
