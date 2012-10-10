@@ -99,10 +99,16 @@ tr.su-pass-background-color {
     background-color: #8ED460;
     opacity: 0.8;
 }
+tr.su-pass-hl-color {
+    background-color: #c7f66f;
+}
 tr.su-fail-background-color {
     /*background-color: #FF7700;*/
     background-color: #FF9A40;
     opacity: 0.8;
+}
+tr.su-fail-hl-color {
+    background-color: #ffc973;
 }
 
 
@@ -139,15 +145,12 @@ div.su-grid-values {
     border-left: thin solid;
 }
 div.su-grid-column {
+
     -webkit-transform:rotate(320deg);
     -moz-transform:rotate(320deg);
     -o-transform: rotate(320deg);
     white-space:nowrap;
     text-align:center;
-/*
-   width:100px;
-   height:30px;
-*/
     float: left;
 
     width:30px;
