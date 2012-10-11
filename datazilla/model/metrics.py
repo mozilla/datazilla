@@ -134,11 +134,22 @@ class MetricsTestModel(DatazillaModelBase):
 
         return self._adapt_test_values(revision_data)
 
-    def get_test_values_by_revision(self, revision):
+    def get_test_values_by_revision(self, revision, ref_data={}):
         """
         Retrieve all test values associated with a given revision.
 
         revision - revision/changeset string.
+
+        ref_data - optional dictionary containing:
+
+                    ref_data: {
+                        all self.METRIC_KEYS: associated id,
+                        test_name:"Talos test name",
+                        revision:revision
+                    },
+
+                    If provided only data associated with the specific
+                    metric key will be retrieved.
 
         returns the following dictionary:
 
@@ -155,10 +166,24 @@ class MetricsTestModel(DatazillaModelBase):
         """
         proc = 'perftest.selects.get_test_values_by_revision'
 
+        placeholders = []
+
+        if ref_data:
+
+            proc = 'perftest.selects.get_test_values_by_ref_data'
+
+            placeholders.append(ref_data['product_id'])
+            placeholders.append(ref_data['operating_system_id'])
+            placeholders.append(ref_data['processor'])
+            placeholders.append(ref_data['build_type'])
+            placeholders.append(ref_data['test_id'])
+
+        placeholders.append(revision)
+
         revision_data = self.sources["perftest"].dhub.execute(
             proc=proc,
             debug_show=self.DEBUG,
-            placeholders=[revision],
+            placeholders=placeholders,
             return_type='tuple',
             )
 
@@ -807,7 +832,7 @@ class MetricsTestModel(DatazillaModelBase):
         return key_lookup
 
     def get_parent_test_data(
-        self, pushlog, index, child_key, metric_method_data=None
+        self, pushlog, index, child_key, ref_data, metric_method_data=None
         ):
         """
         Walks back through the branch 'pushlog' starting at the 'index'
@@ -847,7 +872,7 @@ class MetricsTestModel(DatazillaModelBase):
                 if revision in self.skip_revisions:
                     continue
 
-                data = self.get_test_values_by_revision(revision)
+                data = self.get_test_values_by_revision(revision, ref_data)
                 #no data for this revision, skip
                 if not data:
                     self.add_skip_revision(revision)

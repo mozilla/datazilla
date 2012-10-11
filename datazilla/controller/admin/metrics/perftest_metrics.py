@@ -9,13 +9,16 @@ SAFE_TESTS = set([
     'tsvgr'
     ])
 
+BRANCHES_NOT_ALLOWED = set([
+    'Try', 'Try-Non-PGO'
+    ])
+
 def compute_test_run_metrics(
     project, pushlog_project, debug, test_run_ids=[]
     ):
     """
     Runs all metric tests and associated summaries on a list of test run ids
     """
-
     ###
     #Insure that test_run_ids is iterable, if process objects generates
     #an error it's possible that test_run_ids will be explicitly set to
@@ -65,7 +68,9 @@ def compute_test_run_metrics(
 
         base_message = u"{0} {1}".format(child_revision, str(test_run_id))
 
-        if not check_run_conditions(test_name, rep_count, push_node, debug):
+        if not check_run_conditions(
+            test_name, rep_count, push_node, branch, debug
+            ):
             println(u"Not able to run {0}\n".format(base_message), debug)
             continue
 
@@ -124,7 +129,7 @@ def run_test(test_name):
 
     return execute_metrics
 
-def check_run_conditions(test_name, rep_count, push_node, debug):
+def check_run_conditions(test_name, rep_count, push_node, branch, debug):
     """
     Test a set of conditions that have to be met in order to run the set of
     metrics tests.
@@ -149,6 +154,9 @@ def check_run_conditions(test_name, rep_count, push_node, debug):
         #No push node found for this test run
         #we cannot proceed, need to log this
         println(u"No push node found", debug)
+        return False
+
+    if branch in BRANCHES_NOT_ALLOWED:
         return False
 
     return True
@@ -278,6 +286,8 @@ def _run_metrics(
             branch_id = push_node['branch_id']
 
             if branch_id not in pushlog:
+                #Get the last three days of the pushlog for
+                #this branch.
                 pushlog[ branch_id ] = plm.get_branch_pushlog(
                     branch_id, 5, 0
                     )
@@ -324,6 +334,7 @@ def _run_metrics(
             ####
             parent_data, test_result = mtm.get_parent_test_data(
                 pushlog[ branch_id ], index, mkey,
+                child_test_data[mkey]['ref_data'],
                 child_test_data[mkey]['values']
             )
 
