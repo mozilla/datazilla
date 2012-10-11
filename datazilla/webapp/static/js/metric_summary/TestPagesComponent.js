@@ -169,7 +169,7 @@ var TestPagesView = new Class({
             $(this.lastMouseOverRow).removeClass('su-pass-hl-color');
             $(this.lastMouseOverRow).removeClass('su-fail-hl-color');
 
-            //$(this.lastMouseOverRow).addClass(colorClass);
+            $(this.lastMouseOverRow).addClass(colorClass);
         }
 
         this.lastMouseOverRow = el;
