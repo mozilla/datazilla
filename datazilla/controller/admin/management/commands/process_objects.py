@@ -56,7 +56,6 @@ class Command(ProjectBatchCommand):
         metrics_exclude_projects = set(['b2g', 'stoneridge'])
 
         if project not in metrics_exclude_projects:
-
             compute_test_run_metrics(
                 project, pushlog_project, debug, test_run_ids
                 )
