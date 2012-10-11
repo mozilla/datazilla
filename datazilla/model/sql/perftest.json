@@ -922,6 +922,35 @@
 
              "host":"read_host"
       },
+      "get_test_values_by_ref_data":{
+            "sql":"SELECT tr.id AS 'test_run_id',
+                          b.product_id,
+                          m.operating_system_id,
+                          b.id AS 'build_id',
+                          b.processor,
+                          b.build_type,
+                          tr.test_id,
+                          t.name AS 'test_name',
+                          tr.revision,
+                          p.branch,
+                          tv.run_id,
+                          tv.page_id,
+                          tv.value
+                   FROM `test_run` AS tr
+                   LEFT JOIN `build` AS b ON tr.build_id = b.id
+                   LEFT JOIN `product` AS p ON b.product_id = p.id
+                   LEFT JOIN `machine` AS m ON tr.machine_id = m.id
+                   LEFT JOIN `test` AS t ON tr.test_id = t.id
+                   LEFT JOIN `test_value` AS tv ON tr.id = tv.test_run_id
+                   WHERE b.product_id = ? AND
+                         m.operating_system_id = ? AND
+                         b.processor = ? AND
+                         b.build_type = ? AND
+                         tr.test_id = ? AND
+                         tr.revision = ?",
+
+             "host":"read_host"
+      },
       "get_test_values_by_test_run_id":{
             "sql":"SELECT tr.id AS 'test_run_id',
                           b.product_id,

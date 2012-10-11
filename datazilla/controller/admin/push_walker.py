@@ -5,7 +5,7 @@ the metrics schema
 from datazilla.model import PushLogModel, MetricsTestModel
 
 # Branches that require special handling
-SPECIAL_HANDLING_BRANCHES = set(['Try'])
+SPECIAL_HANDLING_BRANCHES = set(['Try', 'Try-Non-PGO'])
 
 def run_metrics(project, pushlog_project, numdays, daysago):
     """
@@ -145,6 +145,7 @@ def run_metrics(project, pushlog_project, numdays, daysago):
 
                     parent_data, test_result = mtm.get_parent_test_data(
                         pushlog, index, child_key,
+                        child_test_data[child_key]['ref_data'],
                         child_test_data[child_key]['values']
                         )
 

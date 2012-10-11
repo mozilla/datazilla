@@ -124,6 +124,7 @@ def test_get_test_values_mk(ptm, mtm):
     ptm.load_test_data(sample_data)
 
     revision = sample_data['test_build']['revision']
+
     model_data = mtm.get_test_values_by_revision(revision)
 
     examine_metric_key_lookup(mtm, sample_data, model_data)
@@ -434,7 +435,9 @@ def test_get_parent_test_data_case_one(mtm, ptm, plm, monkeypatch):
     parent_data, results = mtm.get_parent_test_data(
         setup_data['branch_pushlog'],
         setup_data['target_revision_index'],
-        test_one_key, None
+        test_one_key,
+        test_one_data[test_one_key]['ref_data'],
+        None
         )
 
     #Parent data should be at target_revision_index - 1
@@ -472,7 +475,9 @@ def test_get_parent_test_data_case_two(mtm, ptm, plm, monkeypatch):
     parent_data, results = mtm.get_parent_test_data(
         setup_data['branch_pushlog'],
         setup_data['skip_index'] + 1,
-        test_two_key, None
+        test_two_key,
+        test_two_data[test_two_key]['ref_data'],
+        None
         )
 
     reference_data = mtm.get_test_values_by_revision(target_revision)
@@ -507,6 +512,7 @@ def test_get_parent_test_data_case_three(mtm, ptm, plm, monkeypatch):
             setup_data['branch_pushlog'],
             fail_index,
             key,
+            fail_data[key]['ref_data'],
             fail_data[key]['values']
             )
 
@@ -544,6 +550,7 @@ def test_get_parent_test_data_case_four(mtm, ptm, plm, monkeypatch):
         setup_data['branch_pushlog'],
         setup_data['target_revision_index'],
         test_four_key,
+        test_four_data[test_four_key]['ref_data'],
         test_four_data[test_four_key]['values']
         )
 
