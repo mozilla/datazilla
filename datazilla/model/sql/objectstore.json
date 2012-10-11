@@ -98,6 +98,7 @@
                           `worker_id` = CONNECTION_ID()
                    WHERE  `processed_flag` = 'ready'
                    AND    `error_flag` = 'N'
+                   ORDER BY `id`
                    LIMIT ?
                   ",
 
