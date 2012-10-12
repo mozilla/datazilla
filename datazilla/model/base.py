@@ -13,9 +13,11 @@ import time
 import json
 import urllib
 import zlib
+import MySQLdb
 
-from MySQLdb import IntegrityError
 from collections import defaultdict
+
+from warnings import filterwarnings, resetwarnings
 
 from django.conf import settings
 from django.core.cache import cache
@@ -351,7 +353,7 @@ class PushLogModel(DatazillaModelBase):
                 self._insert_pushlog_changesets(pushlog_id, pushlog["changesets"])
                 self.pushlog_count += 1
 
-            except IntegrityError as e:
+            except MySQLdb.IntegrityError as e:
                 self.println(e)
                 self.println("--Skip dup- pushlog: {0}".format(
                     pushlog_json_id,
@@ -382,7 +384,7 @@ class PushLogModel(DatazillaModelBase):
                     )
                 self.changeset_count += 1
 
-            except IntegrityError:
+            except MySQLdb.IntegrityError:
                 self.println("--Skip changeset dup- pushlog: {0}, node: {1}".format(
                     pushlog_id,
                     cs["node"],
@@ -1076,6 +1078,29 @@ class PerformanceTestModel(DatazillaModelBase):
         proc_mark = 'objectstore.updates.mark_loading'
         proc_get  = 'objectstore.selects.get_claimed'
 
+        # Note: There is a bug in MySQL http://bugs.mysql.com/bug.php?id=42415
+        # that causes the folowing warning to be generated in the production
+        # environment:
+        #
+        # _mysql_exceptions.Warning: Unsafe statement written to the binary
+        # log using statement format since BINLOG_FORMAT = STATEMENT. The
+        # statement is unsafe because it uses a LIMIT clause. This is
+        # unsafe because the set of rows included cannot be predicted.
+        #
+        # I have been unable to generate the warning in the development
+        # environment to date.  In the production environment the generation
+        # of this warning is causing the program to exit.
+        #
+        # The mark_loading SQL statement does execute an UPDATE/LIMIT but now
+        # implements an "ORDER BY id" clause making the UPDATE
+        # deterministic/safe.  I've been unsuccessfull capturing the specific
+        # warning generated without redirecting program flow control.  To
+        # ressolve the problem in production, we're disabling MySQLdb.Warnings
+        # before executing mark_loading and then re-enabling warnings
+        # immediately after.  If this bug is ever fixed in mysql this handling
+        # should be removed. Holy Hackery! -Jeads
+        filterwarnings('ignore', category=MySQLdb.Warning)
+
         # Note: this claims rows for processing. Failure to call load_test_data
         # on this data will result in some json blobs being stuck in limbo
         # until another worker comes along with the same connection ID.
@@ -1084,6 +1109,8 @@ class PerformanceTestModel(DatazillaModelBase):
             placeholders=[ limit ],
             debug_show=self.DEBUG,
             )
+
+        resetwarnings()
 
         # Return all JSON blobs claimed by this connection ID (could possibly
         # include orphaned rows from a previous run).
