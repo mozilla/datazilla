@@ -94,23 +94,16 @@ div.su-progressbar-value {
 .su-fail-color {
     color: #FF7700;
 }
-tr.su-pass-background-color {
-    /*background-color: #44AA00;*/
+
+/* Table row classes */
+table.display tr.su-pass-background-color td {
     background-color: #8ED460;
     opacity: 0.8;
 }
-tr.su-pass-hl-color {
-    background-color: #c7f66f;
-}
-tr.su-fail-background-color {
-    /*background-color: #FF7700;*/
+table.display tr.su-fail-background-color td {
     background-color: #FF9A40;
     opacity: 0.8;
 }
-tr.su-fail-hl-color {
-    background-color: #ffc973;
-}
-
 
 /* Grid styles */
 div.su-column-headers {

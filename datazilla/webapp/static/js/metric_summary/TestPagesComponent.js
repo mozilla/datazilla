@@ -52,8 +52,6 @@ var TestPagesView = new Class({
         this.failBackgroundColor = 'su-fail-background-color';
         this.passBackgroundColor = 'su-pass-background-color';
 
-        this.lastMouseOverRow = "";
-
         this.scrollHeight = parseInt($(this.tableContainerSel).css('height')) - 125;
 
         this.datatable = {};
@@ -83,6 +81,7 @@ var TestPagesView = new Class({
 
     initializeTestPages: function(event, eventData){
 
+        console.log(['initializeTestPages', event, eventData]);
         var checked = $(this.lockTableSel).attr('checked');
 
         //User has locked the table
@@ -133,46 +132,20 @@ var TestPagesView = new Class({
         $(this.lockTableSel).click();
     },
     tableEventHandler: function(event){
+
+        console.log(event.type);
+
         if(event.type == 'mouseover'){
 
             var target = $(event.target);
             var elParent = $(target).parent();
-            console.log( $(elParent).hasClass('su-fail-background-color') );
 
             var highlightClass = "";
 
-            $(elParent).removeClass('odd');
-            $(elParent).removeClass('even');
+        }else if(event.type == 'mouseout'){
 
-            console.log($(elParent));
-            if( $(elParent).hasClass(this.passBackgroundColor) ){
 
-                $(elParent).removeClass(this.passBackgroundColor);
-                $(elParent).addClass('su-pass-hl-color');
-
-                this._resetRowHighlight(elParent, this.passBackgroundColor);
-
-            }else if( $(elParent).hasClass(this.failBackgroundColor) ){
-
-                $(elParent).removeClass(this.failBackgroundColor);
-                $(elParent).addClass('su-fail-hl-color');
-
-                this._resetRowHighlight(elParent, this.failBackgroundColor);
-
-            }
         }
-    },
-    _resetRowHighlight: function(el, colorClass){
-
-        if(this.lastMouseOverRow){
-
-            $(this.lastMouseOverRow).removeClass('su-pass-hl-color');
-            $(this.lastMouseOverRow).removeClass('su-fail-hl-color');
-
-            $(this.lastMouseOverRow).addClass(colorClass);
-        }
-
-        this.lastMouseOverRow = el;
     },
     _adaptData: function(datatableOptions, data){
 
@@ -193,11 +166,11 @@ var TestPagesView = new Class({
             if(datum.test_evaluation){
                 passFail = 'pass';
 
-                row['DT_RowClass'] = 'su-pass-background-color';
+                row['DT_RowClass'] = this.passBackgroundColor;
 
             }else{
 
-                row['DT_RowClass'] = 'su-fail-background-color';
+                row['DT_RowClass'] = this.failBackgroundColor;
 
             }
 
