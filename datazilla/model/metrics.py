@@ -652,7 +652,7 @@ class MetricsTestModel(DatazillaModelBase):
                     self._get_counter_struct()
 
             value_name = d['metric_value_name']
-            value = int(d['value'])
+            value = d['value']
 
             value = self._format_value(value_name, value)
 
