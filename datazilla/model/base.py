@@ -258,7 +258,9 @@ class PushLogModel(DatazillaModelBase):
         return params
 
 
-    def store_pushlogs(self, repo_host, numdays, enddate=None, branch=None):
+    def store_pushlogs(
+        self, repo_host, numdays, hours=None, enddate=None, branch=None
+        ):
         """
         Main entry point to store pushlogs for branches.
 
@@ -273,7 +275,16 @@ class PushLogModel(DatazillaModelBase):
         branch_list = self.get_branch_list(branch)
 
         # parameters sent to the requests for pushlog data
-        params = self.get_params(numdays, enddate)
+        params = {}
+        if numdays:
+            params = self.get_params(numdays, enddate)
+
+        if hours:
+            params = {
+                "full": 1,
+                "maxhours": hours,
+                }
+
 
         for br in branch_list:
             self.println(u"Branch: pushlogs for {0}".format(
