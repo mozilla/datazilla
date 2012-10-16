@@ -41,6 +41,12 @@ class Command(BaseCommand):
                     default=None,
                     help="Number of days worth of pushlogs to return."),
 
+        make_option("--hours",
+                    action="store",
+                    dest="hours",
+                    default=None,
+                    help="Number of hours worth of pushlogs to return."),
+
         # probably mostly for testing purposes, but could be otherwise useful.
         make_option("--branch",
                    action="store",
@@ -68,6 +74,7 @@ class Command(BaseCommand):
         repo_host = options.get("repo_host")
         enddate = options.get("enddate")
         numdays = options.get("numdays")
+        hours = options.get("hours")
         branch = options.get("branch")
         verbosity = options.get("verbosity")
         project = options.get("project")
@@ -76,13 +83,21 @@ class Command(BaseCommand):
             raise CommandError("You must supply a host name for the repo pushlogs " +
                          "to store: --repo_host hostname")
 
-        if not numdays:
-            raise CommandError("You must supply the number of days data.")
+        if not numdays and not hours:
+            raise CommandError("You must supply the number of days or hours of data.")
         else:
-            try:
-                numdays = int(numdays)
-            except ValueError:
-                raise CommandError("numdays must be an integer.")
+            if numdays:
+                try:
+                    numdays = int(numdays)
+                except ValueError:
+                    raise CommandError("numdays must be an integer.")
+
+            if hours:
+
+                try:
+                    hours = int(hours)
+                except ValueError:
+                    raise CommandError("hours must be an integer.")
 
         lock = FileLock(self.LOCK_FILE)
         try:
@@ -91,7 +106,7 @@ class Command(BaseCommand):
                 plm = PushLogModel(project=project, out=self.stdout, verbosity=verbosity)
 
                 # store the pushlogs for the branch specified, or all branches
-                summary = plm.store_pushlogs(repo_host, numdays, enddate, branch)
+                summary = plm.store_pushlogs(repo_host, numdays, hours, enddate, branch)
                 self.println(("Branches: {0}\nPushlogs stored: {1}, skipped: {2}\n" +
                               "Changesets stored: {3}, skipped: {4}").format(
                         summary["branches"],
