@@ -769,7 +769,15 @@
                    LEFT JOIN `metric_value` AS mv ON tpm.metric_value_id = mv.id
                    LEFT JOIN `machine` AS m ON tr.machine_id = m.id
                    LEFT JOIN `operating_system` AS o ON m.operating_system_id = o.id
-                   WHERE mv.name = 'test_evaluation' AND tr.id IN (REP0)",
+                   WHERE mv.name IN ('test_evaluation',
+                                     'mean',
+                                     'stddev',
+                                     'trend_mean',
+                                     'trend_stddev',
+                                     'p',
+                                     'h0_rejected',
+                                     'n_replicates')
+                         AND tr.id IN (REP0)",
 
             "host":"read_host"
         },
