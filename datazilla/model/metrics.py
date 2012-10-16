@@ -588,30 +588,42 @@ class MetricsTestModel(DatazillaModelBase):
             return_type='tuple'
             )
 
-
         if not computed_metrics:
             return summary_data
 
         key_lookup = set()
 
+        ##Build a list of metric keys without trend data##
+        keys_with_trend = set()
+        keys_without_trend = set()
+        for d in computed_metrics:
+            key = self.get_metrics_key(d)
+            value_name = d['metric_value_name']
+            value = int(d['value'])
+            if (value_name == 'trend_mean') and (value > 0):
+                keys_with_trend.add(key)
+
+        summary_data = {
+            'summary':self._get_counter_struct(),
+            'product_info': {
+                'version': d['product_version'],
+                'name': d['product_name'],
+                'branch': d['product_branch'],
+                'revision': d['revision']
+            },
+            'summary_by_test':{},
+            'summary_by_platform':{},
+            'tests':{}
+            }
+
         #Build summary data structure
-        for index, d in enumerate(computed_metrics):
+        for d in computed_metrics:
 
             key = self.get_metrics_key(d)
 
-            if index == 0:
-                summary_data = {
-                    'summary':self._get_counter_struct(),
-                    'product_info': {
-                        'version': d['product_version'],
-                        'name': d['product_name'],
-                        'branch': d['product_branch'],
-                        'revision': d['revision']
-                    },
-                    'summary_by_test':{},
-                    'summary_by_platform':{},
-                    'tests':{}
-                }
+            if key not in keys_with_trend:
+                keys_without_trend.add(key)
+                continue
 
             pname = "{0} {1} {2}".format(
                 d['operating_system_name'],
@@ -688,7 +700,6 @@ class MetricsTestModel(DatazillaModelBase):
                 summary_data['tests'][tname][pname]['fail']['value'] += 1
                 summary_data['summary']['fail']['value'] += 1
 
-
         #Calculate percentages
         summary_data['summary']['fail']['percent'] = \
             self._calculate_percentage(
@@ -743,6 +754,8 @@ class MetricsTestModel(DatazillaModelBase):
                         summary_data['tests'][test][platform]['pass']['value'],
                         summary_data['tests'][test][platform]['total_tests']
                         )
+
+        summary_data['summary']['keys_without_trend'] = len(keys_without_trend)
 
         return summary_data
 

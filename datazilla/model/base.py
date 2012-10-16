@@ -282,18 +282,16 @@ class PushLogModel(DatazillaModelBase):
             )
 
             uri = "{0}/json-pushes".format(br["uri"])
-
             url = "https://{0}/{1}?{2}".format(
                 repo_host,
                 uri,
                 urllib.urlencode(params),
                 )
-
             self.println("URL: {0}".format(url), 1)
-
             # fetch the JSON content from the constructed URL.
             res = urllib.urlopen(url)
             json_data = res.read()
+
             try:
                 pushlog_dict = json.loads(json_data)
 

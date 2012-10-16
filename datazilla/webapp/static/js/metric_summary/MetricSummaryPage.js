@@ -37,6 +37,7 @@ $(document).ready(function() {
 
     MS_PAGE.setRefData();
 
+    MS_PAGE.trendLineComponent = new TrendLineComponent();
     MS_PAGE.testPagesComponent = new TestPagesComponent();
     MS_PAGE.metricGridComponent = new MetricGridComponent();
     MS_PAGE.metricDashboardComponent = new MetricDashboardComponent();

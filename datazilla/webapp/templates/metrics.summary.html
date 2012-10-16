@@ -46,6 +46,7 @@
                     <div><span class="su-light-text2">Product:</span>&nbsp;<span id="su_product_tested" style="float:right;" class="su-light-text"></span></div>
                     <div><span class="su-light-text2">Revision:</span>&nbsp;<span id="su_revision_tested" style="float:right;" class="su-light-text"></span></div>
                     <div><span class="su-light-text2">Talos Test Count:</span>&nbsp;<span id="su_total_count" style="float:right;" class="su-light-text"></span></div>
+                    <div><span class="su-light-text2">Tests Without Trend:</span>&nbsp;<span id="su_no_trend_count" style="float:right;" class="su-light-text"></span></div>
                     <div><span class="su-light-text2">Results:</span>&nbsp;<span style="float:right;"><span id="su_pass_count" class="su-pass-color"></span>,&nbsp;<span id="su_fail_count" class="su-fail-color"></span></span></div>
                 </div>
             </div>
@@ -63,7 +64,7 @@
    <div class="ui-helper-clearfix"></div>
 
    <div style="height:400px;" class="ui-widget ui-widget-header ui-corner-all dv-toolpanel su-panel-base">
-        <div id="su_grid_spinner" class="su-spinner ui-widget"></div>
+        <div id="su_grid_spinner" style="height:400px;" class="su-spinner ui-widget"></div>
         <div id="su_test_suite_dashboard" style="display:none;">
 
             <div style="width:250px; position:absolute; left:170px; top:440px; opacity:0.6;" class="ui-widget ui-corner-all arrow_box">
@@ -71,9 +72,9 @@
             </div>
 
             <div id="su_grid" style="float:left; margin-top:80px;" class="su-light-text">
-                <div style="width:430px;">
+                <div id="su_boundary" style="width:430px;">
                     <div class="su-column-headers"></div>
-                    <div style="float:left; width:420px; height:175px; overflow-y:auto;">
+                    <div id="su_grid_scroll_container" style="float:left; width:420px; height:175px; overflow-y:auto;">
                         <div class="su-row-headers"></div>
                         <div class="su-grid-values"></div>
                     </div>
@@ -88,6 +89,8 @@
             </div>
         </div>
     </div>
+   <div style="height:400px;" class="ui-widget ui-widget-header ui-corner-all dv-toolpanel su-panel-base">
+   </div>
 </div> <!-- End su_container -->
 
 <script type="text/javascript" src="/static/js/plugins/jquery-1.6.3.min.js"></script>
@@ -110,11 +113,9 @@
 <script type="text/javascript" src="/static/js/plugins/moo4q/Source/Class.Mutators.jQuery.js"></script>
 
 <script type="text/javascript" src="/static/js/plugins/datatables/jquery.dataTables.min.js"></script>
-<script type="text/javascript" src="/static/js/plugins/datatables/ColVis.js"></script>
 
 
 <!-- This version of fg.menu.js has been heavily modified to work in bughunter -->
-<script type="text/javascript" src="/static/js/plugins/fg.menu.js"></script>
 <script type="text/javascript" src="/static/js/plugins/json2.js"></script>
 
 <!-- gages -->
@@ -127,6 +128,7 @@
 <script type="text/javascript" src="/static/js/metric_summary/MetricDashboardComponent.js"></script>
 <script type="text/javascript" src="/static/js/metric_summary/MetricGridComponent.js"></script>
 <script type="text/javascript" src="/static/js/metric_summary/TestPagesComponent.js"></script>
+<script type="text/javascript" src="/static/js/metric_summary/TrendLineComponent.js"></script>
 
 
 </body>

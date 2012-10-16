@@ -82,6 +82,7 @@ var MetricDashboardView = new Class({
         this.productTestsSel = '#su_product_tested';
         this.revisionTestedSel = '#su_revision_tested';
         this.totalCountSel = '#su_total_count';
+        this.noTrendCountSel = '#su_no_trend_count';
         this.passCountSel = '#su_pass_count';
         this.failCountSel = '#su_fail_count';
 
@@ -199,6 +200,7 @@ var MetricDashboardView = new Class({
             data.product_info.revision
             );
 
+        $(this.noTrendCountSel).text(data.summary.keys_without_trend);
         $(this.totalCountSel).text(data.summary.total_tests);
 
         $(this.passCountSel).text(data.summary.pass.value + ' passed');

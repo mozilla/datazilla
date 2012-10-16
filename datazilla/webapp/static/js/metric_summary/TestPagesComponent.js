@@ -55,7 +55,9 @@ var TestPagesView = new Class({
         this.scrollHeight = parseInt($(this.tableContainerSel).css('height')) - 125;
 
         this.datatable = {};
+        this.pagenameDataAttr = 'data-pagename';
 
+        this.tableInputClickEvent = 'TABLE_CLICK_EVENT';
         this.gridClickEvent = 'GRID_CLICK_EVENT';
         this.gridMouseoverEvent = 'GRID_MOUSEOVER_EVENT';
 
@@ -69,11 +71,6 @@ var TestPagesView = new Class({
             _.bind(this.lockTable, this)
         );
 
-        $(this.lockTableSel).bind('click', function(event){
-            var checked = $(event.eventTarget).attr('checked');
-            console.log('checked:' + checked);
-        });
-
         $(this.tableSel).live(
             'click mouseover', _.bind(this.tableEventHandler, this)
         );
@@ -81,7 +78,6 @@ var TestPagesView = new Class({
 
     initializeTestPages: function(event, eventData){
 
-        console.log(['initializeTestPages', event, eventData]);
         var checked = $(this.lockTableSel).attr('checked');
 
         //User has locked the table
@@ -109,6 +105,7 @@ var TestPagesView = new Class({
             'aaData':[],
 
             'aoColumns':[
+                { "sTitle":'', "sWidth":"5px" },
                 { "sTitle":'page', "sWidth":"75px" },
                 { "sTitle":'p/f', "sWidth":"30px" },
                 { "sTitle":'mean', "sWidth":"45px" },
@@ -120,7 +117,7 @@ var TestPagesView = new Class({
                 { "sTitle":'replicates', "sWidth":"75px" },
                 ],
 
-            'aaSorting':[ [1, 'asc'] ]
+            'aaSorting':[ [2, 'asc'] ]
         };
 
         this._adaptData(datatableOptions, eventData.data);
@@ -133,8 +130,6 @@ var TestPagesView = new Class({
     },
     tableEventHandler: function(event){
 
-        console.log(event.type);
-
         if(event.type == 'mouseover'){
 
             var target = $(event.target);
@@ -142,9 +137,26 @@ var TestPagesView = new Class({
 
             var highlightClass = "";
 
-        }else if(event.type == 'mouseout'){
+        }else if(event.type == 'click'){
 
+            if( $(event.target).is('input') ){
 
+                var checked = $(event.target).attr('checked');
+                var pagename = $(event.target).attr(this.pagenameDataAttr);
+                var testSuite = $(this.testSuiteSel).text();
+                var platform = $(this.platformSel).text();
+
+                var eventData = {
+                    'checked':checked,
+                    'pagename':pagename,
+                    'testsuite':testSuite,
+                    'platform':platform
+                    };
+
+                $(this.eventContainerSel).trigger(
+                    this.tableInputClickEvent, eventData
+                    );
+            }
         }
     },
     _adaptData: function(datatableOptions, data){
@@ -159,7 +171,10 @@ var TestPagesView = new Class({
 
             //page name
             var row = {};
-            row['0'] = bars[i];
+            row['0'] = '<input type="checkbox" data-pagename="' + bars[i] + '" />';
+
+
+            row['1'] = bars[i];
 
             var passFail = 'fail';
 
@@ -174,14 +189,14 @@ var TestPagesView = new Class({
 
             }
 
-            row['1'] = passFail;
-            row['2'] = datum.mean;
-            row['3'] = datum.trend_mean;
-            row['4'] = datum.stddev;
-            row['5'] = datum.trend_stddev;
-            row['6'] = datum.p;
-            row['7'] = datum.h0_rejected;
-            row['8'] = datum.n_replicates;
+            row['2'] = passFail;
+            row['3'] = datum.mean;
+            row['4'] = datum.trend_mean;
+            row['5'] = datum.stddev;
+            row['6'] = datum.trend_stddev;
+            row['7'] = datum.p;
+            row['8'] = datum.h0_rejected;
+            row['9'] = datum.n_replicates;
 
             datatableOptions.aaData.push( row );
         }

@@ -74,6 +74,10 @@ var MetricGridView = new Class({
         this.gridRowHeaderClassSel = '.su-row-headers';
         this.gridValuesClassSel = '.su-grid-values';
 
+        this.gridScrollMultiplier = 1.5;
+        this.gridScrollContainer = '#su_grid_scroll_container';
+        this.gridScrollBoundary = '#su_boundry';
+
         this.gridSpinnerSel = '#su_grid_spinner';
         this.testSuiteDashboardContainerSel = '#su_test_suite_dashboard';
 
@@ -128,6 +132,19 @@ var MetricGridView = new Class({
 
         $(this.gridValuesClassSel).css('width', valueRowWidth);
 
+        var scrollWidth = parseInt(
+            $('#su_grid_scroll_container').css('width')
+            );
+
+        if( (scrollWidth - 60) <= valueRowWidth ){
+            $(this.gridScrollContainer).css(
+                'width', valueRowWidth*this.gridScrollMultiplier
+                );
+            $(this.gridScrollBoundary).css(
+                'width', valueRowWidth*this.gridScrollMultiplier
+                );
+        }
+
         $(this.gridColumnHeaderClassSel).css('width', valueRowWidth);
 
         for(var r=0; r<rows.length; r++){
@@ -145,6 +162,8 @@ var MetricGridView = new Class({
                     var value = data.tests[rowTitle][columnTitle]['pass']['percent'];
                     cell = this.getValueCell(columnTitle, rowTitle, value);
 
+                    //This event is only fired once to load a table the
+                    //first time the page loads.
                     if(this.triggerDefaultEvent){
 
                         this._triggerEvent(
