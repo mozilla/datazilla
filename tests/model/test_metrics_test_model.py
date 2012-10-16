@@ -634,6 +634,7 @@ def test_get_metrics_summary(mtm, ptm, plm, monkeypatch):
         test_run_ids = setup_data['test_run_ids'].get(revision, [])
 
         metrics_data = mtm.get_metrics_summary(test_run_ids)
+
         if revision == fail_revision:
 
             assert metrics_data['summary']['fail']['value'] == total_tests
