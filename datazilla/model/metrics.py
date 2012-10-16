@@ -72,6 +72,15 @@ class MetricsTestModel(DatazillaModelBase):
 
         self.mf = MetricsMethodFactory(self.metrics)
 
+        self.push_value_names = set(['push_date', 'pushlog_id'])
+
+        self.format_float_values = set(
+            ['mean', 'stddev', 'trend_mean', 'trend_stddev']
+            )
+        self.format_boolean_values = set(
+            ['fdr', 'h0_rejected', 'test_evaluation']
+            )
+
     @classmethod
     def get_metrics_key(cls, data):
         return cls.KEY_DELIMITER.join(
@@ -424,13 +433,6 @@ class MetricsTestModel(DatazillaModelBase):
             )
 
         key_lookup = {}
-        push_value_names = set(['push_date', 'pushlog_id'])
-        format_float_values = set(
-            ['mean', 'stddev', 'trend_mean', 'trend_stddev', 'p']
-            )
-        format_boolean_values = set(
-            ['fdr', 'h0_rejected', 'test_evaluation']
-            )
 
         #Build a page lookup to filter by
         page_names = set()
@@ -487,12 +489,9 @@ class MetricsTestModel(DatazillaModelBase):
             value_name = d['metric_value_name']
             value = d['value']
 
-            if value_name in format_float_values:
-                value = float( format(value, '.1f') )
-            if value_name in format_boolean_values:
-                value = bool(value)
+            value = self._format_value(value_name, value)
 
-            if value_name in push_value_names:
+            if value_name in self.push_value_names:
                 if value:
                     key_lookup[summary_key]['push_info'][value_name] = value
 
@@ -589,31 +588,42 @@ class MetricsTestModel(DatazillaModelBase):
             return_type='tuple'
             )
 
-
         if not computed_metrics:
             return summary_data
 
         key_lookup = set()
-        push_value_names = set(['push_date', 'pushlog_id'])
+
+        ##Build a list of metric keys without trend data##
+        keys_with_trend = set()
+        keys_without_trend = set()
+        for d in computed_metrics:
+            key = self.get_metrics_key(d)
+            value_name = d['metric_value_name']
+            value = int(d['value'])
+            if (value_name == 'trend_mean') and (value > 0):
+                keys_with_trend.add(key)
+
+        summary_data = {
+            'summary':self._get_counter_struct(),
+            'product_info': {
+                'version': d['product_version'],
+                'name': d['product_name'],
+                'branch': d['product_branch'],
+                'revision': d['revision']
+            },
+            'summary_by_test':{},
+            'summary_by_platform':{},
+            'tests':{}
+            }
 
         #Build summary data structure
-        for index, d in enumerate(computed_metrics):
+        for d in computed_metrics:
 
             key = self.get_metrics_key(d)
 
-            if index == 0:
-                summary_data = {
-                    'summary':self._get_counter_struct(),
-                    'product_info': {
-                        'version': d['product_version'],
-                        'name': d['product_name'],
-                        'branch': d['product_branch'],
-                        'revision': d['revision']
-                    },
-                    'summary_by_test':{},
-                    'summary_by_platform':{},
-                    'tests':{}
-                }
+            if key not in keys_with_trend:
+                keys_without_trend.add(key)
+                continue
 
             pname = "{0} {1} {2}".format(
                 d['operating_system_name'],
@@ -624,15 +634,12 @@ class MetricsTestModel(DatazillaModelBase):
 
             tname = d['test_name']
 
-            value_name = d['metric_value_name']
-            value = int(d['value'])
-
             if tname not in summary_data['tests']:
                 summary_data['tests'][tname] = {}
 
             if pname not in summary_data['tests'][tname]:
                 cstruct = self._get_counter_struct()
-                cstruct['pages'] = []
+                cstruct['pages'] = {}
                 cstruct['platform_info'] = {}
                 summary_data['tests'][tname][pname] = cstruct
 
@@ -644,10 +651,10 @@ class MetricsTestModel(DatazillaModelBase):
                 summary_data['summary_by_test'][tname] = \
                     self._get_counter_struct()
 
-            summary_data['summary']['total_tests'] += 1
-            summary_data['summary_by_platform'][pname]['total_tests'] += 1
-            summary_data['summary_by_test'][tname]['total_tests'] += 1
-            summary_data['tests'][tname][pname]['total_tests'] += 1
+            value_name = d['metric_value_name']
+            value = int(d['value'])
+
+            value = self._format_value(value_name, value)
 
             summary_data['tests'][tname][pname]['platform_info'] = {
                 'operating_system_name':d['operating_system_name'],
@@ -655,6 +662,31 @@ class MetricsTestModel(DatazillaModelBase):
                 'type':d['build_type'],
                 'operating_system_version':d['operating_system_version']
                 }
+
+            if d['page_name'] not in summary_data['tests'][tname][pname]['pages']:
+                summary_data['tests'][tname][pname]['pages'][ d['page_name'] ] = \
+                    {
+                        'test_evaluation':None,
+                        'mean':None,
+                        'stddev':None,
+                        'trend_mean':None,
+                        'trend_stddev':None,
+                        'p':None,
+                        'h0_rejected':None,
+                        'n_replicates':None
+                    }
+
+            summary_data['tests'][tname][pname]['pages'][ d['page_name'] ][
+                value_name] = value
+
+            if value_name != 'test_evaluation':
+                continue
+
+            #only count the test_evaluation data
+            summary_data['summary']['total_tests'] += 1
+            summary_data['summary_by_platform'][pname]['total_tests'] += 1
+            summary_data['summary_by_test'][tname]['total_tests'] += 1
+            summary_data['tests'][tname][pname]['total_tests'] += 1
 
             if value == 1:
                 summary_data['summary_by_platform'][pname]['pass']['value'] += 1
@@ -667,10 +699,6 @@ class MetricsTestModel(DatazillaModelBase):
                 summary_data['summary_by_test'][tname]['fail']['value'] += 1
                 summary_data['tests'][tname][pname]['fail']['value'] += 1
                 summary_data['summary']['fail']['value'] += 1
-
-            summary_data['tests'][tname][pname]['pages'].append(
-                { d['page_name']:bool(value) }
-                )
 
         #Calculate percentages
         summary_data['summary']['fail']['percent'] = \
@@ -727,6 +755,8 @@ class MetricsTestModel(DatazillaModelBase):
                         summary_data['tests'][test][platform]['total_tests']
                         )
 
+        summary_data['summary']['keys_without_trend'] = len(keys_without_trend)
+
         return summary_data
 
     def get_test_run_ids_from_pushlog_ids(self, pushlog_ids=[]):
@@ -757,6 +787,17 @@ class MetricsTestModel(DatazillaModelBase):
             test_run_ids = [ test_data['test_run_id'] for test_data in id_list ]
 
         return test_run_ids
+
+    def _format_value(self, value_name, value):
+
+        if value_name == 'p':
+            value = float( format(value, '.5f') )
+        if value_name in self.format_float_values:
+            value = float( format(value, '.1f') )
+        if value_name in self.format_boolean_values:
+            value = bool(value)
+
+        return value
 
     def _calculate_percentage(self, value, total):
 
