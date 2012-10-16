@@ -34,7 +34,7 @@ def test_no_numdays(capsys):
 
     exp = (
         "",
-        "Error: You must supply the number of days data.\n",
+        "Error: You must supply the number of days or hours of data.\n",
         )
 
     assert capsys.readouterr() == exp
@@ -57,7 +57,7 @@ def test_bad_numdays(capsys):
 def test_successful_store(plm, capsys, monkeypatch):
     """Successful storage of pushlog data."""
 
-    def mock_store_pushlogs(nothing, repo_host, numdays, enddate, branch):
+    def mock_store_pushlogs(nothing, repo_host, numdays, hours, enddate, branch):
         return {
             "branches": 1,
             "pushlogs_stored": 3,
