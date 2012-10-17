@@ -55,6 +55,7 @@ var TestPagesView = new Class({
         this.scrollHeight = parseInt($(this.tableContainerSel).css('height')) - 125;
 
         this.datatable = {};
+        this.platformInfo = {};
         this.pagenameDataAttr = 'data-pagename';
 
         this.tableInputClickEvent = 'TABLE_CLICK_EVENT';
@@ -87,6 +88,7 @@ var TestPagesView = new Class({
 
         $(this.testSuiteSel).text(eventData.test);
         $(this.platformSel).text(eventData.platform);
+        this.platformInfo = eventData.platform_info;
 
         var datatableOptions = {
 
@@ -150,7 +152,8 @@ var TestPagesView = new Class({
                     'checked':checked,
                     'pagename':pagename,
                     'testsuite':testSuite,
-                    'platform':platform
+                    'platform':platform,
+                    'platform_info':this.platformInfo
                     };
 
                 $(this.eventContainerSel).trigger(
@@ -172,7 +175,6 @@ var TestPagesView = new Class({
             //page name
             var row = {};
             row['0'] = '<input type="checkbox" data-pagename="' + bars[i] + '" />';
-
 
             row['1'] = bars[i];
 

@@ -295,6 +295,7 @@ var MetricGridView = new Class({
             var eventData = {
                 'test':titles.row_title,
                 'platform':titles.column_title,
+                'platform_info':this.data.tests[titles.row_title][titles.column_title]['platform_info'],
                 'data':data
                 };
 

@@ -765,7 +765,6 @@ class MetricsTestModel(DatazillaModelBase):
         placeholders = []
         placeholders.extend(pushlog_ids)
 
-
         proc = 'perftest.selects.get_test_run_ids_from_pushlog_ids'
 
         test_run_ids = []
