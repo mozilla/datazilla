@@ -62,7 +62,6 @@ def build_test_summaries(project):
                                          [])
 
             json_data = json.dumps( table )
-
             ptm.set_summary_cache( products[ product_name ], tr, json_data )
 
     ptm.disconnect()
