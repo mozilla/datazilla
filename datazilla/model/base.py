@@ -960,6 +960,11 @@ class PerformanceTestModel(DatazillaModelBase):
             now_datetime
             ]
 
+        # NOTE: Disabling warnings here.  A warning is generated in the
+        # production environment that is specific to the master/slave
+        # configuration.
+        filterwarnings('ignore', category=MySQLdb.Warning)
+
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_summary_cache',
             debug_show=self.DEBUG,
@@ -967,6 +972,7 @@ class PerformanceTestModel(DatazillaModelBase):
             executemany=False,
             )
 
+        resetwarnings()
 
     def set_test_collection(self, name, description):
 
@@ -1099,8 +1105,10 @@ class PerformanceTestModel(DatazillaModelBase):
         # unsafe because the set of rows included cannot be predicted.
         #
         # I have been unable to generate the warning in the development
-        # environment to date.  In the production environment the generation
-        # of this warning is causing the program to exit.
+        # environment because the warning is specific to the master/slave
+        # replication environment which only exists in production.In the
+        # production environment the generation of this warning is causing
+        # the program to exit.
         #
         # The mark_loading SQL statement does execute an UPDATE/LIMIT but now
         # implements an "ORDER BY id" clause making the UPDATE

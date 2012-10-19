@@ -2,17 +2,20 @@
 PYTHON_ROOT=/usr/bin/
 DATAZILLA_HOME=/usr/local/datazilla
 
-*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_summary_cache --build --cache --cron_batch small
-*/10 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_summary_cache --build --cache --cron_batch medium
-0,30 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_summary_cache --build --cache --cron_batch large
+*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_summary_cache --build --cache --project stoneridge
+*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_summary_cache --build --cache --project b2g
+*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_summary_cache --build --cache --project jetperf
+*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_summary_cache --build --cache --project test
 
-*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --load --cron_batch small
-*/10 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --load --cron_batch medium
-0,30 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --load --cron_batch large
+*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --load --project stoneridge
+*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --load --project b2g
+*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --load --project jetperf
+*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --load --project test
 
-*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py set_default_product --cron_batch small
-*/10 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py set_default_product --cron_batch medium
-0,30 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py set_default_product --cron_batch large
+*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py set_default_product --project stoneridge
+*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py set_default_product --project b2g
+*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py set_default_product --project jetperf
+*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py set_default_product --project test
 
 # run twice every minute
 * * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --cron_batch small --loadlimit 15 && $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --cron_batch small --loadlimit 15
