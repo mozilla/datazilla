@@ -105,9 +105,10 @@ def get_metrics_summary(
     return metrics_data
 
 def get_metrics_pushlog(
-    project, branch, os_name=None, os_version=None, branch_version=None,
+    project, branch, revision, os_name=None, os_version=None, branch_version=None,
     processor=None, build_type=None, test_name=None, page_name=None,
-    days_ago=None, numdays=None, pushlog_project=None
+    days_ago=None, pushes_before=None, pushes_after=None, numdays=None,
+    pushlog_project=None
     ):
     """Return a metrics summary based on the parameters and optional filters."""
 
@@ -115,7 +116,13 @@ def get_metrics_pushlog(
     ptm = factory.get_ptm(project)
     mtm = factory.get_mtm(project)
 
-    pushlog = plm.get_branch_pushlog(None, days_ago, numdays, branch)
+    pushlog = {}
+    if days_ago > 0:
+        pushlog = plm.get_branch_pushlog(None, days_ago, numdays, branch)
+    else:
+        pushlog = plm.get_branch_pushlog_by_revision(
+            revision, branch, pushes_before, pushes_after
+        )
 
     aggregate_pushlog = []
     pushlog_id_index_map = {}

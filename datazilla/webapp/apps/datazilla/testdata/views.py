@@ -11,6 +11,9 @@ REQUIRE_DAYS_AGO = """Invalid Request: Require days_ago parameter.
 REQUIRE_TEST_NAME = """Invalid Request: Require test_name parameter.
                      This specifies the name of the test."""
 
+REQUIRE_PAGE_NAME = """Invalid Request: Require page_name parameter.
+                     This specifies the name of the test page."""
+
 API_CONTENT_TYPE = 'application/json; charset=utf-8'
 
 
@@ -99,7 +102,7 @@ def get_metrics_summary(request, project, branch, revision):
         content_type=API_CONTENT_TYPE,
         )
 
-def get_metrics_pushlog(request, project, branch):
+def get_metrics_pushlog(request, project, branch, revision):
     """
     Apply filters and return trend line data for the time period requested.
     """
@@ -110,20 +113,26 @@ def get_metrics_pushlog(request, project, branch):
     build_type = request.GET.get("build_type", None)
     test_name = request.GET.get("test_name", None)
     page_name = request.GET.get("page_name", None)
-    days_ago = request.GET.get("days_ago", None)
-    numdays = request.GET.get("numdays", None)
+
+    days_ago = int(request.GET.get("days_ago", 0))
+    pushes_before = int(request.GET.get("pushes_before", 10))
+    pushes_after = int(request.GET.get("pushes_after", 10))
+
+    numdays = int(request.GET.get("numdays", 0))
 
     pushlog_project = request.GET.get("pushlog_project", None)
 
-    if not days_ago:
-        return HttpResponse(REQUIRE_DAYS_AGO, status=400)
     if not test_name:
         return HttpResponse(REQUIRE_TEST_NAME, status=400)
+
+    if not page_name:
+        return HttpResponse(REQUIRE_PAGE_NAME, status=400)
 
     return HttpResponse(
         json.dumps(testdata.get_metrics_pushlog(
             project,
             branch,
+            revision,
             os_name=os_name,
             os_version=os_version,
             branch_version=branch_version,
@@ -132,6 +141,8 @@ def get_metrics_pushlog(request, project, branch):
             test_name=test_name,
             page_name=page_name,
             days_ago=days_ago,
+            pushes_before=pushes_before,
+            pushes_after=pushes_after,
             numdays=numdays,
             pushlog_project=pushlog_project
             )),

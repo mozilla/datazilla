@@ -5,7 +5,7 @@ urlpatterns = patterns(
 
     (r"^raw/(?P<branch>.+)/(?P<revision>\w+)/?$", "views.get_testdata"),
 
-    (r"^metrics/(?P<branch>.+)/pushlog/?$",
+    (r"^metrics/(?P<branch>.+)/(?P<revision>\w+)/pushlog/?$",
         "views.get_metrics_pushlog"),
 
     (r"^metrics/(?P<branch>.+)/(?P<revision>\w+)/summary/?$",

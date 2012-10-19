@@ -227,6 +227,44 @@ class PushLogModel(DatazillaModelBase):
 
         return data
 
+    def get_branch_pushlog_by_revision(
+        self, revision, branch_name, pushes_before, pushes_after
+        ):
+
+        #Get the push id for this revision
+        push_id_proc = 'hgmozilla.selects.get_push_id_from_revision'
+
+        push_data = self.hg_ds.dhub.execute(
+            proc=push_id_proc,
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            placeholders=[revision, branch_name]
+            )
+
+        if not push_data:
+            return push_data
+
+        node = push_data[0]['node']
+        push_id = push_data[0]['push_id']
+
+        pushes_before_proc = 'hgmozilla.selects.get_push_ids_before_node'
+        pushes_after_proc = 'hgmozilla.selects.get_push_ids_after_node'
+
+        pushes_before_data = self.hg_ds.dhub.execute(
+            proc=pushes_before_proc,
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            placeholders=[push_id, branch_name, pushes_before]
+            )
+
+        pushes_after_data = self.hg_ds.dhub.execute(
+            proc=pushes_after_proc,
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            placeholders=[push_id, branch_name, pushes_after]
+            )
+
+        return pushes_before_data + push_data + pushes_after_data
 
     def get_params(self, numdays, enddate=None):
         """

@@ -60,6 +60,56 @@
             "host":"master_host"
         },
 
+        "get_push_id_from_revision":{
+
+            "sql":"SELECT p.id AS 'pushlog_id',
+                          p.push_id,
+                          p.date,
+                          c.node,
+                          b.id AS 'branch_id',
+                          b.name
+                   FROM pushlogs AS p
+                   LEFT JOIN changesets AS c ON p.id = c.pushlog_id
+                   LEFT JOIN branches AS b ON p.branch_id = b.id
+                   WHERE INSTR(c.node, ?) AND b.name = ?",
+
+            "host":"read_host"
+        },
+
+        "get_push_ids_before_node":{
+
+            "sql":"SELECT p.id AS 'pushlog_id',
+                          p.push_id,
+                          p.date,
+                          c.node,
+                          b.id AS 'branch_id',
+                          b.name
+                   FROM pushlogs AS p
+                   LEFT JOIN changesets AS c ON p.id = c.pushlog_id
+                   LEFT JOIN branches AS b ON p.branch_id = b.id
+                   WHERE p.push_id < ? AND b.name = ?
+                   LIMIT ?",
+
+            "host":"read_host"
+        },
+
+        "get_push_ids_after_node":{
+
+            "sql":"SELECT p.id AS 'pushlog_id',
+                          p.push_id,
+                          p.date,
+                          c.node,
+                          b.id AS 'branch_id',
+                          b.name
+                   FROM pushlogs AS p
+                   LEFT JOIN changesets AS c ON p.id = c.pushlog_id
+                   LEFT JOIN branches AS b ON p.branch_id = b.id
+                   WHERE p.push_id > ? AND b.name = ?
+                   LIMIT ?",
+
+            "host":"read_host"
+        },
+
         "get_all_branch_pushlogs":{
             "sql":"SELECT p.id AS 'pushlog_id',
                           p.push_id,
