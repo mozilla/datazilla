@@ -618,7 +618,7 @@
                 FROM `summary_cache`
                 WHERE `item_id` = ? AND `item_data` = ?",
 
-        "host":"read_host"
+        "host":"master_host"
     },
     "get_all_summary_cache_data":{
 
