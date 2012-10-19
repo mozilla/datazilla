@@ -15,6 +15,6 @@ DATAZILLA_HOME=/usr/local/datazilla
 0,30 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py set_default_product --cron_batch large
 
 # run twice every minute
-* * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --cron_batch small --loadlimit 15 && $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --cron_batch small --loadlimit 15
+* * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --cron_batch small --loadlimit 25 && $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --cron_batch small --loadlimit 25
 
 * * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py update_pushlog --repo_host=hg.mozilla.org --hours=24
