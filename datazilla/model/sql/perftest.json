@@ -618,14 +618,14 @@
                 FROM `summary_cache`
                 WHERE `item_id` = ? AND `item_data` = ?",
 
-        "host":"read_host"
+        "host":"master_host"
     },
     "get_all_summary_cache_data":{
 
         "sql":"SELECT `item_id`, `item_data`, `value`, `date`
                 FROM `summary_cache`",
 
-        "host":"read_host"
+        "host":"master_host"
     },
     "get_test_collections":{
 
