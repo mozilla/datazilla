@@ -279,6 +279,10 @@ def _get_test_run_summary(project, method, request, dm):
 
     json_data = '{}'
 
+    #Commenting the use of memcache out for now, the shared memcache
+    #in production is failing to return the expected data.  This works
+    #in development so it's likely a configuration issue of some sort.
+    """
     if product_ids and (not test_ids) and (not platform_ids):
 
         if len(product_ids) > 1:
@@ -309,13 +313,14 @@ def _get_test_run_summary(project, method, request, dm):
                 json_data = zlib.decompress( compressed_json_data )
 
     else:
-        table = dm.get_test_run_summary(time_ranges[time_key]['start'],
+    """
+    table = dm.get_test_run_summary(time_ranges[time_key]['start'],
                                      time_ranges[time_key]['stop'],
                                      product_ids,
                                      platform_ids,
                                      test_ids)
 
-        json_data = json.dumps( table )
+    json_data = json.dumps( table )
 
     return json_data
 
