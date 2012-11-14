@@ -114,11 +114,30 @@ def get_metrics_pushlog(request, project, branch, revision):
     test_name = request.GET.get("test_name", None)
     page_name = request.GET.get("page_name", None)
 
-    days_ago = int(request.GET.get("days_ago", 0))
-    pushes_before = int(request.GET.get("pushes_before", 10))
-    pushes_after = int(request.GET.get("pushes_after", 10))
 
-    numdays = int(request.GET.get("numdays", 0))
+    days_ago = 0
+    try:
+        days_ago = int(request.GET.get("days_ago", 0))
+    except ValueError:
+        pass
+
+    pushes_before = 10
+    try:
+        pushes_before = int(request.GET.get("pushes_before", 10))
+    except ValueError:
+        pass
+
+    pushes_after = 10
+    try:
+        pushes_after = int(request.GET.get("pushes_after", 10))
+    except ValueError:
+        pass
+
+    numdays = 0
+    try:
+        numdays = int(request.GET.get("numdays", 0))
+    except ValueError:
+        pass
 
     pushlog_project = request.GET.get("pushlog_project", None)
 

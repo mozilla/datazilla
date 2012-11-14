@@ -52,6 +52,8 @@ var TestPagesView = new Class({
         this.failBackgroundColor = 'su-fail-background-color';
         this.passBackgroundColor = 'su-pass-background-color';
 
+        this.cbIdPrefix = 'su_cb_';
+
         this.scrollHeight = parseInt($(this.tableContainerSel).css('height')) - 125;
 
         this.datatable = {};
@@ -61,6 +63,7 @@ var TestPagesView = new Class({
         this.tableInputClickEvent = 'TABLE_CLICK_EVENT';
         this.gridClickEvent = 'GRID_CLICK_EVENT';
         this.gridMouseoverEvent = 'GRID_MOUSEOVER_EVENT';
+        this.closeDataSeriesEvent = 'CLOSE_DATA_SERIES_EVENT';
 
         $(this.eventContainerSel).bind(
             this.gridMouseoverEvent,
@@ -70,6 +73,11 @@ var TestPagesView = new Class({
         $(this.eventContainerSel).bind(
             this.gridClickEvent,
             _.bind(this.lockTable, this)
+        );
+
+        $(this.eventContainerSel).bind(
+            this.closeDataSeriesEvent,
+            _.bind(this.uncheckCb, this)
         );
 
         $(this.tableSel).live(
@@ -130,6 +138,10 @@ var TestPagesView = new Class({
     lockTable: function(event, eventData){
         $(this.lockTableSel).click();
     },
+    uncheckCb: function(event, datumKey){
+        var id = this.cbIdPrefix + datumKey;
+        $('#' + id).prop("checked", false);
+    },
     tableEventHandler: function(event){
 
         if(event.type == 'mouseover'){
@@ -172,9 +184,18 @@ var TestPagesView = new Class({
 
             var datum = data[ bars[i] ];
 
+            var keyData = {
+                'pagename':bars[i],
+                'testsuite':$(this.testSuiteSel).text(),
+                'platform_info':this.platformInfo
+                };
+
+            var key = this.cbIdPrefix + MS_PAGE.getDatumKey(keyData);
+
             //page name
             var row = {};
-            row['0'] = '<input type="checkbox" data-pagename="' + bars[i] + '" />';
+            row['0'] = '<input id="' + key +
+                '" type="checkbox" data-pagename="' + bars[i] + '" />';
 
             row['1'] = bars[i];
 

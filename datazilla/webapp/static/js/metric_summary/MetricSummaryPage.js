@@ -27,6 +27,21 @@ var MetricSummaryPage = new Class( {
         MS_PAGE.refData.project = MS_PAGE.urlObj.data.seg.path[0];
         MS_PAGE.refData.branch = MS_PAGE.urlObj.data.seg.path[2];
         MS_PAGE.refData.revision = MS_PAGE.urlObj.data.seg.path[3];
+    },
+    getDatumKey: function(data){
+        /***
+         * Build a unique datum string and convert to a hash
+         ***/
+        var key = data.platform_info.operating_system_name +
+            data.platform_info.operating_system_version +
+            data.platform_info.processor +
+            data.platform_info.type +
+            data.testsuite +
+            data.pagename;
+
+        key = key.hashCode();
+
+        return key;
     }
 
 });

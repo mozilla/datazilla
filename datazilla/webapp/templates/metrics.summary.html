@@ -74,24 +74,39 @@
             <div id="su_grid" style="float:left; margin-top:80px;" class="su-light-text">
                 <div id="su_boundary" style="width:430px;">
                     <div class="su-column-headers"></div>
-                    <div id="su_grid_scroll_container" style="float:left; width:420px; height:175px; overflow-y:auto;">
+                    <div id="su_grid_scroll_container" style="float:left; width:430px; height:175px; overflow-y:auto;">
                         <div class="su-row-headers"></div>
                         <div class="su-grid-values"></div>
                     </div>
                 </div>
             </div>
-            <div style="float:left; margin-top:190px; margin-right:25px;" class='su-guidearrow-box'>
-                <div style="margin-left:5px; margin-top:5px;" class="su-light-text">Lock Table:<input id="su_lock_table" type="checkbox" /></div>
-            </div>
-            <div id="su_table_container" style="float:left; width:400px; height:380px; margin-top:25px;">
+            <div id="su_table_container" style="float:right; width:400px; height:380px; margin-top:25px;">
                 <div style="font-size:13px; float:left;"><span class="su-light-text2">Test Suite:</span><span id="su_test_suite" class="su-light-text"></span><span style="margin-left:15px;" class="su-light-text2">Platform:</span><span id="su_platform" class="su-light-text"></span></div>
                 <table id="su_test_pages" cellpadding="0" cellspacing="0" border="0" class="display"></table>
+            </div>
+            <div style="float:right; margin-top:190px; margin-right:25px;" class='su-guidearrow-box'>
+                <div style="margin-left:5px; margin-top:5px;" class="su-light-text">Lock Table:<input id="su_lock_table" type="checkbox" /></div>
             </div>
         </div>
     </div>
    <div style="height:400px;" class="ui-widget ui-widget-header ui-corner-all dv-toolpanel su-panel-base">
+        <div id="su_graph_detail_container_1" class="ui-widget ui-helper-clearfix css-left" style="width: 135px; overflow-y: auto; height: 380px; display: block;"></div>
+        <div id="su_trendline_plot" style="margin-left:15px; float:left; height:350px; width:600px;"></div>
+        <div style="overflow-y: auto; height: 380px; display: block; float:right; width:200px;">
+            <div id="su_datum_revision" style="width:181px;" class="ui-state-highlight ui-corner-all su-data-series-panel css-right su-large-text">REVISION</div>
+            <div id="su_datum_controls" style="width:185px;" class="ui-state-highlight ui-corner-all su-data-series-panel css-right su-light-text">Lock Push:<input id="su_lock_datum" type="checkbox" /><div style="float:right;"><a id="su_raw_data" target="_blank" href="#">Get Raw Data</a></div></div>
+            <div id="su_graph_detail_container_2" style="width:185px;" class="ui-state-highlight ui-corner-all su-data-series-panel css-right"></div>
+        </div>
    </div>
 </div> <!-- End su_container -->
+
+<div id="su_legend" class="ui-state-highlight ui-corner-all su-data-series-panel" style="display:none;">
+   <div style="margin-bottom:5px;">
+      <div name="su_dataset_title" class="dv-wordwrap css-left" style="width:90px;"></div>
+      <a name="su_dataset_close" title="close" href="#closedataset"><div class="ui-icon ui-icon-close css-right" style="margin-left:2px; margin-right:2px;"></div></a>
+   </div>
+</div>
+
 
 <script type="text/javascript" src="/static/js/plugins/jquery-1.6.3.min.js"></script>
 <script type="text/javascript" src="/static/js/plugins/jquery-ui-1.8.13.custom.min.js"></script>
@@ -99,10 +114,6 @@
 
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.min.js"></script>
 <!--[if lte IE 8]><script language="javascript" type="text/javascript" src="/static/js/plugins/flot-0.7/excanvas.min.js"></script><![endif]-->
-<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.selection.min.js"></script>
-<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.crosshair.min.js"></script>
-<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.fillbetween.min.js"></script>
-<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.orderBars.js"></script>
 
 <script type="text/javascript" src="/static/js/plugins/underscore-min.js"></script>
 <script type="text/javascript" src="/static/js/plugins/d3.v2.min.js"></script>

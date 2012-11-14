@@ -1,10 +1,13 @@
 body {
     font-family: helvetica, arial, sans-serif;
-    font-size: 14px;
     margin: 0;
+    font-size: 14px;
     padding: 0;
     border-top: 2px solid #676767;
     min-width: 1024px;
+}
+div.su-large-text {
+    font-size: 14px;
 }
 div.su-toppanel {
     -moz-box-sizing: border-box;
@@ -107,17 +110,9 @@ table.display tr.su-fail-background-color td {
 
 /* Grid styles */
 div.su-column-headers {
-
-
     float: left;
     margin-left:150px;
     margin-top:60px;
-
-/*
-    position:absolute;
-    left: 260px;
-    top: 365px;
-*/
 }
 div.su-row-headers {
 
@@ -163,12 +158,6 @@ div.su-grid-value {
     border-bottom: thin solid;
     border-right: thin solid;
 }
-.tickLabel {
-    -webkit-transform:rotate(325deg);
-    -moz-transform:rotate(325deg);
-    -o-transform: rotate(325deg);
-}
-
 .dataTables_info {
     width:100%;
 }
@@ -232,4 +221,12 @@ div.su-grid-value {
     border-width: 24px;
     left: 50%;
     margin-left: -24px;
+}
+div.su-data-series-panel {
+    margin-top: 5px;
+    padding: 0.5em;
+    overflow: auto;
+}
+.ui-button-text{
+    font-size: 11px !important;
 }

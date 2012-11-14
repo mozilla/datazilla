@@ -476,8 +476,6 @@ class PerformanceTestModel(DatazillaModelBase):
     # content types that every project will have
     CONTENT_TYPES = ["perftest", "objectstore"]
 
-
-
     @classmethod
     def create(cls, project, hosts=None, types=None, cron_batch=None):
         """
@@ -1132,7 +1130,7 @@ class PerformanceTestModel(DatazillaModelBase):
         proc_get  = 'objectstore.selects.get_claimed'
 
         # Note: There is a bug in MySQL http://bugs.mysql.com/bug.php?id=42415
-        # that causes the folowing warning to be generated in the production
+        # that causes the following warning to be generated in the production
         # environment:
         #
         # _mysql_exceptions.Warning: Unsafe statement written to the binary
