@@ -440,7 +440,9 @@ class PerformanceTestModel(DatazillaModelBase):
     # content types that every project will have
     CONTENT_TYPES = ["perftest", "objectstore"]
 
-
+    # Total number of replicates allowed for a
+    # single test suite associated with a JSON object
+    REPLICATE_LIMIT = 5000
 
     @classmethod
     def create(cls, project, hosts=None, types=None, cron_batch=None):
@@ -1191,25 +1193,38 @@ class PerformanceTestModel(DatazillaModelBase):
 
     def _set_test_values(self, data, test_id, test_run_id):
         """Insert test values to database for given test_id and test_run_id."""
+
+        total_replicates = 0
+
         for page, values in data['results'].items():
 
             page_id = self._get_or_create_page_id(page, test_id)
 
             placeholders = []
             for index, value in enumerate(values, 1):
-                placeholders.append(
-                    (
-                        test_run_id,
-                        index,
-                        page_id,
-                        # TODO: Need to get the value id into the json
-                        1,
-                        value,
-                        )
-                    )
 
-            self._insert_data(
-                'set_test_values', placeholders, executemany=True)
+                total_replicates += 1
+
+                if total_replicates <= self.REPLICATE_LIMIT:
+
+                    placeholders.append(
+                        (
+                            test_run_id,
+                            index,
+                            page_id,
+                            # TODO: Need to get the value id into the json
+                            1,
+                            value,
+                            )
+                        )
+
+                else:
+                    #Replicate limit reached
+                    break
+
+            if placeholders:
+                self._insert_data(
+                    'set_test_values', placeholders, executemany=True)
 
 
     def _get_or_create_aux_id(self, aux_data, test_id):
