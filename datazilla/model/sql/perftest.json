@@ -271,8 +271,7 @@
       "set_test_collection":{
 
          "sql":"INSERT INTO `test_collection` (`name`, `description`)
-                VALUES (?, ?)
-                ON DUPLICATE KEY UPDATE `name`=?",
+                VALUES (?, ?)",
 
          "host":"master_host"
       },
