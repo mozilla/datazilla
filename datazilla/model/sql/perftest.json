@@ -423,20 +423,7 @@
       "get_test_run_ids":{
         "sql":"SELECT DISTINCT(tr.id) AS test_run_id
             FROM test_run AS tr
-            LEFT JOIN build AS b ON b.id = tr.build_id
-            LEFT JOIN product AS p ON p.id = b.product_id
-            LEFT JOIN machine AS m ON m.id = tr.machine_id
-            LEFT JOIN operating_system as os on os.id = m.operating_system_id
-            LEFT JOIN test as t on t.id = tr.test_id
-            WHERE p.branch = ? AND tr.revision = ? REP0",
-
-        "host":"read_host"
-      },
-      "get_test_run_ids_no_revision":{
-        "sql":"SELECT DISTINCT(tr.id) AS test_run_id
-            FROM test_run AS tr
             LEFT JOIN test_value AS tv ON tr.id = tv.test_run_id
-            LEFT JOIN pages AS pg ON tv.page_id = pg.id
             LEFT JOIN build AS b ON b.id = tr.build_id
             LEFT JOIN product AS p ON p.id = b.product_id
             LEFT JOIN machine AS m ON m.id = tr.machine_id

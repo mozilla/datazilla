@@ -11,8 +11,6 @@ import time
 import datetime
 import sys
 
-
-
 def is_number(s):
     try:
         float(s)

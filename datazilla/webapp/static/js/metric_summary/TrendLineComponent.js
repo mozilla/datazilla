@@ -18,15 +18,28 @@ var TrendLineComponent = new Class({
         this.view = new TrendLineView('#TrendLineView',{});
         this.model = new TrendLineModel('#TrendLineModel',{});
 
+        //Holds all trend line data loaded
         this.trendLines = {};
+        //Maintains the trend line load order according
+        //to the order the user loads them
         this.trendLineOrder = [];
 
-        //[series index][datapoint index]
+        //Maps the flot series index to the trendline keys
+        //and allows flot callback functions to map to the
+        //corresponding reference data in this.trendLines
         this.seriesIndexToKey = [];
         this.seriesIndexToKey.push([]); //pass series
         this.seriesIndexToKey.push([]); //fail series
 
         this.tickDisplayDates = {};
+
+        //Holds all event data received. It's used for
+        //reloading all series data with updated pushes
+        //before and after values.
+        this.eventData = [];
+
+        this.pushesBefore = 50;
+        this.pushesAfter = 3;
 
         this.plot = undefined;
 
@@ -65,19 +78,38 @@ var TrendLineComponent = new Class({
             _.bind(this.initializeTrend, this)
         );
 
+        $(this.view.getPushesSel).bind(
+            'click', _.bind(this.getPushes, this));
+
         $(this.view.detailContainerOneSel).live(
             'click mouseover mouseout', _.bind(this.closeDataSeries, this)
             );
 
+        //Set the push counts in the HTML
+        this.view.setPushCounts(this.pushesBefore, this.pushesAfter);
+
+        $(this.view.pushesBeforeSel).bind(
+            'keyup', _.bind(this._handlePushAroundInput, this)
+            );
+
+        $(this.view.pushesAfterSel).bind(
+            'keyup', _.bind(this._handlePushAroundInput, this)
+            );
     },
     initializeTrend: function(event, eventData){
 
-        this.eventDataReceived = eventData;
-
         if( eventData.checked ){
+
             //Load trend line
+            var key = MS_PAGE.getDatumKey(eventData);
+
+            this.trendLineOrder.push(key);
+
+            var pushCounts = this.view.getPushCounts();
+
             this.model.getTrendLine(
-                this, this.loadTrendData, this.dataLoadError, eventData
+                this, this.loadTrendData, this.dataLoadError, eventData,
+                pushCounts.before, pushCounts.after
                 );
 
         }else {
@@ -86,11 +118,33 @@ var TrendLineComponent = new Class({
             this.deleteDataSeries(key);
         }
     },
-    loadTrendData: function(data, response){
+    getPushes: function(event){
 
-        data = this._loadMockData(data);
+        var pushCounts = this.view.getPushCounts();
 
-        this._loadTrendLineData(data);
+        for(var i=0; i<this.trendLineOrder.length; i++){
+
+            var key = this.trendLineOrder[i];
+
+            //Build the eventData data structure
+            //for each trend line
+            var trendLineEventData = {};
+            trendLineEventData.pagename = this.trendLines[key].pagename;
+            trendLineEventData.testsuite = this.trendLines[key].testsuite;
+            trendLineEventData.platform = this.trendLines[key].platform;
+            trendLineEventData.platform_info = this.trendLines[key].platform_info;
+
+            this.model.getTrendLine(
+                this, this.loadTrendData, this.dataLoadError,
+                trendLineEventData, pushCounts.before, pushCounts.after
+                );
+        }
+    },
+    loadTrendData: function(data, response, eventData){
+
+        data = this._loadMockData(data, eventData);
+
+        this._loadTrendLineData(data, eventData);
 
         var chartData = [];
 
@@ -132,7 +186,7 @@ var TrendLineComponent = new Class({
 
                 if(!this.tickDisplayDates[j]){
                     var unixTimestamp = this.trendLines[key]['data'][j]['date'];
-                    var tickLabel = this.convertTimestampToDate(unixTimestamp);
+                    var tickLabel = this.convertTimestampToDate(unixTimestamp, false);
                     this.tickDisplayDates[j] = tickLabel;
                 }
 
@@ -220,15 +274,30 @@ var TrendLineComponent = new Class({
                 'color': this.view.trendLineColor
                 };
     },
-    convertTimestampToDate: function(unixTimestamp){
+    convertTimestampToDate: function(unixTimestamp, getHMS){
         var dateObj = new Date(unixTimestamp * 1000);
         var dateString = dateObj.getFullYear() + '-' +
-            (dateObj.getMonth() + 1) + '-' +
-            dateObj.getDate() + ' ' +
-            dateObj.getHours() + ':' +
-            dateObj.getMinutes() + ':' +
-            dateObj.getSeconds();
+            this.padNumber((dateObj.getMonth() + 1), 10, '0') + '-' +
+            dateObj.getDate();
+
+        if(getHMS){
+            dateString += ' ' +
+                dateObj.getHours() + ':' +
+                dateObj.getMinutes() + ':' +
+                this.padNumber(dateObj.getSeconds(), 10, '0');
+        }
+
         return dateString;
+    },
+    padNumber: function(n, max, pad){
+
+        n = parseInt(n);
+
+        if( n < max ){
+            return pad + n;
+        }
+
+        return n;
     },
     formatLabel: function(label, series){
         return this.tickDisplayDates[label];
@@ -293,6 +362,15 @@ var TrendLineComponent = new Class({
 
         this.loadTrendData([], {});
     },
+    _handlePushAroundInput: function(event){
+        if(event.keyCode === 13){
+            this.getPushes();
+        } else {
+            var v = $(event.target).val();
+            var integersEntered = parseInt(v);
+            $(event.target).val(integersEntered || "");
+        }
+    },
     _getKeyFromEventTarget: function(etarget){
 
         var sel =  '[id*="' + this.view.legendIdPrefix + '"]';
@@ -309,6 +387,13 @@ var TrendLineComponent = new Class({
     _hoverPlot: function(event, pos, item){
 
         if(item){
+
+            //Check if the datum display is locked
+            var checked = $(this.view.datumLockSel).attr('checked');
+            if(checked){
+                //Datum locked, do nothing
+                return;
+            }
 
             var key = this.seriesIndexToKey[item.seriesIndex][item.dataIndex];
 
@@ -348,7 +433,7 @@ var TrendLineComponent = new Class({
 
             keyValueArray.push(
                 {'label':'date',
-                 'value':[this.convertTimestampToDate(datum.date)]});
+                 'value':[this.convertTimestampToDate(datum.date, true)]});
 
             keyValueArray.push(
                 {'label':'branch',
@@ -379,6 +464,7 @@ var TrendLineComponent = new Class({
             var url = this.model.getRawDataUrl(this.trendLines[key]);
 
             var color = MS_PAGE.passColor;
+
             if( datum.metrics_data[0]['pages'][pagename]['test_evaluation'] === false ){
                 color = MS_PAGE.failColor;
             }
@@ -404,33 +490,32 @@ var TrendLineComponent = new Class({
     },
     _clickPlot: function(event, pos, item){
         if(item){
-            var key = this.seriesIndexToKey[item.seriesIndex][item.dataIndex];
+            $(this.view.datumLockSel).click();
         }
     },
-    _loadTrendLineData: function(data){
+    _loadTrendLineData: function(data, eventData){
 
         if(data.length > 0){
 
-            var key = MS_PAGE.getDatumKey(this.eventDataReceived);
+            var key = MS_PAGE.getDatumKey(eventData);
 
-            if(!this.trendLines[key]){
-                this.trendLineOrder.push(key);
+            //if(!this.trendLines[key]){
 
                 this.trendLines[key] = {
-                    pagename:this.eventDataReceived.pagename,
-                    testsuite:this.eventDataReceived.testsuite,
-                    platform:this.eventDataReceived.platform,
-                    platform_info:this.eventDataReceived.platform_info,
+                    pagename:eventData.pagename,
+                    testsuite:eventData.testsuite,
+                    platform:eventData.platform,
+                    platform_info:eventData.platform_info,
                     data:data,
                     rgb_alpha:"",
                     datapoint_plot_location:{
                         'series_index':0, 'point_index':0
                         }
                     };
-            }
+            //}
         }
     },
-    _loadMockData: function(data){
+    _loadMockData: function(data, eventData){
 
         var datum = {};
         var datumIndex = 0;
@@ -445,22 +530,22 @@ var TrendLineComponent = new Class({
             if( datumIndex != i ){
 
                 var datumClone = jQuery.extend(true, {}, datum);
-                var mean = parseInt(datumClone['metrics_data'][0].pages[ this.eventDataReceived.pagename ].mean);
-                var trendMean = parseInt(datumClone['metrics_data'][0].pages[ this.eventDataReceived.pagename ].trend_mean);
+                var mean = parseInt(datumClone['metrics_data'][0].pages[eventData.pagename ].mean);
+                var trendMean = parseInt(datumClone['metrics_data'][0].pages[eventData.pagename ].trend_mean);
 
                 //mean = Math.floor(Math.random() * (mean - (mean - 5) + 1)) + (mean - 5);
                 //trendMean = Math.floor(Math.random() * (trendMean - (trendMean - 5) + 1)) + (trendMean - 5);
 
-                datumClone['metrics_data'][0].pages[ this.eventDataReceived.pagename ].mean = parseInt(mean);
-                datumClone['metrics_data'][0].pages[ this.eventDataReceived.pagename ].trend_mean = parseInt(trendMean);
-                datumClone['metrics_data'][0].pages[ this.eventDataReceived.pagename ].test_evaluation = true;
+                datumClone['metrics_data'][0].pages[eventData.pagename ].mean = parseInt(mean);
+                datumClone['metrics_data'][0].pages[eventData.pagename ].trend_mean = parseInt(trendMean);
+                datumClone['metrics_data'][0].pages[eventData.pagename ].test_evaluation = true;
 
                 datumClone.dz_revision = 'SomeOtherRevision';
 
                 data[i] = datumClone;
             }
-            var pushlogId = parseInt(datumClone['metrics_data'][0].pages[ this.eventDataReceived.pagename ]['pushlog_id']);
-            datumClone['metrics_data'][0].pages[ this.eventDataReceived.pagename ]['pushlog_id'] = pushlogId + i;
+            var pushlogId = parseInt(datumClone['metrics_data'][0].pages[eventData.pagename ]['pushlog_id']);
+            datumClone['metrics_data'][0].pages[eventData.pagename ]['pushlog_id'] = pushlogId + i;
         }
 
         return data;
@@ -490,6 +575,10 @@ var TrendLineView = new Class({
         this.eventContainerSel = '#su_container';
         this.chartContainerSel = '#su_trendline_plot';
         this.detailContainerOneSel = '#su_graph_detail_container_1';
+        this.datumLockSel = '#su_lock_datum';
+
+        this.pushesBeforeSel = '#su_pushes_before';
+        this.pushesAfterSel = '#su_pushes_after';
 
         this.datumRevision = '#su_datum_revision';
         this.datumRawDataAnchor = '#su_raw_data';
@@ -511,6 +600,9 @@ var TrendLineView = new Class({
         this.trendLineColor = '#A9A9A9';
 
         this.displayedSeriesLabel = {};
+
+        this.getPushesSel = '#su_get_pushes';
+        $(this.getPushesSel).button();
 
     },
 
@@ -545,7 +637,6 @@ var TrendLineView = new Class({
                     data['pagename'] + ' ' +
                     data['platform'];
 
-        //Add alpha channel to lighten the color
         var legendClone = $(this.datasetLegendSel).clone();
 
         var id = this.getSeriesId(key);
@@ -567,7 +658,7 @@ var TrendLineView = new Class({
 
         //Cannot set the div hover style in css only because the
         //explicit setting of background-color seems to over ride
-        //the hover style.
+        //the hover style.  Setting it dynamically with jquery here.
         $(legendClone).hover(
             function(){
                 //On mouseOver
@@ -598,7 +689,6 @@ var TrendLineView = new Class({
             var sel = this.datumDisplayContainers[i];
             $(sel).css('background-color', rgbAlpha);
             $(sel).css('border-color', color);
-            //$(sel).css('border-width', 2);
         }
 
         for(var i=0; i<datumKeyValues.length; i++){
@@ -663,7 +753,10 @@ var TrendLineView = new Class({
         }
     },
     hexToRgb: function(hex) {
+
         var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+
+        //Add alpha channel to lighten the color
         var rgbAlpha = 'rgba(' + parseInt(result[1], 16) + ',' +
             parseInt(result[2], 16) + ',' +
             parseInt(result[3], 16) + ',0.1)';
@@ -673,6 +766,18 @@ var TrendLineView = new Class({
     closeDataSeries: function(key){
         $('#' + this.legendIdPrefix + key).remove();
         delete(this.displayedSeriesLabel[key]);
+    },
+    setPushCounts: function(pushesBefore, pushesAfter){
+
+        $(this.pushesBeforeSel).val(pushesBefore);
+        $(this.pushesAfterSel).val(pushesAfter);
+
+    },
+    getPushCounts: function(){
+        var counts = {};
+        counts.before = $(this.pushesBeforeSel).val();
+        counts.after = $(this.pushesAfterSel).val();
+        return counts;
     }
 
 });
@@ -690,9 +795,11 @@ var TrendLineModel = new Class({
         this.parent(options);
 
     },
-    getTrendLine: function(context, fnSuccess, fnError, eventData){
+    getTrendLine: function(
+        context, fnSuccess, fnError, eventData, pushesBefore, pushesAfter
+        ){
 
-        var url = this.getMetricsUrl(eventData, 20, 3);
+        var url = this.getMetricsUrl(eventData, pushesBefore, pushesAfter);
 
         jQuery.ajax( url, {
             accepts:'application/json',
@@ -701,7 +808,9 @@ var TrendLineModel = new Class({
             type:'GET',
             context:context,
             error:fnError,
-            success:fnSuccess,
+            success: function(data, textStatus, jqXHR){
+                fnSuccess.call(this, data, jqXHR, eventData);
+                }
         });
     },
     getMetricsUrl: function(data, pushesBefore, pushesAfter){

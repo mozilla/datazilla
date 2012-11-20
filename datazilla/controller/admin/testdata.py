@@ -5,6 +5,7 @@ Functions for fetching test data from a project.
 import json
 
 from datazilla.model import factory
+from datazilla.model import utils
 
 def get_testdata(
     project, branch, revision, os_name=None, os_version=None,
@@ -17,7 +18,7 @@ def get_testdata(
 
     # get the testrun ids from perftest
     test_run_ids = ptm.get_test_run_ids(
-        branch, revision, os_name, os_version, branch_version, processor,
+        branch, [revision], os_name, os_version, branch_version, processor,
         build_type, test_name
         )
 
@@ -67,7 +68,7 @@ def get_metrics_data(
 
     # get the testrun ids from perftest
     test_run_ids = ptm.get_test_run_ids(
-        branch, revision, os_name, os_version, branch_version, processor,
+        branch, [revision], os_name, os_version, branch_version, processor,
         build_type, test_name
         )
 
@@ -92,7 +93,7 @@ def get_metrics_summary(
 
     # get the testrun ids from perftest
     test_run_ids = ptm.get_test_run_ids(
-        branch, revision, os_name, os_version, branch_version, processor,
+        branch, [revision], os_name, os_version, branch_version, processor,
         build_type, test_name
         )
 
@@ -126,6 +127,7 @@ def get_metrics_pushlog(
 
     aggregate_pushlog = []
     pushlog_id_index_map = {}
+    all_revisions = []
 
     for node in pushlog:
         if node['pushlog_id'] not in pushlog_id_index_map:
@@ -148,12 +150,14 @@ def get_metrics_pushlog(
         revision = mtm.truncate_revision(node['node'])
         aggregate_pushlog[pushlog_index]['revisions'].append(revision)
 
+        all_revisions.append(revision)
+
     pushlog_id_list = pushlog_id_index_map.keys()
 
     # get the testrun ids from perftest
     filtered_test_run_ids = ptm.get_test_run_ids(
-        branch, None, os_name, os_version, branch_version, processor,
-        build_type, test_name, page_name
+        branch, all_revisions, os_name, os_version, branch_version, processor,
+        build_type, test_name
         )
 
     pushlog_test_run_ids = mtm.get_test_run_ids_from_pushlog_ids(

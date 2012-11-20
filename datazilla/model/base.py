@@ -856,7 +856,7 @@ class PerformanceTestModel(DatazillaModelBase):
 
 
     def get_test_run_ids(
-        self, branch, revision, os_name=None, os_version=None,
+        self, branch, revisions, os_name=None, os_version=None,
         branch_version=None, processor=None, build_type=None,
         test_name=None, page_name=None):
 
@@ -864,15 +864,12 @@ class PerformanceTestModel(DatazillaModelBase):
         placeholders = [branch]
         rep = []
 
-        if not revision:
-            proc = 'perftest.selects.get_test_run_ids_no_revision'
-        else:
-            placeholders.append(revision)
-
-        if page_name:
+        if revisions:
+            revision_string = ','.join( map( lambda v:str(v), revisions ) )
             self.get_replace_and_placeholders(
-                rep, placeholders, 'pg.url', page_name
+                rep, placeholders, 'tr.revision', revision_string
                 )
+
         if os_name:
             self.get_replace_and_placeholders(
                 rep, placeholders, 'os.name', os_name

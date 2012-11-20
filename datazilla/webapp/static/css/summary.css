@@ -4,7 +4,8 @@ body {
     font-size: 14px;
     padding: 0;
     border-top: 2px solid #676767;
-    min-width: 1024px;
+    /*min-width: 1024px;*/
+    min-width: 1050px;
 }
 div.su-large-text {
     font-size: 14px;
@@ -229,4 +230,13 @@ div.su-data-series-panel {
 }
 .ui-button-text{
     font-size: 11px !important;
+}
+.su-vertical-text {
+    -webkit-transform:rotate(270deg);
+    -moz-transform:rotate(270deg);
+    -o-transform: rotate(270deg);
+    white-space:nowrap;
+    position:absolute;
+    left:135px;
+    margin-top:150px;
 }
