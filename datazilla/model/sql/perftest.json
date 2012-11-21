@@ -626,13 +626,6 @@
 
         "host":"master_host"
     },
-    "get_summary_cache_keys":{
-
-        "sql":"SELECT `item_id`, `item_data`
-                FROM `summary_cache`",
-
-        "host":"master_host"
-    },
     "get_test_collections":{
 
         "sql":"SELECT tc.id,
