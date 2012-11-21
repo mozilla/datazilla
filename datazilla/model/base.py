@@ -1013,8 +1013,7 @@ class PerformanceTestModel(DatazillaModelBase):
 
         id = self._insert_data_and_get_id('set_test_collection',
                                           [ name,
-                                            description,
-                                            name ])
+                                            description ])
 
         return id
 

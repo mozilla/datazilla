@@ -2,11 +2,6 @@
 PYTHON_ROOT=/usr/bin/
 DATAZILLA_HOME=/usr/local/datazilla
 
-*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_summary_cache --build --cache --project stoneridge
-*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_summary_cache --build --cache --project b2g
-*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_summary_cache --build --cache --project jetperf
-*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_summary_cache --build --cache --project test
-
 */2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --load --project stoneridge
 */2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --load --project b2g
 */2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --load --project jetperf

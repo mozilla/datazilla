@@ -39,6 +39,8 @@ def load_test_collection(project):
         id = ptm.set_test_collection(new_name, "")
         ptm.set_test_collection_map(id, product_names[ new_name ])
 
+    ptm.cache_ref_data()
+
     ptm.disconnect()
 
 def get_test_collection_name(product, version, branch):
