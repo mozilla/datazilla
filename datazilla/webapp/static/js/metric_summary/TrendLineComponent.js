@@ -41,6 +41,17 @@ var TrendLineComponent = new Class({
         this.pushesBefore = 50;
         this.pushesAfter = 3;
 
+        //true indicates push retrieval in progress
+        //false indicates more pushes can be retrieved
+        this.getPushState = false;
+
+        //The first simulated table checkbox click will
+        //not have the eventData.checked attribute set.  This
+        //switch allows initializeTrend to fully process the
+        //event anyway.  Not sure why the .click() function
+        //does not take care of this.
+        this.simulatedTableCBClick = false;
+
         this.plot = undefined;
 
         this.chartOptions = {
@@ -66,6 +77,7 @@ var TrendLineComponent = new Class({
 
         this.tableInputClickEvent = 'TABLE_CLICK_EVENT';
         this.closeDataSeriesEvent = 'CLOSE_DATA_SERIES_EVENT';
+        this.defaultRowSelectionEvent = 'DEFAULT_ROW_SELECTION_EVENT';
 
         $(this.view.chartContainerSel).bind(
             'plotclick', _.bind(this._clickPlot, this));
@@ -95,17 +107,32 @@ var TrendLineComponent = new Class({
         $(this.view.pushesAfterSel).bind(
             'keyup', _.bind(this._handlePushAroundInput, this)
             );
+
+        //Simulate click on the default test suite table row
+        $(this.view.eventContainerSel).bind(
+            this.defaultRowSelectionEvent,
+            _.bind(this.clickTableCB, this)
+            );
+    },
+    clickTableCB: function(event, eventData){
+        this.simulatedTableCBClick = true;
+        $(eventData).click();
     },
     initializeTrend: function(event, eventData){
 
-        if( eventData.checked ){
+        if(this.simulatedTableCBClick){
+            eventData.checked = 'checked';
+        }
 
+        if( eventData.checked ){
             //Load trend line
             var key = MS_PAGE.getDatumKey(eventData);
 
             this.trendLineOrder.push(key);
 
             var pushCounts = this.view.getPushCounts();
+
+            this.setGetPushState();
 
             this.model.getTrendLine(
                 this, this.loadTrendData, this.dataLoadError, eventData,
@@ -122,9 +149,12 @@ var TrendLineComponent = new Class({
 
         var pushCounts = this.view.getPushCounts();
 
+
         for(var i=0; i<this.trendLineOrder.length; i++){
 
             var key = this.trendLineOrder[i];
+
+            this.setGetPushState();
 
             //Build the eventData data structure
             //for each trend line
@@ -139,6 +169,14 @@ var TrendLineComponent = new Class({
                 trendLineEventData, pushCounts.before, pushCounts.after
                 );
         }
+    },
+    setGetPushState: function(){
+        this.getPushState = true;
+        this.view.setGetPushState();
+    },
+    unsetGetPushState: function(){
+        this.getPushState = false;
+        this.view.unsetGetPushState();
     },
     loadTrendData: function(data, response, eventData){
 
@@ -252,6 +290,15 @@ var TrendLineComponent = new Class({
 
         this.view.drawCircleAroundDataPoints(targetRevisions, this.plot);
 
+        this.unsetGetPushState();
+        this.view.displayDashboard();
+
+        if(this.simulatedTableCBClick === false){
+            //var datum = this.trendLines[key]['data'][ item.datapoint[0] ];
+            //var key = this.seriesIndexToKey[item.seriesIndex][item.dataIndex];
+            //_hoverPlot: function(event, pos, item){
+            this.simulatedTableCBClick = true;
+        }
     },
     getFailDataset: function(){
         return {
@@ -300,7 +347,7 @@ var TrendLineComponent = new Class({
         return n;
     },
     formatLabel: function(label, series){
-        return this.tickDisplayDates[label];
+        return this.tickDisplayDates[label] || "";
     },
     closeDataSeries: function(event){
 
@@ -364,8 +411,11 @@ var TrendLineComponent = new Class({
     },
     _handlePushAroundInput: function(event){
         if(event.keyCode === 13){
-            this.getPushes();
+            if(this.getPushState === false){
+                this.getPushes();
+            }
         } else {
+            //Prevent user from entering anything other than an integer
             var v = $(event.target).val();
             var integersEntered = parseInt(v);
             $(event.target).val(integersEntered || "");
@@ -387,7 +437,6 @@ var TrendLineComponent = new Class({
     _hoverPlot: function(event, pos, item){
 
         if(item){
-
             //Check if the datum display is locked
             var checked = $(this.view.datumLockSel).attr('checked');
             if(checked){
@@ -572,6 +621,9 @@ var TrendLineView = new Class({
 
         this.parent(options);
 
+        this.pushlogSpinnerSel = '#su_pushlog_spinner';
+        this.pushlogDashboardSel = '#su_pushlog_dashboard';
+
         this.eventContainerSel = '#su_container';
         this.chartContainerSel = '#su_trendline_plot';
         this.detailContainerOneSel = '#su_graph_detail_container_1';
@@ -579,6 +631,7 @@ var TrendLineView = new Class({
 
         this.pushesBeforeSel = '#su_pushes_before';
         this.pushesAfterSel = '#su_pushes_after';
+        this.getPushSpinnerSel = '#su_get_pushes_spinner';
 
         this.datumRevision = '#su_datum_revision';
         this.datumRawDataAnchor = '#su_raw_data';
@@ -587,7 +640,8 @@ var TrendLineView = new Class({
 
         this.datumDisplayContainers = [
             this.datumRevision, this.datumControls,
-            this.detailContainerTwoSel ];
+            this.detailContainerTwoSel
+            ];
 
         this.datasetLegendSel = '#su_legend';
         this.datasetTitleName = 'su_dataset_title';
@@ -604,8 +658,25 @@ var TrendLineView = new Class({
         this.getPushesSel = '#su_get_pushes';
         $(this.getPushesSel).button();
 
+        this.dashboardDisplayed = false;
     },
+    displayDashboard: function(){
+        if(this.dashboardDisplayed === false){
+            $(this.pushlogSpinnerSel).css('display', 'none');
+            $(this.pushlogDashboardSel).css('display', 'block');
+        }
+    },
+    setGetPushState: function(){
 
+        $(this.getPushesSel).button({ "disabled": true });
+        $(this.getPushSpinnerSel).css('display', 'block');
+    },
+    unsetGetPushState: function(){
+
+        $(this.getPushesSel).button({ "disabled": false });
+        $(this.getPushSpinnerSel).css('display', 'none');
+
+    },
     drawCircleAroundDataPoints: function(targetRevisions, plot){
 
         var ctx = plot.getCanvas().getContext("2d");

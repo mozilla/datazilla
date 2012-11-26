@@ -52,6 +52,12 @@ var TestPagesView = new Class({
         this.failBackgroundColor = 'su-fail-background-color';
         this.passBackgroundColor = 'su-pass-background-color';
 
+        //This is used to store the row to initialize the
+        //push log with.  It's set by _adaptData to the first
+        //row in the first table loaded.
+        this.defaultRowCbSel = "";
+        this.defaultRowSelectionSent = false;
+
         this.cbIdPrefix = 'su_cb_';
 
         this.scrollHeight = parseInt($(this.tableContainerSel).css('height')) - 125;
@@ -64,6 +70,7 @@ var TestPagesView = new Class({
         this.gridClickEvent = 'GRID_CLICK_EVENT';
         this.gridMouseoverEvent = 'GRID_MOUSEOVER_EVENT';
         this.closeDataSeriesEvent = 'CLOSE_DATA_SERIES_EVENT';
+        this.defaultRowSelectionEvent = 'DEFAULT_ROW_SELECTION_EVENT';
 
         $(this.eventContainerSel).bind(
             this.gridMouseoverEvent,
@@ -80,8 +87,8 @@ var TestPagesView = new Class({
             _.bind(this.uncheckCb, this)
         );
 
-        $(this.tableSel).live(
-            'click mouseover', _.bind(this.tableEventHandler, this)
+        $(this.tableSel).bind(
+            'click', _.bind(this.tableEventHandler, this)
         );
     },
 
@@ -130,9 +137,20 @@ var TestPagesView = new Class({
             'aaSorting':[ [2, 'asc'] ]
         };
 
+
         this._adaptData(datatableOptions, eventData.data);
 
         this.dataTable = $(this.tableSel).dataTable( datatableOptions );
+
+        //Send default row event out
+        if(this.defaultRowSelectionSent === false){
+
+            $(this.eventContainerSel).trigger(
+                this.defaultRowSelectionEvent, this.defaultRowCbSel
+                );
+
+            this.defaultRowSelectionSent = true;
+        }
 
     },
     lockTable: function(event, eventData){
@@ -144,14 +162,7 @@ var TestPagesView = new Class({
     },
     tableEventHandler: function(event){
 
-        if(event.type == 'mouseover'){
-
-            var target = $(event.target);
-            var elParent = $(target).parent();
-
-            var highlightClass = "";
-
-        }else if(event.type == 'click'){
+        if(event.type == 'click'){
 
             if( $(event.target).is('input') ){
 
@@ -191,6 +202,10 @@ var TestPagesView = new Class({
                 };
 
             var key = this.cbIdPrefix + MS_PAGE.getDatumKey(keyData);
+
+            if( (i === 0) && (this.defaultRowCbSel === "")){
+                this.defaultRowCbSel = '#' + key;
+            }
 
             //page name
             var row = {};

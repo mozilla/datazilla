@@ -50,6 +50,11 @@ div.su-spinner {
   background: transparent url(/static/images/spinner.gif) no-repeat center center;
   height:280px;
 }
+div.su-small-spinner {
+  background: transparent url(/static/images/spinner.gif) no-repeat center center;
+  height:35px;
+  width:35px;
+}
 .su-scroll-panel {
     overflow-y: auto;
     height:200px;

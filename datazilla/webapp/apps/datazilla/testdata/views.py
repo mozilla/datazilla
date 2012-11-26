@@ -121,6 +121,10 @@ def get_metrics_pushlog(request, project, branch, revision):
     except ValueError:
         pass
 
+    #applies to both before/after, so total of 2*maximum_pushes
+    #are allowed
+    maximum_pushes = 1000
+
     pushes_before = 10
     try:
         pushes_before = int(request.GET.get("pushes_before", 10))
@@ -132,6 +136,12 @@ def get_metrics_pushlog(request, project, branch, revision):
         pushes_after = int(request.GET.get("pushes_after", 10))
     except ValueError:
         pass
+
+    #Set maximum limit for pushes before/after
+    if pushes_before > maximum_pushes:
+        pushes_before = maximum_pushes
+    if pushes_after > maximum_pushes:
+        pushes_after = maximum_pushes
 
     numdays = 0
     try:
