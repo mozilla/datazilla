@@ -233,6 +233,13 @@ div.su-data-series-panel {
     padding: 0.5em;
     overflow: auto;
 }
+div.su-datum-info-panel {
+    margin-top: 5px;
+    margin-left: 5px;
+    padding: 0.5em;
+    float:right;
+    width:180px;
+}
 .ui-button-text{
     font-size: 11px !important;
 }

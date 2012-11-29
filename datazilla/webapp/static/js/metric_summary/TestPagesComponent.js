@@ -166,6 +166,11 @@ var TestPagesView = new Class({
 
             if( $(event.target).is('input') ){
 
+                //Retrieve the associated mean
+                var row = $(event.target).closest('tr');
+                var cells = $(row).find('td');
+                var meanValue = $(cells[3]).text();
+
                 var checked = $(event.target).attr('checked');
                 var pagename = $(event.target).attr(this.pagenameDataAttr);
                 var testSuite = $(this.testSuiteSel).text();
@@ -176,7 +181,8 @@ var TestPagesView = new Class({
                     'pagename':pagename,
                     'testsuite':testSuite,
                     'platform':platform,
-                    'platform_info':this.platformInfo
+                    'platform_info':this.platformInfo,
+                    'mean':meanValue
                     };
 
                 $(this.eventContainerSel).trigger(

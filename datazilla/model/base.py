@@ -246,6 +246,7 @@ class PushLogModel(DatazillaModelBase):
 
         node = push_data[0]['node']
         push_id = push_data[0]['push_id']
+        branch_id = push_data[0]['branch_id']
 
         pushes_before_proc = 'hgmozilla.selects.get_push_ids_before_node'
         pushes_after_proc = 'hgmozilla.selects.get_push_ids_after_node'
@@ -254,17 +255,60 @@ class PushLogModel(DatazillaModelBase):
             proc=pushes_before_proc,
             debug_show=self.DEBUG,
             return_type='tuple',
-            placeholders=[push_id, branch_name, pushes_before]
+            placeholders=[push_id, branch_id, pushes_before]
             )
 
         pushes_after_data = self.hg_ds.dhub.execute(
             proc=pushes_after_proc,
             debug_show=self.DEBUG,
             return_type='tuple',
-            placeholders=[push_id, branch_name, pushes_after]
+            placeholders=[push_id, branch_id, pushes_after]
             )
 
-        return pushes_before_data + push_data + pushes_after_data
+        #Combine all of the requested push data
+        pushlog = pushes_before_data + push_data + pushes_after_data
+
+        #Retrieve a complete list of all of the pushlog ids
+        pushlog_ids = []
+
+        map(
+            lambda n: pushlog_ids.append(n['pushlog_id']),
+            pushlog
+            )
+
+        #Use a separate query to retrieve associated revisions so
+        #we can control the number of pushes by using a LIMIT clause
+        changeset_data_proc = 'hgmozilla.selects.get_changeset_data_for_pushes'
+
+        #Build the sql WHERE IN clause
+        where_in_clause = ','.join( map( lambda v:'%s', pushlog_ids ) )
+
+        changeset_data = self.hg_ds.dhub.execute(
+            proc=changeset_data_proc,
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            placeholders=pushlog_ids,
+            replace=[where_in_clause]
+            )
+
+        #Aggregate changesets
+        changeset_lookup = {}
+        for changeset in changeset_data:
+            if changeset['pushlog_id'] not in changeset_lookup:
+                changeset_struct = {
+                    'revisions':[],
+                    'pushlog_id':changeset['pushlog_id']
+                    }
+
+                changeset_lookup[ changeset['pushlog_id'] ] = changeset_struct
+
+            changeset_lookup[ changeset['pushlog_id'] ]['revisions'].append(
+                { 'revision':changeset['node'],
+                  'desc':changeset['desc'],
+                  'author':changeset['author'] }
+                )
+
+        return pushlog, changeset_lookup
 
     def get_params(self, numdays, enddate=None):
         """
@@ -288,6 +332,7 @@ class PushLogModel(DatazillaModelBase):
             "full": 1,
             "startdate": _startdate.strftime("%m/%d/%Y"),
             }
+
         # enddate is optional.  the endpoint will just presume today,
         # if not given.
         if enddate:

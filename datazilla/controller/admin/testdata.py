@@ -117,56 +117,54 @@ def get_metrics_pushlog(
     ptm = factory.get_ptm(project)
     mtm = factory.get_mtm(project)
 
-    pushlog = {}
-    if days_ago > 0:
-        pushlog = plm.get_branch_pushlog(None, days_ago, numdays, branch)
-    else:
-        pushlog = plm.get_branch_pushlog_by_revision(
-            revision, branch, pushes_before, pushes_after
+    aggregate_pushlog, changeset_lookup = plm.get_branch_pushlog_by_revision(
+        revision, branch, pushes_before, pushes_after
         )
 
-    aggregate_pushlog = []
     pushlog_id_index_map = {}
     all_revisions = []
 
-    for node in pushlog:
-        if node['pushlog_id'] not in pushlog_id_index_map:
-            node_struct = {
-                    'revisions':[],
-                    'dz_revision':"",
-                    'branch_name':node['name'],
-                    'date':node['date'],
-                    'push_id':node['push_id'],
-                    'pushlog_id':node['pushlog_id'],
-                    'metrics_data':[],
-                    }
+    for index, node in enumerate(aggregate_pushlog):
 
-            aggregate_pushlog.append(node_struct)
-            index = len(aggregate_pushlog) - 1
+        pushlog_id_index_map[node['pushlog_id']] = index
 
-            pushlog_id_index_map[node['pushlog_id']] = index
+        aggregate_pushlog[index]['metrics_data'] = []
+        aggregate_pushlog[index]['dz_revision'] = ""
+        aggregate_pushlog[index]['branch_name'] = branch
 
-        pushlog_index = pushlog_id_index_map[ node['pushlog_id'] ]
-        revision = mtm.truncate_revision(node['node'])
-        aggregate_pushlog[pushlog_index]['revisions'].append(revision)
+        changesets = changeset_lookup[ node['pushlog_id'] ]
 
-        all_revisions.append(revision)
+        #truncate the revision strings and collect them
+        for cset_index, revision_data in enumerate(changesets['revisions']):
+
+            full_revision = revision_data['revision']
+
+            revision = mtm.truncate_revision(full_revision)
+            changesets['revisions'][cset_index]['revision'] = revision
+
+            all_revisions.append(revision)
+
+        aggregate_pushlog[index]['revisions'] = changesets['revisions']
+
 
     pushlog_id_list = pushlog_id_index_map.keys()
 
     # get the testrun ids from perftest
     filtered_test_run_ids = ptm.get_test_run_ids(
-        branch, all_revisions, os_name, os_version, branch_version, processor,
-        build_type, test_name
+        branch, all_revisions, os_name, os_version, branch_version,
+        processor, build_type, test_name
         )
 
+    # get the test run ids associated with the pushlog ids
     pushlog_test_run_ids = mtm.get_test_run_ids_from_pushlog_ids(
         pushlog_ids=pushlog_id_list
         )
 
+    # get intersection
     test_run_ids = list( set(filtered_test_run_ids).intersection(
         set(pushlog_test_run_ids)) )
 
+    # get the metrics data for the intersection
     metrics_data = mtm.get_metrics_data_from_test_run_ids(
         test_run_ids, page_name
         )

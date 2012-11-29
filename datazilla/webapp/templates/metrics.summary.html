@@ -104,10 +104,11 @@
             <div id="su_graph_detail_container_1" class="ui-widget css-left" style="width:135px; overflow-y:auto; height:380px; display:block;"></div>
             <div class="su-vertical-text">Mean (milliseconds)</div>
             <div id="su_trendline_plot" style="margin-left:30px; margin-bottom:20px; float:left; height:350px; width:600px;"></div>
-            <div style="overflow-y: auto; height: 380px; display: block; float:right; width:200px;">
-                <div id="su_datum_revision" style="width:181px;" class="ui-state-highlight ui-corner-all su-data-series-panel css-right su-large-text">REVISION</div>
-                <div id="su_datum_controls" style="width:185px;" class="ui-state-highlight ui-corner-all su-data-series-panel css-right su-light-text">Lock Push:<input id="su_lock_datum" type="checkbox" /><div style="float:right;"><a id="su_raw_data" target="_blank" href="#">Get Raw Data</a></div></div>
-                <div id="su_graph_detail_container_2" style="width:185px; margin-left:5px;" class="ui-state-highlight ui-corner-all su-data-series-panel css-right"></div>
+            <div style="overflow-y:auto; height: 380px; display: block; float:right; width:200px;">
+                <div id="su_datum_revision" text-align="center" class="ui-state-highlight ui-corner-all su-datum-info-panel css-right su-large-text"></div>
+                <div id="su_datum_controls" class="ui-state-highlight ui-corner-all su-datum-info-panel css-right su-light-text">Lock Push:<input id="su_lock_datum" type="checkbox" /><div style="float:right;"><a id="su_raw_data" target="_blank" href="#">Get Raw Data</a></div></div>
+                <div id="su_graph_detail_container_2" class="ui-state-highlight ui-corner-all su-datum-info-panel css-right"></div>
+                <div id="su_graph_detail_container_3" class="ui-state-highlight ui-corner-all su-datum-info-panel css-right"></div>
             </div>
             <div class="ui-helper-clearfix"></div>
             <div style="margin-left:185px; margin-bottom:3px;">Repository (hg.mozilla.org) Push Range: begin<input type="text" size="12" style="margin-left:3px; margin-right:5px;"/>end:<input type="text" size="12" style="margin-left:3px; margin-right:3px;"/><button id="su_get_range" style="margin-left:8px;">Get Range</button></div>

@@ -65,6 +65,7 @@
             "sql":"SELECT p.id AS 'pushlog_id',
                           p.push_id,
                           p.date,
+                          p.user,
                           c.node,
                           b.id AS 'branch_id',
                           b.name
@@ -81,13 +82,9 @@
             "sql":"SELECT p.id AS 'pushlog_id',
                           p.push_id,
                           p.date,
-                          c.node,
-                          b.id AS 'branch_id',
-                          b.name
+                          p.user
                    FROM pushlogs AS p
-                   LEFT JOIN changesets AS c ON p.id = c.pushlog_id
-                   LEFT JOIN branches AS b ON p.branch_id = b.id
-                   WHERE p.push_id < ? AND b.name = ?
+                   WHERE p.push_id < ? AND p.branch_id = ?
                    LIMIT ?",
 
             "host":"read_host"
@@ -98,18 +95,26 @@
             "sql":"SELECT p.id AS 'pushlog_id',
                           p.push_id,
                           p.date,
-                          c.node,
-                          b.id AS 'branch_id',
-                          b.name
+                          p.user
                    FROM pushlogs AS p
-                   LEFT JOIN changesets AS c ON p.id = c.pushlog_id
-                   LEFT JOIN branches AS b ON p.branch_id = b.id
-                   WHERE p.push_id > ? AND b.name = ?
+                   WHERE p.push_id > ? AND p.branch_id = ?
                    LIMIT ?",
 
             "host":"read_host"
         },
+        "get_changeset_data_for_pushes":{
 
+            "sql":"SELECT c.id,
+                          c.pushlog_id,
+                          c.node,
+                          c.author,
+                          c.desc
+                   FROM changesets AS c
+                   WHERE c.pushlog_id IN (REP0)",
+
+            "host":"read_host"
+
+        },
         "get_all_branch_pushlogs":{
             "sql":"SELECT p.id AS 'pushlog_id',
                           p.push_id,

@@ -30,6 +30,7 @@ var TrendLineComponent = new Class({
         this.seriesIndexToKey = [];
         this.seriesIndexToKey.push([]); //pass series
         this.seriesIndexToKey.push([]); //fail series
+        this.seriesIndexToKey.push([]); //no data series
 
         this.tickDisplayDates = {};
 
@@ -194,12 +195,15 @@ var TrendLineComponent = new Class({
 
         var passSeriesIndex = 0;
         var failSeriesIndex = 1;
+        var noMetricsDataSeriesIndex = 2;
 
         var failDataset = this.getFailDataset();
         var passDataset= this.getPassDataset();
+        var noDataDataset= this.getNoDataDataset();
 
         chartData.push(passDataset);
         chartData.push(failDataset);
+        chartData.push(noDataDataset);
 
         for(var i=0; i<this.trendLineOrder.length; i++){
 
@@ -219,54 +223,72 @@ var TrendLineComponent = new Class({
 
             var passIndex = 0;
             var failIndex = 0;
+            var noDataIndex = 0;
+
+            //Used as the mean for any pushes with no data
 
             for(var j=0; j<this.trendLines[key]['data'].length; j++){
 
+                //Store x axis tick labels
                 if(!this.tickDisplayDates[j]){
                     var unixTimestamp = this.trendLines[key]['data'][j]['date'];
                     var tickLabel = this.convertTimestampToDate(unixTimestamp, false);
                     this.tickDisplayDates[j] = tickLabel;
                 }
 
-                var pageData = this.trendLines[key]['data'][j][
-                    'metrics_data'][0]['pages'][
-                        this.trendLines[key]['pagename'] ];
+                if(this.trendLines[key]['data'][j]['metrics_data'].length > 0){
+                    var pageData = this.trendLines[key]['data'][j]['metrics_data'][0]['pages'][this.trendLines[key]['pagename'] ];
 
-                if( pageData.test_evaluation === true ){
-                    passIndex = chartData[0].data.push(
-                        [ j, parseInt(pageData.mean) ]
-                        );
-                    this.seriesIndexToKey[0][passIndex -1] = key;
-                } else {
-                    seriesColor = MS_PAGE.failColor;
-
-                    failIndex = chartData[1].data.push(
-                        [ j, parseInt(pageData.mean) ]
+                    //Metrics data is available set trend datum
+                    var trendDatumIndex = chartData[trendIndex - 1].data.push(
+                        [ j, parseInt(pageData.trend_mean) ]
                         );
 
-                    this.seriesIndexToKey[1][failIndex - 1] = key;
-                }
-
-                var trendDatumIndex = chartData[trendIndex - 1].data.push(
-                    [ j, parseInt(pageData.trend_mean) ]
-                    );
-
-                this.seriesIndexToKey[trendIndex - 1][trendDatumIndex - 1] = key;
-
-                //revision that is loaded in the page
-                if( this.trendLines[key]['data'][j]['dz_revision'] === MS_PAGE.refData.revision ){
-
-                    targetRevisions.push(
-                        {'x':j, 'y':parseInt(pageData.mean) }
-                        );
+                    this.seriesIndexToKey[trendIndex - 1][trendDatumIndex - 1] = key;
 
                     if( pageData.test_evaluation === true ){
-                        this.trendLines[key].datapoint_plot_location.point_index = passIndex - 1;
-                    } else {
-                        targetRevisionType = 'fail';
-                        this.trendLines[key].datapoint_plot_location.point_index = failIndex - 1;
+                        passIndex = chartData[0].data.push(
+                            [ j, parseInt(pageData.mean) ]
+                            );
+
+                        this.seriesIndexToKey[0][passIndex -1] = key;
+                    } else if(pageData.test_evaluation === false) {
+
+                        seriesColor = MS_PAGE.failColor;
+
+                        failIndex = chartData[1].data.push(
+                            [ j, parseInt(pageData.mean) ]
+                            );
+
+                        this.seriesIndexToKey[1][failIndex - 1] = key;
+
                     }
+
+                    //revision that is loaded in the page
+                    if( this.trendLines[key]['data'][j]['dz_revision'] === MS_PAGE.refData.revision ){
+
+                        targetRevisions.push(
+                            {'x':j, 'y':parseInt(pageData.mean) }
+                            );
+
+                        if( pageData.test_evaluation === true ){
+                            this.trendLines[key].datapoint_plot_location.point_index = passIndex - 1;
+                        } else {
+                            targetRevisionType = 'fail';
+                            this.trendLines[key].datapoint_plot_location.point_index = failIndex - 1;
+                        }
+                    }
+
+                } else {
+                    //No metrics data is available, color gray and place
+                    //on trend line
+                    noDataIndex = chartData[2].data.push(
+                        [ j, parseInt(this.trendLines[key]['mean']) ]
+                        );
+
+                    this.seriesIndexToKey[2][noDataIndex - 1] = key;
                 }
+
             }
 
             if(targetRevisionType === 'pass'){
@@ -312,6 +334,13 @@ var TrendLineComponent = new Class({
                 'data':[],
                 'points': { 'show': true },
                 'color': MS_PAGE.passColor
+                };
+    },
+    getNoDataDataset: function(){
+        return {
+                'data':[],
+                'points': { 'show': true },
+                'color': this.view.trendLineColor
                 };
     },
     getTrendLineDataset: function(){
@@ -460,6 +489,7 @@ var TrendLineComponent = new Class({
             this.hoverLegendKey = key;
 
             var datum = this.trendLines[key]['data'][ item.datapoint[0] ];
+            var dataSeries = this.trendLines[key];
 
             var keyValueArray = [];
             var platform = this.trendLines[key]['platform'];
@@ -476,9 +506,17 @@ var TrendLineComponent = new Class({
                 'mean', 'trend_mean', 'stddev', 'trend_stddev',
                 'p', 'fdr', 'h0_rejected', 'n_replicates' ];
 
+            //If the dz_revision is not defined, data metrics datum has not
+            //been received in datazilla, use the first revision associated
+            //with the push.
             keyValueArray.push(
                 {'label':'dz_revision',
-                 'value':[datum.dz_revision]});
+                 'value':[datum.dz_revision ||
+                    datum.revisions[0]['revision'] ] });
+
+            keyValueArray.push(
+                {'label':'author',
+                 'value':[datum.user]});
 
             keyValueArray.push(
                 {'label':'date',
@@ -490,39 +528,56 @@ var TrendLineComponent = new Class({
 
             keyValueArray.push(
                 {'label':'test suite',
-                 'value':[datum.metrics_data[0]['testrun']['suite'] ]});
+                 'value':[dataSeries.testsuite]});
 
             keyValueArray.push(
                 {'label':'page',
                  'value':[pagename]});
 
-            for(var i=0; i<metricKeys.length; i++){
+            var color = MS_PAGE.passColor;
 
-                var mk = metricKeys[i];
-                keyValueArray.push(
-                    {'label':mk,
-                     'value':[datum.metrics_data[0]['pages'][pagename][mk] ] });
+            if(datum.metrics_data.length > 0){
+
+                for(var i=0; i<metricKeys.length; i++){
+
+                    var mk = metricKeys[i];
+                    keyValueArray.push(
+                        {'label':mk,
+                        'value':[datum.metrics_data[0]['pages'][pagename][mk] ] });
+                }
+
+                if( datum.metrics_data[0]['pages'][pagename]['test_evaluation'] === false ){
+                    color = MS_PAGE.failColor;
+                }
+
+            } else {
+                color = this.view.trendLineColor;
             }
 
-            if(datum.revisions.length > 1){
-                keyValueArray.push(
-                    {'label':'revisions',
-                    'value':datum.revisions});
+            var revisionKeyValues = [];
+            for(var i=0; i<datum.revisions.length; i++){
+
+                var revisionDatum = datum.revisions[i];
+
+                revisionKeyValues.push(
+                    {'label':'revision',
+                    'value':[revisionDatum.revision]});
+                revisionKeyValues.push(
+                    {'label':'author',
+                    'value':[revisionDatum.author]});
+                revisionKeyValues.push(
+                    {'label':'desc',
+                    'value':[revisionDatum.desc]});
             }
 
             var url = this.model.getRawDataUrl(this.trendLines[key]);
 
-            var color = MS_PAGE.passColor;
-
-            if( datum.metrics_data[0]['pages'][pagename]['test_evaluation'] === false ){
-                color = MS_PAGE.failColor;
-            }
-
             var rgbAlpha = this.view.hexToRgb(color);
 
             this.view.loadDatumLabelContainer(
-                keyValueArray, url, rgbAlpha, color
+                keyValueArray, revisionKeyValues, url, rgbAlpha, color
                 );
+
         } else {
 
             if(this.hoverLegendKey && this.hoverLegendEl){
@@ -548,20 +603,21 @@ var TrendLineComponent = new Class({
 
             var key = MS_PAGE.getDatumKey(eventData);
 
-            //if(!this.trendLines[key]){
-
-                this.trendLines[key] = {
-                    pagename:eventData.pagename,
-                    testsuite:eventData.testsuite,
-                    platform:eventData.platform,
-                    platform_info:eventData.platform_info,
-                    data:data,
-                    rgb_alpha:"",
-                    datapoint_plot_location:{
-                        'series_index':0, 'point_index':0
-                        }
-                    };
-            //}
+            this.trendLines[key] = {
+                pagename:eventData.pagename,
+                testsuite:eventData.testsuite,
+                platform:eventData.platform,
+                platform_info:eventData.platform_info,
+                data:data,
+                rgb_alpha:"",
+                //This is the mean for the revision of interest.  It's
+                //used by pushes with no metrics data to place them along
+                //side the revision of interest.
+                mean: eventData.mean,
+                datapoint_plot_location:{
+                    'series_index':0, 'point_index':0
+                    }
+                };
         }
     },
     _loadMockData: function(data, eventData){
@@ -636,11 +692,12 @@ var TrendLineView = new Class({
         this.datumRevision = '#su_datum_revision';
         this.datumRawDataAnchor = '#su_raw_data';
         this.detailContainerTwoSel = '#su_graph_detail_container_2';
+        this.detailContainerThreeSel = '#su_graph_detail_container_3';
         this.datumControls = '#su_datum_controls';
 
         this.datumDisplayContainers = [
             this.datumRevision, this.datumControls,
-            this.detailContainerTwoSel
+            this.detailContainerTwoSel, this.detailContainerThreeSel
             ];
 
         this.datasetLegendSel = '#su_legend';
@@ -747,12 +804,15 @@ var TrendLineView = new Class({
 
         return rgbAlpha;
     },
-    loadDatumLabelContainer: function(datumKeyValues, url, rgbAlpha, color){
+    loadDatumLabelContainer: function(
+        datumKeyValues, revisionKeyValues, url, rgbAlpha, color){
 
         $(this.detailContainerTwoSel).empty();
+        $(this.detailContainerThreeSel).empty();
 
         var datumTable = $(document.createElement('table'));
 
+$(datumTable).css('width', 170);
         $(this.datumRawDataAnchor).attr('href', url);
         $(this.datumRawDataAnchor).button();
 
@@ -761,6 +821,19 @@ var TrendLineView = new Class({
             $(sel).css('background-color', rgbAlpha);
             $(sel).css('border-color', color);
         }
+
+        this.setDatumKeyValues(
+            datumKeyValues, datumTable, this.detailContainerTwoSel
+            );
+
+        var revisionTable = $(document.createElement('table'));
+
+        this.setDatumKeyValues(
+            revisionKeyValues, revisionTable, this.detailContainerThreeSel
+            );
+
+    },
+    setDatumKeyValues: function(datumKeyValues, datumTable, container){
 
         for(var i=0; i<datumKeyValues.length; i++){
 
@@ -777,6 +850,7 @@ var TrendLineView = new Class({
 
             var tr = $(document.createElement('tr'));
             var th = $(document.createElement('th'));
+
             $(th).text(label);
             $(th).css('text-align', 'right');
             $(th).addClass('su-light-text');
@@ -803,7 +877,7 @@ var TrendLineView = new Class({
             }
         }
 
-        $(this.detailContainerTwoSel).append(datumTable);
+        $(container).append(datumTable);
     },
     getSeriesId: function(key){
         return this.legendIdPrefix + key;
