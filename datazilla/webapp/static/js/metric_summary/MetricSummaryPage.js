@@ -18,15 +18,56 @@ var MetricSummaryPage = new Class( {
 
         this.failColor = '#FF7700';
         this.passColor = '#44AA00';
+        this.branchUri = '/refdata/pushlog/branch_uri?branch=';
+        this.revisionUrl = 'https://hg.mozilla.org/URI/pushloghtml?TYPE=';
+        this.bugzillaUrl = 'https://bugzilla.mozilla.org/show_bug.cgi?id=';
+
     },
 
+    getHgUrlATag: function(type, revision){
+        /****
+         * Get an html <a> tag for the given type and revision provided.
+         * Type can be 'rev' or 'changeset'.
+         ****/
+        var revisionUrl = this.revisionUrl.replace(
+            'URI', MS_PAGE.refData.branch_uri
+            );
+
+        revisionUrl = revisionUrl.replace(
+            'TYPE', type
+            ) + revision;
+
+        var a = $(document.createElement('a'));
+        $(a).attr('href', revisionUrl);
+        $(a).attr('target', '_blank');
+        $(a).text(revision);
+
+        return a;
+    },
+    addBugzillaATagsToDesc: function(desc){
+        /****
+         * Replace bugzilla bug number strings (Bug 123456) with
+         * an html <a> tag.
+         ****/
+        return desc.replace(
+            /(bug).*?(\d+)/ig,
+            '<a target="_blank" href="' + this.bugzillaUrl + "$2" +
+            '">$1 $2</a>');
+    },
     setRefData: function(){
 
         MS_PAGE.refData = {};
 
-        MS_PAGE.refData.project = MS_PAGE.urlObj.data.seg.path[0];
-        MS_PAGE.refData.branch = MS_PAGE.urlObj.data.seg.path[2];
-        MS_PAGE.refData.revision = MS_PAGE.urlObj.data.seg.path[3];
+        var urlObj = MS_PAGE.urlObj.data;
+
+        MS_PAGE.refData.project = urlObj.seg.path[0];
+        MS_PAGE.refData.branch = urlObj.seg.path[2];
+        MS_PAGE.refData.revision = urlObj.seg.path[3];
+        MS_PAGE.refData.product = urlObj.param.query.product;
+        MS_PAGE.refData.branch_version = urlObj.param.query.branch_version;
+        MS_PAGE.refData.test = urlObj.param.query.test;
+        MS_PAGE.refData.platform = urlObj.param.query.platform;
+
     },
     getDatumKey: function(data){
         /***
@@ -42,6 +83,21 @@ var MetricSummaryPage = new Class( {
         key = key.hashCode();
 
         return key;
+    },
+    getBranchUri: function(){
+
+        var url = this.branchUri + MS_PAGE.refData.branch;
+        jQuery.ajax( url, {
+            accepts:'application/json',
+            dataType:'json',
+            cache:false,
+            type:'GET',
+            context:this,
+            success: function(data, textStatus, jqXHR){
+                MS_PAGE.refData.branch_uri = data[0].uri;
+                console.log(MS_PAGE.refData.branch_uri);
+                }
+            });
     }
 
 });
@@ -51,6 +107,7 @@ $(document).ready(function() {
     MS_PAGE = new MetricSummaryPage();
 
     MS_PAGE.setRefData();
+    MS_PAGE.getBranchUri();
 
     MS_PAGE.trendLineComponent = new TrendLineComponent();
     MS_PAGE.testPagesComponent = new TestPagesComponent();

@@ -16,7 +16,6 @@ REQUIRE_PAGE_NAME = """Invalid Request: Require page_name parameter.
 
 API_CONTENT_TYPE = 'application/json; charset=utf-8'
 
-
 def get_testdata(request, project, branch, revision):
     """
     Apply data filters and return all test data objects associated with the
@@ -51,9 +50,18 @@ def get_metrics_data(request, project, branch, revision):
     """
     Apply filters and return all metrics data associated with the revision.
     """
+
+    #Default to most current version of Firefox
+    product_name = request.GET.get("product", "Firefox")
     os_name = request.GET.get("os_name", None)
     os_version = request.GET.get("os_version", None)
+
     branch_version = request.GET.get("branch_version", None)
+    if not branch_version:
+        branch_version = testdata.get_default_version(
+            project, branch, product_name
+            )
+
     processor = request.GET.get("processor", None)
     build_type = request.GET.get("build_type", None)
     test_name = request.GET.get("test_name", None)
@@ -64,6 +72,7 @@ def get_metrics_data(request, project, branch, revision):
             project,
             branch,
             revision,
+            product_name=product_name,
             os_name=os_name,
             os_version=os_version,
             branch_version=branch_version,
@@ -80,24 +89,35 @@ def get_metrics_summary(request, project, branch, revision):
     Apply filters and build a summary of all metric test evaluations.
     """
 
+    #Default to most current version of Firefox
+    product_name = request.GET.get("product", "Firefox")
     os_name = request.GET.get("os_name", None)
     os_version = request.GET.get("os_version", None)
+
     branch_version = request.GET.get("branch_version", None)
+    if not branch_version:
+        branch_version = testdata.get_default_version(
+            project, branch, product_name
+            )
+
     processor = request.GET.get("processor", None)
     build_type = request.GET.get("build_type", None)
     test_name = request.GET.get("test_name", None)
+    pushlog_project = request.GET.get("pushlog_project", None)
 
     return HttpResponse(
         json.dumps(testdata.get_metrics_summary(
             project,
             branch,
             revision,
+            product_name=product_name,
             os_name=os_name,
             os_version=os_version,
             branch_version=branch_version,
             processor=processor,
             build_type=build_type,
             test_name=test_name,
+            pushlog_project=pushlog_project
             )),
         content_type=API_CONTENT_TYPE,
         )
@@ -106,9 +126,18 @@ def get_metrics_pushlog(request, project, branch, revision):
     """
     Apply filters and return trend line data for the time period requested.
     """
+
+    #Default to most current version of Firefox
+    product_name = request.GET.get("product", "Firefox")
     os_name = request.GET.get("os_name", None)
     os_version = request.GET.get("os_version", None)
+
     branch_version = request.GET.get("branch_version", None)
+    if not branch_version:
+        branch_version = testdata.get_default_version(
+            project, branch, product_name
+            )
+
     processor = request.GET.get("processor", None)
     build_type = request.GET.get("build_type", None)
     test_name = request.GET.get("test_name", None)
@@ -162,6 +191,7 @@ def get_metrics_pushlog(request, project, branch, revision):
             project,
             branch,
             revision,
+            product_name=product_name,
             os_name=os_name,
             os_version=os_version,
             branch_version=branch_version,
@@ -189,5 +219,6 @@ def get_application_log(request, project, revision):
             )),
         content_type=API_CONTENT_TYPE,
         )
+
 
 

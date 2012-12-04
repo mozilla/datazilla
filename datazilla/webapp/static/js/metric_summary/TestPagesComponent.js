@@ -158,7 +158,7 @@ var TestPagesView = new Class({
     },
     uncheckCb: function(event, datumKey){
         var id = this.cbIdPrefix + datumKey;
-        $('#' + id).prop("checked", false);
+        $('#' + id).attr("checked", false);
     },
     tableEventHandler: function(event){
 
@@ -171,10 +171,11 @@ var TestPagesView = new Class({
                 var cells = $(row).find('td');
                 var meanValue = $(cells[3]).text();
 
-                var checked = $(event.target).attr('checked');
                 var pagename = $(event.target).attr(this.pagenameDataAttr);
                 var testSuite = $(this.testSuiteSel).text();
                 var platform = $(this.platformSel).text();
+
+                var checked = $(event.target).attr('checked');
 
                 var eventData = {
                     'checked':checked,

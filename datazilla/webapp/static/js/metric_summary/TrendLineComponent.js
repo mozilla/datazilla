@@ -28,9 +28,13 @@ var TrendLineComponent = new Class({
         //and allows flot callback functions to map to the
         //corresponding reference data in this.trendLines
         this.seriesIndexToKey = [];
-        this.seriesIndexToKey.push([]); //pass series
-        this.seriesIndexToKey.push([]); //fail series
-        this.seriesIndexToKey.push([]); //no data series
+
+        //pass series
+        this.passSeriesIndex = this.seriesIndexToKey.push([]) - 1;
+        //fail series
+        this.failSeriesIndex = this.seriesIndexToKey.push([]) - 1;
+        //no data series
+        this.noMetricsDataSeriesIndex = this.seriesIndexToKey.push([]) - 1;
 
         this.tickDisplayDates = {};
 
@@ -39,8 +43,8 @@ var TrendLineComponent = new Class({
         //before and after values.
         this.eventData = [];
 
-        this.pushesBefore = 50;
-        this.pushesAfter = 3;
+        this.pushesBefore = 20;
+        this.pushesAfter = 5;
 
         //true indicates push retrieval in progress
         //false indicates more pushes can be retrieved
@@ -71,6 +75,18 @@ var TrendLineComponent = new Class({
                 'autoscaleMargin':0.1
             },
 
+            'series': {
+
+                'points': {
+                    'radius': 2.5
+                }
+            },
+
+            'selection':{
+                'mode':'x',
+                'color':'#BDBDBD'
+            },
+
             'hooks': {
                 'draw':[this.draw]
             } };
@@ -81,10 +97,16 @@ var TrendLineComponent = new Class({
         this.defaultRowSelectionEvent = 'DEFAULT_ROW_SELECTION_EVENT';
 
         $(this.view.chartContainerSel).bind(
-            'plotclick', _.bind(this._clickPlot, this));
+            'plotclick', _.bind(this._clickPlot, this)
+            );
 
         $(this.view.chartContainerSel).bind(
-            'plothover', _.bind(this._hoverPlot, this));
+            'plothover', _.bind(this._hoverPlot, this)
+            );
+
+        $(this.view.chartContainerSel).bind(
+            'plotselected', _.bind(this._selectPlot, this)
+            );
 
         $(this.view.eventContainerSel).bind(
             this.tableInputClickEvent,
@@ -92,14 +114,12 @@ var TrendLineComponent = new Class({
         );
 
         $(this.view.getPushesSel).bind(
-            'click', _.bind(this.getPushes, this));
+            'click', _.bind(this.getPushes, this)
+            );
 
         $(this.view.detailContainerOneSel).live(
             'click mouseover mouseout', _.bind(this.closeDataSeries, this)
             );
-
-        //Set the push counts in the HTML
-        this.view.setPushCounts(this.pushesBefore, this.pushesAfter);
 
         $(this.view.pushesBeforeSel).bind(
             'keyup', _.bind(this._handlePushAroundInput, this)
@@ -109,11 +129,15 @@ var TrendLineComponent = new Class({
             'keyup', _.bind(this._handlePushAroundInput, this)
             );
 
+        //Set the push counts in the HTML
+        this.view.setPushCounts(this.pushesBefore, this.pushesAfter);
+
         //Simulate click on the default test suite table row
         $(this.view.eventContainerSel).bind(
             this.defaultRowSelectionEvent,
             _.bind(this.clickTableCB, this)
             );
+
     },
     clickTableCB: function(event, eventData){
         this.simulatedTableCBClick = true;
@@ -121,8 +145,9 @@ var TrendLineComponent = new Class({
     },
     initializeTrend: function(event, eventData){
 
-        if(this.simulatedTableCBClick){
+        if(this.simulatedTableCBClick === true){
             eventData.checked = 'checked';
+            this.simulatedTableCBClick = false;
         }
 
         if( eventData.checked ){
@@ -181,8 +206,6 @@ var TrendLineComponent = new Class({
     },
     loadTrendData: function(data, response, eventData){
 
-        data = this._loadMockData(data, eventData);
-
         this._loadTrendLineData(data, eventData);
 
         var chartData = [];
@@ -193,9 +216,8 @@ var TrendLineComponent = new Class({
 
         this.tickDisplayDates = {};
 
-        var passSeriesIndex = 0;
-        var failSeriesIndex = 1;
-        var noMetricsDataSeriesIndex = 2;
+        //flot data item to be passed to hoverPlot
+        var flotItem = {};
 
         var failDataset = this.getFailDataset();
         var passDataset= this.getPassDataset();
@@ -213,88 +235,126 @@ var TrendLineComponent = new Class({
             var failData = [];
             var trendData = [];
 
-            var seriesColor = MS_PAGE.passColor;
+            var seriesColor = '';
             var targetRevisionType = 'pass';
 
             var trendDataset = this.getTrendLineDataset();
-            var trendIndex = chartData.push(trendDataset);
+            var trendIndex = chartData.push(trendDataset) - 1;
 
-            this.seriesIndexToKey[trendIndex - 1] = [];
+            this.seriesIndexToKey[trendIndex] = [];
 
             var passIndex = 0;
             var failIndex = 0;
             var noDataIndex = 0;
 
-            //Used as the mean for any pushes with no data
+            var metricsData = [];
 
             for(var j=0; j<this.trendLines[key]['data'].length; j++){
 
+                metricsData = this.trendLines[key]['data'][j]['metrics_data'];
+
                 //Store x axis tick labels
                 if(!this.tickDisplayDates[j]){
-                    var unixTimestamp = this.trendLines[key]['data'][j]['date'];
-                    var tickLabel = this.convertTimestampToDate(unixTimestamp, false);
+
+                    var tickLabel = "";
+
+                    //Exclude first and last tick labels on the x-axis
+                    //to keep things unclutered
+                    if((j > 0) && (j <this.trendLines[key]['data'].length - 1)){
+                        var unixTimestamp = this.trendLines[key]['data'][j]['date'];
+                        tickLabel = this.convertTimestampToDate(
+                            unixTimestamp, false
+                            );
+                    }
+
                     this.tickDisplayDates[j] = tickLabel;
                 }
 
-                if(this.trendLines[key]['data'][j]['metrics_data'].length > 0){
-                    var pageData = this.trendLines[key]['data'][j]['metrics_data'][0]['pages'][this.trendLines[key]['pagename'] ];
+                if(metricsData.length > 0){
+                    var pageData =
+                        metricsData[0]['pages'][this.trendLines[key]['pagename'] ];
 
                     //Metrics data is available set trend datum
-                    var trendDatumIndex = chartData[trendIndex - 1].data.push(
+                    var trendDatumIndex = chartData[trendIndex].data.push(
                         [ j, parseInt(pageData.trend_mean) ]
-                        );
+                        ) - 1;
 
-                    this.seriesIndexToKey[trendIndex - 1][trendDatumIndex - 1] = key;
+                    this.seriesIndexToKey[trendIndex][trendDatumIndex] = key;
 
                     if( pageData.test_evaluation === true ){
-                        passIndex = chartData[0].data.push(
-                            [ j, parseInt(pageData.mean) ]
-                            );
 
-                        this.seriesIndexToKey[0][passIndex -1] = key;
+                        //Test passed
+                        passIndex = chartData[this.passSeriesIndex].data.push(
+                            [ j, parseInt(pageData.mean) ]
+                            ) - 1;
+
+                        this.seriesIndexToKey[this.passSeriesIndex][passIndex] = key;
+
                     } else if(pageData.test_evaluation === false) {
 
-                        seriesColor = MS_PAGE.failColor;
+                        //Test failed
 
-                        failIndex = chartData[1].data.push(
+                        failIndex = chartData[this.failSeriesIndex].data.push(
                             [ j, parseInt(pageData.mean) ]
-                            );
+                            ) - 1;
 
-                        this.seriesIndexToKey[1][failIndex - 1] = key;
+                        this.seriesIndexToKey[this.failSeriesIndex][failIndex] = key;
 
                     }
 
                     //revision that is loaded in the page
-                    if( this.trendLines[key]['data'][j]['dz_revision'] === MS_PAGE.refData.revision ){
+                    if( this.trendLines[key]['data'][j]['dz_revision'] ===
+                        MS_PAGE.refData.revision ){
 
                         targetRevisions.push(
                             {'x':j, 'y':parseInt(pageData.mean) }
                             );
 
+                        flotItem.datapoint = [
+                            j, pageData.mean
+                            ];
+
                         if( pageData.test_evaluation === true ){
-                            this.trendLines[key].datapoint_plot_location.point_index = passIndex - 1;
+
+                            seriesColor = MS_PAGE.passColor;
+
+                            this.trendLines[key].datapoint_plot_location.point_index = passIndex;
+
+                            flotItem.seriesIndex = this.passSeriesIndex;
+                            flotItem.dataIndex =
+                                this.trendLines[key].datapoint_plot_location.point_index;
+
                         } else {
+
                             targetRevisionType = 'fail';
-                            this.trendLines[key].datapoint_plot_location.point_index = failIndex - 1;
+
+                            seriesColor = MS_PAGE.failColor;
+
+                            this.trendLines[key].datapoint_plot_location.point_index = failIndex;
+
+                            flotItem.seriesIndex = this.failSeriesIndex;
+                            flotItem.dataIndex = 
+                                this.trendLines[key].datapoint_plot_location.point_index;
+
                         }
                     }
 
                 } else {
                     //No metrics data is available, color gray and place
                     //on trend line
-                    noDataIndex = chartData[2].data.push(
+                    noDataIndex = chartData[this.noMetricsDataSeriesIndex].data.push(
                         [ j, parseInt(this.trendLines[key]['mean']) ]
-                        );
+                        ) - 1;
 
-                    this.seriesIndexToKey[2][noDataIndex - 1] = key;
+                    this.seriesIndexToKey[this.noMetricsDataSeriesIndex][noDataIndex] = key;
                 }
 
             }
 
             if(targetRevisionType === 'pass'){
-                this.trendLines[key].datapoint_plot_location.series_index = passSeriesIndex;
+                this.trendLines[key].datapoint_plot_location.series_index = this.passSeriesIndex;
             }else{
-                this.trendLines[key].datapoint_plot_location.series_index = failSeriesIndex;
+                this.trendLines[key].datapoint_plot_location.series_index = this.failSeriesIndex;
             }
 
             var rgbAlpha = this.view.loadSeriesLabelContainer(
@@ -312,15 +372,22 @@ var TrendLineComponent = new Class({
 
         this.view.drawCircleAroundDataPoints(targetRevisions, this.plot);
 
+        $(window).resize(
+            //Redraw the circle around target revision
+            //when the chart is resized
+            _.bind(
+                function(){
+                    //this.view.drawCircleAroundDataPoints(
+                     //   targetRevisions, this.plot
+                      //  );
+                }, this)
+            );
         this.unsetGetPushState();
         this.view.displayDashboard();
 
-        if(this.simulatedTableCBClick === false){
-            //var datum = this.trendLines[key]['data'][ item.datapoint[0] ];
-            //var key = this.seriesIndexToKey[item.seriesIndex][item.dataIndex];
-            //_hoverPlot: function(event, pos, item){
-            this.simulatedTableCBClick = true;
-        }
+        //Set hover datum to revision of interest
+        this._hoverPlot({}, {}, flotItem);
+
     },
     getFailDataset: function(){
         return {
@@ -422,6 +489,7 @@ var TrendLineComponent = new Class({
     deleteDataSeries: function(key){
 
         var intKey = parseInt(key);
+
         for(var i=0; i<this.trendLineOrder.length; i++){
             //Data series found, delete it
             if( intKey === this.trendLineOrder[i] ){
@@ -436,6 +504,7 @@ var TrendLineComponent = new Class({
             }
         }
 
+        //Redraw trend lines
         this.loadTrendData([], {});
     },
     _handlePushAroundInput: function(event){
@@ -463,13 +532,42 @@ var TrendLineComponent = new Class({
 
         return key;
     },
+    _selectPlot: function(event, ranges){
+
+        var begin = Math.ceil(ranges.xaxis.from);
+        var end = parseInt(ranges.xaxis.to);
+
+        //Don't care what the series is, just need the data index
+        //equivalent
+        var keys = _.keys(this.trendLines);
+        var rangeBegin = this.trendLines[keys[0]]['data'][begin]['revisions'][0]['revision'];
+        var rangeEnd = this.trendLines[keys[0]]['data'][end]['revisions'][0]['revision'];
+
+        //Retrieve the url for the get range href
+        var url = this.model.getPushRangeUrl(rangeBegin, rangeEnd);
+
+        //Set the inputs and href
+        this.view.setPushRange(rangeBegin, rangeEnd, url);
+
+    },
     _hoverPlot: function(event, pos, item){
 
         if(item){
+
             //Check if the datum display is locked
             var checked = $(this.view.datumLockSel).attr('checked');
             if(checked){
                 //Datum locked, do nothing
+                return;
+            }
+
+            //Highlight the datapoint that the datum info is initialized to
+            this.plot.unhighlight();
+
+            this.plot.highlight(item.seriesIndex, item.datapoint);
+
+            if(item.dataIndex === undefined){
+                //dataIndex must be defined to proceed
                 return;
             }
 
@@ -480,10 +578,12 @@ var TrendLineComponent = new Class({
                 //User has hovered directly from a point on series a
                 //to a point on series b, we need to set the point on
                 //series a back to the appropriate background color
-                this.view.unhighlightLegend(
-                    this.trendLines[lastKey].rgb_alpha,
-                    this.hoverLegendEl
-                    );
+                if(this.trendLines[lastKey] != undefined){
+                    this.view.unhighlightLegend(
+                        this.trendLines[lastKey].rgb_alpha,
+                        this.hoverLegendEl
+                        );
+                }
             }
 
             this.hoverLegendKey = key;
@@ -503,47 +603,49 @@ var TrendLineComponent = new Class({
             this.view.highlightLegend(legendEl);
 
             var metricKeys = [
-                'mean', 'trend_mean', 'stddev', 'trend_stddev',
-                'p', 'fdr', 'h0_rejected', 'n_replicates' ];
+                'test_evaluation', 'mean', 'trend_mean', 'stddev',
+                'trend_stddev', 'p', 'fdr', 'h0_rejected', 'n_replicates' ];
 
             //If the dz_revision is not defined, data metrics datum has not
             //been received in datazilla, use the first revision associated
             //with the push.
+            var revision = datum.dz_revision || datum.revisions[0]['revision'];
+            var revisionHtml = MS_PAGE.getHgUrlATag('rev', revision);
+
             keyValueArray.push(
                 {'label':'dz_revision',
-                 'value':[datum.dz_revision ||
-                    datum.revisions[0]['revision'] ] });
+                 'value':revisionHtml });
 
             keyValueArray.push(
                 {'label':'author',
-                 'value':[datum.user]});
+                 'value':datum.user});
 
             keyValueArray.push(
                 {'label':'date',
-                 'value':[this.convertTimestampToDate(datum.date, true)]});
+                 'value':this.convertTimestampToDate(datum.date, true)});
 
             keyValueArray.push(
                 {'label':'branch',
-                 'value':[datum.branch_name]});
+                 'value':datum.branch_name});
 
             keyValueArray.push(
                 {'label':'test suite',
-                 'value':[dataSeries.testsuite]});
+                 'value':dataSeries.testsuite});
 
             keyValueArray.push(
                 {'label':'page',
-                 'value':[pagename]});
+                 'value':pagename});
 
             var color = MS_PAGE.passColor;
 
             if(datum.metrics_data.length > 0){
-
+                //Load metrics specific data
                 for(var i=0; i<metricKeys.length; i++){
 
                     var mk = metricKeys[i];
                     keyValueArray.push(
-                        {'label':mk,
-                        'value':[datum.metrics_data[0]['pages'][pagename][mk] ] });
+                        {'label':mk.replace('_', ' '),
+                        'value':datum.metrics_data[0]['pages'][pagename][mk] });
                 }
 
                 if( datum.metrics_data[0]['pages'][pagename]['test_evaluation'] === false ){
@@ -559,18 +661,42 @@ var TrendLineComponent = new Class({
 
                 var revisionDatum = datum.revisions[i];
 
+                var changesetHtml = MS_PAGE.getHgUrlATag(
+                    'changeset', revisionDatum.revision
+                    );
+
                 revisionKeyValues.push(
                     {'label':'revision',
-                    'value':[revisionDatum.revision]});
-                revisionKeyValues.push(
-                    {'label':'author',
-                    'value':[revisionDatum.author]});
+                    'value':changesetHtml});
+
+                var contactInfo = revisionDatum.author.match(/(.*?)\<(\S+)\>/);
+
+                var email = "";
+                var author = "";
+
+                if(contactInfo.length === 3){
+                    revisionKeyValues.push(
+                        {'label':'author',
+                        'value':contactInfo[1]});
+                    revisionKeyValues.push(
+                        {'label':'email',
+                        'value':contactInfo[2]});
+
+                }else{
+                    revisionKeyValues.push(
+                        {'label':'author',
+                        'value':revisionDatum.author});
+                }
+
+                var desc = MS_PAGE.addBugzillaATagsToDesc(revisionDatum.desc);
+
                 revisionKeyValues.push(
                     {'label':'desc',
-                    'value':[revisionDatum.desc]});
+                    'value':desc});
             }
 
-            var url = this.model.getRawDataUrl(this.trendLines[key]);
+            var url = this.model.getRawDataUrl(
+                this.trendLines[key], datum.revisions[0].revision);
 
             var rgbAlpha = this.view.hexToRgb(color);
 
@@ -582,13 +708,14 @@ var TrendLineComponent = new Class({
 
             if(this.hoverLegendKey && this.hoverLegendEl){
 
-                this.view.unhighlightLegend(
-                    this.trendLines[this.hoverLegendKey].rgb_alpha,
-                    this.hoverLegendEl
-                    );
-
-                this.hoverLegendKey = undefined;
-                this.hoverLegendEl = undefined;
+                if(this.trendLines[this.hoverLegendKey] != undefined){
+                    this.view.unhighlightLegend(
+                        this.trendLines[this.hoverLegendKey].rgb_alpha,
+                        this.hoverLegendEl
+                        );
+                    this.hoverLegendKey = undefined;
+                    this.hoverLegendEl = undefined;
+                }
             }
         }
     },
@@ -603,59 +730,29 @@ var TrendLineComponent = new Class({
 
             var key = MS_PAGE.getDatumKey(eventData);
 
+            var mean = eventData.mean;
+
+            if(this.trendLines[key]){
+                mean = this.trendLines[key].mean;
+            }
+
             this.trendLines[key] = {
-                pagename:eventData.pagename,
-                testsuite:eventData.testsuite,
-                platform:eventData.platform,
-                platform_info:eventData.platform_info,
-                data:data,
-                rgb_alpha:"",
+                'pagename':eventData.pagename,
+                'testsuite':eventData.testsuite,
+                'platform':eventData.platform,
+                'platform_info':eventData.platform_info,
+                'data':data,
+                'rgb_alpha':"",
                 //This is the mean for the revision of interest.  It's
                 //used by pushes with no metrics data to place them along
                 //side the revision of interest.
-                mean: eventData.mean,
-                datapoint_plot_location:{
+                'mean': mean,
+                'datapoint_plot_location':{
                     'series_index':0, 'point_index':0
                     }
                 };
         }
     },
-    _loadMockData: function(data, eventData){
-
-        var datum = {};
-        var datumIndex = 0;
-
-        for(var i=0; i<data.length; i++){
-            if( data[i]['metrics_data'].length > 0 ){
-                datum = data[i];
-                datumIndex = i;
-            }
-        }
-        for(var i=0; i<data.length; i++){
-            if( datumIndex != i ){
-
-                var datumClone = jQuery.extend(true, {}, datum);
-                var mean = parseInt(datumClone['metrics_data'][0].pages[eventData.pagename ].mean);
-                var trendMean = parseInt(datumClone['metrics_data'][0].pages[eventData.pagename ].trend_mean);
-
-                //mean = Math.floor(Math.random() * (mean - (mean - 5) + 1)) + (mean - 5);
-                //trendMean = Math.floor(Math.random() * (trendMean - (trendMean - 5) + 1)) + (trendMean - 5);
-
-                datumClone['metrics_data'][0].pages[eventData.pagename ].mean = parseInt(mean);
-                datumClone['metrics_data'][0].pages[eventData.pagename ].trend_mean = parseInt(trendMean);
-                datumClone['metrics_data'][0].pages[eventData.pagename ].test_evaluation = true;
-
-                datumClone.dz_revision = 'SomeOtherRevision';
-
-                data[i] = datumClone;
-            }
-            var pushlogId = parseInt(datumClone['metrics_data'][0].pages[eventData.pagename ]['pushlog_id']);
-            datumClone['metrics_data'][0].pages[eventData.pagename ]['pushlog_id'] = pushlogId + i;
-        }
-
-        return data;
-    },
-
     dataLoadError: function(data, textStatus, jqXHR){
 
         var messageText = 'Ohhh no, something has gone horribly wrong! ';
@@ -681,6 +778,7 @@ var TrendLineView = new Class({
         this.pushlogDashboardSel = '#su_pushlog_dashboard';
 
         this.eventContainerSel = '#su_container';
+        this.pushesAroundRevisionSel = '#su_pushes_around_rev';
         this.chartContainerSel = '#su_trendline_plot';
         this.detailContainerOneSel = '#su_graph_detail_container_1';
         this.datumLockSel = '#su_lock_datum';
@@ -689,11 +787,18 @@ var TrendLineView = new Class({
         this.pushesAfterSel = '#su_pushes_after';
         this.getPushSpinnerSel = '#su_get_pushes_spinner';
 
+        this.pushRangeBeginSel = '#su_push_range_begin';
+        this.pushRangeEndSel = '#su_push_range_end';
+
         this.datumRevision = '#su_datum_revision';
         this.datumRawDataAnchor = '#su_raw_data';
         this.detailContainerTwoSel = '#su_graph_detail_container_2';
         this.detailContainerThreeSel = '#su_graph_detail_container_3';
         this.datumControls = '#su_datum_controls';
+
+        this.lightTextClass = 'su-light-text';
+        this.datumValueClass = 'su-datum-value';
+        this.patchDescriptionClass = 'su-datum-desc-value';
 
         this.datumDisplayContainers = [
             this.datumRevision, this.datumControls,
@@ -715,7 +820,15 @@ var TrendLineView = new Class({
         this.getPushesSel = '#su_get_pushes';
         $(this.getPushesSel).button();
 
+        this.getPushRangeSel = '#su_get_range';
+        $(this.getPushRangeSel).button();
+
         this.dashboardDisplayed = false;
+
+
+        //Set the pushes around revision
+        $(this.pushesAroundRevisionSel).text(MS_PAGE.refData.revision);
+
     },
     displayDashboard: function(){
         if(this.dashboardDisplayed === false){
@@ -805,14 +918,12 @@ var TrendLineView = new Class({
         return rgbAlpha;
     },
     loadDatumLabelContainer: function(
-        datumKeyValues, revisionKeyValues, url, rgbAlpha, color){
+        datumKeyValues, revisionKeyValues, url, rgbAlpha, color
+        ){
 
         $(this.detailContainerTwoSel).empty();
         $(this.detailContainerThreeSel).empty();
 
-        var datumTable = $(document.createElement('table'));
-
-$(datumTable).css('width', 170);
         $(this.datumRawDataAnchor).attr('href', url);
         $(this.datumRawDataAnchor).button();
 
@@ -823,61 +934,69 @@ $(datumTable).css('width', 170);
         }
 
         this.setDatumKeyValues(
-            datumKeyValues, datumTable, this.detailContainerTwoSel
+            datumKeyValues, this.detailContainerTwoSel
             );
 
-        var revisionTable = $(document.createElement('table'));
-
         this.setDatumKeyValues(
-            revisionKeyValues, revisionTable, this.detailContainerThreeSel
+            revisionKeyValues, this.detailContainerThreeSel
             );
 
     },
-    setDatumKeyValues: function(datumKeyValues, datumTable, container){
+    setDatumKeyValues: function(datumKeyValues, container){
+
+        var containerWidth = $(container).css('width');
 
         for(var i=0; i<datumKeyValues.length; i++){
 
             var datum = datumKeyValues[i];
             var label = datum['label'];
-            var values = datum['value'];
+            var value = datum['value'];
 
             if(label === 'dz_revision'){
-                $(this.datumRevision).text(values[0]);
+                //This is the revision in the push that's found in
+                //datazilla.  Set the datum revision to it.
+                $(this.datumRevision).html(value);
                 continue;
             }
 
-            var rowspan = datumKeyValues[i].length;
+            var dataDiv = $(document.createElement('div'));
+            $(dataDiv).css('width', containerWidth);
 
-            var tr = $(document.createElement('tr'));
-            var th = $(document.createElement('th'));
-
-            $(th).text(label);
-            $(th).css('text-align', 'right');
-            $(th).addClass('su-light-text');
-            $(tr).append(th);
-
-            $(th).attr('rowspan', rowspan);
-
-            for(var j=0; j<values.length; j++){
-
-                var td = $(document.createElement('td'));
-                $(td).css('text-align', 'right');
-                $(td).text(values[j]);
-
-                if(j === 0){
-                    $(tr).append(td);
-                    $(datumTable).append(tr);
-                }else{
-                    var newRow = $(document.createElement('tr'));
-                    var emptyTd = $(document.createElement('td'));
-                    $(newRow).append(emptyTd);
-                    $(newRow).append(td);
-                    $(datumTable).append(newRow);
-                }
+            if(label === 'desc'){
+                //The revision description fields can be really large
+                //make the text lighter to give some visual distinction
+                $(dataDiv).addClass(this.lightTextClass);
+                $(dataDiv).addClass(this.patchDescriptionClass);
+                $(dataDiv).html(value);
+                $(container).append(dataDiv);
+                continue;
             }
-        }
 
-        $(container).append(datumTable);
+            //Create/set the label span
+            var labelSpan = $(document.createElement('span'));
+
+            $(labelSpan).css('text-align', 'left');
+            $(labelSpan).addClass(this.lightTextClass);
+
+
+            $(labelSpan).text(label);
+            $(dataDiv).append(labelSpan);
+
+            //Create/set the value span
+            var valueSpan = $(document.createElement('span'));
+
+            $(valueSpan).addClass(this.datumValueClass);
+
+            if(label === 'revision'){
+                $(valueSpan).html(value);
+            }else{
+                $(valueSpan).text(value);
+            }
+            $(dataDiv).append(valueSpan);
+
+            //Load the data div into the container
+            $(container).append(dataDiv);
+        }
     },
     getSeriesId: function(key){
         return this.legendIdPrefix + key;
@@ -918,6 +1037,13 @@ $(datumTable).css('width', 170);
         $(this.pushesAfterSel).val(pushesAfter);
 
     },
+    setPushRange: function(rangeBegin, rangeEnd, url){
+
+        $(this.pushRangeBeginSel).val(rangeBegin);
+        $(this.pushRangeEndSel).val(rangeEnd);
+        $(this.getPushRangeSel).attr('href', url);
+
+    },
     getPushCounts: function(){
         var counts = {};
         counts.before = $(this.pushesBeforeSel).val();
@@ -938,6 +1064,16 @@ var TrendLineModel = new Class({
         this.setOptions(options);
 
         this.parent(options);
+
+        this.pushlogUrl = '/' + MS_PAGE.refData.project +
+            '/testdata/metrics/' + MS_PAGE.refData.branch + '/' +
+            MS_PAGE.refData.revision + '/pushlog';
+
+        this.rawDataUrl = '/' + MS_PAGE.refData.project +
+            '/testdata/raw/' + MS_PAGE.refData.branch + '/';
+
+        this.pushRangeUrl = "https://hg.mozilla.org/URI/pushloghtml?" +
+            "fromchange=BEGIN&tochange=END";
 
     },
     getTrendLine: function(
@@ -960,31 +1096,25 @@ var TrendLineModel = new Class({
     },
     getMetricsUrl: function(data, pushesBefore, pushesAfter){
 
-        var url = '/' + MS_PAGE.refData.project +
-            '/testdata/metrics/' + MS_PAGE.refData.branch + '/' +
-            MS_PAGE.refData.revision + '/pushlog';
-
-        url = this.getUri(data, url);
+        var url = this.getUri(data, this.pushlogUrl);
 
         url += '&pushes_before=' + pushesBefore;
         url += '&pushes_after=' + pushesAfter;
 
         return url;
     },
-    getRawDataUrl: function(data){
+    getRawDataUrl: function(data, revision){
 
-        var url = '/' + MS_PAGE.refData.project +
-            '/testdata/raw/' + MS_PAGE.refData.branch + '/' +
-            MS_PAGE.refData.revision;
-
-        url = this.getUri(data, url);
+        var url = this.getUri(data, this.rawDataUrl + revision);
 
         return url;
 
     },
     getUri: function(data, url){
 
-        url += '?os_name=' + data.platform_info.operating_system_name;
+        url += '?product=' + MS_PAGE.refData.product;
+        url += '&branch_version=' + MS_PAGE.refData.branch_version;
+        url += '&os_name=' + data.platform_info.operating_system_name;
         url += '&os_version=' + data.platform_info.operating_system_version;
         url += '&processor=' + data.platform_info.processor;
         url += '&build_type=' + data.platform_info.type;
@@ -992,6 +1122,16 @@ var TrendLineModel = new Class({
         url += '&page_name=' + data.pagename;
 
         return url;
+    },
+    getPushRangeUrl: function(rangeBegin, rangeEnd){
+
+        var url = this.pushRangeUrl.replace(
+            'URI', MS_PAGE.refData.branch_uri
+            );
+        url = url.replace('BEGIN', rangeBegin);
+        url = url.replace('END', rangeEnd);
+        return url;
+
     }
 
 });

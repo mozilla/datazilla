@@ -28,7 +28,6 @@ urlpatterns = patterns('',
     #revision metrics summary
     (r'^(?P<project>\w+)/summary/?', include('datazilla.webapp.apps.summary.urls')),
 
-
     #datazilla web service
     (r'^(?P<project>\w+)/?', include('datazilla.webapp.apps.datazilla.urls')),
 

@@ -77,6 +77,23 @@
             "host":"read_host"
         },
 
+        "get_branch_uri":{
+
+            "sql":"SELECT b.name, b.uri
+                   FROM branches AS b
+                   WHERE b.name = ?",
+
+            "host":"read_host"
+        },
+
+        "get_all_branch_uris":{
+
+            "sql":"SELECT b.name, b.uri
+                   FROM branches AS b",
+
+            "host":"read_host"
+        },
+
         "get_push_ids_before_node":{
 
             "sql":"SELECT p.id AS 'pushlog_id',
@@ -84,8 +101,8 @@
                           p.date,
                           p.user
                    FROM pushlogs AS p
-                   WHERE p.push_id < ? AND p.branch_id = ?
-                   LIMIT ?",
+                   WHERE p.push_id < ? AND p.push_id >= ? AND p.branch_id = ?
+                   ORDER BY p.push_id",
 
             "host":"read_host"
         },
@@ -97,8 +114,8 @@
                           p.date,
                           p.user
                    FROM pushlogs AS p
-                   WHERE p.push_id > ? AND p.branch_id = ?
-                   LIMIT ?",
+                   WHERE p.push_id > ? AND p.push_id <= ? AND p.branch_id = ?
+                   ORDER BY p.push_id",
 
             "host":"read_host"
         },
@@ -134,9 +151,11 @@
             "sql":"SELECT p.id AS 'pushlog_id',
                           p.push_id,
                           p.date,
+                          p.user,
                           b.id AS 'branch_id',
                           b.name,
-                          c.node
+                          c.node,
+                          c.desc
                    FROM pushlogs AS p
                    LEFT JOIN changesets AS c ON p.id = c.pushlog_id
                    LEFT JOIN branches AS b ON p.branch_id = b.id

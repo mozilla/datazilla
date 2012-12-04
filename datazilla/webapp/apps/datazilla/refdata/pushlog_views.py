@@ -64,6 +64,12 @@ def get_all_branches(request):
     branches = pushlog_refdata.get_all_branches()
     return HttpResponse(json.dumps(branches), content_type=API_CONTENT_TYPE)
 
+def get_branch_uri(request):
+    """Get the uri associated with branch"""
+    branch = request.GET.get("branch", None)
+    branches = pushlog_refdata.get_branch_uri(branch)
+    return HttpResponse(json.dumps(branches), content_type=API_CONTENT_TYPE)
+
 
 def get_db_size(request):
     """Return the size of the DB on disk in MB."""

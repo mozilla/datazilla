@@ -4,8 +4,11 @@ body {
     font-size: 14px;
     padding: 0;
     border-top: 2px solid #676767;
-    /*min-width: 1024px;*/
-    min-width: 1050px;
+    min-width: 1065px;
+}
+a {
+    text-decoration: underline;
+    font-weight: bold;
 }
 div.su-large-text {
     font-size: 14px;
@@ -35,7 +38,7 @@ div.su-panel-base {
 }
 div.su-main-gauge {
     float: left;
-    width: 325px;
+    width: 375px;
     margin-left:10px;
 }
 div.su-reference-info {
@@ -146,7 +149,6 @@ div.su-grid-column {
     white-space:nowrap;
     text-align:center;
     float: left;
-
     width:30px;
     height:25px;
 }
@@ -205,8 +207,7 @@ div.su-grid-value {
     background: #ffffff;
     border: 3px solid #e8e8e8;
 }
-.arrow_box:after,
-.arrow_box:before {
+.arrow_box:after, .arrow_box:before {
     top: 100%;
     border: solid transparent;
     content: " ";
@@ -228,6 +229,35 @@ div.su-grid-value {
     left: 50%;
     margin-left: -24px;
 }
+
+.arrow_box_up {
+    position: relative;
+    background: #ffffff;
+    border: 3px solid #e8e8e8;
+}
+.arrow_box_up:after, .arrow_box_up:before {
+    bottom: 100%;
+    border: solid transparent;
+    content: " ";
+    height: 0;
+    width: 0;
+    position: absolute;
+    pointer-events: none;
+}
+.arrow_box_up:after {
+    border-color: rgba(255, 255, 255, 0);
+    border-bottom-color: #ffffff;
+    border-width: 20px;
+    left: 50%;
+    margin-left: -20px;
+}
+.arrow_box_up:before {
+    border-color: rgba(232, 232, 232, 0);
+    border-bottom-color: #e8e8e8;
+    border-width: 24px;
+    left: 50%;
+    margin-left: -24px;
+}
 div.su-data-series-panel {
     margin-top: 5px;
     padding: 0.5em;
@@ -238,7 +268,17 @@ div.su-datum-info-panel {
     margin-left: 5px;
     padding: 0.5em;
     float:right;
-    width:180px;
+    width:190px;
+}
+.su-datum-value {
+    text-align:right;
+    float:right;
+}
+/*style for the description field of a patch*/
+div.su-datum-desc-value {
+    text-align:right;
+    margin-top:5px;
+    margin-bottom:15px;
 }
 .ui-button-text{
     font-size: 11px !important;

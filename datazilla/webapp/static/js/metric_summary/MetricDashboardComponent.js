@@ -79,8 +79,10 @@ var MetricDashboardView = new Class({
         this.progressBarTitleClassName = 'su-progressbar-title';
         this.progressBarClassName = 'su-progressbar';
 
-        this.productTestsSel = '#su_product_tested';
+        this.revisionProductsSel = '#su_revision_products';
         this.revisionTestedSel = '#su_revision_tested';
+        this.pushDescSel = '#su_push_desc';
+        this.authorSel = '#su_push_author';
         this.totalCountSel = '#su_total_count';
         this.noTrendCountSel = '#su_no_trend_count';
         this.passCountSel = '#su_pass_count';
@@ -191,13 +193,49 @@ var MetricDashboardView = new Class({
     },
     setReferenceInfo: function(data){
 
-        var productInfo = data.product_info.name + ' ' +
-            data.product_info.branch + ' ' + data.product_info.version;
+        for(var i=0; i<data.products.length; i++){
 
-        $(this.productTestsSel).text(productInfo);
+            var product = data.products[i].product + ' ' +
+                data.products[i].branch + ' ' + data.products[i].version;
 
-        $(this.revisionTestedSel).text(
-            data.product_info.revision
+            var option = $(document.createElement('option'));
+
+            $(option).text(product);
+
+            $(option).val(
+                JSON.stringify(
+                    { 'product':data.products[i].product,
+                      'version':data.products[i].version }
+                    )
+                );
+
+            if((data.product_info.name === data.products[i].product) &&
+               (data.product_info.branch === data.products[i].branch) &&
+               (data.product_info.version === data.products[i].version)){
+                //This is the option the page is loaded on
+                //mark as selected
+                $(option).attr('selected', true);
+            }
+            $(this.revisionProductsSel).append(option);
+
+        }
+
+        $(this.revisionProductsSel).change(
+            _.bind( function(event){
+                var selectedOption = $(event.target).find(':selected');
+
+                var value = $(selectedOption).val();
+                var productData = JSON.parse(value);
+
+                console.log(productData);
+
+                }, this)
+            );
+
+        $(this.authorSel).text(data.push_data.user);
+
+        $(this.revisionTestedSel).html(
+            MS_PAGE.getHgUrlATag('rev', data.product_info.revision)
             );
 
         $(this.noTrendCountSel).text(data.summary.keys_without_trend);
@@ -205,6 +243,9 @@ var MetricDashboardView = new Class({
 
         $(this.passCountSel).text(data.summary.pass.value + ' passed');
         $(this.failCountSel).text(data.summary.fail.value + ' failed');
+
+        var descHtml = MS_PAGE.addBugzillaATagsToDesc(data.push_data.desc);
+        $(this.pushDescSel).html(descHtml);
 
     },
     loadProgressBars: function(targetContainer, data, order){
@@ -280,7 +321,9 @@ var MetricDashboardModel = new Class({
 
         uri = '/' + MS_PAGE.refData.project +
             '/testdata/metrics/' + MS_PAGE.refData.branch +
-            '/' + MS_PAGE.refData.revision + '/summary';
+            '/' + MS_PAGE.refData.revision + '/summary?' +
+            'product=' + MS_PAGE.refData.product + '&branch_version=' +
+            MS_PAGE.refData.branch_version;
 
         jQuery.ajax( uri, {
             accepts:'application/json',

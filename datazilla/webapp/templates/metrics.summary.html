@@ -42,12 +42,19 @@
 
             <div id="su_main_gauge_container" class="su-main-gauge">
                 <div id="su_gauge_1"></div>
-                <div class="su-reference-info" style="width:200px; display:none;">
-                    <div><span class="su-light-text2">Product:</span>&nbsp;<span id="su_product_tested" style="float:right;" class="su-light-text"></span></div>
-                    <div><span class="su-light-text2">Revision:</span>&nbsp;<span id="su_revision_tested" style="float:right;" class="su-light-text"></span></div>
+                <div class="su-reference-info" style="width:245px; display:none;">
+                    <div><span class="su-light-text2">Product:</span>
+                        <select id="su_revision_products" size="1" style="float:right;"></select>
+                    </div>
+                    <div style="margin-top:5px;"><span class="su-light-text2">Revision:</span>&nbsp;<span id="su_revision_tested" style="float:right;" class="su-light-text"></span></div>
+                    <div><span class="su-light-text2">Author:</span>&nbsp;<span id="su_push_author" style="float:right;" class="su-light-text"></span></div>
                     <div><span class="su-light-text2">Talos Test Count:</span>&nbsp;<span id="su_total_count" style="float:right;" class="su-light-text"></span></div>
                     <div><span class="su-light-text2">Tests Without Trend:</span>&nbsp;<span id="su_no_trend_count" style="float:right;" class="su-light-text"></span></div>
                     <div><span class="su-light-text2">Results:</span>&nbsp;<span style="float:right;"><span id="su_pass_count" class="su-pass-color"></span>,&nbsp;<span id="su_fail_count" class="su-fail-color"></span></span></div>
+
+                    <div id="su_push_desc" style="text-align:center; margin-top:10px; overflow-y:auto; height:65px;" class="su-light-text">
+                        <div id="su_push_desc"></div>
+                    </div>
                 </div>
             </div>
 
@@ -80,7 +87,7 @@
                     </div>
                 </div>
             </div>
-            <div id="su_table_container" style="float:right; width:400px; height:380px; margin-top:25px;">
+            <div id="su_table_container" style="float:right; width:42%; height:380px; margin-top:25px;">
                 <div style="font-size:13px; float:left;"><span class="su-light-text2">Test Suite:</span><span id="su_test_suite" class="su-light-text"></span><span style="margin-left:15px;" class="su-light-text2">Platform:</span><span id="su_platform" class="su-light-text"></span></div>
                 <table id="su_test_pages" cellpadding="0" cellspacing="0" border="0" class="display"></table>
             </div>
@@ -97,21 +104,26 @@
 
             <h2 style="margin-left:185px;">Revision Pushlog</h2>
 
-            <div style="margin-left:185px; margin-bottom:50px;"><div style="float:left; margin-top:5px;" >Pushes Around <span id="su_pushes_around_rev"></span>: before<input id="su_pushes_before" type="text" size="3" maxlength="3" style="margin-left:3px; margin-right:5px;"/>after:<input id="su_pushes_after" type="text" size="3" maxlength="3" style="margin-left:3px; margin-right:3px;"/></div><button id="su_get_pushes" style="float:left; margin-left:8px; margin-top:3px;">Get Pushes</button><div id="su_get_pushes_spinner" style="float:left; margin-left:3px; display:none;" class="su-small-spinner"></div></div>
+            <div style="margin-left:185px; margin-bottom:50px;">
+                <div style="float:left; margin-top:5px;" >Pushes Around <span id="su_pushes_around_rev"></span>: before<input id="su_pushes_before" type="text" size="3" maxlength="3" style="margin-left:3px; margin-right:5px;"/>after:<input id="su_pushes_after" type="text" size="3" maxlength="3" style="margin-left:3px; margin-right:3px;"/></div><button id="su_get_pushes" style="float:left; margin-left:8px; margin-top:3px;">Get Pushes</button><div id="su_get_pushes_spinner" style="float:left; margin-left:3px; display:none;" class="su-small-spinner"></div>
+            </div>
 
             <div class="ui-helper-clearfix"></div>
 
             <div id="su_graph_detail_container_1" class="ui-widget css-left" style="width:135px; overflow-y:auto; height:380px; display:block;"></div>
             <div class="su-vertical-text">Mean (milliseconds)</div>
             <div id="su_trendline_plot" style="margin-left:30px; margin-bottom:20px; float:left; height:350px; width:600px;"></div>
-            <div style="overflow-y:auto; height: 380px; display: block; float:right; width:200px;">
-                <div id="su_datum_revision" text-align="center" class="ui-state-highlight ui-corner-all su-datum-info-panel css-right su-large-text"></div>
+            <div style="width:250px; position:absolute; left:760px; top:880px; opacity:0.6;" class="ui-widget ui-corner-all arrow_box_up">
+                <div style="font-size:13px; margin-top:10px; margin-bottom:10px; margin-left:10px; margin-right:10px;">Tip: Select a row above to load a test page series.</div>
+            </div>
+            <div style="overflow-y:auto; height: 380px; margin-left:3px; float:left; width:220px;">
+                <div id="su_datum_revision" style="width:187px; text-align:right;" class="ui-state-highlight ui-corner-all su-datum-info-panel css-right su-large-text"></div>
                 <div id="su_datum_controls" class="ui-state-highlight ui-corner-all su-datum-info-panel css-right su-light-text">Lock Push:<input id="su_lock_datum" type="checkbox" /><div style="float:right;"><a id="su_raw_data" target="_blank" href="#">Get Raw Data</a></div></div>
                 <div id="su_graph_detail_container_2" class="ui-state-highlight ui-corner-all su-datum-info-panel css-right"></div>
                 <div id="su_graph_detail_container_3" class="ui-state-highlight ui-corner-all su-datum-info-panel css-right"></div>
             </div>
             <div class="ui-helper-clearfix"></div>
-            <div style="margin-left:185px; margin-bottom:3px;">Repository (hg.mozilla.org) Push Range: begin<input type="text" size="12" style="margin-left:3px; margin-right:5px;"/>end:<input type="text" size="12" style="margin-left:3px; margin-right:3px;"/><button id="su_get_range" style="margin-left:8px;">Get Range</button></div>
+            <div style="margin-left:185px; margin-bottom:3px;">Repository (hg.mozilla.org) Push Range: begin<input id="su_push_range_begin" type="text" size="12" style="margin-left:3px; margin-right:5px;"/>end:<input id="su_push_range_end" type="text" size="12" style="margin-left:3px; margin-right:3px;"/><a id="su_get_range" style="margin-left:8px;" target="_blank" href="#">Get Range</a></div>
         </div>
    </div>
 </div> <!-- End su_container -->
@@ -129,10 +141,11 @@
 <script type="text/javascript" src="/static/js/plugins/jquery.url.js"></script>
 
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.selection.min.js"></script>
+<!-- <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.resize.min.js"></script> -->
 <!--[if lte IE 8]><script language="javascript" type="text/javascript" src="/static/js/plugins/flot-0.7/excanvas.min.js"></script><![endif]-->
 
 <script type="text/javascript" src="/static/js/plugins/underscore-min.js"></script>
-<script type="text/javascript" src="/static/js/plugins/d3.v2.min.js"></script>
 <script type="text/javascript" src="/static/js/plugins/box.js"></script>
 
 <!-- Gives core mootools class functionality to jQuery -->
@@ -140,9 +153,6 @@
 <script type="text/javascript" src="/static/js/plugins/moo4q/Source/Class.Mutators.jQuery.js"></script>
 
 <script type="text/javascript" src="/static/js/plugins/datatables/jquery.dataTables.min.js"></script>
-
-
-<!-- This version of fg.menu.js has been heavily modified to work in bughunter -->
 <script type="text/javascript" src="/static/js/plugins/json2.js"></script>
 
 <!-- gages -->

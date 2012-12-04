@@ -139,7 +139,7 @@ def check_run_conditions(test_name, rep_count, push_node, branch, debug):
         println(u"Cannot run {0}".format(test_name), debug)
         return False
 
-    if rep_count < 3:
+    if rep_count < 5:
         #If we don't have more than one replicate we cannot
         #run any of the existing metric tests
         println(

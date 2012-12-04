@@ -85,8 +85,6 @@ class PushLogModel(DatazillaModelBase):
         use "MySQL-Engine", where "Engine" could be "InnoDB", "Aria", etc. Not
         all contenttypes need to be represented; any that aren't will use the
         default (``MySQL-InnoDB``).
-
-
         """
 
         project = project or cls.DEFAULT_PROJECT
@@ -137,6 +135,28 @@ class PushLogModel(DatazillaModelBase):
 
         return branch_list
 
+    def get_branch_uri(self, branch=None):
+
+        if branch:
+
+            proc = 'hgmozilla.selects.get_branch_uri'
+
+            data = self.hg_ds.dhub.execute(
+                proc=proc,
+                debug_show=self.DEBUG,
+                placeholders=[branch],
+                return_type='tuple',
+                )
+        else:
+            proc = 'hgmozilla.selects.get_all_branch_uris'
+
+            data = self.hg_ds.dhub.execute(
+                proc=proc,
+                debug_show=self.DEBUG,
+                return_type='tuple',
+                )
+
+        return data
 
     def get_all_pushlogs(self):
 
@@ -251,18 +271,22 @@ class PushLogModel(DatazillaModelBase):
         pushes_before_proc = 'hgmozilla.selects.get_push_ids_before_node'
         pushes_after_proc = 'hgmozilla.selects.get_push_ids_after_node'
 
+        before_boundary = push_id - pushes_before
+
         pushes_before_data = self.hg_ds.dhub.execute(
             proc=pushes_before_proc,
             debug_show=self.DEBUG,
             return_type='tuple',
-            placeholders=[push_id, branch_id, pushes_before]
+            placeholders=[ push_id, before_boundary, branch_id ]
             )
+
+        after_boundary = push_id + pushes_after
 
         pushes_after_data = self.hg_ds.dhub.execute(
             proc=pushes_after_proc,
             debug_show=self.DEBUG,
             return_type='tuple',
-            placeholders=[push_id, branch_id, pushes_after]
+            placeholders=[ push_id, after_boundary, branch_id ]
             )
 
         #Combine all of the requested push data
@@ -667,6 +691,19 @@ class PerformanceTestModel(DatazillaModelBase):
 
         return products
 
+    def get_revision_products(self, revision, branch):
+
+        proc = 'perftest.selects.get_revision_products'
+
+        products = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            placeholders=[revision, branch]
+            )
+
+        return products
+
 
     def get_default_products(self):
 
@@ -684,6 +721,24 @@ class PerformanceTestModel(DatazillaModelBase):
 
         return default_products
 
+    def get_default_branch_version(self, branch, product_name):
+
+        proc = 'perftest.selects.get_default_products'
+
+        products = self.sources["perftest"].dhub.execute(
+                proc=proc,
+                debug_show=self.DEBUG,
+                return_type='tuple'
+                )
+
+        target_product = {}
+
+        for product in products:
+            if (product['branch'] == branch) and (product['product'] == product_name):
+                target_product = product
+                break
+
+        return target_product
 
     def get_machines(self):
 
@@ -901,9 +956,9 @@ class PerformanceTestModel(DatazillaModelBase):
 
 
     def get_test_run_ids(
-        self, branch, revisions, os_name=None, os_version=None,
-        branch_version=None, processor=None, build_type=None,
-        test_name=None, page_name=None):
+        self, branch, revisions, product_name=None, os_name=None,
+        os_version=None, branch_version=None, processor=None,
+        build_type=None, test_name=None, page_name=None):
 
         proc = 'perftest.selects.get_test_run_ids'
         placeholders = [branch]
@@ -914,7 +969,10 @@ class PerformanceTestModel(DatazillaModelBase):
             self.get_replace_and_placeholders(
                 rep, placeholders, 'tr.revision', revision_string
                 )
-
+        if product_name:
+            self.get_replace_and_placeholders(
+                rep, placeholders, 'p.product', product_name
+                )
         if os_name:
             self.get_replace_and_placeholders(
                 rep, placeholders, 'os.name', os_name

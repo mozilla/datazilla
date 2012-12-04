@@ -166,9 +166,35 @@ var MetricGridView = new Class({
                     //first time the page loads.
                     if(this.triggerDefaultEvent){
 
-                        this._triggerEvent(
-                            this.gridMouseoverEvent, cell
-                            );
+                        var platform = MS_PAGE.refData.platform;
+                        var test =  MS_PAGE.refData.test;
+                        var initializeValue = "";
+                        if(data.tests[test] && data.tests[test][platform]){
+                            initializeValue = data.tests[test][platform]['pass']['percent'];
+                        }
+
+                        if(initializeValue){
+                            //URL has test/platform specified, initialize
+                            //table to requested data target
+                            var initializeCell = this.getValueCell(
+                                platform,
+                                test,
+                                initializeValue
+                                );
+
+                            this._triggerEvent(
+                                this.gridMouseoverEvent, initializeCell
+                                );
+
+                            //Lock the table to the data requested
+                            MS_PAGE.testPagesComponent.view.lockTable();
+
+                        }else {
+                            //No target table use first defined cell
+                            this._triggerEvent(
+                                this.gridMouseoverEvent, cell
+                                );
+                        }
 
                         this.triggerDefaultEvent = false;
                     }

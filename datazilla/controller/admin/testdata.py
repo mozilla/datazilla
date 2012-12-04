@@ -8,9 +8,9 @@ from datazilla.model import factory
 from datazilla.model import utils
 
 def get_testdata(
-    project, branch, revision, os_name=None, os_version=None,
-    branch_version=None, processor=None, build_type=None, test_name=None,
-    page_name=None):
+    project, branch, revision, product_name=None, os_name=None,
+    os_version=None, branch_version=None, processor=None,
+    build_type=None, test_name=None, page_name=None):
     """Return test data based on the parameters and optional filters."""
 
     ptm = factory.get_ptm(project)
@@ -18,8 +18,8 @@ def get_testdata(
 
     # get the testrun ids from perftest
     test_run_ids = ptm.get_test_run_ids(
-        branch, [revision], os_name, os_version, branch_version, processor,
-        build_type, test_name
+        branch, [revision], product_name, os_name, os_version,
+        branch_version, processor, build_type, test_name
         )
 
     blobs = ptrdm.get_object_json_blob_for_test_run(test_run_ids)
@@ -57,9 +57,9 @@ def get_testdata(
 
 
 def get_metrics_data(
-    project, branch, revision, os_name=None, os_version=None,
-    branch_version=None, processor=None, build_type=None, test_name=None,
-    page_name=None
+    project, branch, revision, product_name=None, os_name=None,
+    os_version=None, branch_version=None, processor=None, build_type=None,
+    test_name=None, page_name=None
     ):
     """Return metrics data based on the parameters and optional filters."""
 
@@ -68,8 +68,8 @@ def get_metrics_data(
 
     # get the testrun ids from perftest
     test_run_ids = ptm.get_test_run_ids(
-        branch, [revision], os_name, os_version, branch_version, processor,
-        build_type, test_name
+        branch, [revision], product_name, os_name, os_version,
+        branch_version, processor, build_type, test_name
         )
 
     #test page metric
@@ -83,33 +83,44 @@ def get_metrics_data(
     return metrics_data
 
 def get_metrics_summary(
-    project, branch, revision, os_name=None, os_version=None,
-    branch_version=None, processor=None, build_type=None, test_name=None
+    project, branch, revision, product_name=None, os_name=None,
+    os_version=None, branch_version=None, processor=None, build_type=None,
+    test_name=None, pushlog_project=None
     ):
     """Return a metrics summary based on the parameters and optional filters."""
 
+    plm = factory.get_plm(pushlog_project)
     ptm = factory.get_ptm(project)
     mtm = factory.get_mtm(project)
 
     # get the testrun ids from perftest
     test_run_ids = ptm.get_test_run_ids(
-        branch, [revision], os_name, os_version, branch_version, processor,
-        build_type, test_name
+        branch, [revision], product_name, os_name, os_version,
+        branch_version, processor, build_type, test_name
         )
 
     #test page metric
     metrics_data = mtm.get_metrics_summary(test_run_ids)
 
+    #get push info
+    push_data = plm.get_node_from_revision(revision, branch)
+    metrics_data['push_data'] = push_data
+
+    #get the products associated with this revision/branch combination
+    products = ptm.get_revision_products(revision, branch)
+    metrics_data['products'] = products
+
+    plm.disconnect()
     ptm.disconnect()
     mtm.disconnect()
 
     return metrics_data
 
 def get_metrics_pushlog(
-    project, branch, revision, os_name=None, os_version=None, branch_version=None,
-    processor=None, build_type=None, test_name=None, page_name=None,
-    days_ago=None, pushes_before=None, pushes_after=None, numdays=None,
-    pushlog_project=None
+    project, branch, revision, product_name=None, os_name=None,
+    os_version=None, branch_version=None, processor=None, build_type=None,
+    test_name=None, page_name=None, days_ago=None, pushes_before=None,
+    pushes_after=None, numdays=None, pushlog_project=None
     ):
     """Return a metrics summary based on the parameters and optional filters."""
 
@@ -134,6 +145,11 @@ def get_metrics_pushlog(
 
         changesets = changeset_lookup[ node['pushlog_id'] ]
 
+        #The revisions associated with a push are returned in reverse order
+        #from the pushlog web service.  This orders them the same way tbpl
+        #does.
+        changesets['revisions'].reverse()
+
         #truncate the revision strings and collect them
         for cset_index, revision_data in enumerate(changesets['revisions']):
 
@@ -151,8 +167,8 @@ def get_metrics_pushlog(
 
     # get the testrun ids from perftest
     filtered_test_run_ids = ptm.get_test_run_ids(
-        branch, all_revisions, os_name, os_version, branch_version,
-        processor, build_type, test_name
+        branch, all_revisions, product_name, os_name, os_version,
+        branch_version, processor, build_type, test_name
         )
 
     # get the test run ids associated with the pushlog ids
@@ -193,4 +209,22 @@ def get_application_log(project, revision):
     mtm = factory.get_mtm(project)
     log = mtm.get_application_log(revision)
     return log
+
+def get_default_version(project, branch, product_name):
+
+    ptm = factory.get_ptm(project)
+
+    default_version = ptm.get_default_branch_version(
+        branch, product_name
+        )
+
+    ptm.disconnect()
+
+    version = ""
+    if 'version' in default_version:
+        version = default_version['version']
+
+    return version
+
+
 
