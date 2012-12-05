@@ -85,8 +85,6 @@ class PushLogModel(DatazillaModelBase):
         use "MySQL-Engine", where "Engine" could be "InnoDB", "Aria", etc. Not
         all contenttypes need to be represented; any that aren't will use the
         default (``MySQL-InnoDB``).
-
-
         """
 
         project = project or cls.DEFAULT_PROJECT
@@ -137,6 +135,28 @@ class PushLogModel(DatazillaModelBase):
 
         return branch_list
 
+    def get_branch_uri(self, branch=None):
+
+        if branch:
+
+            proc = 'hgmozilla.selects.get_branch_uri'
+
+            data = self.hg_ds.dhub.execute(
+                proc=proc,
+                debug_show=self.DEBUG,
+                placeholders=[branch],
+                return_type='tuple',
+                )
+        else:
+            proc = 'hgmozilla.selects.get_all_branch_uris'
+
+            data = self.hg_ds.dhub.execute(
+                proc=proc,
+                debug_show=self.DEBUG,
+                return_type='tuple',
+                )
+
+        return data
 
     def get_all_pushlogs(self):
 
@@ -227,6 +247,92 @@ class PushLogModel(DatazillaModelBase):
 
         return data
 
+    def get_branch_pushlog_by_revision(
+        self, revision, branch_name, pushes_before, pushes_after
+        ):
+
+        #Get the push id for this revision
+        push_id_proc = 'hgmozilla.selects.get_push_id_from_revision'
+
+        push_data = self.hg_ds.dhub.execute(
+            proc=push_id_proc,
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            placeholders=[revision, branch_name]
+            )
+
+        if not push_data:
+            return push_data
+
+        node = push_data[0]['node']
+        push_id = push_data[0]['push_id']
+        branch_id = push_data[0]['branch_id']
+
+        pushes_before_proc = 'hgmozilla.selects.get_push_ids_before_node'
+        pushes_after_proc = 'hgmozilla.selects.get_push_ids_after_node'
+
+        before_boundary = push_id - pushes_before
+
+        pushes_before_data = self.hg_ds.dhub.execute(
+            proc=pushes_before_proc,
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            placeholders=[ push_id, before_boundary, branch_id ]
+            )
+
+        after_boundary = push_id + pushes_after
+
+        pushes_after_data = self.hg_ds.dhub.execute(
+            proc=pushes_after_proc,
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            placeholders=[ push_id, after_boundary, branch_id ]
+            )
+
+        #Combine all of the requested push data
+        pushlog = pushes_before_data + push_data + pushes_after_data
+
+        #Retrieve a complete list of all of the pushlog ids
+        pushlog_ids = []
+
+        map(
+            lambda n: pushlog_ids.append(n['pushlog_id']),
+            pushlog
+            )
+
+        #Use a separate query to retrieve associated revisions so
+        #we can control the number of pushes by using a LIMIT clause
+        changeset_data_proc = 'hgmozilla.selects.get_changeset_data_for_pushes'
+
+        #Build the sql WHERE IN clause
+        where_in_clause = ','.join( map( lambda v:'%s', pushlog_ids ) )
+
+        changeset_data = self.hg_ds.dhub.execute(
+            proc=changeset_data_proc,
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            placeholders=pushlog_ids,
+            replace=[where_in_clause]
+            )
+
+        #Aggregate changesets
+        changeset_lookup = {}
+        for changeset in changeset_data:
+            if changeset['pushlog_id'] not in changeset_lookup:
+                changeset_struct = {
+                    'revisions':[],
+                    'pushlog_id':changeset['pushlog_id']
+                    }
+
+                changeset_lookup[ changeset['pushlog_id'] ] = changeset_struct
+
+            changeset_lookup[ changeset['pushlog_id'] ]['revisions'].append(
+                { 'revision':changeset['node'],
+                  'desc':changeset['desc'],
+                  'author':changeset['author'] }
+                )
+
+        return pushlog, changeset_lookup
 
     def get_params(self, numdays, enddate=None):
         """
@@ -250,6 +356,7 @@ class PushLogModel(DatazillaModelBase):
             "full": 1,
             "startdate": _startdate.strftime("%m/%d/%Y"),
             }
+
         # enddate is optional.  the endpoint will just presume today,
         # if not given.
         if enddate:
@@ -293,18 +400,16 @@ class PushLogModel(DatazillaModelBase):
             )
 
             uri = "{0}/json-pushes".format(br["uri"])
-
             url = "https://{0}/{1}?{2}".format(
                 repo_host,
                 uri,
                 urllib.urlencode(params),
                 )
-
             self.println("URL: {0}".format(url), 1)
-
             # fetch the JSON content from the constructed URL.
             res = urllib.urlopen(url)
             json_data = res.read()
+
             try:
                 pushlog_dict = json.loads(json_data)
 
@@ -586,6 +691,19 @@ class PerformanceTestModel(DatazillaModelBase):
 
         return products
 
+    def get_revision_products(self, revision, branch):
+
+        proc = 'perftest.selects.get_revision_products'
+
+        products = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            return_type='tuple',
+            placeholders=[revision]
+            )
+
+        return products
+
 
     def get_default_products(self):
 
@@ -603,6 +721,24 @@ class PerformanceTestModel(DatazillaModelBase):
 
         return default_products
 
+    def get_default_branch_version(self, branch, product_name):
+
+        proc = 'perftest.selects.get_default_products'
+
+        products = self.sources["perftest"].dhub.execute(
+                proc=proc,
+                debug_show=self.DEBUG,
+                return_type='tuple'
+                )
+
+        target_product = {}
+
+        for product in products:
+            if (product['branch'] == branch) and (product['product'] == product_name):
+                target_product = product
+                break
+
+        return target_product
 
     def get_machines(self):
 
@@ -820,22 +956,22 @@ class PerformanceTestModel(DatazillaModelBase):
 
 
     def get_test_run_ids(
-        self, branch, revision, os_name=None, os_version=None,
-        branch_version=None, processor=None, build_type=None,
-        test_name=None, page_name=None):
+        self, branch, revisions, product_name=None, os_name=None,
+        os_version=None, branch_version=None, processor=None,
+        build_type=None, test_name=None, page_name=None):
 
         proc = 'perftest.selects.get_test_run_ids'
         placeholders = [branch]
         rep = []
 
-        if not revision:
-            proc = 'perftest.selects.get_test_run_ids_no_revision'
-        else:
-            placeholders.append(revision)
-
-        if page_name:
+        if revisions:
+            revision_string = ','.join( map( lambda v:str(v), revisions ) )
             self.get_replace_and_placeholders(
-                rep, placeholders, 'pg.url', page_name
+                rep, placeholders, 'tr.revision', revision_string
+                )
+        if product_name:
+            self.get_replace_and_placeholders(
+                rep, placeholders, 'p.product', product_name
                 )
         if os_name:
             self.get_replace_and_placeholders(
@@ -1097,7 +1233,7 @@ class PerformanceTestModel(DatazillaModelBase):
         proc_get  = 'objectstore.selects.get_claimed'
 
         # Note: There is a bug in MySQL http://bugs.mysql.com/bug.php?id=42415
-        # that causes the folowing warning to be generated in the production
+        # that causes the following warning to be generated in the production
         # environment:
         #
         # _mysql_exceptions.Warning: Unsafe statement written to the binary

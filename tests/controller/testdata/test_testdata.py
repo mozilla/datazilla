@@ -9,6 +9,7 @@ from ...sample_metric_data import get_metric_values
 from tests.model.test_metrics_test_model import setup_pushlog_walk_tests
 
 from datazilla.controller.admin import testdata
+from datazilla.controller.admin.metrics.perftest_metrics import compute_test_run_metrics
 
 def add_test_data(ptm):
     """Add some test runs with filterable values."""
@@ -114,6 +115,7 @@ def test_get_testdata_filter_test_name(ptm, ptrdm, monkeypatch):
 
 
 def test_get_testdata_filter_os_and_test_name(ptm, ptrdm, monkeypatch):
+
     def mock_ptrdm(project):
         return ptrdm
     monkeypatch.setattr(factory, 'get_ptrdm', mock_ptrdm)
@@ -144,12 +146,15 @@ def test_get_metrics_pushlog(mtm, ptm, plm, monkeypatch ):
     skip_revision = setup_data['skip_revision']
 
     match_count = 0
-
     metric_values = get_metric_values()
 
+    revision_index = setup_data['target_revision_index']
+    revision = setup_data['sample_revisions'][revision_index]
+
     metrics_pushlog = testdata.get_metrics_pushlog(
-        ptm.project, setup_data['branch'], pushlog_project=plm.project,
-        days_ago=5, test_name='Talos tp5r'
+        ptm.project, setup_data['branch'], revision,
+        pushlog_project=plm.project, pushes_before=5, pushes_after=5,
+        test_name='Talos tp5r'
         )
 
     for push in metrics_pushlog:
@@ -158,7 +163,9 @@ def test_get_metrics_pushlog(mtm, ptm, plm, monkeypatch ):
 
             match_count += 1
 
-            assert push['revisions'][0] == push['dz_revision']
+            last_index = len(push['revisions']) - 1
+
+            assert push['revisions'][last_index]['revision'] == push['dz_revision']
 
             for data in push['metrics_data']:
                 for page_data in data['pages']:
@@ -166,7 +173,5 @@ def test_get_metrics_pushlog(mtm, ptm, plm, monkeypatch ):
                     assert metric_values.issubset(metric_data_keys)
 
     assert match_count == 2
-
-
 
 

@@ -323,7 +323,7 @@ var DataViewCollectionModel = new Class({
         this.parent(options);
 
         this.newViewUrl = '/' + DV_PAGE.project;
-        this.urlResubmissionUrl = '/api/resubmit/';
+        this.urlResubmissionUrl = '/dataviews/api/resubmit/';
 
         //An object acting like an associative array that holds
         //all views

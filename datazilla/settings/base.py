@@ -33,7 +33,6 @@ path = lambda *a: os.path.join(ROOT, *a)
 
 ADMINS = [
    ("jeads", "jeads@mozilla.com"),
-   ("Carl Meyer", "cmeyer@mozilla.com"),
 ]
 
 MANAGERS = ADMINS
@@ -118,6 +117,8 @@ INSTALLED_APPS = [
     "datazilla.controller.admin",
     "datazilla.model.sql",
     "datazilla.webapp.apps.datazilla",
+    "datazilla.webapp.apps.dataviews",
+    "datazilla.webapp.apps.summary",
 ]
 
 # A sample logging configuration. The only tangible logging

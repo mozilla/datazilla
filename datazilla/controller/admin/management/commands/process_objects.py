@@ -56,7 +56,10 @@ class Command(ProjectBatchCommand):
         metrics_exclude_projects = set(['b2g', 'stoneridge'])
 
         if project not in metrics_exclude_projects:
+            #minimum required number of replicates for
+            #metrics processing
+            replicate_min = 5
             compute_test_run_metrics(
-                project, pushlog_project, debug, test_run_ids
+                project, pushlog_project, debug, replicate_min, test_run_ids
                 )
 
