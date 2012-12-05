@@ -102,13 +102,15 @@ def get_metrics_summary(
     #test page metric
     metrics_data = mtm.get_metrics_summary(test_run_ids)
 
-    #get push info
-    push_data = plm.get_node_from_revision(revision, branch)
-    metrics_data['push_data'] = push_data
+    if metrics_data:
 
-    #get the products associated with this revision/branch combination
-    products = ptm.get_revision_products(revision, branch)
-    metrics_data['products'] = products
+        #get push info
+        push_data = plm.get_node_from_revision(revision, branch)
+        metrics_data['push_data'] = push_data
+
+        #get the products associated with this revision/branch combination
+        products = ptm.get_revision_products(revision, branch)
+        metrics_data['products'] = products
 
     plm.disconnect()
     ptm.disconnect()
@@ -119,8 +121,8 @@ def get_metrics_summary(
 def get_metrics_pushlog(
     project, branch, revision, product_name=None, os_name=None,
     os_version=None, branch_version=None, processor=None, build_type=None,
-    test_name=None, page_name=None, days_ago=None, pushes_before=None,
-    pushes_after=None, numdays=None, pushlog_project=None
+    test_name=None, page_name=None, pushes_before=None, pushes_after=None,
+    pushlog_project=None
     ):
     """Return a metrics summary based on the parameters and optional filters."""
 

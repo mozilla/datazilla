@@ -699,7 +699,7 @@ class PerformanceTestModel(DatazillaModelBase):
             proc=proc,
             debug_show=self.DEBUG,
             return_type='tuple',
-            placeholders=[revision, branch]
+            placeholders=[revision]
             )
 
         return products

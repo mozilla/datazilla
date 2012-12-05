@@ -60,6 +60,7 @@ var MetricSummaryPage = new Class( {
 
         var urlObj = MS_PAGE.urlObj.data;
 
+        MS_PAGE.urlObj = urlObj;
         MS_PAGE.refData.project = urlObj.seg.path[0];
         MS_PAGE.refData.branch = urlObj.seg.path[2];
         MS_PAGE.refData.revision = urlObj.seg.path[3];
@@ -95,7 +96,6 @@ var MetricSummaryPage = new Class( {
             context:this,
             success: function(data, textStatus, jqXHR){
                 MS_PAGE.refData.branch_uri = data[0].uri;
-                console.log(MS_PAGE.refData.branch_uri);
                 }
             });
     }

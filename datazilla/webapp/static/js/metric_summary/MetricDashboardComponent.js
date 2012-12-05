@@ -79,6 +79,11 @@ var MetricDashboardView = new Class({
         this.progressBarTitleClassName = 'su-progressbar-title';
         this.progressBarClassName = 'su-progressbar';
 
+        this.helpIconClassSel = '.ui-icon-help';
+        this.helpModalClassSel = '.su-help-modal';
+        this.helpModalDialogSel = '#su_help_modal_dialog';
+        this.fileABugSel = '#su_file_a_bug';
+
         this.revisionProductsSel = '#su_revision_products';
         this.revisionTestedSel = '#su_revision_tested';
         this.pushDescSel = '#su_push_desc';
@@ -94,6 +99,16 @@ var MetricDashboardView = new Class({
         this.progressbarValueClassSel = '.ui-progressbar-value';
 
 
+        //Set help icon click to open help dialog
+        $(this.helpModalClassSel).bind(
+            'click', _.bind(this.displayHelpDialog, this)
+            );
+
+        $(this.fileABugSel).bind(
+            'click', _.bind(this.closeHelpDialog, this)
+            );
+
+        $(this.fileABugSel).button();
     },
 
     initializeDashboard: function(data){
@@ -115,6 +130,7 @@ var MetricDashboardView = new Class({
             levelColors: [MS_PAGE.passColor]
         });
 
+
         //Initialize progress bars
         this.loadProgressBars(
             this.summaryByTestContainerSel, data.summary_by_test,
@@ -133,11 +149,21 @@ var MetricDashboardView = new Class({
 
         this.animateProgressBars();
     },
+    closeHelpDialog: function(event){
+        $(this.helpModalDialogSel).dialog('close');
+    },
+    displayHelpDialog: function(event){
+        $(this.helpModalDialogSel).dialog(
+            { height:500, width:500, modal:true }
+            );
+    },
     toggleDashboard: function(toggleOn, target){
 
         $(this.spinnerSel).hide();
 
         if (toggleOn){
+
+            $(this.helpIconClassSel).css('display', 'inline-block');
 
             $('.' + this.dashboardPanelClass).css('display', 'block');
 
@@ -147,6 +173,8 @@ var MetricDashboardView = new Class({
         } else {
 
             $('.' + this.dashboardPanelClass).css('display', 'none');
+
+            $(this.helpIconClassSel).css('display', 'none');
 
             $(this.dashboardSel).hide();
             $('.' + this.referenceInfoPanelClass).css('display', 'none');
@@ -164,6 +192,9 @@ var MetricDashboardView = new Class({
         $(this.noDataMessageSel).text(message);
 
         this.toggleDashboard(false, this.noDataSel);
+
+        MS_PAGE.metricGridComponent.view.showNoDataMessage();
+        MS_PAGE.trendLineComponent.view.showNoDataMessage();
 
     },
     animateProgressBars: function(){
@@ -227,7 +258,19 @@ var MetricDashboardView = new Class({
                 var value = $(selectedOption).val();
                 var productData = JSON.parse(value);
 
-                console.log(productData);
+                var uri = MS_PAGE.urlObj.attr.path +
+                    '?product=' + productData.product +
+                    '&branch_version=' + productData.version;
+
+                if(MS_PAGE.urlObj.param.query.test){
+                    uri += '&test=' + MS_PAGE.urlObj.param.query.test;
+                }
+                if(MS_PAGE.urlObj.param.query.platform){
+                    uri += '&platform=' + MS_PAGE.urlObj.param.query.platform;
+                }
+
+                //Reload the requested product in page
+                window.location = uri;
 
                 }, this)
             );

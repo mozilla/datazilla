@@ -161,7 +161,7 @@ var TrendLineComponent = new Class({
             this.setGetPushState();
 
             this.model.getTrendLine(
-                this, this.loadTrendData, this.dataLoadError, eventData,
+                this, this.loadTrendData, eventData,
                 pushCounts.before, pushCounts.after
                 );
 
@@ -191,8 +191,8 @@ var TrendLineComponent = new Class({
             trendLineEventData.platform_info = this.trendLines[key].platform_info;
 
             this.model.getTrendLine(
-                this, this.loadTrendData, this.dataLoadError,
-                trendLineEventData, pushCounts.before, pushCounts.after
+                this, this.loadTrendData, trendLineEventData,
+                pushCounts.before, pushCounts.after
                 );
         }
     },
@@ -223,10 +223,18 @@ var TrendLineComponent = new Class({
         var passDataset= this.getPassDataset();
         var noDataDataset= this.getNoDataDataset();
 
-        chartData.push(passDataset);
-        chartData.push(failDataset);
-        chartData.push(noDataDataset);
+        chartData[this.passSeriesIndex] = passDataset;
+        chartData[this.failSeriesIndex] = failDataset;
+        chartData[this.noMetricsDataSeriesIndex] = noDataDataset;
 
+        //This loop populates chartData for flot.  Data types that need to
+        //be colored/treated differently (pass, fail, no data, trend data)
+        //all need to be their own series.  This gives the appearance of
+        //individual data points being "colored" differently, when they are
+        //actually different series color assignments in flot.
+        //This is a bit counter intuitive but unfortunately, the flot data
+        //structure does not support assigning different colors to data
+        //points individually.
         for(var i=0; i<this.trendLineOrder.length; i++){
 
             var key = this.trendLineOrder[i];
@@ -238,14 +246,19 @@ var TrendLineComponent = new Class({
             var seriesColor = '';
             var targetRevisionType = 'pass';
 
+            //A new trend dataset needs to be created for each trend line
+            //since it is displayed as a line, otherwise flot will display
+            //a disjointed line connected across all data series.  The other
+            //data series types (fail, pass, noData) are displayed as points
+            //so they need to share the dataset array.
             var trendDataset = this.getTrendLineDataset();
             var trendIndex = chartData.push(trendDataset) - 1;
 
             this.seriesIndexToKey[trendIndex] = [];
 
-            var passIndex = 0;
-            var failIndex = 0;
-            var noDataIndex = 0;
+            var passDatumIndex = 0;
+            var failDatumIndex = 0;
+            var noDataDatumIndex = 0;
 
             var metricsData = [];
 
@@ -284,21 +297,20 @@ var TrendLineComponent = new Class({
                     if( pageData.test_evaluation === true ){
 
                         //Test passed
-                        passIndex = chartData[this.passSeriesIndex].data.push(
+                        passDatumIndex = chartData[this.passSeriesIndex].data.push(
                             [ j, parseInt(pageData.mean) ]
                             ) - 1;
 
-                        this.seriesIndexToKey[this.passSeriesIndex][passIndex] = key;
+                        this.seriesIndexToKey[this.passSeriesIndex][passDatumIndex] = key;
 
                     } else if(pageData.test_evaluation === false) {
 
                         //Test failed
-
-                        failIndex = chartData[this.failSeriesIndex].data.push(
+                        failDatumIndex = chartData[this.failSeriesIndex].data.push(
                             [ j, parseInt(pageData.mean) ]
                             ) - 1;
 
-                        this.seriesIndexToKey[this.failSeriesIndex][failIndex] = key;
+                        this.seriesIndexToKey[this.failSeriesIndex][failDatumIndex] = key;
 
                     }
 
@@ -310,28 +322,36 @@ var TrendLineComponent = new Class({
                             {'x':j, 'y':parseInt(pageData.mean) }
                             );
 
+                        //flot datapoint object of the target revision
                         flotItem.datapoint = [
                             j, pageData.mean
                             ];
 
                         if( pageData.test_evaluation === true ){
 
+                            //Set the series color
                             seriesColor = MS_PAGE.passColor;
 
-                            this.trendLines[key].datapoint_plot_location.point_index = passIndex;
+                            //Record the datum point index
+                            this.trendLines[key].datapoint_plot_location.point_index = passDatumIndex;
 
+                            //Set flot seriesIndex and dataIndex attributes
                             flotItem.seriesIndex = this.passSeriesIndex;
                             flotItem.dataIndex =
                                 this.trendLines[key].datapoint_plot_location.point_index;
 
                         } else {
-
+                            //Set the revision type to fail, it's pass by
+                            //default
                             targetRevisionType = 'fail';
 
+                            //Set the series color
                             seriesColor = MS_PAGE.failColor;
 
-                            this.trendLines[key].datapoint_plot_location.point_index = failIndex;
+                            //Record the datum point index
+                            this.trendLines[key].datapoint_plot_location.point_index = failDatumIndex;
 
+                            //Set flot seriesIndex and dataIndex attributes
                             flotItem.seriesIndex = this.failSeriesIndex;
                             flotItem.dataIndex = 
                                 this.trendLines[key].datapoint_plot_location.point_index;
@@ -342,49 +362,45 @@ var TrendLineComponent = new Class({
                 } else {
                     //No metrics data is available, color gray and place
                     //on trend line
-                    noDataIndex = chartData[this.noMetricsDataSeriesIndex].data.push(
+                    noDataDatumIndex = chartData[this.noMetricsDataSeriesIndex].data.push(
                         [ j, parseInt(this.trendLines[key]['mean']) ]
                         ) - 1;
 
-                    this.seriesIndexToKey[this.noMetricsDataSeriesIndex][noDataIndex] = key;
+                    this.seriesIndexToKey[this.noMetricsDataSeriesIndex][noDataDatumIndex] = key;
                 }
-
             }
 
+            //Set the series_index for the datapoint plot location
             if(targetRevisionType === 'pass'){
                 this.trendLines[key].datapoint_plot_location.series_index = this.passSeriesIndex;
             }else{
                 this.trendLines[key].datapoint_plot_location.series_index = this.failSeriesIndex;
             }
 
+            //Get the rgb alpha for the series label
             var rgbAlpha = this.view.loadSeriesLabelContainer(
                 key, this.trendLines[key], seriesColor
                 );
 
+            //Store the rgb alpha for hover events
             this.trendLines[key].rgb_alpha = rgbAlpha;
 
         }
 
+        //Initialize the plot with the chartData
         this.plot = $.plot(
             $(this.view.chartContainerSel),
             chartData,
             this.chartOptions);
 
+        //Draw a circle around the target revisions that the
+        //page is loaded on to help the user find their push
+        //of interest
         this.view.drawCircleAroundDataPoints(targetRevisions, this.plot);
-
-        $(window).resize(
-            //Redraw the circle around target revision
-            //when the chart is resized
-            _.bind(
-                function(){
-                    //this.view.drawCircleAroundDataPoints(
-                     //   targetRevisions, this.plot
-                      //  );
-                }, this)
-            );
+        //Hide the per-push spinner
         this.unsetGetPushState();
+        //Display the chart
         this.view.displayDashboard();
-
         //Set hover datum to revision of interest
         this._hoverPlot({}, {}, flotItem);
 
@@ -563,7 +579,6 @@ var TrendLineComponent = new Class({
 
             //Highlight the datapoint that the datum info is initialized to
             this.plot.unhighlight();
-
             this.plot.highlight(item.seriesIndex, item.datapoint);
 
             if(item.dataIndex === undefined){
@@ -591,7 +606,6 @@ var TrendLineComponent = new Class({
             var datum = this.trendLines[key]['data'][ item.datapoint[0] ];
             var dataSeries = this.trendLines[key];
 
-            var keyValueArray = [];
             var platform = this.trendLines[key]['platform'];
             var pagename = this.trendLines[key]['pagename'];
 
@@ -611,6 +625,10 @@ var TrendLineComponent = new Class({
             //with the push.
             var revision = datum.dz_revision || datum.revisions[0]['revision'];
             var revisionHtml = MS_PAGE.getHgUrlATag('rev', revision);
+
+            //Configure key/values for the top datum panel holding metrics
+            //data
+            var keyValueArray = [];
 
             keyValueArray.push(
                 {'label':'dz_revision',
@@ -636,8 +654,8 @@ var TrendLineComponent = new Class({
                 {'label':'page',
                  'value':pagename});
 
+            //Set the color to use for the datum display panel.
             var color = MS_PAGE.passColor;
-
             if(datum.metrics_data.length > 0){
                 //Load metrics specific data
                 for(var i=0; i<metricKeys.length; i++){
@@ -649,51 +667,19 @@ var TrendLineComponent = new Class({
                 }
 
                 if( datum.metrics_data[0]['pages'][pagename]['test_evaluation'] === false ){
+                    //Test fails, use the fail color
                     color = MS_PAGE.failColor;
                 }
 
             } else {
+                //No metrics data use the trendLineColor
                 color = this.view.trendLineColor;
             }
 
+            //Set the key/value pairs for the push information section
+            //of the datum
             var revisionKeyValues = [];
-            for(var i=0; i<datum.revisions.length; i++){
-
-                var revisionDatum = datum.revisions[i];
-
-                var changesetHtml = MS_PAGE.getHgUrlATag(
-                    'changeset', revisionDatum.revision
-                    );
-
-                revisionKeyValues.push(
-                    {'label':'revision',
-                    'value':changesetHtml});
-
-                var contactInfo = revisionDatum.author.match(/(.*?)\<(\S+)\>/);
-
-                var email = "";
-                var author = "";
-
-                if(contactInfo.length === 3){
-                    revisionKeyValues.push(
-                        {'label':'author',
-                        'value':contactInfo[1]});
-                    revisionKeyValues.push(
-                        {'label':'email',
-                        'value':contactInfo[2]});
-
-                }else{
-                    revisionKeyValues.push(
-                        {'label':'author',
-                        'value':revisionDatum.author});
-                }
-
-                var desc = MS_PAGE.addBugzillaATagsToDesc(revisionDatum.desc);
-
-                revisionKeyValues.push(
-                    {'label':'desc',
-                    'value':desc});
-            }
+            this._setPushInfoKeyValues(revisionKeyValues, datum);
 
             var url = this.model.getRawDataUrl(
                 this.trendLines[key], datum.revisions[0].revision);
@@ -717,6 +703,46 @@ var TrendLineComponent = new Class({
                     this.hoverLegendEl = undefined;
                 }
             }
+        }
+    },
+    _setPushInfoKeyValues: function(revisionKeyValues, datum){
+
+        for(var i=0; i<datum.revisions.length; i++){
+
+            var revisionDatum = datum.revisions[i];
+
+            var changesetHtml = MS_PAGE.getHgUrlATag(
+                'changeset', revisionDatum.revision
+                );
+
+            revisionKeyValues.push(
+                {'label':'revision',
+                 'value':changesetHtml});
+
+            var contactInfo = revisionDatum.author.match(/(.*?)\<(\S+)\>/);
+
+            var email = "";
+            var author = "";
+
+            if(contactInfo.length === 3){
+                revisionKeyValues.push(
+                    {'label':'author',
+                     'value':contactInfo[1]});
+                revisionKeyValues.push(
+                    {'label':'email',
+                     'value':contactInfo[2]});
+
+            }else{
+                revisionKeyValues.push(
+                    {'label':'author',
+                     'value':revisionDatum.author});
+            }
+
+            var desc = MS_PAGE.addBugzillaATagsToDesc(revisionDatum.desc);
+
+            revisionKeyValues.push(
+                {'label':'desc',
+                 'value':desc});
         }
     },
     _clickPlot: function(event, pos, item){
@@ -752,14 +778,6 @@ var TrendLineComponent = new Class({
                     }
                 };
         }
-    },
-    dataLoadError: function(data, textStatus, jqXHR){
-
-        var messageText = 'Ohhh no, something has gone horribly wrong! ';
-
-        messageText += ' HTTP status:' + data.status + ', ' + textStatus +
-        ', ' + data.statusText;
-
     }
 });
 var TrendLineView = new Class({
@@ -846,6 +864,10 @@ var TrendLineView = new Class({
         $(this.getPushesSel).button({ "disabled": false });
         $(this.getPushSpinnerSel).css('display', 'none');
 
+    },
+    showNoDataMessage: function(){
+        $(this.pushlogSpinnerSel).css('display', 'none');
+        $(this.pushlogDashboardSel).css('display', 'none');
     },
     drawCircleAroundDataPoints: function(targetRevisions, plot){
 
@@ -1077,7 +1099,7 @@ var TrendLineModel = new Class({
 
     },
     getTrendLine: function(
-        context, fnSuccess, fnError, eventData, pushesBefore, pushesAfter
+        context, fnSuccess, eventData, pushesBefore, pushesAfter
         ){
 
         var url = this.getMetricsUrl(eventData, pushesBefore, pushesAfter);
@@ -1088,7 +1110,6 @@ var TrendLineModel = new Class({
             cache:false,
             type:'GET',
             context:context,
-            error:fnError,
             success: function(data, textStatus, jqXHR){
                 fnSuccess.call(this, data, jqXHR, eventData);
                 }

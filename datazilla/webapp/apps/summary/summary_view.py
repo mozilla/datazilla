@@ -11,5 +11,10 @@ from django.http import HttpResponse
 
 def summary_page(request, project="", branch="", revision=""):
 
-    return render_to_response('metrics.summary.html', {})
+    #give template access to the DEBUG variable
+    template_context = { 'DEBUG':settings.DEBUG }
+
+    return render_to_response(
+        'metrics.summary.html', template_context
+        )
 

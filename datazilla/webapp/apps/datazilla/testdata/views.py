@@ -143,13 +143,6 @@ def get_metrics_pushlog(request, project, branch, revision):
     test_name = request.GET.get("test_name", None)
     page_name = request.GET.get("page_name", None)
 
-
-    days_ago = 0
-    try:
-        days_ago = int(request.GET.get("days_ago", 0))
-    except ValueError:
-        pass
-
     #applies to both before/after, so total of 2*maximum_pushes
     #are allowed
     maximum_pushes = 1000
@@ -172,12 +165,6 @@ def get_metrics_pushlog(request, project, branch, revision):
     if pushes_after > maximum_pushes:
         pushes_after = maximum_pushes
 
-    numdays = 0
-    try:
-        numdays = int(request.GET.get("numdays", 0))
-    except ValueError:
-        pass
-
     pushlog_project = request.GET.get("pushlog_project", None)
 
     if not test_name:
@@ -199,10 +186,8 @@ def get_metrics_pushlog(request, project, branch, revision):
             build_type=build_type,
             test_name=test_name,
             page_name=page_name,
-            days_ago=days_ago,
             pushes_before=pushes_before,
             pushes_after=pushes_after,
-            numdays=numdays,
             pushlog_project=pushlog_project
             )),
         content_type=API_CONTENT_TYPE,

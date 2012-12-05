@@ -761,6 +761,8 @@ class MetricsTestModel(DatazillaModelBase):
 
     def get_test_run_ids_from_pushlog_ids(self, pushlog_ids=[]):
 
+        pushlog_ids.append(1)
+
         rep = []
         placeholders = []
         placeholders.extend(pushlog_ids)
@@ -770,7 +772,6 @@ class MetricsTestModel(DatazillaModelBase):
         test_run_ids = []
 
         if pushlog_ids:
-
             replace = ','.join( map( lambda pushlog_id: '%s', pushlog_ids ) )
             rep.append(replace)
             replace = [" ".join(rep)] if len(rep) else [" "]

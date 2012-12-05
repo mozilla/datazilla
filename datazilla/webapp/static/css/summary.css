@@ -6,6 +6,15 @@ body {
     border-top: 2px solid #676767;
     min-width: 1065px;
 }
+div.su-title {
+  background: url("/static/images/title.png") no-repeat scroll 0 center transparent;
+  position: absolute;
+  left: 15px;
+  width:400px;
+  height:100%;
+  top: 0;
+  z-index: 1;
+}
 a {
     text-decoration: underline;
     font-weight: bold;
@@ -13,28 +22,54 @@ a {
 div.su-large-text {
     font-size: 14px;
 }
+.su-light-text {
+    opacity: 0.8;
+}
+.su-light-text2 {
+    opacity: 0.5;
+}
+div.su-toolpanel {
+  width: 95%;
+  height:50px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  padding: 10px;
+  font-size:0.750em;
+}
+div.su-toolbar-base {
+   /*************
+    * Sets basic layout and background properties
+    * for toolbar components
+    *************/
+   position: relative;
+   margin-left: auto;
+   margin-right: auto;
+   background: transparent #2a2a2a;
+   background: transparent rgba(38,38,38,0.98);
+}
+div.su-vis-detail-panel {
+  margin-top: 5px;
+  padding: 0.5em;
+  overflow: auto;
+}
 div.su-toppanel {
     -moz-box-sizing: border-box;
     -webkit-box-sizing: border-box;
     border: 0 solid #000;
     background: -moz-linear-gradient(-90deg, #74D435, #43AA00);
     background: -webkit-gradient(linear, left top, left bottom, from(#74D435), to(#43AA00));
-
     height: 50px;
     width: 95%;
     margin-top: 20px;
     padding-top: 10px;
 }
 div.su-panel-base {
-
     width: 93%;
-    height: 300px;
+    height: 320px;
     margin-left: auto;
     margin-right: auto;
     margin-bottom: 10px;
-
     background: white;
-
 }
 div.su-main-gauge {
     float: left;
@@ -94,12 +129,6 @@ div.su-progressbar-value {
     margin-left: 5;
 }
 
-.su-light-text {
-    opacity: 0.8;
-}
-.su-light-text2 {
-    opacity: 0.5;
-}
 .su-pass-color {
     color: #44AA00;
 }
@@ -124,14 +153,11 @@ div.su-column-headers {
     margin-top:60px;
 }
 div.su-row-headers {
-
     float: left;
     width: 125px;
     text-align: right;
-
     margin-right: 10px;
     margin-top: 10px;
-
 }
 div.su-grid-values {
     float: left;
@@ -142,7 +168,6 @@ div.su-grid-values {
     border-left: thin solid;
 }
 div.su-grid-column {
-
     -webkit-transform:rotate(320deg);
     -moz-transform:rotate(320deg);
     -o-transform: rotate(320deg);
@@ -156,13 +181,11 @@ div.su-grid-row {
    float: left;
    height:30px;
    width: 125px;
-
 }
 div.su-grid-value {
     float: left;
     width: 30px;
     height: 30px;
-
     border-bottom: thin solid;
     border-right: thin solid;
 }
@@ -291,4 +314,20 @@ div.su-datum-desc-value {
     position:absolute;
     left:135px;
     margin-top:150px;
+}
+div.su-wordwrap {
+   white-space: pre-wrap;      /* CSS3 */
+   white-space: -moz-pre-wrap; /* Firefox */
+   white-space: -pre-wrap;     /* Opera <7 */
+   white-space: -o-pre-wrap;   /* Opera 7 */
+   word-wrap: break-word;      /* IE */
+}
+hr.su-light-horz-line {
+   background-color:#0D2054;
+}
+.css-right {
+  float: right;
+}
+.css-left {
+  float: left;
 }

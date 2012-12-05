@@ -169,6 +169,7 @@ var MetricGridView = new Class({
                         var platform = MS_PAGE.refData.platform;
                         var test =  MS_PAGE.refData.test;
                         var initializeValue = "";
+
                         if(data.tests[test] && data.tests[test][platform]){
                             initializeValue = data.tests[test][platform]['pass']['percent'];
                         }
@@ -209,7 +210,7 @@ var MetricGridView = new Class({
     },
     getColumnHeaderCell: function(columnTitle){
 
-        var d = $('<div></div>');
+        var d = $(document.createElement('div'));
         d.addClass(this.gridColumnHeaderClass);
         d.text(columnTitle);
 
@@ -217,7 +218,7 @@ var MetricGridView = new Class({
     },
     getRowHeaderCell: function(rowTitle){
 
-        var d = $('<div></div>');
+        var d = $(document.createElement('div'));
         d.addClass(this.gridRowHeaderClass);
         d.text(rowTitle);
 
@@ -225,7 +226,7 @@ var MetricGridView = new Class({
     },
     getValueCell: function(columnTitle, rowTitle, value){
 
-        var d = $('<div></div>');
+        var d = $(document.createElement('div'));
         d.addClass(this.gridValueClass);
         d.text(value);
 
@@ -301,6 +302,10 @@ var MetricGridView = new Class({
                 this.gridClickEvent, cellEl
                 );
         }
+    },
+    showNoDataMessage: function(){
+        $(this.gridSpinnerSel).css('display', 'none');
+        $(this.testSuiteDashboardContainerSel).css('display', 'none');
     },
     _triggerEvent: function(eventType, cell){
 

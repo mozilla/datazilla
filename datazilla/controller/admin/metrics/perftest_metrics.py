@@ -14,7 +14,7 @@ BRANCHES_NOT_ALLOWED = set([
     ])
 
 def compute_test_run_metrics(
-    project, pushlog_project, debug, test_run_ids=[]
+    project, pushlog_project, debug, replicate_min, test_run_ids=[]
     ):
     """
     Runs all metric tests and associated summaries on a list of test run ids
@@ -69,7 +69,7 @@ def compute_test_run_metrics(
         base_message = u"{0} {1}".format(child_revision, str(test_run_id))
 
         if not check_run_conditions(
-            test_name, rep_count, push_node, branch, debug
+            test_name, rep_count, push_node, branch, replicate_min, debug
             ):
             println(u"Not able to run {0}\n".format(base_message), debug)
             continue
@@ -129,7 +129,9 @@ def run_test(test_name):
 
     return execute_metrics
 
-def check_run_conditions(test_name, rep_count, push_node, branch, debug):
+def check_run_conditions(
+    test_name, rep_count, push_node, branch, replicate_min, debug
+    ):
     """
     Test a set of conditions that have to be met in order to run the set of
     metrics tests.
@@ -139,7 +141,7 @@ def check_run_conditions(test_name, rep_count, push_node, branch, debug):
         println(u"Cannot run {0}".format(test_name), debug)
         return False
 
-    if rep_count < 5:
+    if rep_count < replicate_min:
         #If we don't have more than one replicate we cannot
         #run any of the existing metric tests
         println(

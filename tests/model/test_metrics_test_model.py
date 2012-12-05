@@ -772,9 +772,8 @@ def setup_pushlog_walk_tests(
         if load_objects:
             ptm.store_test_data( json.dumps( sample_data ) )
             test_run_ids = ptm.process_objects(2)
-
             compute_test_run_metrics(
-                ptm.project, plm.project, False, test_run_ids
+                ptm.project, plm.project, False, 3, test_run_ids
             )
 
             setup_data['test_run_ids'][revision] = test_run_ids
