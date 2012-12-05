@@ -3,6 +3,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. 
  * *****/
+String.prototype.hashCode = function(){
+    //Builds a 32bit integer hash of a string
+    var hash = 0, i, charCode;
+    if (this.length == 0) return hash;
+    for (i = 0; i < this.length; i++) {
+        charCode = this.charCodeAt(i);
+        hash = ((hash<<5)-hash)+charCode;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash);
+};
 var Page = new Class({
 
     Implements:Options,
@@ -101,5 +112,16 @@ var View = new Class({
             newId = '#' + id + '_' + dviewIndex;
         }
         return newId;
+    },
+    getAlphabeticalSortKeys: function(sortTarget){
+
+        var key = "";
+        var keys = [];
+        for (key in sortTarget){
+            if (sortTarget.hasOwnProperty(key)){
+               keys.push(key);
+            }
+        }
+        return keys.sort();
     }
 });

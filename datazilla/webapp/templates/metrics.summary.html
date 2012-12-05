@@ -1,0 +1,198 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>Perf-o-Matic</title>
+{% if DEBUG %}
+    <link rel="stylesheet" href="/static/css/Aristo/jquery-ui-1.8.7.custom.css" type="text/css"/>
+    <link rel="stylesheet" href="/static/css/datatables.css" type="text/css"/>
+    <link rel="stylesheet" href="/static/css/summary.css" type="text/css"/>
+{% else %}
+    <link rel="stylesheet" href="/static/css/metric-summary-min.css" type="text/css"/>
+{% endif %}
+
+</head>
+
+<body>
+
+<!--Toppanel-->
+<div class="ui-widget ui-widget-header ui-corner-top su-toolbar-base su-toppanel">
+   <div class="su-title">
+        <a href=""><span id="logo"></span></a>
+   </div>
+</div>
+
+<div id="su_container">
+   <!-- Help Modal -->
+   <div id="su_help_modal_dialog" title="Application Help" style="display:none;">
+
+        <a href="https://github.com/mozilla/datazilla"><img style="position: absolute; top: 0; left: -15px; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_left_orange_ff7600.png" alt="Fork me on GitHub"></a>
+
+        <p style="margin-top:150px;">Help is on the way! No really it is... it just hasn't quite arrived yet.  In the meantime, if something doesn't seem to be working correctly, please file a bug. Thank you!</p>
+
+        <a id="su_file_a_bug" target="_blank" href="https://bugzilla.mozilla.org/enter_bug.cgi?product=Datazilla">File a Datazilla Bug</a>
+   </div>
+
+   <!-- Dashboard -->
+   <div class="ui-widget ui-widget-header ui-corner-all su-panel-base su-toolpanel">
+        <div id="su_dashboard_spinner" class="su-spinner ui-widget"></div>
+
+        <div id="su_no_data" style="display:none;" class="ui-widget su-no-data">No metrics data available for <span id="su_no_data_message"></span></div>
+
+        <div id="su_dashboard" style="display:hidden;">
+
+            <a href="#" class="su-help-modal css-right">
+                <span style="display:none;" class="ui-icon ui-icon-help"></span>
+            </a>
+
+            <div style="display:none;" class="su-dashboard-panel">
+                <div class="su-light-text">Results By Test</div>
+                 <hr class="su-light-horz-line su-light-text" />
+                <div class="su-scroll-panel">
+                    <div id="su_summary_by_test"></div>
+                </div>
+            </div>
+
+            <div id="su_main_gauge_container" class="su-main-gauge">
+                <div id="su_gauge_1"></div>
+                <div class="su-reference-info" style="width:245px; display:none;">
+                    <div><span class="su-light-text2">Product:</span>
+                        <select id="su_revision_products" size="1" class="css-right"></select>
+                    </div>
+                    <div style="margin-top:5px;"><span class="su-light-text2">Revision:</span>&nbsp;<span id="su_revision_tested" class="su-light-text css-right"></span></div>
+                    <div><span class="su-light-text2">Author:</span>&nbsp;<span id="su_push_author" class="su-light-text css-right"></span></div>
+                    <div><span class="su-light-text2">Talos Test Count:</span>&nbsp;<span id="su_total_count" class="su-light-text css-right"></span></div>
+                    <div><span class="su-light-text2">Tests Without Trend:</span>&nbsp;<span id="su_no_trend_count" class="su-light-text css-right"></span></div>
+                    <div><span class="su-light-text2">Results:</span>&nbsp;<span class="css-right"><span id="su_pass_count" class="su-pass-color"></span>,&nbsp;<span id="su_fail_count" class="su-fail-color"></span></span></div>
+
+                    <div id="su_push_desc" style="text-align:center; margin-top:10px; overflow-y:auto; height:70px;" class="su-light-text">
+                        <div id="su_push_desc"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display:none;" class="su-dashboard-panel">
+                <div class="su-light-text">Results By Platform</div>
+                <hr class="su-light-horz-line su-light-text" />
+                <div class="su-scroll-panel">
+                    <div id="su_summary_by_platform"></div>
+                </div>
+            </div>
+        </div>
+
+
+    </div> <!-- End Dashboard -->
+
+   <div class="ui-helper-clearfix"></div>
+
+   <div style="height:400px;" class="ui-widget ui-widget-header ui-corner-all su-panel-base su-toolpanel">
+        <div id="su_grid_spinner" style="height:400px;" class="su-spinner ui-widget"></div>
+        <div id="su_test_suite_dashboard" style="display:none;">
+
+            <a href="#" class="su-help-modal css-right">
+                <span class="ui-icon ui-icon-help"></span>
+            </a>
+
+            <div style="width:250px; position:absolute; left:170px; top:460px; opacity:0.6;" class="ui-widget ui-corner-all arrow_box">
+                <div style="margin-top:10px; margin-bottom:10px; margin-left:10px; margin-right:10px;">Tip: Mouse over grid to load a test suite table.  Click a cell to lock.</div>
+            </div>
+
+            <div id="su_grid" style="margin-top:80px;" class="su-light-text css-left">
+                <div id="su_boundary" style="width:430px;">
+                    <div class="su-column-headers"></div>
+                    <div id="su_grid_scroll_container" style="width:430px; height:175px; overflow-y:auto;" class="css-left">
+                        <div class="su-row-headers"></div>
+                        <div class="su-grid-values"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="su_table_container" style="width:42%; height:380px; margin-top:25px;" class="css-right">
+                <div class="su-large-text css-left"><span class="su-light-text2">Test Suite:</span><span id="su_test_suite" class="su-light-text"></span><span style="margin-left:15px;" class="su-light-text2">Platform:</span><span id="su_platform" class="su-light-text"></span></div>
+                <table id="su_test_pages" cellpadding="0" cellspacing="0" border="0" class="display"></table>
+            </div>
+            <div style="margin-top:190px; margin-right:25px;" class='su-guidearrow-box css-right'>
+                <div style="margin-left:5px; margin-top:5px;" class="su-light-text">Lock Table:<input id="su_lock_table" type="checkbox" /></div>
+            </div>
+        </div>
+    </div> <!-- End Grid Panel -->
+
+   <div style="height:500px;" class="ui-widget ui-widget-header ui-corner-all su-panel-base su-toolpanel">
+
+        <div id="su_pushlog_spinner" style="height:400px;" class="su-spinner ui-widget"></div>
+
+        <div id="su_pushlog_dashboard" style="display:none;">
+
+            <a href="#" class="su-help-modal css-right">
+                <span class="ui-icon ui-icon-help"></span>
+            </a>
+
+            <h2 style="margin-left:185px;">Revision Pushlog</h2>
+
+            <div style="margin-left:185px; margin-bottom:50px;">
+                <div style="margin-top:5px;" class="css-left">Pushes around <span id="su_pushes_around_rev"></span>: before<input id="su_pushes_before" type="text" size="3" maxlength="3" style="margin-left:3px; margin-right:5px;"/>after:<input id="su_pushes_after" type="text" size="3" maxlength="3" style="margin-left:3px; margin-right:3px;"/></div><button id="su_get_pushes" style="margin-left:8px; margin-top:3px;" class="css-left">Get Pushes</button><div id="su_get_pushes_spinner" style="margin-left:3px; display:none;" class="su-small-spinner css-left"></div>
+            </div>
+
+            <div class="ui-helper-clearfix"></div>
+
+            <div id="su_graph_detail_container_1" class="ui-widget css-left" style="width:135px; overflow-y:auto; height:380px; display:block;"></div>
+            <div class="su-vertical-text">Mean (milliseconds)</div>
+            <div id="su_trendline_plot" style="margin-left:30px; margin-bottom:20px; height:350px; width:600px;" class="css-left"></div>
+            <div style="width:250px; position:absolute; left:740px; top:900px; opacity:0.6;" class="ui-widget ui-corner-all arrow_box_up">
+                <div style="margin-top:10px; margin-bottom:10px; margin-left:10px; margin-right:10px;">Tip: Select a row above to load a test page series. Mouse over data points to load push info below.  Click a point to lock.</div>
+            </div>
+            <div style="overflow-y:auto; height: 380px; margin-left:3px; width:220px;" class="css-left">
+                <div id="su_datum_revision" style="width:187px; text-align:right;" class="ui-state-highlight ui-corner-all su-datum-info-panel css-right su-large-text"></div>
+                <div id="su_datum_controls" class="ui-state-highlight ui-corner-all su-datum-info-panel css-right su-light-text">Lock Push:<input id="su_lock_datum" type="checkbox" /><div class="css-right"><a id="su_raw_data" target="_blank" href="#">Get Raw Data</a></div></div>
+                <div id="su_graph_detail_container_2" class="ui-state-highlight ui-corner-all su-datum-info-panel css-right"></div>
+                <div id="su_graph_detail_container_3" class="ui-state-highlight ui-corner-all su-datum-info-panel css-right"></div>
+            </div>
+            <div class="ui-helper-clearfix"></div>
+            <div style="margin-left:185px; margin-bottom:3px;">Select a push range on the chart above: begin<input id="su_push_range_begin" type="text" size="12" style="margin-left:3px; margin-right:5px;"/>end:<input id="su_push_range_end" type="text" size="12" style="margin-left:3px; margin-right:3px;"/><a id="su_get_range" style="margin-left:8px;" target="_blank" href="#">Get Range</a></div>
+        </div>
+   </div> <!-- End Trendline Panel -->
+</div> <!-- End su_container -->
+
+<div id="su_legend" class="ui-state-highlight ui-corner-all su-data-series-panel" style="display:none;">
+   <div style="margin-bottom:5px;">
+      <div name="su_dataset_title" class="su-wordwrap css-left" style="width:85px;"></div>
+      <a name="su_dataset_close" title="close" href="#closedataset"><div class="ui-icon ui-icon-close css-right" style="margin-left:2px; margin-right:2px;"></div></a>
+   </div>
+</div>
+
+{% if DEBUG %}
+<script type="text/javascript" src="/static/js/plugins/jquery-1.6.3.min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/jquery-ui-1.8.13.custom.min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/jquery.url.js"></script>
+<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.selection.min.js"></script>
+
+<!--[if lte IE 8]><script language="javascript" type="text/javascript" src="/static/js/plugins/flot-0.7/excanvas.min.js"></script><![endif]-->
+
+<script type="text/javascript" src="/static/js/plugins/underscore-min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/box.js"></script>
+
+<!-- Gives core mootools class functionality to jQuery -->
+<script type="text/javascript" src="/static/js/plugins/mootools-core-1.4.0.js"></script>
+<script type="text/javascript" src="/static/js/plugins/moo4q/Source/Class.Mutators.jQuery.js"></script>
+<script type="text/javascript" src="/static/js/plugins/datatables/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/json2.js"></script>
+
+<!-- gages -->
+<script type="text/javascript" src="/static/js/plugins/raphael.2.1.0.min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/justgage.1.0.1.min.js"></script>
+
+<!-- Metric summary classes -->
+<script type="text/javascript" src="/static/js/data_views/Bases.js"></script>
+<script type="text/javascript" src="/static/js/metric_summary/MetricSummaryPage.js"></script>
+<script type="text/javascript" src="/static/js/metric_summary/MetricDashboardComponent.js"></script>
+<script type="text/javascript" src="/static/js/metric_summary/MetricGridComponent.js"></script>
+<script type="text/javascript" src="/static/js/metric_summary/TestPagesComponent.js"></script>
+<script type="text/javascript" src="/static/js/metric_summary/TrendLineComponent.js"></script>
+
+{% else %}
+<script type="text/javascript" src="/static/js/metric_summary/metric-summary-min.js"></script>
+{% endif %}
+
+
+</body>
+</html>

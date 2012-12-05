@@ -62,6 +62,14 @@ def get_all_branches():
     plm.disconnect()
     return branches
 
+def get_branch_uri(branch):
+    """Return the requested branch uri. If no branch is requested return all
+       branch uris."""
+    plm = factory.get_plm()
+    branches = plm.get_branch_uri(branch)
+    plm.disconnect()
+    return branches
+
 
 def get_db_size():
     """Return the database size, on disk in MB"""

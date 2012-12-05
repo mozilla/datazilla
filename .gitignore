@@ -1,4 +1,5 @@
 *.pyc
+*.swp
 htmlcov/
 datazilla/settings/local.py
 docs/_build/
