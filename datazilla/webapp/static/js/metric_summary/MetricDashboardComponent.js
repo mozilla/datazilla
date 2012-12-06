@@ -236,6 +236,7 @@ var MetricDashboardView = new Class({
             $(option).val(
                 JSON.stringify(
                     { 'product':data.products[i].product,
+                      'branch':data.products[i].branch,
                       'version':data.products[i].version }
                     )
                 );
@@ -254,12 +255,16 @@ var MetricDashboardView = new Class({
         $(this.revisionProductsSel).change(
             _.bind( function(event){
                 var selectedOption = $(event.target).find(':selected');
-
                 var value = $(selectedOption).val();
                 var productData = JSON.parse(value);
 
-                var uri = MS_PAGE.urlObj.attr.path +
-                    '?product=' + productData.product +
+                //Substitute the selected branch
+                var uri = MS_PAGE.urlObj.attr.path.replace(
+                    /(summary\/)(.*?)\//g,
+                    "$1" + productData.branch + "/"
+                    );
+
+                uri += '?product=' + productData.product +
                     '&branch_version=' + productData.version;
 
                 if(MS_PAGE.urlObj.param.query.test){
