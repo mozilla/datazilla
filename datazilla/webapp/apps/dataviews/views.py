@@ -162,43 +162,13 @@ def _get_test_run_summary(project, method, request, dm):
 
     json_data = '{}'
 
-    if product_ids and (not test_ids) and (not platform_ids):
-
-        if len(product_ids) > 1:
-            extend_list = { 'data':[], 'columns':[] }
-            for id in product_ids:
-                key = utils.get_summary_cache_key(project, str(id), time_key)
-
-                compressed_json_data = cache.get(key)
-
-                if compressed_json_data:
-                    json_data = zlib.decompress( compressed_json_data )
-                    data = json.loads( json_data )
-                    extend_list['data'].extend( data['data'] )
-                    extend_list['columns'] = data['columns']
-
-            json_data = json.dumps(extend_list)
-
-
-        else:
-            key = utils.get_summary_cache_key(
-                project,
-                str(product_ids[0]),
-                time_key,
-                )
-            compressed_json_data = cache.get(key)
-
-            if compressed_json_data:
-                json_data = zlib.decompress( compressed_json_data )
-
-    else:
-        table = dm.get_test_run_summary(time_ranges[time_key]['start'],
+    table = dm.get_test_run_summary(time_ranges[time_key]['start'],
                                      time_ranges[time_key]['stop'],
                                      product_ids,
                                      platform_ids,
                                      test_ids)
 
-        json_data = json.dumps( table )
+    json_data = json.dumps( table )
 
     return json_data
 
