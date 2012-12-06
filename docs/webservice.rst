@@ -16,6 +16,9 @@ for a given project.
     If a JSON blob of test data is malformed, or has an error, then
     a placeholder with the error message is returned.
 
+    :query product: (optional) The name of the product to filter on.
+        *Examples:* ``Firefox``, ``Fennec``
+
     :query os_name: (optional) The name of the operating system to filter on.
         *Examples:* ``win``, ``mac``, ``linux``
 
@@ -46,6 +49,7 @@ for a given project.
     .. sourcecode:: http
 
         GET /talos/testdata/raw/Mozilla-Beta/ebfad1bf8749/
+        GET /talos/testdata/raw/Mozilla-Beta/ebfad1bf8749?product=Firefox
         GET /talos/testdata/raw/Mozilla-Beta/ebfad1bf8749?os_name=mac&test_name=Talos%20tp5row
         GET /talos/testdata/raw/Mozilla-Beta/ebfad1bf8749?os_name=mac,linux
         GET /talos/testdata/raw/Mozilla-Beta/ebfad1bf8749?page_name=digg.com,alipay.com,tmall.com
@@ -113,7 +117,10 @@ These are a set of web service endpoints for retrieving metrics data.
 
 .. http:get:: /(project)/testdata/metrics/(branch)/(revision)
 
-    Return all metrics data for the ``project``, ``branch`` and ``revision`` specified.
+    Return all metrics data for the ``project``, ``branch`` and ``revision`` specified. If no product name is supplied the product name defaults to Firefox.
+
+    :query product: (optional, defaults to Firefox) The name of the product to filter on.
+        *Examples:* ``Firefox``, ``Fennec``
 
     :query os_name: (optional) The name of the operating system to filter on.
         *Examples:* ``win``, ``mac``, ``linux``
@@ -121,7 +128,7 @@ These are a set of web service endpoints for retrieving metrics data.
     :query os_version: (optional) The operating system version associated with an ``os_name`` to filter on.
         *Examples:* ``OSX 10.5.8``, ``fedora 12``, ``5.1.2600``
 
-    :query branch_version: (optional) The branch version associated with ``brach_version`` to filter on.
+    :query branch_version: (optional) The branch version associated with ``brach_version`` to filter on. If no branch is supplied the most recent branch for the product specified is used.
         *Examples:* ``15.0``, ``16.0a1``, ``15.0.1``
 
     :query processor: (optional) The name of the processor associated with the test run.
@@ -144,7 +151,7 @@ These are a set of web service endpoints for retrieving metrics data.
     .. sourcecode:: http
 
         GET /talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749/
-        GET /talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749?os_name=mac&test_name=Talos%20tp5row
+        GET /talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749?product=Firefox&os_name=mac&test_name=Talos%20tp5row
         GET /talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749?os_name=mac,linux
         GET /talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749?page_name=digg.com,alipay.com,tmall.com
 
@@ -242,6 +249,9 @@ These are a set of web service endpoints for retrieving metrics data.
     sucess.  All metric methods available implement a generic test evaluation that can be accessed
     as the metric value ``test_evaluation``.
 
+    :query product: (optional, defaults to Firefox) The name of the product to filter on.
+        *Examples:* ``Firefox``, ``Fennec``
+
     :query os_name: (optional) The name of the operating system to filter on.
         *Examples:* ``win``, ``mac``, ``linux``
 
@@ -270,8 +280,8 @@ These are a set of web service endpoints for retrieving metrics data.
 
     .. sourcecode:: http
 
-        GET /talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749/summary
-        GET /talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749/summary?os_name=mac&test_name=Talos%20tp5row
+        GET /talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749/summary?product=Firefox
+        GET /talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749/summary?os_name=mac&test_name=Talos tp5row
         GET /talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749/summary?os_name=mac,linux
         GET /talos/testdata/metrics/Mozilla-Beta/ebfad1bf8749/smmary?page_name=digg.com,alipay.com,tmall.com
 
@@ -282,11 +292,47 @@ These are a set of web service endpoints for retrieving metrics data.
         Content-Type: application/json
 
         {
+            /* Information about the product data requested */
             product_info": {
                 "version": "15.0",
                 "name": "Firefox",
                 "branch": "Mozilla-Beta",
                 "revision": "7d3fc54fb002"
+            },
+            "products": [
+                /* List of products/branches that are available for this revision */
+                {
+                    "product": "Firefox",
+                    "version": "15.0",
+                    "branch": "Mozilla-Inbound"
+                },
+                {
+                    "product": "Fennec",
+                    "version": "16.0a1",
+                    "branch": "Mozilla-Inbound"
+                },
+                {
+                    "product": "Firefox",
+                    "version": "16.0a1",
+                    "branch": "Mozilla-Inbound-Non-PGO"
+                },
+
+            ],
+            /* Push data associated with this revision */
+            "push_data": {
+                "node": "1e2b9cdc486b0d23de9d313fdfe24978213d3630",
+                "branch_id": 65,
+                "name": "Mozilla-Inbound",
+                "date": 1340753165,
+                "user": "someone@mozilla.com",
+                "pushlog_id": 25823,
+                "push_id": 11191,
+                "desc": "Change standards mode height calculations for table cells
+                         to use content-box sizing rather than border-box sizing
+                         by default (and to honor -moz-box-sizing, which we do not
+                         do in quirks mode). Also remove -moz-box-sizing:
+                         border-box from default style for caption element
+                        (all modes). (Bug 248239) r=dbaron"
             },
             summary": {
                 "fail": {
@@ -419,17 +465,12 @@ These are a set of web service endpoints for retrieving metrics data.
                 "Talos tdhtml": { ... }
             }
 
-.. http:get:: /(project)/testdata/metrics/(branch)/pushlog
+.. http:get:: /(project)/testdata/metrics/(branch)/(revision)/pushlog?test_name=(test name)&page_name=(page name)
 
-    Return a pushlog data structure for the given ``project`` and ``branch`` combination
-    decorated with all of the metrics data associated with each push.
+    Return a pushlog data structure for the given ``project``, ``branch``, ``revision``, ``test_name``, ``page_name`` combination decorated with all of the metrics data associated with each push.  A number of pushes before and after the target revision can also be specified.
 
-    :query days_ago: (required) Number of days prior to this date to use as the
-        beginning of the date range for this request.  This acts on the
-        ``date_loaded`` field in the objectstore database.
-
-    :query numdays: (optional) Number of days worth of data to return.  If not
-        provided, the date range will be from ``days_ago`` to today.
+    :query product: (optional) The name of the product to filter on.
+        *Examples:* ``Firefox``, ``Fennec``
 
     :query os_name: (optional) The name of the operating system to filter on.
         *Examples:* ``win``, ``mac``, ``linux``
@@ -446,23 +487,27 @@ These are a set of web service endpoints for retrieving metrics data.
     :query build_type: (optional) The type of build.
         *Examples:* ``opt``, ``debug``
 
-    :query test_name: (optional) The name of the test to filter on.  Test names are prefixed with their type.
+    :query test_name: (required) The name of the test to filter on.  Test names are prefixed with their type.
         *Examples:* ``Talos tp5row``, ``Talos tsvg``, ``Talos tdhtml``
 
-    :query page_name: (optional) The page name associated with the test.
+    :query page_name: (required) The page name associated with the test.
         *Examples:* ``scrolling.html``, ``layers6.html``, ``digg.com``
 
+    :query pushes_before: (defaults to 5) Number of pushes prior to the push associated with the supplied
+        revision to include in the dataset returned.
 
-        **All parameters can take a comma delimited list of arguments.**
+    :query pushes_after: (defaults to 5) Number of pushes after the push associated with the supplied
+        revision to include in the dataset returned.
+
+
+        **All parameters, except pushes_before and pushes_after, can take a comma delimited list of arguments.**
 
     **Example request**:
 
     .. sourcecode:: http
 
-        GET /talos/testdata/metrics/Mozilla-Beta/pushlog
-        GET /talos/testdata/metrics/Mozilla-Beta/pushlog?os_name=mac&test_name=Talos%20tp5row
-        GET /talos/testdata/metrics/Mozilla-Beta/pushlog?os_name=mac,linux
-        GET /talos/testdata/metrics/Mozilla-Beta/pushlog?page_name=digg.com,alipay.com,tmall.com
+        GET /talos/testdata/metrics/Mozilla-Inbound/18f7e51126e0/pushlog?product=Firefox&branch_version=16.0a1&os_name=linux&os_version=redhat 12 processor=x86&build_type=opt&test_name=Talos tdhtmlr&page_name=colorfade.html&pushes_before=35&pushes_after=5
+        GET /talos/testdata/metrics/Mozilla-Inbound/18f7e51126e0/pushlog?product=Firefox&branch_version=16.0a1&os_name=linux&os_version=redhat 12 processor=x86&build_type=opt&test_name=Talos tdhtmlr&page_name=digg.com,alipay.com,tmall.com&pushes_before=35&pushes_after=5
 
     **Example response**:
 
@@ -472,18 +517,32 @@ These are a set of web service endpoints for retrieving metrics data.
 
         [
             {
-                "branch_name": "Mozilla-Beta",
+                "branch_name": "Mozilla-Inbound",
                 "pushlog_id": 6004901,
                 "metrics_data": [ ... ],
                 "date": 1345500867,
-                "dz_revision": "6fc9e89951a9",
+                "dz_revision": "ee34f7b36241",
                 "push_id": 1303,
                 "revisions": [
-                    "6fc9e89951a9"
+                    {
+                        "desc": "Fix for bug 768669 (Move remaining DOM list proxy bindings from behind the pref). r=bz.",
+                        "author": "someone <someone@mozilla.org>",
+                        "revision": "cd9ce15216cd"
+                    },
+                    {
+                        "desc": "Fix for bug 768533 (Make mozilla::dom::Uint8ClampedArray::Create call JS_NewUint8ClampedArray). r=bz.",
+                        "author": "someone <someone@mozilla.org>",
+                        "revision": "7c0a1c9ab380"
+                    },
+                    {
+                        "desc": "Fix for bug 768050 (Make TypedArray::Create take a wrapper cache and create JS objects in the compartment of the cache's wrapper). r=bz.",
+                        "author": "someone <someone@mozilla.org>",
+                        "revision": "ee34f7b36241"
+                    }
                 ]
             },
             {
-                "branch_name": "Mozilla-Beta",
+                "branch_name": "Mozilla-Inbound",
                 "pushlog_id": 6034235,
                 "metrics_data": [
                     {
@@ -551,21 +610,12 @@ These are a set of web service endpoints for retrieving metrics data.
                 "dz_revision": "b691cd9c10dd",
                 "push_id": 1304,
                 "revisions": [
-                    "31aacbde98ad",
-                    "b691cd9c10dd"
+                    { ... },
+                    { ... },
+                    { ... },
                 ]
             },
-            {
-                "branch_name": "Mozilla-Beta",
-                "pushlog_id": 6077315,
-                "metrics_data": [ ... ],
-                "date": 1345523670,
-                "dz_revision": "7d3fc54fb002",
-                "push_id": 1305,
-                "revisions": [
-                    "7d3fc54fb002"
-                ]
-            },
+
             { ... },
             { ... },
             { ... },

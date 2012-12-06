@@ -227,14 +227,16 @@ var TrendLineComponent = new Class({
         chartData[this.failSeriesIndex] = failDataset;
         chartData[this.noMetricsDataSeriesIndex] = noDataDataset;
 
-        //This loop populates chartData for flot.  Data types that need to
-        //be colored/treated differently (pass, fail, no data, trend data)
-        //all need to be their own series.  This gives the appearance of
-        //individual data points being "colored" differently, when they are
-        //actually different series color assignments in flot.
-        //This is a bit counter intuitive but unfortunately, the flot data
-        //structure does not support assigning different colors to data
-        //points individually.
+        /****
+         * This loop populates chartData for flot.  Data types that need to
+         * be colored/treated differently (pass, fail, no data, trend data)
+         * all need to be their own series.  This gives the appearance of
+         * individual data points being "colored" differently, when they are
+         * actually different series color assignments in flot.
+         * This is a bit counter intuitive but unfortunately, the flot data
+         * structure does not support assigning different colors to data
+         * points individually.
+         ****/
         for(var i=0; i<this.trendLineOrder.length; i++){
 
             var key = this.trendLineOrder[i];
