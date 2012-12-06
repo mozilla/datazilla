@@ -8,6 +8,10 @@ REQUIRE_DAYS_AGO = """Invalid Request: Require days_ago parameter.
                     This specifies the number of days ago to use as the start
                     date range for this response."""
 
+REQUIRE_PRODUCT_NAME = """Invalid Request: Require product parameter.
+                     This specifies the name of the product to retrieve data
+                     for (Firefox, Fennec etc...)"""
+
 REQUIRE_TEST_NAME = """Invalid Request: Require test_name parameter.
                      This specifies the name of the test."""
 
@@ -21,6 +25,7 @@ def get_testdata(request, project, branch, revision):
     Apply data filters and return all test data objects associated with the
     revision.
     """
+    product_name = request.GET.get("product", None)
     os_name = request.GET.get("os_name", None)
     os_version = request.GET.get("os_version", None)
     branch_version = request.GET.get("branch_version", None)
@@ -34,6 +39,7 @@ def get_testdata(request, project, branch, revision):
             project,
             branch,
             revision,
+            product_name=product_name,
             os_name=os_name,
             os_version=os_version,
             branch_version=branch_version,
@@ -147,15 +153,17 @@ def get_metrics_pushlog(request, project, branch, revision):
     #are allowed
     maximum_pushes = 1000
 
-    pushes_before = 10
+    #cast pushes_before/pushes_after to an int to scrub user
+    #supplied data
+    pushes_before =5
     try:
-        pushes_before = int(request.GET.get("pushes_before", 10))
+        pushes_before = int(request.GET.get("pushes_before", pushes_before))
     except ValueError:
         pass
 
-    pushes_after = 10
+    pushes_after = 5
     try:
-        pushes_after = int(request.GET.get("pushes_after", 10))
+        pushes_after = int(request.GET.get("pushes_after", pushes_after))
     except ValueError:
         pass
 

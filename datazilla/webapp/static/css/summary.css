@@ -175,7 +175,8 @@ div.su-grid-column {
     text-align:center;
     float: left;
     width:30px;
-    height:25px;
+    height:15px;
+    margin-bottom:10px;
 }
 div.su-grid-row {
    float: left;
@@ -313,7 +314,7 @@ div.su-datum-desc-value {
     white-space:nowrap;
     position:absolute;
     left:135px;
-    margin-top:150px;
+    margin-top:160px;
 }
 div.su-wordwrap {
    white-space: pre-wrap;      /* CSS3 */

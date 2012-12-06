@@ -192,6 +192,16 @@ var TestPagesView = new Class({
             }
         }
     },
+    expandTable: function(){
+
+        //This is called when there is no grid to display
+        //when there only one test suite and platform
+        //combination are present.
+        $(this.tableContainerSel).css('width', '100%');
+        $(this.tableContainerSel).css('margin-top', 0);
+        $(this.tableContainerSel).css('margin-bottom', 10);
+
+    },
     _adaptData: function(datatableOptions, data){
 
         var adaptedData = [];
@@ -214,8 +224,12 @@ var TestPagesView = new Class({
                 this.defaultRowCbSel = '#' + key;
             }
 
-            //page name
+            //row is an associative array required by datatables.js where
+            //the key is the index of the displayed row array and the value
+            //is the value to place at that location in the table
             var row = {};
+
+            //Build input box with data-pagename parameter
             row['0'] = '<input id="' + key +
                 '" type="checkbox" data-pagename="' + bars[i] + '" />';
 

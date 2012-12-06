@@ -35,16 +35,7 @@ var MetricGridComponent = new Class({
         }else{
             this.view.initializeGrid(data);
         }
-    },
-    dataLoadError: function(data, textStatus, jqXHR){
-
-        var messageText = 'Ohhh no, something has gone horribly wrong! ';
-
-        messageText += ' HTTP status:' + data.status + ', ' + textStatus +
-        ', ' + data.statusText;
-
     }
-
 });
 var MetricGridView = new Class({
 
@@ -66,6 +57,8 @@ var MetricGridView = new Class({
         this.gridRowHeaderClass = 'su-grid-row';
         this.gridValueClass = 'su-grid-value';
 
+        this.guidearrowClassSel = '.su-guidearrow-box';
+
         //Data attributes
         this.dataTitlesAttr = 'data-titles';
 
@@ -73,6 +66,9 @@ var MetricGridView = new Class({
         this.gridColumnHeaderClassSel = '.su-column-headers';
         this.gridRowHeaderClassSel = '.su-row-headers';
         this.gridValuesClassSel = '.su-grid-values';
+
+        this.tableContainerSel = '#su_table_container';
+        this.gridContainerSel = '#su_grid_container';
 
         this.gridScrollMultiplier = 1.5;
         this.gridScrollContainer = '#su_grid_scroll_container';
@@ -105,17 +101,54 @@ var MetricGridView = new Class({
 
         $(this.gridSpinnerSel).css('display', 'none');
 
+        var columns, rows = [];
+
         if(data){
-            $(this.testSuiteDashboardContainerSel).css('display', 'block');
+
+            columns = this.getAlphabeticalSortKeys(
+                data.summary_by_platform
+                );
+
+            rows = this.getAlphabeticalSortKeys(
+                data.summary_by_test
+                );
+
+            $(this.testSuiteDashboardContainerSel).css(
+                'display', 'block'
+                );
+
+            if( (columns.length === 1) && (rows.length === 1) ){
+                //If there's only one column and one row there's no need
+                //for the grid. Expand the table to 100% of the panel
+                $(this.gridContainerSel).css('display', 'none');
+                $(this.gridSel).css('display', 'none');
+                $(this.gridScrollContainer).css('display', 'none');
+                $(this.guidearrowClassSel).css('display', 'none');
+
+                //Expand table
+                MS_PAGE.testPagesComponent.view.expandTable();
+
+                var initializeValue = "";
+
+                if(data.tests[test] && data.tests[test][platform]){
+                    initializeValue = data.tests[ rows[0] ][ columns[0] ]['pass']['percent'];
+                }
+
+                var initializeCell = this.getValueCell(
+                    columns[0],
+                    rows[0],
+                    initializeValue
+                    );
+
+                //Trigger initialize event for the one column/row
+                this._triggerEvent(
+                    this.gridMouseoverEvent, initializeCell
+                    );
+
+                return;
+            }
         }
 
-        var columns = this.getAlphabeticalSortKeys(
-            data.summary_by_platform
-            );
-
-        var rows = this.getAlphabeticalSortKeys(
-            data.summary_by_test
-            );
 
         var columnTitle, rowTitle = "";
 
@@ -128,24 +161,28 @@ var MetricGridView = new Class({
 
         }
 
-        var valueRowWidth = columns.length*30 + columns.length;
-
-        $(this.gridValuesClassSel).css('width', valueRowWidth);
-
-        var scrollWidth = parseInt(
-            $('#su_grid_scroll_container').css('width')
+        var cellWidth = parseInt(
+            $('.' + this.gridColumnHeaderClass).css('width')
             );
 
-        if( (scrollWidth - 60) <= valueRowWidth ){
-            $(this.gridScrollContainer).css(
-                'width', valueRowWidth*this.gridScrollMultiplier
-                );
-            $(this.gridScrollBoundary).css(
-                'width', valueRowWidth*this.gridScrollMultiplier
-                );
-        }
+        //Calculate the width based on total numbers of columns
+        //and width of an individual cell
+        var valueRowWidth = columns.length*cellWidth + columns.length;
 
+        //Set width of container of individual cells
+        $(this.gridValuesClassSel).css('width', valueRowWidth);
+        //Set width of container of column labels
         $(this.gridColumnHeaderClassSel).css('width', valueRowWidth);
+
+        var headerWidth = parseInt(
+            $(this.gridRowHeaderClassSel).css('width')
+            );
+
+        //The width of the scroll container needs to be set dynamically
+        //based on the width of all of the rows, row headers, and cell width
+        $(this.gridScrollContainer).css(
+            'width', cellWidth + valueRowWidth + headerWidth
+            );
 
         for(var r=0; r<rows.length; r++){
 
