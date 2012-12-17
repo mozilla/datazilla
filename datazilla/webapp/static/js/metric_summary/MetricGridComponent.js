@@ -125,8 +125,10 @@ var MetricGridView = new Class({
             }
         }
 
-        var columnTitle, rowTitle = "";
+        //Set the column headers
+        this._buildGridHeaders(columns);
 
+        var columnTitle, rowTitle = "";
 
         var cellWidth = parseInt(
             $('.' + this.gridColumnHeaderClass).css('width')
@@ -149,11 +151,10 @@ var MetricGridView = new Class({
         //The width of the scroll container needs to be set dynamically
         //based on the width of all of the rows, row headers, and cell width
         var containerWidth = cellWidth + valueRowWidth + headerWidth;
+
         $(this.gridScrollContainer).css('width', containerWidth);
         $(this.gridBoundarySel).css('width', containerWidth);
 
-        //Set the column headers
-        this._buildGridHeaders(columns);
 
         //Build the grid of cells
         this._buildGrid(rows, columns, this.data);
