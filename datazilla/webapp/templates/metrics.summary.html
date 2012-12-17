@@ -133,7 +133,11 @@
             <h2 style="margin-left:185px;">Revision Pushlog</h2>
 
             <div style="margin-left:185px; margin-bottom:50px;">
-                <div style="margin-top:5px;" class="css-left">Pushes around <span id="su_pushes_around_rev"></span>: before<input id="su_pushes_before" type="text" size="3" maxlength="3" style="margin-left:3px; margin-right:5px;"/>after:<input id="su_pushes_after" type="text" size="3" maxlength="3" style="margin-left:3px; margin-right:3px;"/></div><button id="su_get_pushes" style="margin-left:8px; margin-top:3px;" class="css-left">Get Pushes</button><div id="su_get_pushes_spinner" style="margin-left:3px; display:none;" class="su-small-spinner css-left"></div>
+                <select id="su_trend_line_display" size="1" style="margin-right:10px; margin-top:8px;" class="css-left">
+                    <option value="least_squares_fit">Least Squares Fit</option>
+                    <option value="no_fit">No Fit</option>
+                </select>
+                <div style="margin-top:5px;" class="css-left">Pushes before:<input id="su_pushes_before" type="text" size="3" maxlength="3" style="margin-left:3px; margin-right:5px;"/>after:<input id="su_pushes_after" type="text" size="3" maxlength="3" style="margin-left:3px; margin-right:6px;"/><span id="su_pushes_around_rev"></span></div><button id="su_get_pushes" style="margin-left:8px; margin-top:3px;" class="css-left">Get Pushes</button><div id="su_get_pushes_spinner" style="margin-left:3px; display:none;" class="su-small-spinner css-left"></div>
             </div>
 
             <div class="ui-helper-clearfix"></div>
@@ -141,8 +145,8 @@
             <div id="su_graph_detail_container_1" class="ui-widget css-left" style="width:135px; overflow-y:auto; height:380px; display:block;"></div>
             <div class="su-vertical-text">Mean (milliseconds)</div>
             <div id="su_trendline_plot" style="margin-left:30px; margin-bottom:20px; height:350px; width:600px;" class="css-left"></div>
-            <div style="width:250px; position:absolute; left:740px; top:900px; opacity:0.6;" class="ui-widget ui-corner-all arrow_box_up">
-                <div style="margin-top:10px; margin-bottom:10px; margin-left:10px; margin-right:10px;">Tip: Select a row above to load a test page series. Mouse over data points to load push info below.  Click a point to lock.</div>
+            <div style="width:235px; position:absolute; left:770px; top:900px; opacity:0.6;" class="ui-widget ui-corner-all arrow_box_up css-left">
+                <div style="margin:10px;">Tip: Select a row above to load a test page series. Mouse over data points to load push info below.  Click a point to lock.</div>
             </div>
             <div style="overflow-y:auto; height: 380px; margin-left:3px; width:220px;" class="css-left">
                 <div id="su_datum_revision" style="width:187px; text-align:right;" class="ui-state-highlight ui-corner-all su-datum-info-panel css-right su-large-text"></div>

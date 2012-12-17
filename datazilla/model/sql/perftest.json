@@ -209,9 +209,15 @@
                 SELECT ?, ?, ?, ?, ?, ?
                 FROM DUAL
                 WHERE NOT EXISTS (
-                    SELECT `test_build_id`
+                    SELECT `product_id`,
+                           `test_build_id`,
+                           `processor`,
+                           `build_type`
                     FROM `build`
-                    WHERE `test_build_id` = ?
+                    WHERE `product_id` = ? AND
+                          `test_build_id` = ? AND
+                          `processor` = ? AND
+                          `build_type` = ?
                 )",
 
          "host":"master_host"
@@ -569,6 +575,23 @@
 
         "host":"read_host"
     },
+    "get_build_data":{
+
+        "sql":"SELECT `id`,
+                      `product_id`,
+                      `test_build_id`,
+                      `processor`,
+                      `revision`,
+                      `build_type`,
+                      `build_date`
+               FROM build
+               WHERE `product_id` = ? AND
+                     `test_build_id` = ? AND
+                     `processor` = ? AND
+                     `build_type` = ?",
+
+        "host":"master_host"
+    },
     "get_product_data":{
 
         "sql":"SELECT `id`, `product`, `branch`, `version`, `default_product` FROM `product`",
@@ -635,14 +658,6 @@
                 LEFT JOIN test_collection_map AS tcm ON tc.id = tcm.test_collection_id
                 LEFT JOIN test AS t ON tcm.test_id = t.id
                 ORDER BY tc.name",
-
-        "host":"read_host"
-    },
-    "get_build_id":{
-
-        "sql":"SELECT `id`
-               FROM `build`
-               WHERE `test_build_id` = ?",
 
         "host":"read_host"
     },

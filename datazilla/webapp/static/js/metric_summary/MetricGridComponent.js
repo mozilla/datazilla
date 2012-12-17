@@ -30,9 +30,7 @@ var MetricGridComponent = new Class({
 
     },
     initializeGrid: function(ev, data){
-
-        if(_.isEmpty(data)){
-        }else{
+        if(!_.isEmpty(data)){
             this.view.initializeGrid(data);
         }
     }
@@ -68,7 +66,9 @@ var MetricGridView = new Class({
         this.gridValuesClassSel = '.su-grid-values';
 
         this.tableContainerSel = '#su_table_container';
+        this.lockTableSel = '#su_lock_table';
         this.gridContainerSel = '#su_grid_container';
+        this.gridBoundarySel = '#su_boundary';
 
         this.gridScrollMultiplier = 1.5;
         this.gridScrollContainer = '#su_grid_scroll_container';
@@ -103,14 +103,14 @@ var MetricGridView = new Class({
 
         var columns, rows = [];
 
-        if(data){
+        if(this.data){
 
             columns = this.getAlphabeticalSortKeys(
-                data.summary_by_platform
+                this.data.summary_by_platform
                 );
 
             rows = this.getAlphabeticalSortKeys(
-                data.summary_by_test
+                this.data.summary_by_test
                 );
 
             $(this.testSuiteDashboardContainerSel).css(
@@ -120,46 +120,13 @@ var MetricGridView = new Class({
             if( (columns.length === 1) && (rows.length === 1) ){
                 //If there's only one column and one row there's no need
                 //for the grid. Expand the table to 100% of the panel
-                $(this.gridContainerSel).css('display', 'none');
-                $(this.gridSel).css('display', 'none');
-                $(this.gridScrollContainer).css('display', 'none');
-                $(this.guidearrowClassSel).css('display', 'none');
-
-                //Expand table
-                MS_PAGE.testPagesComponent.view.expandTable();
-
-                var initializeValue = "";
-
-                if(data.tests[test] && data.tests[test][platform]){
-                    initializeValue = data.tests[ rows[0] ][ columns[0] ]['pass']['percent'];
-                }
-
-                var initializeCell = this.getValueCell(
-                    columns[0],
-                    rows[0],
-                    initializeValue
-                    );
-
-                //Trigger initialize event for the one column/row
-                this._triggerEvent(
-                    this.gridMouseoverEvent, initializeCell
-                    );
-
+                this._expandTable(this.data, rows[0], columns[0]);
                 return;
             }
         }
 
-
         var columnTitle, rowTitle = "";
 
-        for(var i=0; i<columns.length; i++){
-
-            columnTitle = columns[i];
-            var columnCell = this.getColumnHeaderCell(columnTitle);
-
-            $(this.gridColumnHeaderClassSel).append(columnCell);
-
-        }
 
         var cellWidth = parseInt(
             $('.' + this.gridColumnHeaderClass).css('width')
@@ -171,6 +138,7 @@ var MetricGridView = new Class({
 
         //Set width of container of individual cells
         $(this.gridValuesClassSel).css('width', valueRowWidth);
+
         //Set width of container of column labels
         $(this.gridColumnHeaderClassSel).css('width', valueRowWidth);
 
@@ -180,70 +148,16 @@ var MetricGridView = new Class({
 
         //The width of the scroll container needs to be set dynamically
         //based on the width of all of the rows, row headers, and cell width
-        $(this.gridScrollContainer).css(
-            'width', cellWidth + valueRowWidth + headerWidth
-            );
+        var containerWidth = cellWidth + valueRowWidth + headerWidth;
+        $(this.gridScrollContainer).css('width', containerWidth);
+        $(this.gridBoundarySel).css('width', containerWidth);
 
-        for(var r=0; r<rows.length; r++){
+        //Set the column headers
+        this._buildGridHeaders(columns);
 
-            rowTitle = rows[r];
-            var rowCell = this.getRowHeaderCell(rowTitle);
-            $(this.gridRowHeaderClassSel).append(rowCell);
+        //Build the grid of cells
+        this._buildGrid(rows, columns, this.data);
 
-            for(var c=0; c<columns.length; c++){
-
-                var columnTitle = columns[c];
-                var cell;
-
-                if(data.tests[rowTitle][columnTitle]){
-                    var value = data.tests[rowTitle][columnTitle]['pass']['percent'];
-                    cell = this.getValueCell(columnTitle, rowTitle, value);
-
-                    //This event is only fired once to load a table the
-                    //first time the page loads.
-                    if(this.triggerDefaultEvent){
-
-                        var platform = MS_PAGE.refData.platform;
-                        var test =  MS_PAGE.refData.test;
-                        var initializeValue = "";
-
-                        if(data.tests[test] && data.tests[test][platform]){
-                            initializeValue = data.tests[test][platform]['pass']['percent'];
-                        }
-
-                        if(initializeValue){
-                            //URL has test/platform specified, initialize
-                            //table to requested data target
-                            var initializeCell = this.getValueCell(
-                                platform,
-                                test,
-                                initializeValue
-                                );
-
-                            this._triggerEvent(
-                                this.gridMouseoverEvent, initializeCell
-                                );
-
-                            //Lock the table to the data requested
-                            MS_PAGE.testPagesComponent.view.lockTable();
-
-                        }else {
-                            //No target table use first defined cell
-                            this._triggerEvent(
-                                this.gridMouseoverEvent, cell
-                                );
-                        }
-
-                        this.triggerDefaultEvent = false;
-                    }
-
-                }else{
-                    cell = this.getValueCell("");
-                }
-
-                $(this.gridValuesClassSel).append(cell);
-            }
-        }
     },
     getColumnHeaderCell: function(columnTitle){
 
@@ -335,16 +249,139 @@ var MetricGridView = new Class({
 
         }else if(event.type == 'click'){
 
-            this._triggerEvent(
-                this.gridClickEvent, cellEl
-                );
+            var checked = $(this.lockTableSel).attr('checked');
+
+            if(checked){
+                //table is locked but user has clicked a cell, keep the
+                //lock on but change the table to correspnd to the selected
+                //cell
+                var eventData = this._getCellClickEventData(cellEl);
+                MS_PAGE.testPagesComponent.initializeTestPages(
+                    this.gridClickEvent, eventData, true
+                    );
+
+            } else {
+                this._triggerEvent(
+                    this.gridClickEvent, cellEl
+                    );
+            }
         }
     },
     showNoDataMessage: function(){
         $(this.gridSpinnerSel).css('display', 'none');
         $(this.testSuiteDashboardContainerSel).css('display', 'none');
     },
+    _expandTable: function(data, test, platform){
+
+        //Hide grid containers
+        $(this.gridContainerSel).css('display', 'none');
+        $(this.gridSel).css('display', 'none');
+        $(this.gridScrollContainer).css('display', 'none');
+        $(this.guidearrowClassSel).css('display', 'none');
+
+        //Expand table
+        MS_PAGE.testPagesComponent.view.expandTable();
+
+        //Set the table initialization value
+        var initializeValue = "";
+
+        if(data.tests[test] && data.tests[test][platform]){
+            initializeValue = data.tests[test][platform]['pass']['percent'];
+        }
+
+        var initializeCell = this.getValueCell(
+            platform, test, initializeValue
+            );
+
+        //Trigger initialize event for the one column/row
+        this._triggerEvent(
+            this.gridMouseoverEvent, initializeCell
+            );
+
+    },
+    _buildGridHeaders: function(columns){
+
+        for(var i=0; i<columns.length; i++){
+
+            columnTitle = columns[i];
+            var columnCell = this.getColumnHeaderCell(columnTitle);
+
+            $(this.gridColumnHeaderClassSel).append(columnCell);
+        }
+    },
+    _buildGrid: function(rows, columns, data){
+
+        for(var r=0; r<rows.length; r++){
+
+            rowTitle = rows[r];
+            var rowCell = this.getRowHeaderCell(rowTitle);
+            $(this.gridRowHeaderClassSel).append(rowCell);
+
+            for(var c=0; c<columns.length; c++){
+
+                var columnTitle = columns[c];
+                var cell;
+
+                if(data.tests[rowTitle][columnTitle]){
+                    var value = data.tests[rowTitle][columnTitle]['pass']['percent'];
+                    cell = this.getValueCell(columnTitle, rowTitle, value);
+
+                    //This event is only fired once to load a table the
+                    //first time the page loads.
+                    if(this.triggerDefaultEvent){
+
+                        var platform = MS_PAGE.refData.platform;
+                        var test =  MS_PAGE.refData.test;
+                        var initializeValue = "";
+
+                        if(data.tests[test] && data.tests[test][platform]){
+                            initializeValue = data.tests[test][platform]['pass']['percent'];
+                        }
+
+                        if(initializeValue){
+                            //URL has test/platform specified, initialize
+                            //table to requested data target
+                            var initializeCell = this.getValueCell(
+                                platform,
+                                test,
+                                initializeValue
+                                );
+
+                            this._triggerEvent(
+                                this.gridMouseoverEvent, initializeCell
+                                );
+
+                            //Lock the table to the data requested
+                            MS_PAGE.testPagesComponent.view.lockTable();
+
+                        }else {
+                            //No target table use first defined cell
+                            this._triggerEvent(
+                                this.gridMouseoverEvent, cell
+                                );
+                        }
+
+                        this.triggerDefaultEvent = false;
+                    }
+
+                }else{
+                    cell = this.getValueCell("");
+                }
+
+                $(this.gridValuesClassSel).append(cell);
+            }
+        }
+
+    },
     _triggerEvent: function(eventType, cell){
+
+        var eventData = this._getCellClickEventData(cell);
+
+        $(this.eventContainerSel).trigger(
+            eventType, eventData
+            );
+    },
+    _getCellClickEventData: function(cell){
 
         var titles = JSON.parse( $(cell).attr(this.dataTitlesAttr) );
 
@@ -358,19 +395,19 @@ var MetricGridView = new Class({
 
         }
 
-        if(!_.isEmpty(data)){
+        var eventData = {};
 
-            var eventData = {
+        if(!_.isEmpty(data)){
+            eventData = {
                 'test':titles.row_title,
                 'platform':titles.column_title,
                 'platform_info':this.data.tests[titles.row_title][titles.column_title]['platform_info'],
                 'data':data
-                };
-
-            $(this.eventContainerSel).trigger(
-                eventType, eventData
-                );
+            }
         }
+
+        return eventData;
+
     },
     _interpolateColor: function(pBegin, pEnd, pStep, pMax){
 

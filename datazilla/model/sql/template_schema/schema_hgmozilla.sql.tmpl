@@ -45,6 +45,28 @@ INSERT INTO `branches` (`name`, `uri`) VALUES ('Firefox','mozilla-central'),('Tr
 /*!40000 ALTER TABLE `branches` ENABLE KEYS */;
 UNLOCK TABLES;
 
+DROP TABLE IF EXISTS `branch_map`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `branch_map` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(45) NOT NULL,
+  `alt_name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `key_name` (`name`),
+  KEY `key_alt_name` (`alt_name`)
+) ENGINE={engine} DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `branches`
+--
+LOCK TABLES `branch_map` WRITE;
+/*!40000 ALTER TABLE `branch_map` DISABLE KEYS */;
+INSERT INTO branch_map (`name`, `alt_name`) VALUES ('Try', 'Try-Non-PGO'), ('Firefox', 'Firefox-Non-PGO'), ('Fx-Team', 'Fx-Team-Non-PGO'), ('Ionmonkey', 'Ionmonkey-Non-PGO'), ('Mozilla-Inbound', 'Mozilla-Inbound-Non-PGO'),('Profiling', 'Profiling-Non-PGO'),('Services-Central', 'Services-Central-Non-PGO');
+/*!40000 ALTER TABLE `branch_map` ENABLE KEYS */;
+UNLOCK TABLES;
+
 --
 -- Table structure for table `changesets`
 --

@@ -103,7 +103,9 @@ def test_get_json_blob(ptm):
 
     result = objectstore_refdata.get_json_blob(ptm.project, 1)
 
-    assert badblob == result
+    assert badblob == result['json_blob']
+    assert 'Y' == result['error_flag']
+    assert None == result['test_run_id']
 
 
 def test_get_json_blob_bad_id(ptm):

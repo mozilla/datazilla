@@ -265,16 +265,17 @@ def test_get_or_create_machine_id_no_name(ptm):
     assert str(e.value) == "Missing data: ['test_machine']['name']."
 
 
-def test_set_build_data(ptm):
+def test_get_or_create_build_id(ptm):
     """Inserts data into the build table."""
     data = TestData(perftest_data())
 
     product_id = ptm._get_or_create_product_id(data)
 
-    build_id = ptm._set_build_data(data, product_id)
+    build_id = ptm._get_or_create_build_id(data, product_id)
 
     row_data = ptm.sources["perftest"].dhub.execute(
-        proc="perftest_test.selects.build", placeholders=[build_id])[0]
+        proc="perftest_test.selects.build",
+        placeholders=[build_id])[0]
 
     assert row_data["test_build_id"] == data["test_build"]["id"]
     assert row_data["product_id"] == product_id
@@ -288,22 +289,22 @@ def test_set_existing_build_data(ptm):
 
     product_id = ptm._get_or_create_product_id(data)
 
-    first_build_id = ptm._set_build_data(data, product_id)
+    first_build_id = ptm._get_or_create_build_id(data, product_id)
 
     # perform another insert so that last_insert_id changes
     # second call to perftest_data() will have a new build ID
-    ptm._set_build_data(TestData(perftest_data()), product_id)
+    ptm._get_or_create_build_id(TestData(perftest_data()), product_id)
 
-    # using the original data, so should return first build id
-    build_id = ptm._set_build_data(data, product_id)
+    # using the original data, so should return same build id
+    build_id = ptm._get_or_create_build_id(data, product_id)
 
     assert build_id == first_build_id
 
 
-def test_set_build_data_no_test_machine(ptm):
+def test_get_or_create_build_id_no_test_machine(ptm):
     """Raises TestDataError if there is no 'test_machine' key in data."""
     with pytest.raises(TestDataError) as e:
-        ptm._set_build_data(
+        ptm._get_or_create_build_id(
             TestData({"test_build": {"id": "12345", "revision": "deadbeef"}}),
             None
             )
@@ -311,19 +312,19 @@ def test_set_build_data_no_test_machine(ptm):
     assert str(e.value) == "Missing data: ['test_machine']."
 
 
-def test_set_build_data_no_test_build(ptm):
+def test_get_or_create_build_id_no_test_build(ptm):
     """Raises TestDataError if there is no 'test_build' key in data."""
     with pytest.raises(TestDataError) as e:
-        ptm._set_build_data(
+        ptm._get_or_create_build_id(
             TestData({"test_machine": {"platform": "arm"}}), None)
 
     assert str(e.value) ==  "Missing data: ['test_build']."
 
 
-def test_set_build_data_no_platform(ptm):
+def test_get_or_create_build_id_no_platform(ptm):
     """Raises TestDataError if 'test_machine' is missing 'platform' key."""
     with pytest.raises(TestDataError) as e:
-        ptm._set_build_data(
+        ptm._get_or_create_build_id(
             TestData(
                 {
                     "test_build": {"id": "12345", "revision": "deadbeef"},
@@ -336,10 +337,10 @@ def test_set_build_data_no_platform(ptm):
     assert str(e.value) == "Missing data: ['test_machine']['platform']."
 
 
-def test_set_build_data_no_build_id(ptm):
+def test_get_or_create_build_id_no_build_id(ptm):
     """Raises TestDataError if 'test_machine' is missing 'platform' key."""
     with pytest.raises(TestDataError) as e:
-        ptm._set_build_data(
+        ptm._get_or_create_build_id(
             TestData(
                 {
                     "test_build": {"revision": "deadbeef"},
@@ -361,7 +362,7 @@ def test_set_test_run_data(ptm):
     product_id = ptm._get_or_create_product_id(data)
     machine_id = ptm._get_or_create_machine_id(data, os_id)
 
-    build_id = ptm._set_build_data(data, product_id)
+    build_id = ptm._get_or_create_build_id(data, product_id)
 
     test_run_id = ptm._set_test_run_data(data, test_id, build_id, machine_id)
 
@@ -396,7 +397,7 @@ def test_set_option_data(ptm):
     product_id = ptm._get_or_create_product_id(data)
     machine_id = ptm._get_or_create_machine_id(data, os_id)
 
-    build_id = ptm._set_build_data(data, product_id)
+    build_id = ptm._get_or_create_build_id(data, product_id)
     test_run_id = ptm._set_test_run_data(data, test_id, build_id, machine_id)
 
     # Try to set the option data
@@ -428,7 +429,7 @@ def test_set_extension_data(ptm):
     product_id = ptm._get_or_create_product_id(data)
     machine_id = ptm._get_or_create_machine_id(data, os_id)
 
-    build_id = ptm._set_build_data(data, product_id)
+    build_id = ptm._get_or_create_build_id(data, product_id)
 
     test_run_id = ptm._set_test_run_data(data, test_id, build_id, machine_id)
 
@@ -463,7 +464,7 @@ def test_set_test_values(ptm):
     product_id = ptm._get_or_create_product_id(data)
     machine_id = ptm._get_or_create_machine_id(data, os_id)
 
-    build_id = ptm._set_build_data(data, product_id)
+    build_id = ptm._get_or_create_build_id(data, product_id)
 
     test_run_id = ptm._set_test_run_data(data, test_id, build_id, machine_id)
 
@@ -497,7 +498,7 @@ def test_set_test_aux_data(ptm):
     product_id = ptm._get_or_create_product_id(data)
     machine_id = ptm._get_or_create_machine_id(data, os_id)
 
-    build_id = ptm._set_build_data(data, product_id)
+    build_id = ptm._get_or_create_build_id(data, product_id)
 
     test_run_id = ptm._set_test_run_data(data, test_id, build_id, machine_id)
 
@@ -626,7 +627,7 @@ def test_get_test_reference_data(ptm):
     product_id = ptm._get_or_create_product_id(data)
     machine_id = ptm._get_or_create_machine_id(data, os_id)
 
-    build_id = ptm._set_build_data(data, product_id)
+    build_id = ptm._get_or_create_build_id(data, product_id)
     test_run_id = ptm._set_test_run_data(data, test_id, build_id, machine_id)
 
     json_data = json.loads( ptm.get_test_reference_data('{0}-refdata'.format(ptm.project)) )

@@ -13,9 +13,7 @@ class TestSetTestData(object):
             proc="objectstore_test.selects.all")[0]
 
         assert json.loads(row_data["json_blob"]) == {"test": "foo"}
-        assert response.json == {
-            u"size": 15, u"status": u"well-formed JSON stored"}
-
+        assert response.json['status'] == u"well-formed JSON stored"
 
     def test_no_oauth(self, client):
         """Trying to set test data without OAuth creds results in an error."""
