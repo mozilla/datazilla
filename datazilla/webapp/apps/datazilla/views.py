@@ -124,14 +124,22 @@ def set_test_data(request, project=""):
 
         try:
             dm = PerformanceTestModel(project)
-            dm.store_test_data(unquoted_json_data, error)
+            id = dm.store_test_data(unquoted_json_data, error)
             dm.disconnect()
         except Exception as e:
             status = 500
             result = {"status": "Unknown error", "message": str(e)}
         else:
+
+            location = "/{0}/refdata/objectstore/json_blob/{1}".format(
+                project, str(id)
+                )
+
+            result['url'] = request.build_absolute_uri(location)
+
             if not error:
                 status = 200
+
 
     return HttpResponse(json.dumps(result), mimetype=APP_JS, status=status)
 

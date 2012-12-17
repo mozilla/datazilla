@@ -126,9 +126,8 @@ class PushLogModel(DatazillaModelBase):
         # if a branch was specified, limit the list to only that branch
         # TODO: make a separate select for this case, instead of all
         branch_list = self.get_all_branches()
-
         if branch:
-            branch_list=[x for x in branch_list if x["name"] == branch]
+            branch_list=[x for x in branch_list if x["name"] == branch or x["alt_name"] == branch]
             if len(branch_list) < 1:
                 self.println("Branch not found: {0}".format(branch))
                 return
@@ -137,6 +136,8 @@ class PushLogModel(DatazillaModelBase):
 
     def get_branch_uri(self, branch=None):
 
+        data = []
+
         if branch:
 
             proc = 'hgmozilla.selects.get_branch_uri'
@@ -144,7 +145,7 @@ class PushLogModel(DatazillaModelBase):
             data = self.hg_ds.dhub.execute(
                 proc=proc,
                 debug_show=self.DEBUG,
-                placeholders=[branch],
+                placeholders=[branch, branch],
                 return_type='tuple',
                 )
         else:
@@ -258,7 +259,7 @@ class PushLogModel(DatazillaModelBase):
             proc=push_id_proc,
             debug_show=self.DEBUG,
             return_type='tuple',
-            placeholders=[revision, branch_name]
+            placeholders=[revision, branch_name, branch_name]
             )
 
         if not push_data:
@@ -288,6 +289,9 @@ class PushLogModel(DatazillaModelBase):
             return_type='tuple',
             placeholders=[ push_id, after_boundary, branch_id ]
             )
+
+        del push_data[0]['branch_id']
+        del push_data[0]['node']
 
         #Combine all of the requested push data
         pushlog = pushes_before_data + push_data + pushes_after_data
@@ -438,7 +442,7 @@ class PushLogModel(DatazillaModelBase):
             proc=proc,
             debug_show=self.DEBUG,
             return_type='tuple',
-            placeholders=[revision, branch]
+            placeholders=[revision, branch, branch]
             )
 
         node = {}
@@ -1147,6 +1151,8 @@ class PerformanceTestModel(DatazillaModelBase):
             debug_show=self.DEBUG
             )
 
+        return self._get_last_insert_id()
+
 
     def retrieve_test_data(self, limit):
         """
@@ -1179,7 +1185,8 @@ class PerformanceTestModel(DatazillaModelBase):
         machine_id = self._get_or_create_machine_id(data, os_id)
 
         # Insert build and test_run data.
-        build_id = self._set_build_data(data, product_id)
+        build_id = self._get_or_create_build_id(data, product_id)
+
         test_run_id = self._set_test_run_data(
             data,
             test_id,
@@ -1442,37 +1449,6 @@ class PerformanceTestModel(DatazillaModelBase):
             'set_test_option_values', placeholders, executemany=True)
 
 
-    def _set_build_data(self, data, product_id):
-        """Inserts build data into the db and returns build ID."""
-        machine = data['test_machine']
-        build = data['test_build']
-
-        self.sources["perftest"].dhub.execute(
-            proc='perftest.inserts.set_build_data',
-            placeholders=[
-                product_id,
-                build['id'],
-                machine['platform'],
-                build['revision'],
-                # TODO: Need to get the build type into the json
-                'opt',
-                # TODO: need to get the build date into the json
-                utils.get_now_timestamp(),
-                build['id']
-                ],
-            debug_show=self.DEBUG
-            )
-
-        # Get the build id
-        id_iter = self.sources["perftest"].dhub.execute(
-            proc='perftest.selects.get_build_id',
-            placeholders=[build['id']],
-            debug_show=self.DEBUG,
-            return_type='iter')
-
-        return id_iter.get_column_data('id')
-
-
     def _set_test_run_data(self, data, test_id, build_id, machine_id):
         """Inserts testrun data into the db and returns test_run id."""
 
@@ -1519,6 +1495,51 @@ class PerformanceTestModel(DatazillaModelBase):
             debug_show=self.DEBUG,
             return_type='iter',
             ).get_column_data('id')
+
+
+    def _get_or_create_build_id(self, data, product_id):
+        """Inserts build data into the db or if the build already exists
+           it returns the build id."""
+        machine = data['test_machine']
+        build = data['test_build']
+
+        build_type = 'opt'
+
+        placeholders=[
+            product_id,
+            build['id'],
+            machine['platform'],
+            build['revision'],
+            # TODO: Need to get the build type into the json
+            build_type,
+            # TODO: need to get the build date into the json
+            utils.get_now_timestamp(),
+
+            #These params confirm identity in a nested select
+            product_id,
+            build['id'],
+            machine['platform'],
+            build_type
+            ]
+
+        self.sources["perftest"].dhub.execute(
+            proc='perftest.inserts.set_build_data',
+            debug_show=self.DEBUG,
+            placeholders=placeholders
+            )
+
+        build_iter = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_build_data',
+            debug_show=self.DEBUG,
+            return_type='iter',
+            placeholders=[
+                product_id, build['id'], machine['platform'], build_type
+                ]
+            )
+
+        id = build_iter.get_column_data('id')
+
+        return id
 
 
     def _get_or_create_machine_id(self, data, os_id):

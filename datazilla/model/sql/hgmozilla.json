@@ -17,7 +17,10 @@
             "host":"master_host"
         },
         "get_all_branches":{
-            "sql":"SELECT id, name, uri FROM branches",
+            "sql":"SELECT b.id, b.name, bm.alt_name, b.uri
+                   FROM branches AS b
+                   LEFT JOIN branch_map AS bm
+                   ON b.name = bm.name",
             "host":"read_host"
         },
         "get_all_pushlogs":{
@@ -51,10 +54,12 @@
                           p.date,
                           c.node,
                           b.id AS 'branch_id',
-                          b.name
+                          b.name,
+                          bm.alt_name
                    FROM pushlogs AS p
                    LEFT JOIN changesets AS c ON p.id = c.pushlog_id
                    LEFT JOIN branches AS b ON p.branch_id = b.id
+                   LEFT JOIN branch_map AS bm ON b.name = bm.name
                    WHERE REP0 AND ( p.date >= ? AND p.date <= ?)
                    ORDER BY b.name, p.date ASC",
             "host":"master_host"
@@ -68,28 +73,33 @@
                           p.user,
                           c.node,
                           b.id AS 'branch_id',
-                          b.name
+                          b.name AS 'branch_name'
                    FROM pushlogs AS p
                    LEFT JOIN changesets AS c ON p.id = c.pushlog_id
                    LEFT JOIN branches AS b ON p.branch_id = b.id
-                   WHERE INSTR(c.node, ?) AND b.name = ?",
+                   LEFT JOIN branch_map AS bm ON b.name = bm.name
+                   WHERE INSTR(c.node, ?) AND (b.name = ? OR bm.alt_name = ?)",
 
             "host":"read_host"
         },
 
         "get_branch_uri":{
 
-            "sql":"SELECT b.name, b.uri
+            "sql":"SELECT b.name, bm.alt_name, b.uri
                    FROM branches AS b
-                   WHERE b.name = ?",
+                   LEFT JOIN branch_map AS bm
+                   ON b.name = bm.name
+                   WHERE b.name = ? OR bm.alt_name = ?",
 
             "host":"read_host"
         },
 
         "get_all_branch_uris":{
 
-            "sql":"SELECT b.name, b.uri
-                   FROM branches AS b",
+            "sql":"SELECT b.name, bm.alt_name, b.uri
+                   FROM branches AS b
+                   LEFT JOIN branch_map AS bm
+                   ON b.name = bm.name",
 
             "host":"read_host"
         },
@@ -138,10 +148,12 @@
                           p.date,
                           c.node,
                           b.id AS 'branch_id',
-                          b.name
+                          b.name,
+                          bm.alt_name
                    FROM pushlogs AS p
                    LEFT JOIN changesets AS c ON p.id = c.pushlog_id
                    LEFT JOIN branches AS b ON p.branch_id = b.id
+                   LEFT JOIN branch_map AS bm ON b.name = bm.name
                    WHERE REP0
                    ORDER BY b.name, p.date ASC",
             "host":"master_host"
@@ -154,12 +166,14 @@
                           p.user,
                           b.id AS 'branch_id',
                           b.name,
+                          bm.alt_name,
                           c.node,
                           c.desc
                    FROM pushlogs AS p
                    LEFT JOIN changesets AS c ON p.id = c.pushlog_id
                    LEFT JOIN branches AS b ON p.branch_id = b.id
-                   WHERE INSTR(node, ?) AND b.name = ?",
+                   LEFT JOIN branch_map AS bm ON b.name = bm.name
+                   WHERE INSTR(node, ?) AND (b.name = ? OR bm.alt_name = ?)",
 
             "host":"master_host"
         }

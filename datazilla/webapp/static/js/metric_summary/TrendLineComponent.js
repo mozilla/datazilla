@@ -38,13 +38,17 @@ var TrendLineComponent = new Class({
 
         this.tickDisplayDates = {};
 
+        this.trendLineAdapters = {
+            'least_squares_fit':this.getLeastSquaresFit
+            };
+
         //Holds all event data received. It's used for
         //reloading all series data with updated pushes
         //before and after values.
         this.eventData = [];
 
-        this.pushesBefore = 20;
-        this.pushesAfter = 5;
+        this.pushesBefore = 25;
+        this.pushesAfter = 10;
 
         //true indicates push retrieval in progress
         //false indicates more pushes can be retrieved
@@ -72,7 +76,7 @@ var TrendLineComponent = new Class({
             },
 
             'yaxis': {
-                'autoscaleMargin':0.1
+                'autoscaleMargin':0.3
             },
 
             'series': {
@@ -129,6 +133,10 @@ var TrendLineComponent = new Class({
             'keyup', _.bind(this._handlePushAroundInput, this)
             );
 
+        $(this.view.trendLineDisplaySel).bind(
+            'change', _.bind(this.redrawTrendLine, this)
+            );
+
         //Set the push counts in the HTML
         this.view.setPushCounts(this.pushesBefore, this.pushesAfter);
 
@@ -138,10 +146,15 @@ var TrendLineComponent = new Class({
             _.bind(this.clickTableCB, this)
             );
 
+        //Initialize the push selection range to empty strings
+        this.view.setPushRange("", "", "");
+
     },
     clickTableCB: function(event, eventData){
+
         this.simulatedTableCBClick = true;
         $(eventData).click();
+
     },
     initializeTrend: function(event, eventData){
 
@@ -175,7 +188,6 @@ var TrendLineComponent = new Class({
 
         var pushCounts = this.view.getPushCounts();
 
-
         for(var i=0; i<this.trendLineOrder.length; i++){
 
             var key = this.trendLineOrder[i];
@@ -197,12 +209,16 @@ var TrendLineComponent = new Class({
         }
     },
     setGetPushState: function(){
+
         this.getPushState = true;
         this.view.setGetPushState();
+
     },
     unsetGetPushState: function(){
+
         this.getPushState = false;
         this.view.unsetGetPushState();
+
     },
     loadTrendData: function(data, response, eventData){
 
@@ -226,6 +242,9 @@ var TrendLineComponent = new Class({
         chartData[this.passSeriesIndex] = passDataset;
         chartData[this.failSeriesIndex] = failDataset;
         chartData[this.noMetricsDataSeriesIndex] = noDataDataset;
+
+        var displayType = $(this.view.trendLineDisplaySel).val();
+        trendAdapter = this.trendLineAdapters[displayType];
 
         /****
          * This loop populates chartData for flot.  Data types that need to
@@ -262,7 +281,10 @@ var TrendLineComponent = new Class({
             var failDatumIndex = 0;
             var noDataDatumIndex = 0;
 
+            var trendMeanValue = 0;
+
             var metricsData = [];
+            var trendAdapterValues = [[], []];
 
             for(var j=0; j<this.trendLines[key]['data'].length; j++){
 
@@ -290,9 +312,15 @@ var TrendLineComponent = new Class({
                         metricsData[0]['pages'][this.trendLines[key]['pagename'] ];
 
                     //Metrics data is available set trend datum
+                    trendMeanValue = parseInt(pageData.trend_mean);
                     var trendDatumIndex = chartData[trendIndex].data.push(
-                        [ j, parseInt(pageData.trend_mean) ]
+                        [ j, trendMeanValue ]
                         ) - 1;
+
+                    if(trendAdapter){
+                        trendAdapterValues[0].push(j);
+                        trendAdapterValues[1].push(trendMeanValue);
+                    }
 
                     this.seriesIndexToKey[trendIndex][trendDatumIndex] = key;
 
@@ -355,7 +383,7 @@ var TrendLineComponent = new Class({
 
                             //Set flot seriesIndex and dataIndex attributes
                             flotItem.seriesIndex = this.failSeriesIndex;
-                            flotItem.dataIndex = 
+                            flotItem.dataIndex =
                                 this.trendLines[key].datapoint_plot_location.point_index;
 
                         }
@@ -370,7 +398,7 @@ var TrendLineComponent = new Class({
 
                     this.seriesIndexToKey[this.noMetricsDataSeriesIndex][noDataDatumIndex] = key;
                 }
-            }
+            } //end data for loop
 
             //Set the series_index for the datapoint plot location
             if(targetRevisionType === 'pass'){
@@ -387,7 +415,23 @@ var TrendLineComponent = new Class({
             //Store the rgb alpha for hover events
             this.trendLines[key].rgb_alpha = rgbAlpha;
 
-        }
+            //If a trend data adapter has been selected
+            //use it to process the trend data and set the chartData
+            //to display to the adapter's return value
+            if(trendAdapter){
+                var adaptedLine = trendAdapter(
+                    trendAdapterValues[0], trendAdapterValues[1]
+                    );
+
+                chartData[trendIndex].data = adaptedLine;
+            }
+        } //end trend line for loop
+
+        //Hide the per-push spinner
+        this.unsetGetPushState();
+
+        //Display the chart
+        this.view.displayDashboard();
 
         //Initialize the plot with the chartData
         this.plot = $.plot(
@@ -395,19 +439,26 @@ var TrendLineComponent = new Class({
             chartData,
             this.chartOptions);
 
+        //Set hover datum to the revision of interest.
+        //Tell hoverPlot to not highlight datum hovered
+        //by passing the boolean "true" parameter.  There is
+        //an issue in flot that causes the first highlighted
+        //point to be off on the y-axis.  This is a work around.
+        this._hoverPlot({}, {}, flotItem, true);
+
         //Draw a circle around the target revisions that the
         //page is loaded on to help the user find their push
         //of interest
         this.view.drawCircleAroundDataPoints(targetRevisions, this.plot);
-        //Hide the per-push spinner
-        this.unsetGetPushState();
-        //Display the chart
-        this.view.displayDashboard();
-        //Set hover datum to revision of interest
-        this._hoverPlot({}, {}, flotItem);
+
+    },
+    redrawTrendLine: function(){
+
+        this.loadTrendData([], {});
 
     },
     getFailDataset: function(){
+
         return {
                 'data':[],
                 'points': { 'show': true },
@@ -415,6 +466,7 @@ var TrendLineComponent = new Class({
                 };
     },
     getPassDataset: function(){
+
         return {
                 'data':[],
                 'points': { 'show': true },
@@ -422,6 +474,7 @@ var TrendLineComponent = new Class({
                 };
     },
     getNoDataDataset: function(){
+
         return {
                 'data':[],
                 'points': { 'show': true },
@@ -429,6 +482,7 @@ var TrendLineComponent = new Class({
                 };
     },
     getTrendLineDataset: function(){
+
         return {
                 'data':[],
                 'lines': { 'show': true },
@@ -436,6 +490,7 @@ var TrendLineComponent = new Class({
                 };
     },
     convertTimestampToDate: function(unixTimestamp, getHMS){
+
         var dateObj = new Date(unixTimestamp * 1000);
         var dateString = dateObj.getFullYear() + '-' +
             this.padNumber((dateObj.getMonth() + 1), 10, '0') + '-' +
@@ -461,6 +516,7 @@ var TrendLineComponent = new Class({
         return n;
     },
     formatLabel: function(label, series){
+
         return this.tickDisplayDates[label] || "";
     },
     closeDataSeries: function(event){
@@ -494,6 +550,7 @@ var TrendLineComponent = new Class({
             }
 
         }else if(event.type === 'mouseout'){
+
             var key = this._getKeyFromEventTarget(event.target);
 
             if(key){
@@ -523,9 +580,49 @@ var TrendLineComponent = new Class({
         }
 
         //Redraw trend lines
-        this.loadTrendData([], {});
+        this.redrawTrendLine();
+    },
+    getLeastSquaresFit: function(valuesX, valuesY){
+
+        var sumX = 0;
+        var sumY = 0;
+        var sumXY = 0;
+        var sumXX = 0;
+        var  x = 0;
+        var y = 0;
+        var count = 0;
+
+        var totalValues = valuesX.length;
+        if(totalValues === 0){
+            return [];
+        }
+
+        for(var i=0; i < totalValues; i++){
+            x = valuesX[i];
+            y = valuesY[i];
+
+            sumX += x;
+            sumY += y;
+            sumXX += x*x;
+            sumXY += x*y;
+        }
+
+        //Calculate m and b for: y = m*x + b
+        var m = (totalValues*sumXY - sumX*sumY) / (totalValues*sumXX - sumX*sumX);
+        var b = (sumY/totalValues) - (m*sumX)/totalValues;
+
+        var lsfLine = [];
+
+        for(var i=0; i < totalValues; i++){
+            x = valuesX[i];
+            y = x*m + b;
+            lsfLine.push([x, y]);
+        }
+
+        return lsfLine;
     },
     _handlePushAroundInput: function(event){
+
         if(event.keyCode === 13){
             if(this.getPushState === false){
                 this.getPushes();
@@ -568,7 +665,7 @@ var TrendLineComponent = new Class({
         this.view.setPushRange(rangeBegin, rangeEnd, url);
 
     },
-    _hoverPlot: function(event, pos, item){
+    _hoverPlot: function(event, pos, item, noHighlight){
 
         if(item){
 
@@ -580,8 +677,11 @@ var TrendLineComponent = new Class({
             }
 
             //Highlight the datapoint that the datum info is initialized to
-            this.plot.unhighlight();
-            this.plot.highlight(item.seriesIndex, item.datapoint);
+            //ignore if caller specifies noHighlight
+            if(!noHighlight){
+                this.plot.unhighlight();
+                this.plot.highlight(item.seriesIndex, item.datapoint);
+            }
 
             if(item.dataIndex === undefined){
                 //dataIndex must be defined to proceed
@@ -592,9 +692,9 @@ var TrendLineComponent = new Class({
 
             if(key != this.hoverLegendKey){
                 var lastKey = this.hoverLegendKey || key;
-                //User has hovered directly from a point on series a
-                //to a point on series b, we need to set the point on
-                //series a back to the appropriate background color
+                //User has hovered directly from a point on series "a"
+                //to a point on series "b", we need to set the point on
+                //series "a" back to the appropriate background color
                 if(this.trendLines[lastKey] != undefined){
                     this.view.unhighlightLegend(
                         this.trendLines[lastKey].rgb_alpha,
@@ -806,6 +906,7 @@ var TrendLineView = new Class({
         this.pushesBeforeSel = '#su_pushes_before';
         this.pushesAfterSel = '#su_pushes_after';
         this.getPushSpinnerSel = '#su_get_pushes_spinner';
+        this.trendLineDisplaySel = '#su_trend_line_display';
 
         this.pushRangeBeginSel = '#su_push_range_begin';
         this.pushRangeEndSel = '#su_push_range_end';
@@ -845,16 +946,17 @@ var TrendLineView = new Class({
 
         this.dashboardDisplayed = false;
 
-
-        //Set the pushes around revision
+        //Set the pushes around revision text
         $(this.pushesAroundRevisionSel).text(MS_PAGE.refData.revision);
 
     },
     displayDashboard: function(){
+
         if(this.dashboardDisplayed === false){
             $(this.pushlogSpinnerSel).css('display', 'none');
             $(this.pushlogDashboardSel).css('display', 'block');
         }
+
     },
     setGetPushState: function(){
 
@@ -868,8 +970,10 @@ var TrendLineView = new Class({
 
     },
     showNoDataMessage: function(){
+
         $(this.pushlogSpinnerSel).css('display', 'none');
         $(this.pushlogDashboardSel).css('display', 'none');
+
     },
     drawCircleAroundDataPoints: function(targetRevisions, plot){
 
@@ -1023,9 +1127,12 @@ var TrendLineView = new Class({
         }
     },
     getSeriesId: function(key){
+
         return this.legendIdPrefix + key;
+
     },
     highlightLegend: function(el){
+
         if(el){
             $(el).css('background-color', '#FFFFFF');
         } else {
@@ -1052,6 +1159,7 @@ var TrendLineView = new Class({
         return rgbAlpha;
     },
     closeDataSeries: function(key){
+
         $('#' + this.legendIdPrefix + key).remove();
         delete(this.displayedSeriesLabel[key]);
     },
@@ -1069,6 +1177,7 @@ var TrendLineView = new Class({
 
     },
     getPushCounts: function(){
+
         var counts = {};
         counts.before = $(this.pushesBeforeSel).val();
         counts.after = $(this.pushesAfterSel).val();

@@ -19,12 +19,9 @@ var TestPagesComponent = new Class({
         this.model = new TestPagesModel('#TestPagesModel',{});
 
     },
-    initializeTestPages: function(ev, data){
-
-        if(_.isEmpty(data)){
-
-        }else{
-            this.view.initializeTestPages(data);
+    initializeTestPages: function(ev, data, ignoreLock){
+        if(!_.isEmpty(data)){
+            this.view.initializeTestPages(ev, data, ignoreLock);
         }
     }
 });
@@ -92,12 +89,13 @@ var TestPagesView = new Class({
         );
     },
 
-    initializeTestPages: function(event, eventData){
+    initializeTestPages: function(event, eventData, ignoreLock){
 
         var checked = $(this.lockTableSel).attr('checked');
 
-        //User has locked the table
-        if(checked){
+        //User has locked the table and caller has not specified
+        //ignore lock
+        if(checked && !ignoreLock){
             return;
         }
 

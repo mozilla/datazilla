@@ -23,10 +23,11 @@ def get_json_blob(project, id):
     ptm = PerformanceTestRefDataModel(project)
     blob = ptm.get_object_json_blob(id)
     ptm.disconnect()
+
     if blob:
-        return blob[0]["json_blob"]
-    else:
-        return None
+        return blob[0]
+
+    return {}
 
 
 def get_error_detail_count(project, startdate, enddate):

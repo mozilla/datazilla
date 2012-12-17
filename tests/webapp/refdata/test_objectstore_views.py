@@ -141,15 +141,15 @@ def test_get_json_blob(ptm, client, monkeypatch):
 
     rj = response.json
 
-    assert rj["test_machine"] == exp_tm
+    assert rj['json_blob']['test_machine'] == exp_tm
 
     # these ids can vary
-    del(rj["test_build"]["id"])
+    del(rj['json_blob']['test_build']['id'])
 
-    assert rj["test_build"] == exp_tb
-    assert rj["testrun"] == exp_tr
-    assert rj["results_aux"] == exp_ra
-    assert rj["results"] == exp_res
+    assert rj['json_blob']['test_build'] == exp_tb
+    assert rj['json_blob']['testrun'] == exp_tr
+    assert rj['json_blob']['results_aux'] == exp_ra
+    assert rj['json_blob']['results'] == exp_res
 
 
 def test_get_json_blob_bad_id(ptm, client, monkeypatch):
