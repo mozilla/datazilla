@@ -1,4 +1,5 @@
 import json
+import re
 from django.http import HttpResponse
 from datazilla.controller.admin.refdata import objectstore_refdata
 from .view_utils import get_range, REQUIRE_DAYS_AGO, API_CONTENT_TYPE
@@ -37,8 +38,17 @@ def get_json_blob(request, project, id):
     """Return a count of all objectstore entries with error"""
 
     blob = objectstore_refdata.get_json_blob(project, id)
+
     if blob:
-        return HttpResponse(blob, content_type=API_CONTENT_TYPE)
+
+        if not re.search('Malformed JSON', blob['error_msg'] or ""):
+            # If we don't have malformed json load it so we can return
+            # a single json data structure with all fields present including
+            # json_blob.  Malformed json will be returned as an escaped string.
+            blob['json_blob'] = json.loads(blob['json_blob'])
+
+        return HttpResponse(json.dumps(blob), content_type=API_CONTENT_TYPE)
+
     else:
         return HttpResponse("Id not found: {0}".format(id), status=404)
 

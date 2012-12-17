@@ -104,7 +104,7 @@ CREATE TABLE `build` (
   KEY `build_date_key` (`build_date`),
   KEY `revision_key` (`revision`),
   KEY `fk_build_product` (`product_id`),
-  UNIQUE KEY `unique_build` (`test_build_id`),
+  UNIQUE KEY `unique_build` (`product_id`, `test_build_id`, `processor`, `build_type`),
   CONSTRAINT `fk_build_product` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`)
 ) ENGINE={engine} DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;

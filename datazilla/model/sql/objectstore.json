@@ -58,7 +58,13 @@
 
         "get_json_blob":{
 
-            "sql":"SELECT json_blob, error_msg, error_flag FROM `objectstore` WHERE `id` = ?",
+            "sql":"SELECT json_blob,
+                          error_msg,
+                          error_flag,
+                          processed_flag,
+                          date_loaded,
+                          test_run_id
+                   FROM `objectstore` WHERE `id` = ?",
 
             "host":"read_host"
         },

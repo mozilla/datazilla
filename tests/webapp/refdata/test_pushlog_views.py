@@ -34,9 +34,6 @@ def test_get_not_referenced(ptm, client, monkeypatch):
         "branches": None,
         }
 
-    print response.json
-    print exp
-
     assert response.json == exp
 
 
@@ -102,6 +99,7 @@ def test_get_db_size(plrdm, client, monkeypatch):
 
     response = client.get("/refdata/pushlog/db_size/")
 
-    assert response.json == [
-            {"size_mb": "0.13", "db_name": "{0}_hgmozilla_1".format(plrdm.project)},
-            ]
+    for r in response.json:
+
+        assert r['size_mb'] > 0
+        assert r['db_name'] == "{0}_hgmozilla_1".format(plrdm.project)

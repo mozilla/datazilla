@@ -207,7 +207,7 @@ def pytest_funcarg__plm(request):
         request._pyfuncitem.session.pushlog_name,
         out=sys.stdout, verbosity=2)
 
-    request.addfinalizer(partial(truncate, plm, ["branches"]))
+    request.addfinalizer(partial(truncate, plm, ["branches", "branch_map"]))
     return plm
 
 
@@ -245,5 +245,5 @@ def pytest_funcarg__plrdm(request):
     plrdm = PushLogRefDataModel(
         request._pyfuncitem.session.pushlog_name)
 
-    request.addfinalizer(partial(truncate, plrdm, ["branches"]))
+    request.addfinalizer(partial(truncate, plrdm, ["branches", "branch_map"]))
     return plrdm

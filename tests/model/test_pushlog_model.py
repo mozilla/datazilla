@@ -11,6 +11,11 @@ def get_branch_id(plm):
     branch = plm.get_branch_list("Firefox")
     return branch[0]["id"]
 
+def get_alt_name_branch_id(plm):
+    """Use the Firefox-Non-PGO branch to retrieve id"""
+    branch = plm.get_branch_list("Firefox-Non-PGO")
+    return branch[0]["id"]
+
 
 def test_branches(plm):
     """
@@ -27,6 +32,12 @@ def test_branches(plm):
 def test_single_branch(plm):
     """Test get_branch_list with a branch that exists."""
     branches = plm.get_branch_list("Firefox")
+
+    assert len(branches) == 1
+
+def test_single_alt_name_branch(plm):
+    """Test get_branch_list with an alt_name branch that exists."""
+    branches = plm.get_branch_list("Firefox-Non-PGO")
 
     assert len(branches) == 1
 
