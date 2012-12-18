@@ -41,11 +41,14 @@ def get_json_blob(request, project, id):
 
     if blob:
 
-        if not re.search('Malformed JSON', blob['error_msg'] or ""):
-            # If we don't have malformed json load it so we can return
-            # a single json data structure with all fields present including
-            # json_blob.  Malformed json will be returned as an escaped string.
+        # If we don't have malformed json load it so we can return
+        # a single json data structure with all fields present including
+        # json_blob.  Malformed json will be returned as an escaped
+        # string.
+        try:
             blob['json_blob'] = json.loads(blob['json_blob'])
+        except ValueError as e:
+            pass
 
         return HttpResponse(json.dumps(blob), content_type=API_CONTENT_TYPE)
 
