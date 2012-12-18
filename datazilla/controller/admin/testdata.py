@@ -102,15 +102,20 @@ def get_metrics_summary(
     #test page metric
     metrics_data = mtm.get_metrics_summary(test_run_ids)
 
-    if metrics_data:
+    metrics_data['product_info'] = {
+        'version': branch_version,
+        'name': product_name,
+        'branch': branch,
+        'revision': revision
+        }
 
-        #get push info
-        push_data = plm.get_node_from_revision(revision, branch)
-        metrics_data['push_data'] = push_data
+    #get push info
+    push_data = plm.get_node_from_revision(revision, branch)
+    metrics_data['push_data'] = push_data
 
-        #get the products associated with this revision/branch combination
-        products = ptm.get_revision_products(revision, branch)
-        metrics_data['products'] = products
+    #get the products associated with this revision/branch combination
+    products = ptm.get_revision_products(revision, branch)
+    metrics_data['products'] = products
 
     plm.disconnect()
     ptm.disconnect()

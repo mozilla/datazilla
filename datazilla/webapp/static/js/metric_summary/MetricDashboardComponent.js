@@ -32,10 +32,9 @@ var MetricDashboardComponent = new Class({
             this.metricSummaryDataEvent, data
             );
 
-        if(_.isEmpty(data)){
-            this.view.showNoDataMessage();
+        if(_.isEmpty(data.tests)){
+            this.view.showNoDataMessage(data);
         }else{
-
             this.view.initializeDashboard(data);
         }
     },
@@ -68,6 +67,7 @@ var MetricDashboardView = new Class({
 
         this.spinnerSel = '#su_dashboard_spinner';
         this.noDataSel = '#su_no_data';
+        this.mainGaugeNoDataClass = 'su-main-gauge-no-data';
         this.noDataMessageSel = '#su_no_data_message';
         this.dashboardSel = '#su_dashboard';
 
@@ -84,6 +84,7 @@ var MetricDashboardView = new Class({
         this.helpModalDialogSel = '#su_help_modal_dialog';
         this.fileABugSel = '#su_file_a_bug';
 
+        this.revisionProductsContainerSel = '#su_revision_products_container';
         this.revisionProductsSel = '#su_revision_products';
         this.revisionTestedSel = '#su_revision_tested';
         this.pushDescSel = '#su_push_desc';
@@ -129,7 +130,6 @@ var MetricDashboardView = new Class({
             gaugeColor: MS_PAGE.failColor,
             levelColors: [MS_PAGE.passColor]
         });
-
 
         //Initialize progress bars
         this.loadProgressBars(
@@ -184,14 +184,24 @@ var MetricDashboardView = new Class({
             }
         }
     },
-    showNoDataMessage: function(){
+    showNoDataMessage: function(data){
 
-        var message = MS_PAGE.refData.revision + ' ' +
-            MS_PAGE.refData.branch;
+        var message = MS_PAGE.refData.revision + ' on ' +
+            MS_PAGE.refData.product +
+            ' ' + MS_PAGE.refData.branch + ' ' +
+            MS_PAGE.refData.branch_version;
 
         $(this.noDataMessageSel).text(message);
 
         this.toggleDashboard(false, this.noDataSel);
+
+        //Add the product select menu so the user can
+        //return to other products that might have data
+        this.setProductSelectMenu(data);
+        $(this.noDataSel).after( $(this.revisionProductsContainerSel) );
+        $(this.revisionProductsContainerSel).addClass(
+            this.mainGaugeNoDataClass
+            );
 
         MS_PAGE.metricGridComponent.view.showNoDataMessage();
         MS_PAGE.trendLineComponent.view.showNoDataMessage();
@@ -223,6 +233,26 @@ var MetricDashboardView = new Class({
         }
     },
     setReferenceInfo: function(data){
+
+        this.setProductSelectMenu(data);
+
+        $(this.authorSel).text(data.push_data.user);
+
+        $(this.revisionTestedSel).html(
+            MS_PAGE.getHgUrlATag('rev', data.product_info.revision)
+            );
+
+        $(this.noTrendCountSel).text(data.summary.keys_without_trend);
+        $(this.totalCountSel).text(data.summary.total_tests);
+
+        $(this.passCountSel).text(data.summary.pass.value + ' passed');
+        $(this.failCountSel).text(data.summary.fail.value + ' failed');
+
+        var descHtml = MS_PAGE.addBugzillaATagsToDesc(data.push_data.desc);
+        $(this.pushDescSel).html(descHtml);
+
+    },
+    setProductSelectMenu: function(data){
 
         for(var i=0; i<data.products.length; i++){
 
@@ -264,14 +294,14 @@ var MetricDashboardView = new Class({
                     "$1" + productData.branch + "/"
                     );
 
-                uri += '?product=' + productData.product +
-                    '&branch_version=' + productData.version;
+                uri += '?product=' + encodeURIComponent(productData.product) +
+                    '&branch_version=' + encodeURIComponent(productData.version);
 
                 if(MS_PAGE.urlObj.param.query.test){
-                    uri += '&test=' + MS_PAGE.urlObj.param.query.test;
+                    uri += '&test=' + encodeURIComponent(MS_PAGE.urlObj.param.query.test);
                 }
                 if(MS_PAGE.urlObj.param.query.platform){
-                    uri += '&platform=' + MS_PAGE.urlObj.param.query.platform;
+                    uri += '&platform=' + encodeURIComponent(MS_PAGE.urlObj.param.query.platform);
                 }
 
                 //Reload the requested product in page
@@ -280,27 +310,18 @@ var MetricDashboardView = new Class({
                 }, this)
             );
 
-        $(this.authorSel).text(data.push_data.user);
-
-        $(this.revisionTestedSel).html(
-            MS_PAGE.getHgUrlATag('rev', data.product_info.revision)
-            );
-
-        $(this.noTrendCountSel).text(data.summary.keys_without_trend);
-        $(this.totalCountSel).text(data.summary.total_tests);
-
-        $(this.passCountSel).text(data.summary.pass.value + ' passed');
-        $(this.failCountSel).text(data.summary.fail.value + ' failed');
-
-        var descHtml = MS_PAGE.addBugzillaATagsToDesc(data.push_data.desc);
-        $(this.pushDescSel).html(descHtml);
-
     },
     loadProgressBars: function(targetContainer, data, order){
 
         var pbContainer = $('<div class="su-progressbar-container"></div>');
 
         var title = "";
+        var container = "";
+        var titleDiv = "";
+        var pb = "";
+        var percent = "";
+        var valueDiv = "";
+
         for(var i=0; i<order.length; i++){
 
             title = order[i];
@@ -370,8 +391,8 @@ var MetricDashboardModel = new Class({
         uri = '/' + MS_PAGE.refData.project +
             '/testdata/metrics/' + MS_PAGE.refData.branch +
             '/' + MS_PAGE.refData.revision + '/summary?' +
-            'product=' + MS_PAGE.refData.product + '&branch_version=' +
-            MS_PAGE.refData.branch_version;
+            'product=' + encodeURIComponent(MS_PAGE.refData.product) +
+            '&branch_version=' + encodeURIComponent(MS_PAGE.refData.branch_version);
 
         jQuery.ajax( uri, {
             accepts:'application/json',

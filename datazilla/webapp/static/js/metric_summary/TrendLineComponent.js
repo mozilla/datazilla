@@ -1244,14 +1244,14 @@ var TrendLineModel = new Class({
     },
     getUri: function(data, url){
 
-        url += '?product=' + MS_PAGE.refData.product;
-        url += '&branch_version=' + MS_PAGE.refData.branch_version;
-        url += '&os_name=' + data.platform_info.operating_system_name;
-        url += '&os_version=' + data.platform_info.operating_system_version;
-        url += '&processor=' + data.platform_info.processor;
-        url += '&build_type=' + data.platform_info.type;
-        url += '&test_name=' + data.testsuite;
-        url += '&page_name=' + data.pagename;
+        url += '?product=' + encodeURIComponent(MS_PAGE.refData.product);
+        url += '&branch_version=' + encodeURIComponent(MS_PAGE.refData.branch_version);
+        url += '&os_name=' + encodeURIComponent(data.platform_info.operating_system_name);
+        url += '&os_version=' + encodeURIComponent(data.platform_info.operating_system_version);
+        url += '&processor=' + encodeURIComponent(data.platform_info.processor);
+        url += '&build_type=' + encodeURIComponent(data.platform_info.type);
+        url += '&test_name=' + encodeURIComponent(data.testsuite);
+        url += '&page_name=' + encodeURIComponent(data.pagename);
 
         return url;
     },

@@ -287,7 +287,7 @@ def _run_metrics(
             branch_id = push_node['branch_id']
 
             if branch_id not in pushlog:
-                #Get the last three days of the pushlog for
+                #Get the last five days of the pushlog for
                 #this branch.
                 pushlog[ branch_id ] = plm.get_branch_pushlog(
                     branch_id, 5, 0

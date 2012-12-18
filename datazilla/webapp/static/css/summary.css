@@ -80,6 +80,11 @@ div.su-reference-info {
     margin-left:60px;
     margin-right:20px;
 }
+div.su-main-gauge-no-data {
+    width: 375px;
+    margin-top:30px;
+    margin-left:320px;
+}
 div.su-dashboard-panel {
     float: left;
     margin-top: 40px;

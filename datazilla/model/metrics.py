@@ -605,12 +605,6 @@ class MetricsTestModel(DatazillaModelBase):
 
         summary_data = {
             'summary':self._get_counter_struct(),
-            'product_info': {
-                'version': d['product_version'],
-                'name': d['product_name'],
-                'branch': d['product_branch'],
-                'revision': d['revision']
-            },
             'summary_by_test':{},
             'summary_by_platform':{},
             'tests':{}
@@ -1525,7 +1519,7 @@ class TtestMethod(MetricMethodBase):
             trend_stddev = lookup.get('trend_mean', None)
 
             #This variable represents whether the test passes or fails,
-            #it's value is ultimately determined by the results of
+            #its value is ultimately determined by the results of
             #fdr.rejector.
             #
             #A test_evaluation of 0 indicates failure and 1 success
