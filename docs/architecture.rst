@@ -1,9 +1,12 @@
+
+.. _Architecture:
+
 Architecture
 ==============
 
 Top Level
 -----------
-There are four database schemas available in datazilla: :ref:`datazilla`, :ref:`schema_hgmozilla.sql.tmpl`, :ref:`schema_objectstore.sql.tmpl`, and :ref:`schema_perftest.sql.tmpl`. Access to each schema is provided through the :ref:`model`.
+There are four database schemas available in datazilla: :ref:`datazilla`, :ref:`schema_hgmozilla.sql.tmpl`, :ref:`schema_objectstore.sql.tmpl`, and :ref:`schema_perftest.sql.tmpl`. Three of these are template schemas that are used by manage commands to create new databases with the storage engine specified by the user.  Access to each schema is provided through the :ref:`model` layer.  The model layer is used by controllers to retrieve data in each of the schemas and is exposed to the user through a set of web service methods.
 
 .. _datazilla:
 
@@ -39,7 +42,7 @@ This schema is accessed using the django ORM, the model for it is defined `here 
 | cron_batch            | varchar(45)  | YES  |     | small   |                |
 +-----------------------+--------------+------+-----+---------+----------------+
 
-All databases storing data used by datazilla are stored as a row in this table.  Each database has three classifiers associated with it: project, contenttype, and dataset.  The name of the database is typically these three classifiers joined on an underscore but there is no requirement for this, the name can be any string.  There is no physical requirement for the databases referenced in this table to be co-located.  The only requirement is that both the web service and machine that run's the cron jobs have access to each of the databases in this table.  Any database can have oauth credentials associated with it but they are not required so the field can be null.  Currently the only databases that require oauth are the objectstore and only for the storage of the JSON object.  Each database can also have a cron batch interval associated with it.  This interval specifies the time interval of cron jobs run.
+All databases storing data used by datazilla are stored as a row in this table.  Each database has three classifiers associated with it: project, contenttype, and dataset.  The name of the database is typically these three classifiers joined on an underscore but there is no requirement for this, the name can be any string.  There is no physical requirement for the databases referenced in this table to be co-located.  The only requirement is that both the web service and machine that run's the cron jobs have access to each of the databases in this table.  Any database can have OAuth credentials associated with it but they are not required so the field can be null.  Currently the only databases that require OAuth are the objectstore and only for the storage of the JSON object.  Each database can also have a cron batch interval associated with it.  This interval specifies the time interval of cron jobs run.
 
 **project** - A descriptive string associated with the project: talos, b2g, schema etc... This string becomes the location field in the url for related web service methods.
 
@@ -55,9 +58,9 @@ All databases storing data used by datazilla are stored as a row in this table. 
 
 **type** - Type of storage engine associated with the database.  This is automatically added to the template schema when a user runs a manage command that creates a database schema.  There is currently support for MariaDB and MySQL storage engines.
 
-**oauth_consumer_key** - The oauth consumer key.  This is created for databases with objectstores automatically by the create_project manage command.
+**oauth_consumer_key** - The OAuth consumer key.  This is created for databases with objectstores automatically by the create_project manage command.
 
-**oauth_consumer_secret** - The oauth consumer secret.  This is created for databases with objectstores automatically by the create_project manage command.
+**oauth_consumer_secret** - The OAuth consumer secret.  This is created for databases with objectstores automatically by the create_project manage command.
 
 **creation_date** - Date the database was created.
 
@@ -85,15 +88,14 @@ This `schema <https://github.com/mozilla/datazilla/blob/master/datazilla/model/s
 
 Model
 ----------
-The model layer found in /datazilla/model provides an interface for getting/setting data in a database. The datazilla model classes rely on a module called datasource. This module encapsulates SQL manipulation. All of the SQL used by the system is stored in JSON files found in /datazilla/model/sql. There can be any number of SQL files stored in this format. The JSON structure allows SQL to be stored in named associative arrays that also contain the host type to be associated with each statement. Any command line script or web service method that requires data should use a derived model class to obtain it. ::
+The model layer found in `/datazilla/model <https://github.com/mozilla/datazilla/tree/master/datazilla/model>`_ provides an interface for getting/setting data in a database. The datazilla model classes rely on a module called `datasource <https://github.com/jeads/datasource>`_. This module encapsulates SQL manipulation. All of the SQL used by the system is stored in JSON files found in `/datazilla/model/sql <https://github.com/mozilla/datazilla/tree/master/datazilla/model/sql>`_. There can be any number of SQL files stored in this format. The JSON structure allows SQL to be stored in named associative arrays that also contain the host type to be associated with each statement. Any command line script or web service method that requires data should use a derived model class to obtain it. ::
 
 
     ptm = PerformanceTestModel(project)
     products = ptm.get_product_test_os_map()
 
-The ``ptm.get_product_test_os_map()`` method looks like ::
+The ``ptm.get_product_test_os_map()`` method looks like this::
 
-    #python
         def get_product_test_os_map(self):
             proc = 'perftest.selects.get_product_test_os_map'
 
@@ -105,9 +107,8 @@ The ``ptm.get_product_test_os_map()`` method looks like ::
 
             return product_tuple
 
-``perftest.selects.get_product_test_os_map`` found in `datazilla/model/sql/perftest.json <https://github.com/mozilla/datazilla/blob/master/datazilla/model/sql/perftest.json>`_ looks like ::
+``perftest.selects.get_product_test_os_map`` found in `datazilla/model/sql/perftest.json <https://github.com/mozilla/datazilla/blob/master/datazilla/model/sql/perftest.json>`_ looks like this::
 
-    json
     {
         "selects":{
 
@@ -127,5 +128,5 @@ The ``ptm.get_product_test_os_map()`` method looks like ::
            "...more SQL statements..."
     }
 
-The string, ``perftest``, in ``perftest.selects.get_product_test_os_map`` refers to the SQL file name to load in `/datazilla/model/sql <https://github.com/mozilla/datazilla/tree/master/datazilla/model/sql>`_.  The SQL in perftest.json can also be written with placeholders and a string replacement system, see [datasource] [5] for all of the features available.
+The string, ``perftest``, in ``perftest.selects.get_product_test_os_map`` refers to the SQL file name to load in `/datazilla/model/sql <https://github.com/mozilla/datazilla/tree/master/datazilla/model/sql>`_.  The SQL in perftest.json can also be written with placeholders and a string replacement system, see `datasource <https://git    hub.com/jeads/datasource>`_ for all of the features available.
 

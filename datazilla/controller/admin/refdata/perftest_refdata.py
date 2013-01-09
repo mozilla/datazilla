@@ -38,7 +38,13 @@ def get_run_counts_by_branch(project, startdate, enddate):
 def get_ref_data(project, table):
     """Return a simple list of data from ``table`` for ``project``."""
     ptm = factory.get_ptm(project)
-    result = get_ref_data_method(ptm, table)()
+
+    result = []
+    if table in ['products', 'operating_systems']:
+        result = get_ref_data_method(ptm, table)(key_column='id')
+    else:
+        result = get_ref_data_method(ptm, table)()
+
     ptm.disconnect()
 
     return result

@@ -981,7 +981,7 @@ Push Logs
         }
 
 
-.. http:get:: /(project)/refdata/pushlog/list
+.. http:get:: /refdata/pushlog/list
 
     Return a list of pushlog entries.
 
@@ -998,7 +998,7 @@ Push Logs
 
     .. sourcecode:: http
 
-        GET /talos/refdata/pushlog/list/?days_ago=1&branches=Mozilla-Inbound
+        GET /refdata/pushlog/list/?days_ago=1&branches=Mozilla-Inbound
 
     **Example response**:
 

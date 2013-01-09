@@ -145,7 +145,7 @@ def test_get_ref_data_operating_systems(ptm):
 
     ref_data = perftest_refdata.get_ref_data(ptm.project, "operating_systems")
 
-    exp = {'linuxUbuntu 11.10': 1L}
+    exp = {1: {'id': 1, 'name': 'linux', 'version': 'Ubuntu 11.10'}}
     assert exp == ref_data
 
 
@@ -206,7 +206,13 @@ def test_get_ref_data_products(ptm):
 
     ref_data = perftest_refdata.get_ref_data(ptm.project, "products")
 
-    exp = {'FirefoxMozilla-Aurora14.0a2': 1L}
+    exp = {
+        1:{'branch': 'Mozilla-Aurora',
+           'default_product': 0,
+           'id': 1,
+           'product': 'Firefox',
+           'version': '14.0a2'}
+        }
 
     assert exp == ref_data
 
