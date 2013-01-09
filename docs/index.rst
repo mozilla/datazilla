@@ -6,9 +6,15 @@
 Welcome to Datazilla's documentation!
 =====================================
 
-Datazilla is a system for managing and visualizing data.
+Datazilla is a system for managing and visualizing test data.  It's designed to be able to manage different subsets of test data, such as performance data.
 
-.. NOTE:: This is a work in progress and will likely see a number of structural changes. It is currently being developed to manage Talos test data, a performance testing framework developed by mozilla for testing software products.
+Description
+-----------
+At a top level, performance test data is submitted as a JSON data structure to the webservice via http post, an example data structure can be found here.  It's stored in a dedicated database schema as an object, the objects in this schema are then translated into a relational database schema where individual fields in the JSON structure are indexed for queries.  The indexed data is used for applying statistical analysis' to identify performance regressions.  Both the indexed data and un-processed objects are available through the web service.
+
+New JSON objects and schema definitions can be added to support different types of data.  It's also possible to utilize the fields already available in the JSON structure to represent different information.
+
+This project includes a model, web service, and web based user interfaces.
 
 Contents
 ---------
@@ -22,10 +28,4 @@ Contents
    architecture
 
 * :ref:`search`
-
-Description
------------
-The fundamental unit of data display in the user interface is called a *dataview*. Data views can display data in any number of tabular or graphical ways. Data views can also send signals to one another enabling the user to maintain visual context across multiple graphical displays of different data types. Each data view shares a toolbar that abstracts navigation, data presentation controls, and visual presentation. A prototype of datazilla was first developed in an application called bughunter.
-
-This project includes a model, web service, and web based user interface, and eventually it will support a local development environment.
 
