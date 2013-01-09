@@ -265,7 +265,6 @@ def test_get_metrics_summary_with_parameters(
         )
 
     reference_response = client.get(uri)
-    platform = 'linux Ubuntu 11.10 x86_64'
 
     for params in parameters:
 
@@ -282,8 +281,7 @@ def test_get_metrics_summary_with_parameters(
         success_response = client.get(uri_with_params)
         fail_response = client.get(fail_uri_with_params)
 
-
-        assert success_response.json == reference_response.json
+        assert success_response.json.keys() == reference_response.json.keys()
         assert 'summary' not in fail_response.json
 
 def test_get_metrics_pushlog(client, mtm, ptm, plm, monkeypatch):

@@ -3,6 +3,7 @@ Web Service
 
 The web services available in datazilla can be grouped into the following categories.
 
+
 Test Data
 ---------
 
@@ -720,10 +721,10 @@ Object Store
 
 .. http:get:: /(project)/refdata/objectstore/json_blob/(int:id)
 
-    Return the full JSON blob for ``id`` as retrieved by the
-    ``/(project)/refdata/objectstore/error_list`` endpoint.  Often this JSON is
-    in a non-parseable state.  So the information you're looking for may
-    require you to dig into the poorly formed JSON without a parser.
+    Return the full JSON blob for ``id`` and associated object reference data.
+    It's possible that the JSON is in a non-parseable state, in which case it will
+    be returned as an escaped string.  So the information you're looking for may
+    require you to dig into the malformed formed JSON without a parser.
 
     **Example request**:
 
@@ -737,10 +738,36 @@ Object Store
 
         Content-Type: application/json
 
-        {"test_machine": {"name": "talos-r3-leopard-014", "os": "mac",
-        "osversion": "OS X 10.5.8", "platform": "x86"}, "test_build":
-        {"name": "Firefox", "version": "14.0.1", "revision": "b96eb495bfe5",
-        ...
+        {
+
+            "json_blob": {
+                "test_machine": {
+                    "platform": "x86",
+                    "osversion": "redhat 12",
+                    "os": "linux",
+                    "name": "talos-r3-fed-003"
+                },
+                "testrun": {
+                    "date": 1351308688,
+                    "suite": "Talos dromaeo_css",
+                    "options": { … }
+                },
+                "results": { … },
+                "test_build": {
+                    "id": "20121026192237",
+                    "version": "19.0a1",
+                    "name": "Firefox",
+                    "branch": "Mozilla-Inbound-Non-PGO",
+                    "revision": "ba9fb2ed910c"
+                }
+            },
+            "date_loaded": 1355269377,
+            "error_flag": "N",
+            "test_run_id": null,
+            "processed_flag": "ready",
+            "error_msg": ""
+
+        }
 
 
 .. http:get:: /(project)/refdata/objectstore/db_size
@@ -954,7 +981,7 @@ Push Logs
         }
 
 
-.. http:get:: /(project)/refdata/pushlog/list
+.. http:get:: /refdata/pushlog/list
 
     Return a list of pushlog entries.
 
@@ -971,7 +998,7 @@ Push Logs
 
     .. sourcecode:: http
 
-        GET /talos/refdata/pushlog/list/?days_ago=1&branches=Mozilla-Inbound
+        GET /refdata/pushlog/list/?days_ago=1&branches=Mozilla-Inbound
 
     **Example response**:
 
@@ -1048,3 +1075,37 @@ Push Logs
             }
         ]
 
+Load Data
+---------
+
+The following method loads a JSON structure into the objectstore database.  This web service method implements two-legged OAuth and requires a consumer key and secret to be supplied in the POST.  Each objectstore database in datazilla has an OAuth consumer key and secret associated with it.  The values for the OAuth credentials can be found in the datazilla schema.  The best way to load data into datazilla is by using the `datazilla client <https://github.com/mozilla/datazilla_client>`_ which calls this method but also provides helpful methods for building the required JSON structure and implementing the OAuth consumer.  A sample JSON structure that datazilla accepts can be found `here <https://github.com/mozilla/datazilla/blob/master/datazilla/model/sql/template_schema/schema_perftest.json>`_.
+
+.. http:post:: /(project)/api/load_test/
+
+    Returns a JSON object
+
+    :query data: (required) The json object to load. A sample object can be found `here <https://github.com/mozilla/datazilla/blob/master/datazilla/model/sql/template_schema/schema_perftest.json>`_.
+
+    :query user: (required) The project name to POST data to
+
+    :query oauth_version: (required) OAuth version to use, this is specified by the datazilla client.
+
+    :query oauth_nonce: (required) Provided by oauth interface.
+
+    :query oauth_timestamp: Timestamp
+
+    :query oauth_token: (optional) Not required by two-legged OAuth but required by oauth consumer interface.
+
+    :query oauth_consumer_key: (required) OAuth consumer key
+
+    **Example response**:
+
+    .. sourcecode:: http
+
+        Content-Type: application/json
+
+        {
+            "status": "well-formed JSON stored",
+            "size": 1500,
+            "url": "https://datazilla.mozilla.com/talos/refdata/objectstore/json_blob/1000"
+        }

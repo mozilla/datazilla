@@ -22,8 +22,34 @@ Installation
   string like ``127.0.0.1:11211`` - the host and port at which memcached is
   running.
 
-* Run ``python manage.py syncdb`` to create the core datasource table,
-  then ``python manage.py create_perftest_project --project projectname`` to
-  create a project. See ``python manage.py help create_perftest_project`` for
-  all the project-creation options (including placing the project database
-  on a different database host).
+* Run ``python manage.py syncdb`` to create the core datasource table.
+
+* Create a paired objectstore and performance test database with the manage.py create_perftest_project command::
+
+    manage.py create_perftest_project [options]
+
+    Create all databases for a new project.
+
+    Options:
+        -p PROJECT, --project=PROJECT
+                        Set the project to run on: talos, b2g, schema, test
+                        etc....
+        --perftest_host=PERFTEST_HOST
+                        The host name for the perftest database
+        --objectstore_host=OBJECTSTORE_HOST
+                        The host name for the objectstore database
+        --perftest_type=PERFTEST_TYPE
+                        The database type (e.g. 'MySQL-InnoDB') for the
+                        perftest database
+        --objectstore_type=OBJECTSTORE_TYPE
+                        The database type (e.g. 'MySQL-Aria') for the
+                        objectstore database
+        --cron_batch=CRON_BATCH
+                        Add this new project to this cron_batch. This value
+                        indicates the size of the project and may determine
+                        how much time between intervals should be set.  Larger
+                        projects will likely have a longer time interval
+                        between execution as cron jobs.Choices are: small,
+                        medium, large.  Default to None.
+
+* Install crontab.txt
