@@ -1,0 +1,59 @@
+body {
+    font-family: helvetica, arial, sans-serif;
+    margin: 10px;
+    font-size: 12px;
+    padding: 10px;
+}
+div.su-vis-detail-panel {
+    margin-top: 5px; 
+    padding: 4px;
+    overflow: auto;
+}
+div.su-text-background {
+    border-color: rgba(68, 170, 0, 0.8);
+    background-color: rgba(68, 170, 0, 0.1);
+}
+a {
+    text-decoration: underline;
+    font-weight: bold;
+    color: #006306;
+}
+hr.su-light-horz-line {
+    background-color:#0D2054;
+}
+.su-help-grid {
+    width:311px;
+    height:240px;
+    margin-left:10px;
+    background-repeat: no-repeat;
+    background-image: url('/static/images/metrics_summary/grid.png');
+    background-position: 0 0;
+}
+.su-help-pc-1 {
+    width:510px;
+    height:39px;
+    margin-left:10px;
+    margin-top:10px;
+    background-repeat: no-repeat;
+    background-image: url('/static/images/metrics_summary/pushlog_controls_1.png');
+    background-position: 0 0;
+}
+.su-help-pc-2 {
+    width:560px;
+    height:44px;
+    margin-left:10px;
+    margin-top:10px;
+    background-repeat: no-repeat;
+    background-image: url('/static/images/metrics_summary/pushlog_controls_2.png');
+    background-position: 0 0;
+}
+.su-help-table {
+    width:625px;
+    height:276px;
+    margin-left:10px;
+    margin-top:10px;
+    margin-bottom:10px;
+    background-repeat: no-repeat;
+    background-image: url('/static/images/metrics_summary/table.png');
+    background-position: 0 0;
+}

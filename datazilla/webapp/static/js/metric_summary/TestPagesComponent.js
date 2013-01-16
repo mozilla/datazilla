@@ -130,6 +130,7 @@ var TestPagesView = new Class({
                 { "sTitle":'p value', "sWidth":"60px" },
                 { "sTitle":'h0 rejected', "sWidth":"75px" },
                 { "sTitle":'replicates', "sWidth":"75px" },
+                { "sTitle":'compared to', "sWidth":"75px" },
                 ],
 
             'aaSorting':[ [2, 'asc'] ]
@@ -254,6 +255,7 @@ var TestPagesView = new Class({
             row['7'] = datum.p;
             row['8'] = datum.h0_rejected;
             row['9'] = datum.n_replicates;
+            row['10'] = datum.threshold_revision;
 
             datatableOptions.aaData.push( row );
         }

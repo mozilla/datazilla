@@ -29,6 +29,7 @@ var TrendLineComponent = new Class({
         //corresponding reference data in this.trendLines
         this.seriesIndexToKey = [];
 
+
         //pass series
         this.passSeriesIndex = this.seriesIndexToKey.push([]) - 1;
         //fail series
@@ -41,6 +42,10 @@ var TrendLineComponent = new Class({
         this.trendLineAdapters = {
             'least_squares_fit':this.getLeastSquaresFit
             };
+
+        //Maps the 'compared to' revision to the corresponding
+        //plot datapoint index
+        this.revisionToPlotIndex = {};
 
         //Holds all event data received. It's used for
         //reloading all series data with updated pushes
@@ -266,6 +271,7 @@ var TrendLineComponent = new Class({
 
             var seriesColor = '';
             var targetRevisionType = 'pass';
+            var dzRevision = '';
 
             //A new trend dataset needs to be created for each trend line
             //since it is displayed as a line, otherwise flot will display
@@ -289,6 +295,8 @@ var TrendLineComponent = new Class({
             for(var j=0; j<this.trendLines[key]['data'].length; j++){
 
                 metricsData = this.trendLines[key]['data'][j]['metrics_data'];
+
+                dzRevision = this.trendLines[key]['data'][j]['dz_revision'];
 
                 //Store x axis tick labels
                 if(!this.tickDisplayDates[j]){
@@ -333,6 +341,10 @@ var TrendLineComponent = new Class({
 
                         this.seriesIndexToKey[this.passSeriesIndex][passDatumIndex] = key;
 
+                        if(dzRevision && (!this.revisionToPlotIndex[dzRevision])){
+                            this.revisionToPlotIndex[dzRevision] = passDatumIndex;
+                        }
+
                     } else if(pageData.test_evaluation === false) {
 
                         //Test failed
@@ -341,6 +353,10 @@ var TrendLineComponent = new Class({
                             ) - 1;
 
                         this.seriesIndexToKey[this.failSeriesIndex][failDatumIndex] = key;
+
+                        if(dzRevision && (!this.revisionToPlotIndex[dzRevision])){
+                            this.revisionToPlotIndex[dzRevision] = failDatumIndex;
+                        }
 
                     }
 
@@ -621,6 +637,28 @@ var TrendLineComponent = new Class({
 
         return lsfLine;
     },
+    getCompareRevisionHtml: function(compareRevisionStr, seriesIndex, datapoint){
+
+        var aEl = MS_PAGE.getHgUrlATag('rev', compareRevisionStr);
+
+        if(compareRevisionStr){
+
+            if( !isNaN(seriesIndex) && !isNaN(datapoint) ){
+
+                $(aEl).hover(
+                    _.bind(function(){
+                        this.plot.highlight(seriesIndex, datapoint);
+                    }, this),
+
+                    _.bind(function(){
+                        this.plot.unhighlight(seriesIndex, datapoint);
+                    }, this)
+                    );
+            }
+        }
+
+        return aEl;
+    },
     _handlePushAroundInput: function(event){
 
         if(event.keyCode === 13){
@@ -652,8 +690,6 @@ var TrendLineComponent = new Class({
         var begin = Math.ceil(ranges.xaxis.from);
         var end = parseInt(ranges.xaxis.to);
 
-        //Don't care what the series is, just need the data index
-        //equivalent
         var keys = _.keys(this.trendLines);
         var rangeBegin = this.trendLines[keys[0]]['data'][begin]['revisions'][0]['revision'];
         var rangeEnd = this.trendLines[keys[0]]['data'][end]['revisions'][0]['revision'];
@@ -756,9 +792,28 @@ var TrendLineComponent = new Class({
                 {'label':'page',
                  'value':pagename});
 
+
             //Set the color to use for the datum display panel.
             var color = MS_PAGE.passColor;
             if(datum.metrics_data.length > 0){
+
+                //Metrics data is available load the 'compared to' revision
+                var tr = datum.metrics_data[0]['pages'][pagename]['threshold_revision'];
+
+                var revIndex = undefined;
+
+                if( this.revisionToPlotIndex[tr] ){
+                    revIndex = this.revisionToPlotIndex[tr];
+                }
+
+                var a = this.getCompareRevisionHtml(
+                    tr, item.seriesIndex, revIndex
+                    );
+
+                keyValueArray.push(
+                    {'label':'compared to',
+                     'value':a });
+
                 //Load metrics specific data
                 for(var i=0; i<metricKeys.length; i++){
 
@@ -849,7 +904,16 @@ var TrendLineComponent = new Class({
     },
     _clickPlot: function(event, pos, item){
         if(item){
-            $(this.view.datumLockSel).click();
+
+            var checked = $(this.view.datumLockSel).attr('checked');
+
+            if(checked){
+                $(this.view.datumLockSel).click();
+                this._hoverPlot({}, {}, item);
+                $(this.view.datumLockSel).click();
+            }else{
+                $(this.view.datumLockSel).click();
+            }
         }
     },
     _loadTrendLineData: function(data, eventData){
@@ -1115,7 +1179,7 @@ var TrendLineView = new Class({
 
             $(valueSpan).addClass(this.datumValueClass);
 
-            if(label === 'revision'){
+            if((label === 'revision') || (label === 'compared to')){
                 $(valueSpan).html(value);
             }else{
                 $(valueSpan).text(value);

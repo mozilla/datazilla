@@ -158,7 +158,7 @@ var MetricDashboardView = new Class({
     },
     displayHelpDialog: function(event){
         $(this.helpModalDialogSel).dialog(
-            { height:500, width:500, modal:true }
+            { height:700, width:800, modal:true }
             );
     },
     toggleDashboard: function(toggleOn, target){
