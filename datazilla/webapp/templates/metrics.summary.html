@@ -24,17 +24,20 @@
 
 <div id="su_container">
    <!-- Help Modal -->
-   <div id="su_help_modal_dialog" title="Application Help" style="display:none;">
+   <div id="su_help_modal_dialog" title="Application Help" style="display:none; overflow:hidden;">
 
         <a href="https://github.com/mozilla/datazilla"><img style="position: absolute; top: 0; left: -15px; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_left_orange_ff7600.png" alt="Fork me on GitHub"></a>
 
-        <p style="margin-top:150px;">Help is on the way! No really it is... it just hasn't quite arrived yet.  In the meantime, if something doesn't seem to be working correctly, please file a bug. Thank you!</p>
+        <div style="position: absolute; top: 10px; left: 450px; display:inline;">
+            <p><b>Something not working right? Please</b> <a id="su_file_a_bug" target="_blank" href="https://bugzilla.mozilla.org/enter_bug.cgi?product=Datazilla">File a Datazilla Bug</a></p>
+        </div>
 
-        <a id="su_file_a_bug" target="_blank" href="https://bugzilla.mozilla.org/enter_bug.cgi?product=Datazilla">File a Datazilla Bug</a>
+        <iframe frameborder="0" src="/static/html/help/metrics_summary.html" style="overflow-y:auto; overflow-x:hidden; width:750px; height:590px; margin-top:75px;"></iframe>
+
    </div>
 
    <!-- Dashboard -->
-   <div class="ui-widget ui-widget-header ui-corner-all su-panel-base su-toolpanel">
+   <div style="height:360px;" class="ui-widget ui-widget-header ui-corner-all su-panel-base">
         <div id="su_dashboard_spinner" class="su-spinner ui-widget"></div>
 
         <div id="su_no_data" style="display:none;" class="ui-widget su-no-data">No metrics data available for <span id="su_no_data_message"></span></div>
@@ -54,7 +57,7 @@
             </div>
 
             <div id="su_main_gauge_container" class="su-main-gauge">
-                <div id="su_gauge_1"></div>
+                <div id="su_gauge_1" style="width:210px; height:170px; margin-left:85px; display:none;"></div>
                 <div class="su-reference-info" style="width:245px; display:none;">
                     <div id="su_revision_products_container"><span class="su-light-text2">Product:</span>
                         <select id="su_revision_products" size="1" class="css-right"></select>
@@ -85,7 +88,7 @@
 
    <div class="ui-helper-clearfix"></div>
 
-   <div style="height:400px;" class="ui-widget ui-widget-header ui-corner-all su-panel-base su-toolpanel">
+   <div style="height:425px;" class="ui-widget ui-widget-header ui-corner-all su-panel-base">
         <div id="su_grid_spinner" style="height:400px;" class="su-spinner ui-widget"></div>
         <div id="su_test_suite_dashboard" style="display:none;">
 
@@ -99,7 +102,7 @@
                     <div style="margin-top:10px; margin-bottom:10px; margin-left:10px; margin-right:10px;">Tip: Mouse over grid to load a test suite table.  Click a cell to lock.</div>
                 </div>
 
-                <div id="su_grid" style="margin-top:80px;" class="su-light-text css-left">
+                <div id="su_grid" style="margin-top:100px;" class="su-light-text css-left">
                     <div id="su_boundary" style="width:430px;">
                         <div class="su-column-headers"></div>
                         <div id="su_grid_scroll_container" style="width:430px; height:230px; overflow-y:auto;" class="css-left">
@@ -120,7 +123,7 @@
         </div>
     </div> <!-- End Grid Panel -->
 
-   <div style="height:500px;" class="ui-widget ui-widget-header ui-corner-all su-panel-base su-toolpanel">
+   <div style="height:500px;" class="ui-widget ui-widget-header ui-corner-all su-panel-base">
 
         <div id="su_pushlog_spinner" style="height:400px;" class="su-spinner ui-widget"></div>
 
@@ -142,11 +145,11 @@
 
             <div class="ui-helper-clearfix"></div>
 
-            <div id="su_graph_detail_container_1" class="ui-widget css-left" style="width:135px; overflow-y:auto; height:380px; display:block;"></div>
+            <div id="su_graph_detail_container_1" class="ui-widget css-left" style="width:135px; overflow-y:auto; height:380px; display:block; margin-left:10px;"></div>
             <div class="su-vertical-text">Mean (milliseconds)</div>
             <div id="su_trendline_plot" style="margin-left:30px; margin-bottom:20px; height:350px; width:600px;" class="css-left"></div>
-            <div style="width:235px; position:absolute; left:770px; top:900px; opacity:0.6;" class="ui-widget ui-corner-all arrow_box_up css-left">
-                <div style="margin:10px;">Tip: Select a row above to load a test page series. Mouse over data points to load push info below.  Click a point to lock.</div>
+            <div style="width:235px; position:absolute; left:780px; top:915px; opacity:0.6;" class="ui-widget ui-corner-all arrow_box_up css-left">
+                <div style="margin:10px;">Tip: Select a row above to load a series. Mouse over points below to load data.</div>
             </div>
             <div style="overflow-y:auto; height: 380px; margin-left:3px; width:220px;" class="css-left">
                 <div id="su_datum_revision" style="width:187px; text-align:right;" class="ui-state-highlight ui-corner-all su-datum-info-panel css-right su-large-text"></div>

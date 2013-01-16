@@ -1,7 +1,7 @@
 body {
     font-family: helvetica, arial, sans-serif;
     margin: 0;
-    font-size: 14px;
+    font-size: 10px;
     padding: 0;
     border-top: 2px solid #676767;
     min-width: 1065px;
@@ -24,17 +24,11 @@ div.su-large-text {
 }
 .su-light-text {
     opacity: 0.8;
+    filter: alpha(opacity=80);
 }
 .su-light-text2 {
     opacity: 0.5;
-}
-div.su-toolpanel {
-  width: 95%;
-  height:50px;
-  margin-top: 10px;
-  margin-bottom: 10px;
-  padding: 10px;
-  font-size:0.750em;
+    filter: alpha(opacity=50);
 }
 div.su-toolbar-base {
    /*************
@@ -64,30 +58,31 @@ div.su-toppanel {
     padding-top: 10px;
 }
 div.su-panel-base {
-    width: 93%;
-    height: 320px;
+    width: 95%;
+    background: white;
     margin-left: auto;
     margin-right: auto;
-    margin-bottom: 10px;
-    background: white;
+    margin-top: 10px;
 }
 div.su-main-gauge {
     float: left;
-    width: 375px;
+    width: 350px;
     margin-left:10px;
+    margin-right:10px;
 }
 div.su-reference-info {
     margin-left:60px;
     margin-right:20px;
 }
 div.su-main-gauge-no-data {
-    width: 375px;
+    width: 350px;
     margin-top:30px;
     margin-left:320px;
 }
 div.su-dashboard-panel {
     float: left;
     margin-top: 40px;
+    margin-left: 10px;
 }
 div.su-spinner {
   background: transparent url(/static/images/spinner.gif) no-repeat center center;

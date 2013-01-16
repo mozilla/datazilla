@@ -425,6 +425,14 @@
         "host":"read_host"
 
       },
+      "get_threshold_revisions":{
+        "sql":"SELECT id, revision
+               FROM test_run
+               WHERE id IN (REP0)",
+
+        "host":"read_host"
+
+      },
       "get_test_run_ids":{
         "sql":"SELECT DISTINCT(tr.id) AS test_run_id
             FROM test_run AS tr
