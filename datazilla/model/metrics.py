@@ -367,6 +367,29 @@ class MetricsTestModel(DatazillaModelBase):
 
         return key_lookup
 
+    def get_threshold_revision_lookup(
+         self, computed_metrics, threshold_test_run_ids=set()):
+
+        if not threshold_test_run_ids:
+
+            for d in computed_metrics:
+                threshold_test_run_ids.add(str(d['threshold_test_run_id']))
+
+        revision_lookup = {}
+        if threshold_test_run_ids:
+            threshold_proc = 'perftest.selects.get_threshold_revisions'
+
+            revision_data = self.sources["perftest"].dhub.execute(
+                proc=threshold_proc,
+                debug_show=self.DEBUG,
+                replace=[ ','.join(threshold_test_run_ids) ]
+                )
+
+            for d in revision_data:
+                revision_lookup[ d['id'] ] = d['revision']
+
+        return revision_lookup
+
     def get_metrics_data_from_test_run_ids(self, test_run_ids, page_name):
         """
         Retrieve all metrics data associated with a given revision.
@@ -442,6 +465,10 @@ class MetricsTestModel(DatazillaModelBase):
                 page_name.split(',')
                 )
 
+        #Build a threshold revision lookup to return the threshold
+        #revision str
+        revision_lookup = self.get_threshold_revision_lookup(computed_metrics)
+
         for d in computed_metrics:
             ####
             #Add revision to summary key to handle getting a mix of test
@@ -485,6 +512,8 @@ class MetricsTestModel(DatazillaModelBase):
 
             if d['page_name'] not in key_lookup[summary_key]['pages']:
                 key_lookup[summary_key]['pages'][ d['page_name'] ] = {}
+                key_lookup[summary_key]['pages'][ d['page_name'] ]['threshold_revision'] = \
+                    revision_lookup[ d['threshold_test_run_id'] ]
 
             value_name = d['metric_value_name']
             value = d['value']
@@ -596,12 +625,20 @@ class MetricsTestModel(DatazillaModelBase):
         ##Build a list of metric keys without trend data##
         keys_with_trend = set()
         keys_without_trend = set()
+        threshold_test_run_ids = set()
+
         for d in computed_metrics:
             key = self.get_metrics_key(d)
             value_name = d['metric_value_name']
             value = int(d['value'])
             if (value_name == 'trend_mean') and (value > 0):
                 keys_with_trend.add(key)
+
+            threshold_test_run_ids.add( str(d['threshold_test_run_id']) )
+
+        revision_lookup = self.get_threshold_revision_lookup(
+            computed_metrics, threshold_test_run_ids
+            )
 
         summary_data = {
             'summary':self._get_counter_struct(),
@@ -660,6 +697,7 @@ class MetricsTestModel(DatazillaModelBase):
             if d['page_name'] not in summary_data['tests'][tname][pname]['pages']:
                 summary_data['tests'][tname][pname]['pages'][ d['page_name'] ] = \
                     {
+                        'threshold_revision':revision_lookup[ d['threshold_test_run_id'] ],
                         'test_evaluation':None,
                         'mean':None,
                         'stddev':None,

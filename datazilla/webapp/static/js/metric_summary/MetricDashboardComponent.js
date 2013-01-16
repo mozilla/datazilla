@@ -67,6 +67,7 @@ var MetricDashboardView = new Class({
 
         this.spinnerSel = '#su_dashboard_spinner';
         this.noDataSel = '#su_no_data';
+        this.mainGaugeSel = '#su_gauge_1';
         this.mainGaugeNoDataClass = 'su-main-gauge-no-data';
         this.noDataMessageSel = '#su_no_data_message';
         this.dashboardSel = '#su_dashboard';
@@ -114,6 +115,9 @@ var MetricDashboardView = new Class({
 
     initializeDashboard: function(data){
 
+        //Make sure the main gauge is visible before initialization
+        $(this.mainGaugeSel).css('display', 'block');
+
         //Initialize main gauge
         this.mainGauge = new JustGage({
 
@@ -154,7 +158,7 @@ var MetricDashboardView = new Class({
     },
     displayHelpDialog: function(event){
         $(this.helpModalDialogSel).dialog(
-            { height:500, width:500, modal:true }
+            { height:700, width:800, modal:true }
             );
     },
     toggleDashboard: function(toggleOn, target){
@@ -170,6 +174,8 @@ var MetricDashboardView = new Class({
             $(this.dashboardSel).show();
             $('.' + this.referenceInfoPanelClass).css('display', 'block');
 
+            $(this.mainGaugeSel).css('display', 'block');
+
         } else {
 
             $('.' + this.dashboardPanelClass).css('display', 'none');
@@ -182,6 +188,7 @@ var MetricDashboardView = new Class({
             if (target){
                 $(target).show();
             }
+
         }
     },
     showNoDataMessage: function(data){
