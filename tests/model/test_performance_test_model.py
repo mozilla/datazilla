@@ -86,6 +86,16 @@ def test_get_or_create_test_id(ptm):
     assert second_id == first_id == inserted_id
 
 
+def test_adapt_production_data(ptm):
+
+    data = json.loads( perftest_json( test_machine={'os':'mac', 'osversion':'OS X 10.8.2'} ) )
+
+    assert '-Non-PGO' not in data['test_build']['branch']
+
+    ptm._adapt_production_data(data)
+
+    assert '-Non-PGO' in data['test_build']['branch']
+
 def test_get_or_create_test_id_no_testrun(ptm):
     """Raises TestDataError if there is no 'testrun' key in data."""
     with pytest.raises(TestDataError) as e:

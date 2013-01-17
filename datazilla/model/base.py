@@ -1178,6 +1178,10 @@ class PerformanceTestModel(DatazillaModelBase):
     def load_test_data(self, data):
         """Load TestData instance into perftest db, return test_run_id."""
 
+        # Apply all platform specific hacks to account for mozilla
+        # production test environment problems
+        self._adapt_production_data(data)
+
         # Get/Set reference info, all inserts use ON DUPLICATE KEY
         test_id = self._get_or_create_test_id(data)
         os_id = self._get_or_create_os_id(data)
@@ -1303,6 +1307,20 @@ class PerformanceTestModel(DatazillaModelBase):
             debug_show=self.DEBUG
             )
 
+
+    def _adapt_production_data(self, data):
+
+        ###
+        #In production all "mac os x" data is -Non-PGO but this is not
+        #reflected in the branch name.  This is due to inconsistancies
+        #in buildbot.  To account for this we append -Non-PGO to the
+        #branch name for all branches for "mac os x".
+        ###
+        os = data['test_machine']['os'].lower()
+        osversion = data['test_machine']['osversion'].lower()
+
+        if ('mac' in os) and ('os x' in osversion):
+            data['test_build']['branch'] += '-Non-PGO'
 
     def _set_test_aux_data(self, data, test_id, test_run_id):
         """Insert test aux data to db for given test_id and test_run_id."""
