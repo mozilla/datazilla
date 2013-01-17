@@ -100,7 +100,6 @@ var MetricDashboardView = new Class({
 
         this.progressbarValueClassSel = '.ui-progressbar-value';
 
-
         //Set help icon click to open help dialog
         $(this.helpModalClassSel).bind(
             'click', _.bind(this.displayHelpDialog, this)
@@ -157,6 +156,7 @@ var MetricDashboardView = new Class({
         $(this.helpModalDialogSel).dialog('close');
     },
     displayHelpDialog: function(event){
+
         $(this.helpModalDialogSel).dialog(
             { height:700, width:800, modal:true }
             );

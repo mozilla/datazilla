@@ -513,7 +513,7 @@ class MetricsTestModel(DatazillaModelBase):
             if d['page_name'] not in key_lookup[summary_key]['pages']:
                 key_lookup[summary_key]['pages'][ d['page_name'] ] = {}
                 key_lookup[summary_key]['pages'][ d['page_name'] ]['threshold_revision'] = \
-                    revision_lookup[ d['threshold_test_run_id'] ]
+                    revision_lookup.get( d['threshold_test_run_id'] )
 
             value_name = d['metric_value_name']
             value = d['value']

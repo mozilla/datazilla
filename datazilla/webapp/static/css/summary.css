@@ -86,7 +86,7 @@ div.su-dashboard-panel {
 }
 div.su-spinner {
   background: transparent url(/static/images/spinner.gif) no-repeat center center;
-  height:280px;
+  height:300px;
 }
 div.su-small-spinner {
   background: transparent url(/static/images/spinner.gif) no-repeat center center;
