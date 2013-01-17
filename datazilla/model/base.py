@@ -959,20 +959,6 @@ class PerformanceTestModel(DatazillaModelBase):
         return test_run_value_table
 
 
-    def get_threshold_revisions(self, threshold_test_run_ids):
-
-        proc = 'perftest.selects.get_threshold_revisions'
-
-        revision_lookup = self.sources["perftest"].dhub.execute(
-            proc=proc,
-            debug_show=self.DEBUG,
-            replace=replace,
-            key_column='id',
-            return_type='dict',
-            )
-
-        return revision_lookup
-
     def get_test_run_ids(
         self, branch, revisions, product_name=None, os_name=None,
         os_version=None, branch_version=None, processor=None,
