@@ -35,9 +35,31 @@ def get_error_count(request, project):
 
 
 def get_json_blob(request, project, id):
-    """Return a count of all objectstore entries with error"""
+    """Return a json object for the objectstore id provided"""
 
     blob = objectstore_refdata.get_json_blob(project, id)
+
+    if blob:
+
+        # If we don't have malformed json load it so we can return
+        # a single json data structure with all fields present including
+        # json_blob.  Malformed json will be returned as an escaped
+        # string.
+        try:
+            blob['json_blob'] = json.loads(blob['json_blob'])
+        except ValueError as e:
+            pass
+
+        return HttpResponse(json.dumps(blob), content_type=API_CONTENT_TYPE)
+
+    else:
+        return HttpResponse("Id not found: {0}".format(id), status=404)
+
+def get_json_blob_by_test_run_id(request, project, test_run_id):
+    """Return a json object for the test_run_id provided"""
+
+    blob = objectstore_refdata.get_json_blob_by_test_run_id(
+        project, test_run_id)
 
     if blob:
 

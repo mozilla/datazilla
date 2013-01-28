@@ -29,6 +29,17 @@ def get_json_blob(project, id):
 
     return {}
 
+def get_json_blob_by_test_run_id(project, test_run_id):
+    """Based on the test_run_id passed in, return the JSON blob"""
+    ptm = PerformanceTestRefDataModel(project)
+    blob = ptm.get_object_json_blob_for_test_run([test_run_id])
+    ptm.disconnect()
+
+    if blob:
+        return blob[0]
+
+    return {}
+
 
 def get_error_detail_count(project, startdate, enddate):
     """Return counts attempting to parse some of the bad JSON to extract details."""

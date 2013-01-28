@@ -22,6 +22,9 @@ DATAZILLA_MEMCACHED         = os.environ.get("DATAZILLA_MEMCACHED", "")
 # base URL
 DATAZILLA_URL               = os.environ.get("DATAZILLA_URL", "/")
 
+#pipe delimited list of allowed project names, defaults to \w+ if not set
+ALLOWED_PROJECTS            = os.environ.get("ALLOWED_PROJECTS", "")
+
 # This should always be False in production
 DEBUG = os.environ.get("DATAZILLA_DEBUG") is not None
 

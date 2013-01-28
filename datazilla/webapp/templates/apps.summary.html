@@ -1,0 +1,142 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>Perf-o-Matic</title>
+{% if DEBUG %}
+    <link rel="stylesheet" href="/static/css/Aristo/jquery-ui-1.8.7.custom.css" type="text/css"/>
+    <link rel="stylesheet" href="/static/css/summary.css" type="text/css"/>
+    <link rel="stylesheet" href="/static/css/apps.css" type="text/css"/>
+{% else %}
+    <link rel="stylesheet" href="/static/css/apps-summary-min.css" type="text/css"/>
+{% endif %}
+
+</head>
+
+<body>
+
+<!--Toppanel-->
+<div class="ui-widget ui-widget-header ui-corner-top su-toolbar-base app-toppanel">
+   <div class="app-title">
+        <a href=""><span id="logo"></span></a>
+   </div>
+</div>
+
+<div id="su_legend" class="ui-state-highlight ui-corner-all su-data-series-panel" style="display:none;">
+   <div style="margin-bottom:3px;">
+      <input type="checkbox" title="toggle" style="margin-left:2px; margin-right:5px; float:left;" />
+      <div name="su_dataset_title" class="su-wordwrap css-left" style="width:100px; margin-top:4px;"></div>
+   </div>
+</div>
+<div id="su_test_legend" class="ui-state-highlight ui-corner-all su-data-series-panel" style="display:none;">
+   <div style="margin-bottom:3px;">
+      <input type="radio" name="test_type" style="margin-left:2px; margin-right:5px; float:left;" />
+      <div name="su_dataset_title" class="su-wordwrap css-left" style="width:100px; margin-top:4px;"></div>
+   </div>
+</div>
+
+<div id="app_container" class="ui-widget ui-widget-header ui-corner-top app-container">
+   <div id="test_series" class="ui-widget ui-widget-header ui-corner-all app-list-two">
+   </div>
+   <div class="ui-widget ui-widget-header ui-corner-all app-list-controls-two">
+        <div style="padding:5px;" class="su-large-text">Tests</div>
+   </div>
+   <div id="app_series" class="ui-widget ui-widget-header ui-corner-all app-list">
+   </div>
+   <div class="ui-widget ui-widget-header ui-corner-all app-list-controls">
+        <div style="padding:5px;" class="su-large-text">Applications</div>
+   </div>
+   <div class="ui-widget ui-widget-header ui-corner-all app-control-container">
+        <div style="display:inline;">
+            <div style="width:250px;" class="app-control-element su-large-text">Firefox OS Application Performace</div>
+            <div style="width:350px;" class="app-control-element app-control-small-element">Test:<span id="app_test_name" class="app-data"></span></div>
+            <div style="width:150px;" class="app-control-element">Time Range:
+                <select id="app_time_range">
+                    <option value="30">30 Days</option>
+                    <option value="60">60 Days</option>
+                    <option value="90">90 Days</option>
+                </select>
+            </div>
+            </div>
+    </div>
+   <div class="ui-widget ui-widget-header ui-corner-all app-graph-container">
+        <div id="app_perf_wait" class="app-spinner"></div>
+        <div id="app_perf_data_container" style="display:none;">
+            <div style="position:absolute; left:-60px; top:10px;" class="su-vertical-text">Mean Run Time (milliseconds)</div>
+            <div id="app_perf_chart" style="width:905px; height:370px; margin-top:5px; margin-left:35px;"></div>
+            <div id="app_perf_detail_container" class="ui-widget ui-widget-header ui-corner-all app-detail-graph-container">
+                <div style="width:200px;" class="app-control-element app-control-small-element">Application:<span id="app_series_application" class="app-data"></span></div>
+                <div style="width:185px;" class="app-control-element app-control-small-element">Gaia Revision:<span id="app_series_revision" class="app-data"></span></div>
+                <div style="width:140px;" class="app-control-element app-control-small-element">Date:<span id="app_series_formatted_date_run" class="app-data"></span></div>
+                <div style="width:80px;" class="app-control-element app-control-small-element">Mean:<span id="app_series_avg" class="app-data"></span></div>
+                <div style="width:75px;" class="app-control-element app-control-small-element">Min:<span id="app_series_min" class="app-data"></span></div>
+                <div style="width:75px;" class="app-control-element app-control-small-element">Max:<span id="app_series_max" class="app-data"></span></div>
+                <div style="width:75px;" class="app-control-element app-control-small-element">Std:<span id="app_series_std" class="app-data"></span></div>
+            </div>
+        </div>
+   </div>
+   <div class="app-hints su-light-text">Hint: Select a test below to load performance data</div>
+   <div style="left:450px;" class="app-hints su-light-text">Hint: Click on a point above to load the associated replicates below</div>
+   <div class="ui-widget ui-widget-header ui-corner-all app-control-container-two">
+        <div style="display:inline;">
+            <div style="width:120px;" class="app-control-element su-large-text">Test Replicates</div>
+            <div style="width:185px;" class="app-control-element app-control-small-element">Application:<span id="app_replicate_application" class="app-data"></span></div>
+            <div style="width:200px;" class="app-control-element app-control-small-element">Test:<span id="app_replicate_test" class="app-data"></span></div>
+            <div style="width:185px;" class="app-control-element app-control-small-element">Gaia Revision:<span id="app_replicate_revision" class="app-data"></span></div>
+            <div style="width:190px;" class="app-control-element app-control-small-element">Gecko Revision:<span id="app_replicate_gecko_revision" class="app-data"></span></div>
+        </div>
+    </div>
+   <div class="ui-widget ui-widget-header ui-corner-all app-graph-container-two">
+        <div id="app_replicate_wait" style="height:380px;" class="app-spinner"></div>
+        <div id="app_replicate_data_container" style="display:none;">
+            <div style="position:absolute; left:-45px; top:10px;" class="su-vertical-text">Run Time (milliseconds)</div>
+            <div id="app_replicate_chart" style="width:605px; height:340px; margin-top:30px; margin-left:35px;"></div>
+            <div class="ui-widget ui-widget-header ui-corner-all app-detail-graph-container app-replicate-graph-detail" style="width:300px; top:35px; left:648px;">
+                <div style="width:68px;" class="app-control-element app-control-small-element">Mean:<span id="app_replicate_avg" class="app-data"></span></div>
+                <div style="width:68px;" class="app-control-element app-control-small-element">Min:<span id="app_replicate_min" class="app-data"></span></div>
+                <div style="width:68px;" class="app-control-element app-control-small-element">Max:<span id="app_replicate_max" class="app-data"></span></div>
+                <div style="width:50px;" class="app-control-element app-control-small-element">Std:<span id="app_replicate_std" class="app-data"></span></div>
+            </div>
+            <div class="ui-widget ui-widget-header ui-corner-all app-detail-graph-container app-replicate-graph-detail" style="width:300px; top:70px; left:648px;">
+                <div style="width:120px;" class="app-control-element app-control-small-element">Replicate Number:<span id="app_replicate_x" class="app-data"></span></div>
+                <div style="width:150px;" class="app-control-element app-control-small-element">Run Time:<span id="app_replicate_y" class="app-data"></span></div>
+            </div>
+            <div id="app_replicate_build_data" class="ui-widget ui-widget-header ui-corner-all app-detail-graph-container app-replicate-graph-detail" style="width:300px; height:245px; top:105px; left:648px;">
+            </div>
+        </div>
+   </div>
+</div>
+
+{% if DEBUG %}
+<script type="text/javascript" src="/static/js/plugins/jquery-1.6.3.min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/jquery-ui-1.8.13.custom.min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/jquery.url.js"></script>
+<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.selection.min.js"></script>
+
+<!--[if lte IE 8]><script language="javascript" type="text/javascript" src="/static/js/plugins/flot-0.7/excanvas.min.js"></script><![endif]-->
+
+<script type="text/javascript" src="/static/js/plugins/underscore-min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/box.js"></script>
+
+<!-- Gives core mootools class functionality to jQuery -->
+<script type="text/javascript" src="/static/js/plugins/mootools-core-1.4.0.js"></script>
+<script type="text/javascript" src="/static/js/plugins/moo4q/Source/Class.Mutators.jQuery.js"></script>
+<script type="text/javascript" src="/static/js/plugins/json2.js"></script>
+
+<!-- Metric summary classes -->
+<script type="text/javascript" src="/static/js/data_views/Bases.js"></script>
+<script type="text/javascript" src="/static/js/b2g_apps/AppsPage.js"></script>
+<script type="text/javascript" src="/static/js/b2g_apps/GraphControlsComponent.js"></script>
+<script type="text/javascript" src="/static/js/b2g_apps/PerformanceGraphComponent.js"></script>
+<script type="text/javascript" src="/static/js/b2g_apps/ReplicateGraphComponent.js"></script>
+
+{% else %}
+<script type="text/javascript" src="/static/js/b2g_apps/apps-summary-min.js"></script>
+
+<!--[if lte IE 8]><script language="javascript" type="text/javascript" src="/static/js/plugins/flot-0.7/excanvas.min.js"></script><![endif]-->
+{% endif %}
+
+
+</body>
+</html>
