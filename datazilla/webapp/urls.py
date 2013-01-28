@@ -1,9 +1,12 @@
 from django.conf.urls.defaults import patterns, include
 from django.http import HttpResponse
 
+from django.conf import settings
+
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
 # admin.autodiscover()
+project_list = settings.ALLOWED_PROJECTS or '\w+'
 
 urlpatterns = patterns('',
     # Examples:
@@ -19,20 +22,22 @@ urlpatterns = patterns('',
         "User-agent: *\nDisallow: /", mimetype="text/plain"
         )),
 
+    (r'^b2g/?', include('datazilla.webapp.apps.summary.b2g_app_urls')),
+
     #default UI
-    (r'^(?P<project>\w+)/?$', include('datazilla.webapp.apps.dataviews.urls')),
+    (r'^(?P<project>{0})/?$'.format(project_list), include('datazilla.webapp.apps.dataviews.urls')),
 
     #dataview application
-    (r'^(?P<project>\w+)/dataviews/?', include('datazilla.webapp.apps.dataviews.urls')),
+    (r'^(?P<project>{0})/dataviews/?'.format(project_list), include('datazilla.webapp.apps.dataviews.urls')),
 
-    #revision metrics summary
-    (r'^(?P<project>\w+)/summary/?', include('datazilla.webapp.apps.summary.urls')),
+
+    (r'^(?P<project>{0})/summary/?'.format(project_list), include('datazilla.webapp.apps.summary.urls')),
 
     #datazilla web service
-    (r'^(?P<project>\w+)/?', include('datazilla.webapp.apps.datazilla.urls')),
+    (r'^(?P<project>{0})/?'.format(project_list), include('datazilla.webapp.apps.datazilla.urls')),
 
     #api for data ingestion
-    (r'^(?P<project>\w+)/api/?', include('datazilla.webapp.apps.datazilla.urls')),
+    (r'^(?P<project>{0})/api/?'.format(project_list), include('datazilla.webapp.apps.datazilla.urls')),
 
     # return reference data about Datazilla, not particular to a project
     (r'^refdata/', include("datazilla.webapp.apps.datazilla.refdata.urls_no_project")),

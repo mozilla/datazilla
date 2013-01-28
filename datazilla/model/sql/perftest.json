@@ -525,6 +525,34 @@
          "host":"read_host"
 
     },
+    "get_value_summary_by_test_id":{
+
+        "sql":"SELECT tv.test_run_id,
+                      tv.page_id,
+                      tr.revision,
+                      tr.test_id,
+                      tr.date_run,
+                      b.product_id,
+                      tr.test_id,
+                      m.operating_system_id,
+                      p.url,
+                      ROUND( AVG(tv.value), 2 ) AS avg,
+                      ROUND( MIN(tv.value), 2 ) AS min,
+                      ROUND( MAX(tv.value), 2 ) AS max,
+                      ROUND( STDDEV(tv.value), 2 ) AS 'std'
+              FROM test_value AS tv
+              LEFT JOIN pages AS p ON tv.page_id = p.id
+              LEFT JOIN value AS v ON tv.value_id = v.id
+              LEFT JOIN test_run AS tr ON tv.test_run_id = tr.id
+              LEFT JOIN machine AS m ON tr.machine_id = m.id
+              LEFT JOIN build AS b ON tr.build_id = b.id
+              WHERE tr.test_id IN (REP0) AND p.url = ? AND tr.date_run >= ? AND tr.date_run <= ?
+              GROUP BY tr.id, p.url
+              ORDER BY tr.id DESC",
+
+         "host":"read_host"
+
+    },
     "get_page_values":{
 
         "sql":"SELECT tv.id AS test_value_id,
