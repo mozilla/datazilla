@@ -1,8 +1,10 @@
 import json
+import time
 
 from django.http import HttpResponse
 
 from datazilla.controller.admin import testdata
+from datazilla.model import utils
 
 REQUIRE_DAYS_AGO = """Invalid Request: Require days_ago parameter.
                     This specifies the number of days ago to use as the start
@@ -213,5 +215,29 @@ def get_application_log(request, project, revision):
         content_type=API_CONTENT_TYPE,
         )
 
+def get_test_value_summary(request, project):
 
+    test_ids = utils.get_id_list(request.GET['test_ids'])
+    page_name = request.GET.get("page_name", "")
+    range = request.GET.get("range", 30)
+
+    now = int(time.time())
+
+    begin = now - 2592000
+
+    if range == 60:
+        begin = now - 5184000
+    elif range == 90:
+        begin = now - 7776000
+
+    return HttpResponse(
+        json.dumps(testdata.get_test_value_summary(
+            project,
+            test_ids,
+            page_name,
+            begin,
+            now
+            )),
+        content_type=API_CONTENT_TYPE,
+        )
 

@@ -307,7 +307,7 @@ var TrendLineComponent = new Class({
                     //to keep things unclutered
                     if((j > 0) && (j <this.trendLines[key]['data'].length - 1)){
                         var unixTimestamp = this.trendLines[key]['data'][j]['date'];
-                        tickLabel = this.convertTimestampToDate(
+                        tickLabel = this.view.convertTimestampToDate(
                             unixTimestamp, false
                             );
                     }
@@ -504,32 +504,6 @@ var TrendLineComponent = new Class({
                 'lines': { 'show': true },
                 'color': this.view.trendLineColor
                 };
-    },
-    convertTimestampToDate: function(unixTimestamp, getHMS){
-
-        var dateObj = new Date(unixTimestamp * 1000);
-        var dateString = dateObj.getFullYear() + '-' +
-            this.padNumber((dateObj.getMonth() + 1), 10, '0') + '-' +
-            dateObj.getDate();
-
-        if(getHMS){
-            dateString += ' ' +
-                dateObj.getHours() + ':' +
-                dateObj.getMinutes() + ':' +
-                this.padNumber(dateObj.getSeconds(), 10, '0');
-        }
-
-        return dateString;
-    },
-    padNumber: function(n, max, pad){
-
-        n = parseInt(n);
-
-        if( n < max ){
-            return pad + n;
-        }
-
-        return n;
     },
     formatLabel: function(label, series){
 
@@ -778,7 +752,7 @@ var TrendLineComponent = new Class({
 
             keyValueArray.push(
                 {'label':'date',
-                 'value':this.convertTimestampToDate(datum.date, true)});
+                 'value':this.view.convertTimestampToDate(datum.date, true)});
 
             keyValueArray.push(
                 {'label':'branch',
@@ -1210,17 +1184,6 @@ var TrendLineView = new Class({
         } else {
             $(this).css('background-color', rgbAlpha);
         }
-    },
-    hexToRgb: function(hex) {
-
-        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-
-        //Add alpha channel to lighten the color
-        var rgbAlpha = 'rgba(' + parseInt(result[1], 16) + ',' +
-            parseInt(result[2], 16) + ',' +
-            parseInt(result[3], 16) + ',0.1)';
-
-        return rgbAlpha;
     },
     closeDataSeries: function(key){
 

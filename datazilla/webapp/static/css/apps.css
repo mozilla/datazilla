@@ -1,0 +1,136 @@
+body {
+    font-family: helvetica, arial, sans-serif;
+    margin: 0;
+    font-size: 10px;
+    padding: 0;
+    border-top: 2px solid #676767;
+    min-width: 1120px;
+}
+div.app-toppanel {
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    border: 0 solid #000;
+    background: -moz-linear-gradient(-90deg, #5CB2CB, #297E96);
+    background: -webkit-gradient(linear, left top, left bottom, from(#5CB2CB), to(#297E96));
+    height: 50px;
+    width: 1120px;
+    margin-top: 20px;
+    padding-top: 10px;
+}
+div.app-title {
+  background: url("/static/images/title.png") no-repeat scroll 0 center transparent;
+  position: absolute;
+  left: 15px;
+  width:400px;
+  height:100%;
+  top: 0;
+  z-index: 1;
+}
+a {
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+div.app-container {
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    border: 0 solid #000;
+    width: 1120px;
+    padding-top: 10px;
+    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+    background:white;
+}
+div.app-list-controls {
+    position:absolute;
+    width: 150px;
+    height: 25px;
+    background: white;
+}
+div.app-list-controls-two {
+    position:absolute;
+    width: 150px;
+    height: 25px;
+    background: white;
+    top: 495px;
+}
+div.app-list {
+    position:absolute;
+    width: 150px;
+    height: 420px;
+    top:35px;
+    background: white;
+    overflow: auto;
+}
+div.app-list-two {
+    position:absolute;
+    width: 150px;
+    height: 380px;
+    top: 520px;
+    background: white;
+    overflow: auto;
+}
+div.app-control-container {
+    position:absolute;
+    width: 958px;
+    height: 25px;
+    background: white;
+    left: 160px;
+}
+div.app-control-container-two {
+    position:absolute;
+    width: 958px;
+    height: 25px;
+    background: white;
+    left: 160px;
+    top: 495px;
+}
+div.app-control-element {
+    padding: 5px;
+    float: left;
+}
+div.app-control-small-element {
+    margin-top: 2px;
+}
+div.app-graph-container {
+    position:absolute;
+    width: 958px;
+    height: 420px;
+    background: white;
+    top:35px;
+    left: 160px;
+}
+div.app-graph-container-two {
+    position:absolute;
+    width: 958px;
+    height: 380px;
+    background: white;
+    left: 160px;
+    top:520px;
+}
+div.app-hints {
+    position:absolute;
+    top: 470px;
+}
+div.app-detail-graph-container {
+    position:absolute;
+    width: 905px;
+    height: 25px;
+    background: white;
+    left: 30px;
+    top: 385px;
+
+    display:inline;
+}
+span.app-data {
+    margin-left:3px;
+}
+div.app-build-data{
+    width:100%;
+    float:left;
+}
+div.app-spinner {
+  background: transparent url(/static/images/spinner.gif) no-repeat center center;
+  height:420px;
+}

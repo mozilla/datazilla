@@ -191,9 +191,9 @@ def test_get_ref_data_pages(ptm):
 
     ref_data = perftest_refdata.get_ref_data(ptm.project, "pages")
 
-    exp = {'one.com': {'id': 2L, 'test_id': 1L, 'url': 'one.com'},
-           'three.com': {'id': 1L, 'test_id': 1L, 'url': 'three.com'},
-           'two.com': {'id': 3L, 'test_id': 1L, 'url': 'two.com'}}
+    exp = {'three.com': {'url': 'three.com', 'id': 1L, 'test_ids': {1L: True}},
+           'one.com': {'url': 'one.com', 'id': 2L, 'test_ids': {1L: True}},
+           'two.com': {'url': 'two.com', 'id': 3L, 'test_ids': {1L: True}}}
 
     assert exp == ref_data
 

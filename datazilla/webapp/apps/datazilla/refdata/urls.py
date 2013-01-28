@@ -10,6 +10,8 @@ urlpatterns = patterns(
 
     (r"^objectstore/json_blob/(?P<id>\d+)/?$", "objectstore_views.get_json_blob"),
 
+    (r"^objectstore/json_blob/test_run/(?P<test_run_id>\d+)/?$", "objectstore_views.get_json_blob_by_test_run_id"),
+
     (r"^objectstore/db_size/?$", "objectstore_views.get_db_size"),
 
     # perftest

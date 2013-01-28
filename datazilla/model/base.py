@@ -776,12 +776,20 @@ class PerformanceTestModel(DatazillaModelBase):
 
         proc = 'perftest.selects.get_pages'
 
-        pages_dict = self.sources["perftest"].dhub.execute(
+        pages_tuple = self.sources["perftest"].dhub.execute(
             proc=proc,
             debug_show=self.DEBUG,
-            key_column='url',
-            return_type='dict',
             )
+
+        pages_dict = {}
+        for page_data in pages_tuple:
+            if page_data['url'] not in pages_dict:
+                pages_dict[ page_data['url'] ] = {}
+                pages_dict[ page_data['url'] ]['test_ids'] = {}
+                pages_dict[ page_data['url'] ]['id'] = page_data['id']
+                pages_dict[ page_data['url'] ]['url'] = page_data['url']
+
+            pages_dict[ page_data['url'] ]['test_ids'][ page_data['test_id'] ] = True
 
         return pages_dict
 
@@ -958,6 +966,30 @@ class PerformanceTestModel(DatazillaModelBase):
 
         return test_run_value_table
 
+    def get_value_summary_by_test_ids(
+        self, test_ids, url, begin_date, end_date
+        ):
+
+        data = []
+
+        if test_ids and url and begin_date and end_date:
+
+            proc = 'perftest.selects.get_value_summary_by_test_id'
+
+            r_string = ','.join( map( lambda t_id: '%s', test_ids ) )
+
+            test_ids.append( url )
+            test_ids.append( begin_date )
+            test_ids.append( end_date )
+
+            data = self.sources["perftest"].dhub.execute(
+                proc=proc,
+                debug_show=self.DEBUG,
+                placeholders=test_ids,
+                replace=[ r_string ]
+                )
+
+        return data
 
     def get_test_run_ids(
         self, branch, revisions, product_name=None, os_name=None,
