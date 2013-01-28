@@ -221,6 +221,8 @@ var PerformanceGraphComponent = new Class({
         this.plot.unhighlight();
         this.plot.highlight(item.seriesIndex, item.dataIndex);
 
+        this._hoverPlot(event, pos, item);
+
         $(this.view.appContainerSel).trigger(
             this.perfPlotClickEvent,
             { 'series':seriesDatum, 'datapoint':datapointDatum[0] }
@@ -323,6 +325,7 @@ var PerformanceGraphView = new Class({
                     datapointDatum[fieldName]
                     );
                 $(idSel).attr('title', datapointDatum[fieldName]);
+                $(idSel).attr('href', APPS_PAGE.gaiaHrefBase + value);
             }
 
             $(idSel).text( datapointDatum[fieldName] );

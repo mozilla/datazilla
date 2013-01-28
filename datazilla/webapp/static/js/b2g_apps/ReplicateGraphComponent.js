@@ -188,6 +188,18 @@ var ReplicateGraphView = new Class({
                     'title', jsonData['json_blob']['test_build'][field]
                     );
 
+                if(field === 'revision'){
+                    $(idAttr).attr(
+                        'href',
+                        APPS_PAGE.gaiaHrefBase + jsonData['json_blob']['test_build'][field]
+                        );
+                }else{
+                    $(idAttr).attr(
+                        'href',
+                        APPS_PAGE.geckoHrefBase + jsonData['json_blob']['test_build'][field]
+                        );
+                }
+
             }else if(field === 'date'){
 
                 value = this.convertTimestampToDate(

@@ -17,13 +17,16 @@ var AppsPage = new Class( {
         this.parent(options);
         this.revisionLength = 16;
 
+        this.gaiaHrefBase = "https://github.com/mozilla-b2g/gaia/tree/";
+        this.geckoHrefBase = "https://github.com/mozilla-b2g/B2G/tree/";
     },
 
     setRefData: function(){
 
         APPS_PAGE.refData = {};
 
-        APPS_PAGE.refData.project = 'b2g';
+        var urlObj = APPS_PAGE.urlObj.data;
+        APPS_PAGE.refData.project = urlObj.seg.path[0];
 
     },
     getRevisionSlice: function(revision){
