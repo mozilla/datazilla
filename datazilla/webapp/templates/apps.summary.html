@@ -48,9 +48,9 @@
    </div>
    <div class="ui-widget ui-widget-header ui-corner-all app-control-container">
         <div style="display:inline;">
-            <div style="width:250px;" class="app-control-element su-large-text">Firefox OS Application Performance</div>
-            <div style="width:350px;" class="app-control-element app-control-small-element">Test:<span id="app_test_name" class="app-data"></span></div>
-            <div style="width:150px;" class="app-control-element">Time Range:
+            <div style="width:300px;" class="app-control-element su-large-text">Firefox OS Application Performance</div>
+            <div style="margin-left:30px; margin-right:30px;" class="app-control-element app-control-small-element">Test:<span id="app_test_name" class="app-data"></span></div>
+            <div style="margin-left:30px; margin-right:30px;" class="app-control-element">Time Range:
                 <select id="app_time_range">
                     <option value="30">30 Days</option>
                     <option value="60">60 Days</option>
@@ -62,16 +62,16 @@
    <div class="ui-widget ui-widget-header ui-corner-all app-graph-container">
         <div id="app_perf_wait" class="app-spinner"></div>
         <div id="app_perf_data_container" style="display:none;">
-            <div style="position:absolute; left:-60px; top:10px;" class="su-vertical-text">Mean Run Time (milliseconds)</div>
+            <div style="position:absolute; left:-60px; top:10px;" class="su-vertical-text">Average Run Time (milliseconds)</div>
             <div id="app_perf_chart" style="width:905px; height:370px; margin-top:5px; margin-left:35px;"></div>
             <div id="app_perf_detail_container" class="ui-widget ui-widget-header ui-corner-all app-detail-graph-container">
-                <div style="width:200px;" class="app-control-element app-control-small-element">Application:<span id="app_series_application" class="app-data"></span></div>
+                <div style="width:180px;" class="app-control-element app-control-small-element">Application:<span id="app_series_application" class="app-data"></span></div>
                 <div style="width:185px;" class="app-control-element app-control-small-element">Gaia Revision:<a id="app_series_revision" target="_blank" class="app-data"></a></div>
                 <div style="width:140px;" class="app-control-element app-control-small-element">Date:<span id="app_series_formatted_date_run" class="app-data"></span></div>
-                <div style="width:80px;" class="app-control-element app-control-small-element">Mean:<span id="app_series_avg" class="app-data"></span></div>
-                <div style="width:75px;" class="app-control-element app-control-small-element">Min:<span id="app_series_min" class="app-data"></span></div>
-                <div style="width:75px;" class="app-control-element app-control-small-element">Max:<span id="app_series_max" class="app-data"></span></div>
-                <div style="width:75px;" class="app-control-element app-control-small-element">Std:<span id="app_series_std" class="app-data"></span></div>
+                <div style="width:85px;" class="app-control-element app-control-small-element">Avg:<span id="app_series_avg" class="app-data"></span></div>
+                <div style="width:80px;" class="app-control-element app-control-small-element">Min:<span id="app_series_min" class="app-data"></span></div>
+                <div style="width:80px;" class="app-control-element app-control-small-element">Max:<span id="app_series_max" class="app-data"></span></div>
+                <div style="width:80px;" class="app-control-element app-control-small-element">Std:<span id="app_series_std" class="app-data"></span></div>
             </div>
         </div>
    </div>
@@ -79,11 +79,11 @@
    <div style="left:450px;" class="app-hints su-light-text">Hint: Click on a point above to load the associated replicates below</div>
    <div class="ui-widget ui-widget-header ui-corner-all app-control-container-two">
         <div style="display:inline;">
-            <div style="width:120px;" class="app-control-element su-large-text">Test Replicates</div>
-            <div style="width:185px;" class="app-control-element app-control-small-element">Application:<span id="app_replicate_application" class="app-data"></span></div>
-            <div style="width:200px;" class="app-control-element app-control-small-element">Test:<span id="app_replicate_test" class="app-data"></span></div>
-            <div style="width:185px;" class="app-control-element app-control-small-element">Gaia Revision:<a id="app_replicate_revision" target="_blank" class="app-data"></a></div>
-            <div style="width:190px;" class="app-control-element app-control-small-element">Gecko Revision:<a id="app_replicate_gecko_revision" target="_blank" class="app-data"></a></div>
+            <div style="width:150px;" class="app-control-element su-large-text">Test Replicates</div>
+            <div style="margin-left:10px; margin-right:10px;" class="app-control-element app-control-small-element">Application:<span id="app_replicate_application" class="app-data"></span></div>
+            <div style="margin-left:10px; margin-right:10px;" class="app-control-element app-control-small-element">Test:<span id="app_replicate_test" class="app-data"></span></div>
+            <div style="margin-left:10px; margin-right:10px;" class="app-control-element app-control-small-element">Gaia Revision:<a id="app_replicate_revision" target="_blank" class="app-data"></a></div>
+            <div style="margin-left:10px; margin-right:10px;" class="app-control-element app-control-small-element">Gecko Revision:<a id="app_replicate_gecko_revision" target="_blank" class="app-data"></a></div>
         </div>
     </div>
    <div class="ui-widget ui-widget-header ui-corner-all app-graph-container-two">
@@ -92,10 +92,10 @@
             <div style="position:absolute; left:-45px; top:10px;" class="su-vertical-text">Run Time (milliseconds)</div>
             <div id="app_replicate_chart" style="width:605px; height:340px; margin-top:30px; margin-left:35px;"></div>
             <div class="ui-widget ui-widget-header ui-corner-all app-detail-graph-container app-replicate-graph-detail" style="width:300px; top:35px; left:648px;">
-                <div style="width:68px;" class="app-control-element app-control-small-element">Mean:<span id="app_replicate_avg" class="app-data"></span></div>
-                <div style="width:68px;" class="app-control-element app-control-small-element">Min:<span id="app_replicate_min" class="app-data"></span></div>
-                <div style="width:68px;" class="app-control-element app-control-small-element">Max:<span id="app_replicate_max" class="app-data"></span></div>
-                <div style="width:50px;" class="app-control-element app-control-small-element">Std:<span id="app_replicate_std" class="app-data"></span></div>
+                <div class="app-control-element app-control-small-element">Avg:<span id="app_replicate_avg" class="app-data"></span></div>
+                <div class="app-control-element app-control-small-element">Min:<span id="app_replicate_min" class="app-data"></span></div>
+                <div class="app-control-element app-control-small-element">Max:<span id="app_replicate_max" class="app-data"></span></div>
+                <div class="app-control-element app-control-small-element">Std:<span id="app_replicate_std" class="app-data"></span></div>
             </div>
             <div class="ui-widget ui-widget-header ui-corner-all app-detail-graph-container app-replicate-graph-detail" style="width:300px; top:70px; left:648px;">
                 <div style="width:120px;" class="app-control-element app-control-small-element">Replicate Number:<span id="app_replicate_x" class="app-data"></span></div>

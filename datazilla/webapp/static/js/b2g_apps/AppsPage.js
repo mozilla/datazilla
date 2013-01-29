@@ -18,7 +18,7 @@ var AppsPage = new Class( {
         this.revisionLength = 16;
 
         this.gaiaHrefBase = "https://github.com/mozilla-b2g/gaia/commit/";
-        this.geckoHrefBase = "https://github.com/mozilla-b2g/B2G/commit/";
+        this.geckoHrefBase = "http://git.mozilla.org/?p=releases/gecko.git;a=commit;h=";
     },
 
     setRefData: function(){
