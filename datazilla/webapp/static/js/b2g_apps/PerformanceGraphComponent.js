@@ -211,6 +211,7 @@ var PerformanceGraphComponent = new Class({
 
         if(!this.replicatesInitialized && this.seriesIndexDataMap[seriesIndex]){
             this._clickPlot({}, {}, { 'seriesIndex':seriesIndex, 'dataIndex':0 });
+            this.view.resetSeriesLabelBackground(this.chartData);
             this.replicatesInitialized = true;
         }
     },
@@ -230,11 +231,9 @@ var PerformanceGraphComponent = new Class({
     },
     _hoverPlot: function(event, pos, item){
 
-        if(_.isEmpty(item)){
+        this.view.resetSeriesLabelBackground(this.chartData);
 
-            this.view.resetSeriesLabelBackground(this.chartData);
-
-        }else {
+        if(!_.isEmpty(item)){
             var seriesDatum = this.seriesIndexDataMap[ item.seriesIndex ];
             var datapointDatum = this.seriesIndexDataMap[ item.seriesIndex ]['full_data'][ item.dataIndex ];
             this.view.setDetailContainer(seriesDatum, datapointDatum[0]);
