@@ -20,9 +20,11 @@ var ReplicateGraphComponent = new Class({
 
         this.perfPlotClickEvent = 'PERF_PLOT_CLICK_EV';
 
+        this.data = {};
         this.series = {};
         this.datapoint = {};
         this.chartData = {};
+        this.hoverData = {};
 
         this.chartOptions = {
             'grid': {
@@ -53,10 +55,6 @@ var ReplicateGraphComponent = new Class({
             );
 
         $(this.view.chartContainerSel).bind(
-            'plotclick', _.bind(this._clickPlot, this)
-            );
-
-        $(this.view.chartContainerSel).bind(
             'plothover', _.bind(this._hoverPlot, this)
             );
     },
@@ -68,15 +66,14 @@ var ReplicateGraphComponent = new Class({
         this.view.hideData();
 
         this.model.getReplicateData(
-            this, this.renderPlot, this.datapoint.test_run_id
+            this, this.renderPlot, this.datapoint.branch,
+            this.datapoint.revision, this.datapoint.gecko_revision
             );
 
     },
     renderPlot: function(data){
 
-        this.view.setDetailContainer(this.series, this.datapoint, data);
-
-        var results = data['json_blob']['results'][this.datapoint.url];
+        this.data = data;
 
         this.chartData = {
             'color':this.series['color'],
@@ -85,11 +82,37 @@ var ReplicateGraphComponent = new Class({
             };
 
         var i=0;
-        for(i=0; i<results.length; i++){
-            this.chartData['data'].push( [ i + 1, results[i] ] );
-        }
+        var j=0;
+        var results = {};
 
-        this.view.showData();
+        this.hoverData = {};
+
+        var totalReplicates = 1;
+
+        for(j=0; j<data.length; j++){
+
+            results = data[j]['json_blob']['results'][this.datapoint.url];
+
+            this.data[j]['replicate_range'] = { 'start':0, 'end':0 };
+            this.data[j]['replicate_range']['start'] = totalReplicates;
+
+            for(i=0; i<results.length; i++){
+
+                this.chartData['data'].push( [ totalReplicates, results[i] ] );
+                this.hoverData[ totalReplicates ] = j;
+
+                totalReplicates++;
+            }
+
+            this.data[j]['replicate_range']['end'] = totalReplicates - 1;
+
+            if( j === 0 ){
+                this.view.setDetailContainer(
+                    this.series, this.datapoint, this.data[j]);
+            }
+
+            this.view.showData();
+        }
 
         this.plot = $.plot(
             $(this.view.chartContainerSel),
@@ -100,14 +123,16 @@ var ReplicateGraphComponent = new Class({
         this.view.setHoverData(1, results[0]);
 
     },
-    _clickPlot: function(event, pos, item){
-
-    },
     _hoverPlot: function(event, pos, item){
 
         if(!_.isEmpty(item)){
             var datum = this.chartData['data'][ item.dataIndex ];
             this.view.setHoverData(datum[0], datum[1]);
+            var dataIndex = this.hoverData[ datum[0] ];
+
+            if( this.data[dataIndex] ){
+                this.view.setDetailContainer(this.series, this.datapoint, this.data[dataIndex]);
+            }
         }
     }
 });
@@ -133,8 +158,8 @@ var ReplicateGraphView = new Class({
 
         this.idPrefix = 'app_replicate_';
         this.idFields = [
-            'application', 'test', 'revision', 'gecko_revision',
-            'avg', 'min', 'max', 'std'
+            'application', 'replicate range', 'test', 'revision',
+            'gecko_revision', 'avg', 'min', 'max', 'std'
             ];
 
     },
@@ -215,6 +240,15 @@ var ReplicateGraphView = new Class({
 
         $(this.buildDataContainerSel).empty();
 
+        var replicateRange = jsonData['replicate_range']['start'] + " - " +
+            jsonData['replicate_range']['end'];
+
+        this.loadField(
+            'replicate range:',
+            replicateRange,
+            this.buildDataContainerSel
+            );
+
         this.loadField(
             'date',
             this.convertTimestampToDate(
@@ -259,6 +293,25 @@ var ReplicateGraphView = new Class({
             this.buildDataContainerSel
             );
 
+        if(jsonData['json_blob']['test_build']['build_revision']){
+
+            var fullBuildRevision = jsonData['json_blob']['test_build']['build_revision'];
+            var truncBuildRevision = APPS_PAGE.getRevisionSlice(fullBuildRevision);
+
+            var divEl = $('<div></div>');
+            $(divEl).addClass('app-control-element app-control-small-element app-build-data');
+            $(divEl).append('Build Revision:');
+
+            var aEl = $('<a></a>');
+            $(aEl).attr('href', APPS_PAGE.buildHrefBase + fullBuildRevision);
+            $(aEl).attr('target', '_blank');
+            $(aEl).text(truncBuildRevision);
+
+            $(divEl).append(aEl);
+
+            $(this.buildDataContainerSel).append(divEl);
+        }
+
     },
     loadField: function(fieldName, value, container){
 
@@ -289,10 +342,14 @@ var ReplicateGraphModel = new Class({
 
     },
 
-    getReplicateData: function(context, fnSuccess, testRunId){
+    getReplicateData: function(
+        context, fnSuccess, branch, gaiaRevision, geckoRevision
+        ){
 
         var uri = '/' + APPS_PAGE.refData.project +
-            '/refdata/objectstore/json_blob/test_run/' + testRunId;
+            '/refdata/objectstore/json_blob/revisions?branch=' + branch +
+            '&gaia_revision=' + gaiaRevision +
+            '&gecko_revision=' + geckoRevision;
 
         jQuery.ajax( uri, {
             accepts:'application/json',
@@ -303,6 +360,5 @@ var ReplicateGraphModel = new Class({
             context:context,
             success:fnSuccess,
         });
-
     }
 });

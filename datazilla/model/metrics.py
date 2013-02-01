@@ -1109,7 +1109,7 @@ class MetricsTestModel(DatazillaModelBase):
 
     def get_application_log(self, revision):
 
-        proc = 'perftest.inserts.get_application_log'
+        proc = 'perftest.selects.get_application_log'
 
         placeholders = [ revision ]
 
