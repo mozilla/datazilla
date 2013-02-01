@@ -84,6 +84,10 @@ var PerformanceGraphComponent = new Class({
         $(this.view.timeRangeSel).bind(
             'change', _.bind(this.changeTimeRange, this)
             );
+
+        $(this.view.branchSel).bind(
+            'change', _.bind(this.changeTimeRange, this)
+            );
     },
     formatLabel: function(label, series){
         return this.tickDisplayDates[label] || "";
@@ -117,11 +121,13 @@ var PerformanceGraphComponent = new Class({
         var testIds = _.keys(data.test_ids);
 
         var range = $(this.view.timeRangeSel).val();
+        var branch = $(this.view.branchSel).val();
 
         this.view.hideData();
 
         this.model.getAppData(
-            this, this.renderPlot, testIds.join(','), data.url, range
+            this, this.renderPlot, testIds.join(','), data.url, range,
+            branch
             );
     },
     renderPlot: function(data){
@@ -159,6 +165,7 @@ var PerformanceGraphComponent = new Class({
 
             timestamp = data[i]['date_run'];
 
+            //Don't add x-axis labels to the first and last x-axis values
             if((i > 0) && (i < data.length - 1)){
                 if(!this.tickDisplayDates[ data[i]['test_run_id'] ]){
                     formattedTime = this.view.convertTimestampToDate(timestamp);
@@ -224,6 +231,8 @@ var PerformanceGraphComponent = new Class({
 
         this._hoverPlot(event, pos, item);
 
+        datapointDatum[0]['branch'] = $(this.view.branchSel).val();
+
         $(this.view.appContainerSel).trigger(
             this.perfPlotClickEvent,
             { 'series':seriesDatum, 'datapoint':datapointDatum[0] }
@@ -256,6 +265,7 @@ var PerformanceGraphView = new Class({
         this.appContainerSel = '#app_container';
 
         this.timeRangeSel = '#app_time_range';
+        this.branchSel = '#app_branch';
         this.chartContainerSel = '#app_perf_chart';
         this.appTestName = '#app_test_name';
         this.graphDetailContainerSel = '#app_perf_detail_container';
@@ -345,11 +355,12 @@ var PerformanceGraphModel = new Class({
 
     },
 
-    getAppData: function(context, fnSuccess, testIds, pageName, range){
+    getAppData: function(context, fnSuccess, testIds, pageName, range, branch){
 
         var uri = '/' + APPS_PAGE.refData.project + '/testdata/test_values?' + 
-            'test_ids=TEST_IDS&page_name=PAGE_NAME&range=RANGE';
+            'branch=BRANCH&test_ids=TEST_IDS&page_name=PAGE_NAME&range=RANGE';
 
+        uri = uri.replace('BRANCH', branch);
         uri = uri.replace('TEST_IDS', testIds);
         uri = uri.replace('PAGE_NAME', pageName);
         uri = uri.replace('RANGE', range);

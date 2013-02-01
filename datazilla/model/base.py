@@ -967,17 +967,18 @@ class PerformanceTestModel(DatazillaModelBase):
         return test_run_value_table
 
     def get_value_summary_by_test_ids(
-        self, test_ids, url, begin_date, end_date
+        self, branch, test_ids, url, begin_date, end_date
         ):
 
         data = []
 
-        if test_ids and url and begin_date and end_date:
+        if branch and test_ids and url and begin_date and end_date:
 
             proc = 'perftest.selects.get_value_summary_by_test_id'
 
             r_string = ','.join( map( lambda t_id: '%s', test_ids ) )
 
+            test_ids.append( branch )
             test_ids.append( url )
             test_ids.append( begin_date )
             test_ids.append( end_date )
@@ -990,6 +991,25 @@ class PerformanceTestModel(DatazillaModelBase):
                 )
 
         return data
+
+    def get_test_run_ids_by_revisions(
+        self, branch, revision, gecko_revision):
+        #TODO: This method is specific to the b2g project and should
+        #       be placed in a derived class
+
+        proc = 'perftest.selects.get_test_run_ids_from_revisions'
+
+        data = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            placeholders=[revision, gecko_revision, branch]
+            )
+
+        test_run_ids = []
+        for d in data:
+            test_run_ids.append(d['id'])
+
+        return test_run_ids
 
     def get_test_run_ids(
         self, branch, revisions, product_name=None, os_name=None,
@@ -1234,6 +1254,9 @@ class PerformanceTestModel(DatazillaModelBase):
         self._set_test_values(data, test_id, test_run_id)
         self._set_test_aux_data(data, test_id, test_run_id)
 
+        # Make project specific changes
+        self._adapt_project_specific_data(data, test_run_id)
+
         return test_run_id
 
 
@@ -1353,6 +1376,44 @@ class PerformanceTestModel(DatazillaModelBase):
 
         if ('mac' in os) and ('os x' in osversion):
             data['test_build']['branch'] += '-Non-PGO'
+
+    def _adapt_project_specific_data(self, data, test_run_id):
+
+        ###
+        #TODO: This should be moved into a derived class
+        ###
+        if self.project == 'b2g':
+            ###
+            #b2g has two unique test run fields, gecko_revision and
+            #build_revision, they need to be loaded here
+            ###
+            self._update_b2g_test_run(data, test_run_id)
+
+    def _update_b2g_test_run(self, data, test_run_id):
+
+        if 'gecko_revision' in data['test_build']:
+
+            gecko_proc = 'perftest.inserts.set_gecko_revision'
+
+            gecko_revision = data['test_build']['gecko_revision']
+
+            test_dict = self.sources["perftest"].dhub.execute(
+                proc=gecko_proc,
+                debug_show=self.DEBUG,
+                placeholders=[ gecko_revision, test_run_id ]
+                )
+
+        if 'build_revision' in data['test_build']:
+
+            build_proc = 'perftest.inserts.set_build_revision'
+
+            build_revision = data['test_build']['build_revision']
+
+            test_dict = self.sources["perftest"].dhub.execute(
+                proc=build_proc,
+                debug_show=self.DEBUG,
+                placeholders=[ build_revision, test_run_id ]
+                )
 
     def _set_test_aux_data(self, data, test_id, test_run_id):
         """Insert test aux data to db for given test_id and test_run_id."""
