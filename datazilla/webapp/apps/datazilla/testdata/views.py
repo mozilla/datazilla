@@ -217,6 +217,7 @@ def get_application_log(request, project, revision):
 
 def get_test_value_summary(request, project):
 
+    branch = request.GET['branch']
     test_ids = utils.get_id_list(request.GET['test_ids'])
     page_name = request.GET.get("page_name", "")
     range = request.GET.get("range", 30)
@@ -232,11 +233,7 @@ def get_test_value_summary(request, project):
 
     return HttpResponse(
         json.dumps(testdata.get_test_value_summary(
-            project,
-            test_ids,
-            page_name,
-            begin,
-            now
+            project, branch, test_ids, page_name, begin, now
             )),
         content_type=API_CONTENT_TYPE,
         )

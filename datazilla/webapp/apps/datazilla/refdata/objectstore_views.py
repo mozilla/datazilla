@@ -33,6 +33,27 @@ def get_error_count(request, project):
         )
     return HttpResponse(json.dumps(stats), content_type=API_CONTENT_TYPE)
 
+def get_json_blob_by_revisions(request, project):
+
+    branch = request.GET.get("branch")
+    gaia_revision = request.GET.get("gaia_revision")
+    gecko_revision = request.GET.get("gecko_revision")
+
+    blobs = objectstore_refdata.get_json_blob_by_revisions(
+        project, branch, gaia_revision, gecko_revision)
+
+    if blobs:
+        try:
+            for index, b in enumerate(blobs):
+                blobs[index]['json_blob'] = json.loads(b['json_blob'])
+        except ValueError as e:
+            pass
+
+        return HttpResponse(json.dumps(blobs), content_type=API_CONTENT_TYPE)
+    else:
+        return HttpResponse(
+            "gaia revision, {0}, and gecko revision, {1} not found".format(gaia_revision, gecko_revision),
+            status=404)
 
 def get_json_blob(request, project, id):
     """Return a json object for the objectstore id provided"""

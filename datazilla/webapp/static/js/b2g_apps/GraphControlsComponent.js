@@ -20,6 +20,7 @@ var GraphControlsComponent = new Class({
 
         this.appLookup = {};
         this.testLookup = {};
+        this.branchLookup = {};
 
         this.model.getApps(this, this.initializeAppList);
 
@@ -75,14 +76,31 @@ var GraphControlsComponent = new Class({
             this.appLookup[ seriesDatum.id ] = seriesDatum;
         }
 
-        this.model.getTests(this, this.initializeTestList);
+        this.model.getBranches(this, this.initializeBranchList);
 
+    },
+    initializeBranchList: function(data){
+
+        var keys = _.keys(data).sort();
+
+        var branch = "";
+        var i = 0;
+
+        for(i = 0; i<keys.length; i++){
+
+            branch = data[ keys[i] ].branch;
+            if(!this.branchLookup[branch]){
+                this.branchLookup[branch] = true;
+                this.view.addBranch(branch);
+            }
+        }
+
+        //Make sure apps and branches are loaded before tests are initialized
+        this.model.getTests(this, this.initializeTestList);
     },
     initializeTestList: function(data){
 
         var sortOrder = this.view.getAlphabeticalSortKeys(data);
-
-        sortOrder.reverse();
 
         for(var i=0; i<sortOrder.length; i++){
 
@@ -154,10 +172,12 @@ var GraphControlsView = new Class({
         this.appSeriesContainerSel = '#app_series';
         this.testSeriesContainerSel = '#test_series';
 
+        this.branchSelectMenuSel = '#app_branch';
+
         this.idRegex = /^.*_(\d+)$/;
 
         this.colors = [
-            '#0b3b40', '#99911c', '#a66247', '#7989b3', '#8bccc4', '#f2eba5', '#ff622e', '#cc8bc7', '#2254bf', '#22bf90', '#666345', '#ffbead', '#481059', '#2c96f2', '#10593d', '#ffc42e', '#4c1a0e', '#a35dd9', '#add9ff', '#196612', '#332409', '#604e73', '#103859', '#3dbf22', '#7f5717', '#462eff', '#1e84a6', '#88b379', '#f2cea5', '#1e1ea6', '#2cdbf2', '#d4f22c', '#e58729', '#091233', '#a61e88', '#ff2ee3',
+            '#0b3b40', '#99911c', '#a66247', '#7989b3', '#8bccc4', '#a35dd9', '#ff622e', '#cc8bc7', '#2254bf', '#22bf90', '#666345', '#ffbead', '#481059', '#2c96f2', '#10593d', '#ffc42e', '#4c1a0e', '#add9ff', '#196612', '#332409', '#604e73', '#103859', '#3dbf22', '#7f5717', '#462eff', '#1e84a6', '#88b379', '#f2cea5', '#1e1ea6', '#2cdbf2', '#d4f22c', '#e58729', '#091233', '#a61e88', '#ff2ee3', '#f2eba5'
             ];
 
         this.testColor = '#5CB2CB';
@@ -255,6 +275,12 @@ var GraphControlsView = new Class({
             }
         }
         return id;
+    },
+    addBranch: function(branch){
+        var optionEl = $('<option></option>');
+        $(optionEl).attr('value', branch);
+        $(optionEl).text(branch);
+        $(this.branchSelectMenuSel).append(optionEl);
     }
 });
 var GraphControlsModel = new Class({
@@ -271,6 +297,20 @@ var GraphControlsModel = new Class({
 
     },
 
+    getBranches: function(context, fnSuccess){
+
+        var uri = '/' + APPS_PAGE.refData.project + '/refdata/perftest/ref_data/products';
+
+        jQuery.ajax( uri, {
+            accepts:'application/json',
+            dataType:'json',
+            cache:false,
+            type:'GET',
+            data:data,
+            context:context,
+            success:fnSuccess,
+        });
+    },
     getApps: function(context, fnSuccess){
 
         var uri = '/' + APPS_PAGE.refData.project + '/refdata/perftest/ref_data/tests';

@@ -1,4 +1,5 @@
 from datazilla.model.refdata import PerformanceTestRefDataModel
+from datazilla.model.base import PerformanceTestModel
 
 
 def get_error_count(project, startdate, enddate):
@@ -40,6 +41,19 @@ def get_json_blob_by_test_run_id(project, test_run_id):
 
     return {}
 
+def get_json_blob_by_revisions(project, branch, gaia_revision, gecko_revision):
+
+    ptm = PerformanceTestModel(project)
+    test_run_ids = ptm.get_test_run_ids_by_revisions(
+        branch, gaia_revision, gecko_revision
+        )
+    ptm.disconnect()
+
+    ptrm = PerformanceTestRefDataModel(project)
+    blobs = ptrm.get_object_json_blob_for_test_run(test_run_ids)
+    ptm.disconnect()
+
+    return blobs
 
 def get_error_detail_count(project, startdate, enddate):
     """Return counts attempting to parse some of the bad JSON to extract details."""
