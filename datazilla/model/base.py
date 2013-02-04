@@ -993,7 +993,7 @@ class PerformanceTestModel(DatazillaModelBase):
         return data
 
     def get_test_run_ids_by_revisions(
-        self, branch, revision, gecko_revision):
+        self, branch, revision, gecko_revision, test_id):
         #TODO: This method is specific to the b2g project and should
         #       be placed in a derived class
 
@@ -1002,7 +1002,7 @@ class PerformanceTestModel(DatazillaModelBase):
         data = self.sources["perftest"].dhub.execute(
             proc=proc,
             debug_show=self.DEBUG,
-            placeholders=[revision, gecko_revision, branch]
+            placeholders=[revision, gecko_revision, branch, test_id]
             )
 
         test_run_ids = []

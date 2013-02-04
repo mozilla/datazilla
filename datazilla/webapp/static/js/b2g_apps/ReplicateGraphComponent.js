@@ -64,10 +64,10 @@ var ReplicateGraphComponent = new Class({
         this.datapoint = data.datapoint;
 
         this.view.hideData();
-
         this.model.getReplicateData(
             this, this.renderPlot, this.datapoint.branch,
-            this.datapoint.revision, this.datapoint.gecko_revision
+            this.datapoint.revision, this.datapoint.gecko_revision,
+            this.datapoint.test_id
             );
 
     },
@@ -244,7 +244,7 @@ var ReplicateGraphView = new Class({
             jsonData['replicate_range']['end'];
 
         this.loadField(
-            'replicate range:',
+            'replicate range',
             replicateRange,
             this.buildDataContainerSel
             );
@@ -300,7 +300,7 @@ var ReplicateGraphView = new Class({
 
             var divEl = $('<div></div>');
             $(divEl).addClass('app-control-element app-control-small-element app-build-data');
-            $(divEl).append('Build Revision:');
+            $(divEl).append('Build Revision: ');
 
             var aEl = $('<a></a>');
             $(aEl).attr('href', APPS_PAGE.buildHrefBase + fullBuildRevision);
@@ -343,13 +343,14 @@ var ReplicateGraphModel = new Class({
     },
 
     getReplicateData: function(
-        context, fnSuccess, branch, gaiaRevision, geckoRevision
+        context, fnSuccess, branch, gaiaRevision, geckoRevision, testId
         ){
 
         var uri = '/' + APPS_PAGE.refData.project +
             '/refdata/objectstore/json_blob/revisions?branch=' + branch +
             '&gaia_revision=' + gaiaRevision +
-            '&gecko_revision=' + geckoRevision;
+            '&gecko_revision=' + geckoRevision +
+            '&test_id=' + testId;
 
         jQuery.ajax( uri, {
             accepts:'application/json',

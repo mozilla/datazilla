@@ -38,11 +38,18 @@ def get_json_blob_by_revisions(request, project):
     branch = request.GET.get("branch")
     gaia_revision = request.GET.get("gaia_revision")
     gecko_revision = request.GET.get("gecko_revision")
+    test_id = request.GET.get("test_id")
+
+    bad_param = False
+    try:
+        test_id = int(test_id)
+    except ValueError:
+        bad_param = True
 
     blobs = objectstore_refdata.get_json_blob_by_revisions(
-        project, branch, gaia_revision, gecko_revision)
+        project, branch, gaia_revision, gecko_revision, test_id)
 
-    if blobs:
+    if blobs and not bad_param:
         try:
             for index, b in enumerate(blobs):
                 blobs[index]['json_blob'] = json.loads(b['json_blob'])
@@ -52,7 +59,7 @@ def get_json_blob_by_revisions(request, project):
         return HttpResponse(json.dumps(blobs), content_type=API_CONTENT_TYPE)
     else:
         return HttpResponse(
-            "gaia revision, {0}, and gecko revision, {1} not found".format(gaia_revision, gecko_revision),
+            "gaia revision, {0}, and gecko revision, {1}, test {2} not found".format(gaia_revision, gecko_revision, str(test_id)),
             status=404)
 
 def get_json_blob(request, project, id):

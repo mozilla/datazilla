@@ -41,11 +41,12 @@ def get_json_blob_by_test_run_id(project, test_run_id):
 
     return {}
 
-def get_json_blob_by_revisions(project, branch, gaia_revision, gecko_revision):
+def get_json_blob_by_revisions(
+    project, branch, gaia_revision, gecko_revision, testId):
 
     ptm = PerformanceTestModel(project)
     test_run_ids = ptm.get_test_run_ids_by_revisions(
-        branch, gaia_revision, gecko_revision
+        branch, gaia_revision, gecko_revision, testId
         )
     ptm.disconnect()
 
