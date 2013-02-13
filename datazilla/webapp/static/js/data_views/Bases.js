@@ -127,15 +127,20 @@ var View = new Class({
     convertTimestampToDate: function(unixTimestamp, getHMS){
 
         var dateObj = new Date(unixTimestamp * 1000);
-        var dateString = dateObj.getFullYear() + '-' +
-            this.padNumber((dateObj.getMonth() + 1), 10, '0') + '-' +
-            dateObj.getDate();
+
+        var year = dateObj.getFullYear();
+        var month = this.padNumber(dateObj.getMonth() + 1, 10, '0');
+        var day = this.padNumber(dateObj.getDate(), 10, '0');
+
+        var dateString = year + '-' + month + '-' + day;
 
         if(getHMS){
-            dateString += ' ' +
-                dateObj.getHours() + ':' +
-                dateObj.getMinutes() + ':' +
-                this.padNumber(dateObj.getSeconds(), 10, '0');
+
+            var hours = this.padNumber(dateObj.getHours(), 10, '0');
+            var minutes = this.padNumber(dateObj.getMinutes(), 10, '0');
+            var seconds = this.padNumber(dateObj.getSeconds(), 10, '0');
+
+            dateString += ' ' + hours + ':' + minutes + ':' + seconds;
         }
 
         return dateString;
