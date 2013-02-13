@@ -404,7 +404,6 @@ class PushLogModel(DatazillaModelBase):
                 "maxhours": hours,
                 }
 
-
         for br in branch_list:
             self.println(u"Branch: pushlogs for {0}".format(
                 unicode(br["name"])).encode("UTF-8"),
@@ -420,6 +419,8 @@ class PushLogModel(DatazillaModelBase):
             self.println("URL: {0}".format(url), 1)
             # fetch the JSON content from the constructed URL.
 
+            json_data = ''
+
             try:
                 res = urllib.urlopen(url)
                 json_data = res.read()
@@ -429,7 +430,6 @@ class PushLogModel(DatazillaModelBase):
 
             try:
                 pushlog_dict = json.loads(json_data)
-
                 self._insert_branch_pushlogs(br["id"], pushlog_dict)
                 self.branch_count += 1
 
