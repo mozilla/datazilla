@@ -184,6 +184,8 @@ var GraphControlsView = new Class({
 
         this.appContainerSel = '#app_container';
 
+        this.defaultBranchOption = 'master';
+
         //series label ids
         this.datasetLegendSel = '#su_legend';
         this.datasetTestLegendSel = '#su_test_legend';
@@ -279,6 +281,11 @@ var GraphControlsView = new Class({
     addBranch: function(branch){
         var optionEl = $('<option></option>');
         $(optionEl).attr('value', branch);
+
+        if(branch === this.defaultBranchOption){
+            $(optionEl).attr('selected', 'selected');
+        }
+
         $(optionEl).text(branch);
         $(this.branchSelectMenuSel).append(optionEl);
     }

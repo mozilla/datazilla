@@ -12,6 +12,7 @@ import datetime
 import time
 import json
 import urllib
+import socket
 import zlib
 import MySQLdb
 
@@ -382,6 +383,13 @@ class PushLogModel(DatazillaModelBase):
 
         """
 
+        ###
+        #This sets the socket timeout globally for all socket operations.
+        #Its default setting is None.  In production, the /json-pushes
+        #web service call will occasionally hang on a TCP CLOSE_WAIT state.
+        ###
+        socket.setdefaulttimeout(120)
+
         # fetch the list of known branches.
         branch_list = self.get_branch_list(branch)
 
@@ -395,7 +403,6 @@ class PushLogModel(DatazillaModelBase):
                 "full": 1,
                 "maxhours": hours,
                 }
-
 
         for br in branch_list:
             self.println(u"Branch: pushlogs for {0}".format(
@@ -411,12 +418,18 @@ class PushLogModel(DatazillaModelBase):
                 )
             self.println("URL: {0}".format(url), 1)
             # fetch the JSON content from the constructed URL.
-            res = urllib.urlopen(url)
-            json_data = res.read()
+
+            json_data = ''
+
+            try:
+                res = urllib.urlopen(url)
+                json_data = res.read()
+
+            except socket.timeout:
+                continue
 
             try:
                 pushlog_dict = json.loads(json_data)
-
                 self._insert_branch_pushlogs(br["id"], pushlog_dict)
                 self.branch_count += 1
 
