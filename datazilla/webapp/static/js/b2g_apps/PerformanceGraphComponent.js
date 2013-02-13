@@ -135,6 +135,7 @@ var PerformanceGraphComponent = new Class({
         this.data = data;
 
         this.chartData = {};
+        this.tickDisplayDates = {};
 
         var i = 0;
 
@@ -143,8 +144,9 @@ var PerformanceGraphComponent = new Class({
         var appName = "";
         var timestamp = "";
         var formattedTime = "";
+        var dataLength = data.length;
 
-        for(i = 0; i<data.length; i++){
+        for(i = 0; i<dataLength; i++){
 
             testId = data[i]['test_id'];
 
@@ -161,16 +163,15 @@ var PerformanceGraphComponent = new Class({
                 this.chartData[ testId ][ 'lines' ] = { 'show': true };
                 this.chartData[ testId ][ 'data' ] = [];
                 this.chartData[ testId ][ 'full_data' ] = [];
+
             }
 
             timestamp = data[i]['date_run'];
 
             //Don't add x-axis labels to the first and last x-axis values
-            if((i > 0) && (i < data.length - 1)){
-                if(!this.tickDisplayDates[ data[i]['test_run_id'] ]){
-                    formattedTime = this.view.convertTimestampToDate(timestamp);
-                    this.tickDisplayDates[ data[i]['test_run_id'] ] = formattedTime;
-                }
+            if((i > 0) && (i < dataLength - 1)){
+                formattedTime = this.view.convertTimestampToDate(timestamp);
+                this.tickDisplayDates[ i ] = formattedTime;
             }
 
             if(!data[i]['formatted_date_run']){
@@ -181,7 +182,7 @@ var PerformanceGraphComponent = new Class({
 
             //Data for flot
             this.chartData[ testId ][ 'data' ].push(
-                [ data[i]['test_run_id'], data[i]['avg'] ]
+                [ i, data[i]['avg'] ]
                 );
 
             //Data for presentation
@@ -217,7 +218,12 @@ var PerformanceGraphComponent = new Class({
             );
 
         if(!this.replicatesInitialized && this.seriesIndexDataMap[seriesIndex]){
-            this._clickPlot({}, {}, { 'seriesIndex':seriesIndex, 'dataIndex':0 });
+            //Simulate plot click on first series, last datapoint
+            this._clickPlot({}, {}, {
+                'seriesIndex':0,
+                'dataIndex':this.seriesIndexDataMap[0]['data'].length - 1
+                });
+
             this.view.resetSeriesLabelBackground(this.chartData);
             this.replicatesInitialized = true;
         }

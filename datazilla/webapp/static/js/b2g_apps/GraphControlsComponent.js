@@ -184,7 +184,7 @@ var GraphControlsView = new Class({
 
         this.appContainerSel = '#app_container';
 
-        this.defaultBranchOption = 'v1-train';
+        this.defaultBranchOption = 'master';
 
         //series label ids
         this.datasetLegendSel = '#su_legend';
