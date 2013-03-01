@@ -220,12 +220,20 @@ def get_test_value_summary(request, project):
     branch = request.GET['branch']
     test_ids = utils.get_id_list(request.GET['test_ids'])
     page_name = request.GET.get("page_name", "")
-    range = request.GET.get("range", 30)
+    range = request.GET.get("range", 7)
+
+    #make sure we're operating on an int
+    try:
+        range = int(range)
+    except ValueError:
+        range = 7
 
     now = int(time.time())
 
-    begin = now - 2592000
+    begin = now - 604800
 
+    if range == 30:
+        begin = now - 2592000
     if range == 60:
         begin = now - 5184000
     elif range == 90:

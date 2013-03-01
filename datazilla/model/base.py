@@ -1006,16 +1006,22 @@ class PerformanceTestModel(DatazillaModelBase):
         return data
 
     def get_test_run_ids_by_revisions(
-        self, branch, revision, gecko_revision, test_id):
+        self, branch, revision, gecko_revision, test_id, test_type):
         #TODO: This method is specific to the b2g project and should
         #       be placed in a derived class
+        #
+        #NOTE: test_type corresponds to pages.url, b2g overloads the schema
+        #       in the following way.  The test table holds applications and
+        #       the pages table holds tests
 
         proc = 'perftest.selects.get_test_run_ids_from_revisions'
 
         data = self.sources["perftest"].dhub.execute(
             proc=proc,
             debug_show=self.DEBUG,
-            placeholders=[revision, gecko_revision, branch, test_id]
+            placeholders=[
+                revision, gecko_revision, branch, test_id, test_type
+                ]
             )
 
         test_run_ids = []

@@ -18,9 +18,14 @@ var GraphControlsComponent = new Class({
         this.view = new GraphControlsView();
         this.model = new GraphControlsModel();
 
+        this.appSortOrder = [];
         this.appLookup = {};
         this.testLookup = {};
         this.branchLookup = {};
+
+        if(APPS_PAGE.defaults['range'] != undefined){
+            this.view.selectDefaultTimeRange( APPS_PAGE.defaults['range'] );
+        }
 
         this.model.getApps(this, this.initializeAppList);
 
@@ -45,17 +50,19 @@ var GraphControlsComponent = new Class({
     },
     initializeAppList: function(data){
 
-        var sortOrder = this.view.getAlphabeticalSortKeys(data);
-
+        this.appSortOrder = this.view.getAlphabeticalSortKeys(data);
         var colorIndex = 0;
         var colorCount = this.view.colors.length - 1;
         var hexColor = "";
 
-        for(var i=0; i<sortOrder.length; i++){
+        for(var i=0; i<this.appSortOrder.length; i++){
 
-            var seriesDatum = data[ sortOrder[i] ];
+            var seriesDatum = data[ this.appSortOrder[i] ];
 
-            if( this.excludeList[ seriesDatum.name ] ){
+            if( this.excludeList[ seriesDatum.name ] != undefined ){
+
+                delete this.appSortOrder[i];
+
                 continue;
             }
 
@@ -69,12 +76,15 @@ var GraphControlsComponent = new Class({
             this.view.getSeriesLabel(
                 this.view.datasetLegendSel, hexColor, seriesDatum,
                 this.toggleAppSeries, this, this.view.appSeriesContainerSel,
-                this.view.appSeriesIdPrefix
+                this.view.appSeriesIdPrefix, true
                 );
 
             seriesDatum['color'] = hexColor;
             this.appLookup[ seriesDatum.id ] = seriesDatum;
+            this.appLookup[ seriesDatum.name ] = seriesDatum;
         }
+
+        this.appSortOrder = _.compact(this.appSortOrder);
 
         this.model.getBranches(this, this.initializeBranchList);
 
@@ -89,7 +99,7 @@ var GraphControlsComponent = new Class({
         for(i = 0; i<keys.length; i++){
 
             branch = data[ keys[i] ].branch;
-            if(!this.branchLookup[branch]){
+            if(this.branchLookup[branch] === undefined){
                 this.branchLookup[branch] = true;
                 this.view.addBranch(branch);
             }
@@ -106,7 +116,7 @@ var GraphControlsComponent = new Class({
 
             var seriesDatum = data[ sortOrder[i] ];
 
-            if( this.excludeList[ seriesDatum.url ] ){
+            if( this.excludeList[ seriesDatum.url ] != undefined){
                 continue;
             }
 
@@ -121,7 +131,43 @@ var GraphControlsComponent = new Class({
         }
 
         var inputEls = $(this.view.testSeriesContainerSel).find('input');
-        $(inputEls[0]).click();
+
+        //Select default test
+        if(APPS_PAGE.defaults['test'] != undefined){
+
+            var i = 0;
+            var testName = "";
+
+            for(i=0; i<inputEls.length; i++){
+
+                testName = $(inputEls[i]).next().text();
+                if(APPS_PAGE.defaults['test'] === testName){
+                    $(inputEls[i]).click();
+                    return;
+                }
+            }
+
+            //If we make here no match was found for the test name
+            //carry out default behavior so we load something
+            $(inputEls[0]).click();
+
+        }else{
+            $(inputEls[0]).click();
+        }
+
+    },
+    displayApps: function(includeApps){
+
+        for(var i=0; i<this.appSortOrder.length; i++){
+            var seriesDatum = this.appLookup[ this.appSortOrder[i] ];
+
+            var appSeriesSel = '#' + this.view.appSeriesIdPrefix + seriesDatum.id;
+            if( includeApps[ seriesDatum.name ] != undefined ){
+                $(appSeriesSel).css('display', 'block');
+            }else{
+                $(appSeriesSel).css('display', 'none');
+            }
+        }
     },
     toggleAppSeries: function(event){
 
@@ -186,14 +232,48 @@ var GraphControlsView = new Class({
 
         this.defaultBranchOption = 'master';
 
+        if(APPS_PAGE.defaults['branch'] != undefined){
+            this.defaultBranchOption = APPS_PAGE.defaults['branch'];
+        }
+
         //series label ids
         this.datasetLegendSel = '#su_legend';
         this.datasetTestLegendSel = '#su_test_legend';
+        this.timeRangeSel = '#app_time_range';
+        this.selectAllAppsSel = '#app_select_apps';
         this.datasetTitleName = 'su_dataset_title';
         this.datasetCbContainerName = 'su_dataset_cb';
         this.datasetCloseName = 'su_dataset_close';
         this.appSeriesIdPrefix = 'app_series_';
         this.testSeriesIdPrefix = 'test_series_';
+
+        $(this.selectAllAppsSel).bind(
+            'click', _.bind(this.toggleAllApps, this)
+            );
+    },
+    toggleAllApps: function(event){
+
+        var checked = $(event.target).is(':checked');
+
+        var inputEls = $(this.appSeriesContainerSel).find('input');
+
+        for(var i=0; i<inputEls.length; i++){
+            var el = inputEls[i];
+
+            if(checked){
+
+                if( !$(el).is(':checked') ){
+                    $(el).click();
+                }
+
+            }else {
+
+                if( $(el).is(':checked') ){
+                    $(el).click();
+                }
+
+            }
+        }
     },
     selectApplications: function(testIds){
 
@@ -203,6 +283,13 @@ var GraphControlsView = new Class({
         var id = "";
         var checked = "";
 
+        var defaultApp = APPS_PAGE.defaults['app'];
+        var appLookup = APPS_PAGE.defaults['app_list'] || {};
+
+        if(defaultApp != undefined){
+            appLookup[defaultApp] = true;
+        }
+
         for(var i=0; i<inputEls.length; i++){
 
             inputEl = inputEls[i];
@@ -211,25 +298,38 @@ var GraphControlsView = new Class({
             id = this.getId(idAttr);
 
             if(id in testIds){
-                if(!checked){
-                    $(inputEl).click();
+
+                var appName = $(inputEl).next().text();
+
+                if( !_.isEmpty(appLookup) ){
+                    if( appLookup[appName] === true ){
+                        //If a default app name has been specified in the params
+                        //only click on it
+                        if(!checked){
+                            $(inputEl).click();
+                        }
+                    }
+
+                }else{
+
+                    if(!checked){
+                        $(inputEl).click();
+                    }
                 }
             }else{
-                if(checked){
-                    $(inputEl).click();
-                }
+                $('#' + idAttr).css('display', 'none');
             }
         }
     },
     getSeriesLabel: function(
         legendIdSel, hexColor, seriesDatum, fnCallback, context,
-        containerSel, idPrefix
+        containerSel, idPrefix, noDisplay
         ){
 
         var rgbAlpha = this.hexToRgb(hexColor);
 
         var label = "";
-        if(seriesDatum['url']){
+        if(seriesDatum['url'] != undefined){
             label = seriesDatum.url;
         }else{
             label = seriesDatum.name;
@@ -239,6 +339,7 @@ var GraphControlsView = new Class({
         $(legendClone).attr(
             'id', idPrefix + seriesDatum.id
             );
+
 
         var inputEl = $(legendClone).find('input');
         $(inputEl).bind('click', _.bind( fnCallback, context ) );
@@ -252,7 +353,10 @@ var GraphControlsView = new Class({
         $(legendClone).css('background-color', rgbAlpha);
         $(legendClone).css('border-color', hexColor);
         $(legendClone).css('border-width', 1);
-        $(legendClone).css('display', 'block');
+
+        if(noDisplay != true){
+            $(legendClone).css('display', 'block');
+        }
 
         $(legendClone).hover(
             function(){
@@ -270,7 +374,7 @@ var GraphControlsView = new Class({
     },
     getId: function(idAttr){
         var id = "";
-        if(idAttr){
+        if(idAttr != undefined){
             var idMatch = this.idRegex.exec(idAttr);
             if(idMatch && idMatch.length === 2){
                 id = idMatch[1];
@@ -288,6 +392,10 @@ var GraphControlsView = new Class({
 
         $(optionEl).text(branch);
         $(this.branchSelectMenuSel).append(optionEl);
+    },
+    selectDefaultTimeRange: function(range){
+        var optionEl = $(this.timeRangeSel).find('[value="' + range + '"]');
+        $(optionEl).attr('selected', 'selected');
     }
 });
 var GraphControlsModel = new Class({
