@@ -578,8 +578,9 @@
         "sql":"SELECT tr.id
                FROM test_run AS tr
                LEFT JOIN build AS b ON tr.build_id = b.id
+               LEFT JOIN pages AS pg ON tr.test_id = pg.test_id
                LEFT JOIN product AS pr ON b.product_id = pr.id
-               WHERE tr.revision = ? AND tr.gecko_revision = ? AND pr.branch = ? AND tr.test_id = ?
+               WHERE tr.revision = ? AND tr.gecko_revision = ? AND pr.branch = ? AND tr.test_id = ? AND pg.url = ?
                ORDER BY tr.id ASC",
 
         "host":"read_host"

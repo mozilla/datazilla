@@ -63,11 +63,15 @@ var ReplicateGraphComponent = new Class({
         this.series = data.series;
         this.datapoint = data.datapoint;
 
+        this.seriesIndex = data.seriesIndex;
+        this.dataIndex = data.dataIndex;
+
         this.view.hideData();
+
         this.model.getReplicateData(
             this, this.renderPlot, this.datapoint.branch,
             this.datapoint.revision, this.datapoint.gecko_revision,
-            this.datapoint.test_id
+            this.datapoint.test_id, this.datapoint.url
             );
 
     },
@@ -111,7 +115,7 @@ var ReplicateGraphComponent = new Class({
                     this.series, this.datapoint, this.data[j]);
             }
 
-            this.view.showData();
+            this.view.showData(_.isEmpty(this.data));
         }
 
         this.plot = $.plot(
@@ -121,6 +125,16 @@ var ReplicateGraphComponent = new Class({
             );
 
         this.view.setHoverData(1, results[0]);
+
+        /******
+         * NOTE: This is a workaround for an issue in flot that only
+         *  occurs when a permalink is used and the page first initializes.
+         *  The highlight function in flot fails to work in this case,
+         *  possibly due to an asynchronous initialization of the graph.
+         *  Calling the highlight function here works for now.
+         *******/
+        APPS_PAGE.performanceGraphComponent.plot.highlight(
+            this.seriesIndex, this.dataIndex);
 
     },
     _hoverPlot: function(event, pos, item){
@@ -150,6 +164,7 @@ var ReplicateGraphView = new Class({
 
         this.appContainerSel = '#app_container';
         this.chartContainerSel = '#app_replicate_chart';
+        this.noChartDataMessageSel = '#app_rep_no_chartdata';
         this.buildDataContainerSel = '#app_replicate_build_data';
         this.replicateWaitSel = '#app_replicate_wait';
         this.replicateDataContainerSel = '#app_replicate_data_container';
@@ -163,8 +178,22 @@ var ReplicateGraphView = new Class({
             ];
 
     },
-    showData: function(){
+    showData: function(noData){
+
         $(this.replicateWaitSel).css('display', 'none');
+
+        if(noData){
+
+            $(this.chartContainerSel).css('display', 'none');
+            $(this.noChartDataMessageSel).css('display', 'block');
+
+        }else{
+
+            $(this.noChartDataMessageSel).css('display', 'none');
+            $(this.chartContainerSel).css('display', 'block');
+
+        }
+
         $(this.replicateDataContainerSel).css('display', 'block');
     },
     hideData: function(){
@@ -343,14 +372,15 @@ var ReplicateGraphModel = new Class({
     },
 
     getReplicateData: function(
-        context, fnSuccess, branch, gaiaRevision, geckoRevision, testId
+        context, fnSuccess, branch, gaiaRevision, geckoRevision, testId,
+        testType
         ){
 
         var uri = '/' + APPS_PAGE.refData.project +
             '/refdata/objectstore/json_blob/revisions?branch=' + branch +
             '&gaia_revision=' + gaiaRevision +
             '&gecko_revision=' + geckoRevision +
-            '&test_id=' + testId;
+            '&test_id=' + testId + '&test_type=' + testType;
 
         jQuery.ajax( uri, {
             accepts:'application/json',
