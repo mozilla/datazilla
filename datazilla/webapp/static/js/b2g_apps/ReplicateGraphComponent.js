@@ -85,6 +85,7 @@ var ReplicateGraphComponent = new Class({
             'data':[]
             };
 
+        var testName = "";
         var i=0;
         var j=0;
         var results = {};
@@ -96,6 +97,10 @@ var ReplicateGraphComponent = new Class({
         for(j=0; j<data.length; j++){
 
             results = data[j]['json_blob']['results'][this.datapoint.url];
+
+            if(results === undefined){
+                continue;
+            }
 
             this.data[j]['replicate_range'] = { 'start':0, 'end':0 };
             this.data[j]['replicate_range']['start'] = totalReplicates;

@@ -172,3 +172,6 @@ div.app-no-data-message {
     left: 50%;
     margin-left: -13px;
 }
+button:hover {
+    cursor:pointer;
+}
