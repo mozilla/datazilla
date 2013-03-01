@@ -88,7 +88,7 @@ var ReplicateGraphComponent = new Class({
         var testName = "";
         var i=0;
         var j=0;
-        var results = {};
+        var results = [];
 
         this.hoverData = {};
 
@@ -129,7 +129,10 @@ var ReplicateGraphComponent = new Class({
             this.chartOptions
             );
 
-        this.view.setHoverData(1, results[0]);
+        //Initialize the replicate detail to first replicate
+        if(results != undefined){
+            this.view.setHoverData(1, results[0]);
+        }
 
         /******
          * NOTE: This is a workaround for an issue in flot that only
