@@ -39,6 +39,7 @@ def get_json_blob_by_revisions(request, project):
     gaia_revision = request.GET.get("gaia_revision")
     gecko_revision = request.GET.get("gecko_revision")
     test_id = request.GET.get("test_id")
+    test_type = request.GET.get("test_type")
 
     bad_param = False
     try:
@@ -47,7 +48,7 @@ def get_json_blob_by_revisions(request, project):
         bad_param = True
 
     blobs = objectstore_refdata.get_json_blob_by_revisions(
-        project, branch, gaia_revision, gecko_revision, test_id)
+        project, branch, gaia_revision, gecko_revision, test_id, test_type)
 
     if blobs and not bad_param:
         try:
