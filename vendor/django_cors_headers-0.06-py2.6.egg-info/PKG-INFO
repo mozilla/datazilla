@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: django-cors-headers
+Version: 0.06
+Summary: Django app for handling the server headers required for Cross-Origin Resource Sharing (CORS).
+Home-page: https://github.com/OttoYiu/django-cors-headers
+Author: Otto Yiu
+Author-email: otto@live.ca
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
