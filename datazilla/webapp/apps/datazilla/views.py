@@ -122,6 +122,7 @@ def set_test_data(request, project=""):
                 "size": len(unquoted_json_data),
             }
 
+        id = 0
         try:
             dm = PerformanceTestModel(project)
             id = dm.store_test_data(unquoted_json_data, error)

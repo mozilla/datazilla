@@ -91,6 +91,7 @@ TEMPLATE_LOADERS = [
 
 MIDDLEWARE_CLASSES = [
     "django.middleware.common.CommonMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
 #    "django.contrib.sessions.middleware.SessionMiddleware",
 #    "django.contrib.auth.middleware.AuthenticationMiddleware",
 #    "django.contrib.messages.middleware.MessageMiddleware",
@@ -119,8 +120,15 @@ INSTALLED_APPS = [
     "datazilla.webapp.apps.datazilla",
     "datazilla.webapp.apps.dataviews",
     "datazilla.webapp.apps.summary",
+
+    "corsheaders",
 ]
 
+CORS_ORIGIN_ALLOW_ALL = True
+
+CORS_ALLOW_METHODS = (
+    'GET'
+)
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
 # the site admins on every HTTP 500 error.

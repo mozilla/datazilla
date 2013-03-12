@@ -47,6 +47,11 @@ var GraphControlsComponent = new Class({
             'gallery_time_to_paint': true,
             'settings_time_to_paint': true,
             };
+
+        $(APPS_PAGE.appContainerSel).bind(
+            APPS_PAGE.stateChangeEvent,
+            _.bind(this.stateChange, this)
+            );
     },
     initializeAppList: function(data){
 
@@ -128,6 +133,7 @@ var GraphControlsComponent = new Class({
                 );
 
             this.testLookup[ seriesDatum.id ] = seriesDatum;
+            this.testLookup[ seriesDatum.url ] = seriesDatum;
         }
 
         var inputEls = $(this.view.testSeriesContainerSel).find('input');
@@ -156,12 +162,74 @@ var GraphControlsComponent = new Class({
         }
 
     },
+    stateChange: function(event, data){
+
+        if(data['test'] != undefined){
+
+            this.selectTest(data['test']);
+
+        }else if(data['app_list'] != undefined){
+
+            var i=0;
+            var appName = "";
+            var datum = {};
+            var id = "";
+            var appSel = "";
+            var inputSel = "";
+            var checkedAllowed = {};
+
+            //Disable individual toggling events from getting
+            //added to history
+            APPS_PAGE.disableSaveState = true;
+
+            //make sure apps in the app_list are checked
+            for(i=0; i<data['app_list'].length; i++){
+
+                appName = data['app_list'][i];
+                datum = this.appLookup[ appName ];
+                checkedAllowed[datum.id] = true;
+
+                appSel = this.view.getAppSeriesSel(datum.id);
+                inputSel = $(appSel).find('input');
+
+                if( !$(inputSel).is(':checked') ){
+                    $(inputSel).click();
+                }
+            }
+
+            //Make sure no other apps are checked
+            var inputEls = $(this.view.appSeriesContainerSel).find(
+                'input:checked');
+
+            var j=0;
+            var idAttr = "";
+            var id = "";
+
+            for(j=0; j<inputEls.length; j++){
+
+                idAttr = $(inputEls[j]).parent().parent().attr('id');
+                id = this.view.getId(idAttr);
+
+                if( checkedAllowed[id] === undefined ){
+
+                    if($(inputEls[j]).is(':checked') ){
+                        $(inputEls[j]).click();
+                    }
+                }
+            }
+
+            //Reenable saveState
+            APPS_PAGE.disableSaveState = false;
+
+        }
+    },
     displayApps: function(includeApps){
 
         for(var i=0; i<this.appSortOrder.length; i++){
             var seriesDatum = this.appLookup[ this.appSortOrder[i] ];
 
-            var appSeriesSel = '#' + this.view.appSeriesIdPrefix + seriesDatum.id;
+            var appSeriesSel = this.view.getAppSeriesSel(seriesDatum.id);
+
             if( includeApps[ seriesDatum.name ] != undefined ){
                 $(appSeriesSel).css('display', 'block');
             }else{
@@ -174,7 +242,7 @@ var GraphControlsComponent = new Class({
         var idAttr = $(event.currentTarget).parent().parent().attr('id');
         var id = this.view.getId(idAttr);
 
-        $(this.view.appContainerSel).trigger(
+        $(APPS_PAGE.appContainerSel).trigger(
             this.appToggleEvent,
             { 'test_id':id }
             );
@@ -197,9 +265,26 @@ var GraphControlsComponent = new Class({
                 };
         }
 
-        $(this.view.appContainerSel).trigger(
+        $(APPS_PAGE.appContainerSel).trigger(
             this.testToggleEvent, eventData
             );
+
+    },
+    selectTest: function(testName){
+
+
+        var datum = this.testLookup[testName];
+
+        if(_.isEmpty(datum)){
+
+            var inputEls = $(this.view.testSeriesContainerSel).find('input');
+            $(inputEls[0]).click();
+
+        }else{
+
+            var elSel = this.view.getTestSeriesSel(datum.id);
+            $(elSel).find('input').click();
+        }
 
     }
 });
@@ -228,8 +313,6 @@ var GraphControlsView = new Class({
 
         this.testColor = '#5CB2CB';
 
-        this.appContainerSel = '#app_container';
-
         this.defaultBranchOption = 'master';
 
         if(APPS_PAGE.defaults['branch'] != undefined){
@@ -257,13 +340,19 @@ var GraphControlsView = new Class({
 
         var inputEls = $(this.appSeriesContainerSel).find('input');
 
+        //Disable individual toggling events from getting
+        //added to history
+        APPS_PAGE.disableSaveState = true;
+
         for(var i=0; i<inputEls.length; i++){
+
             var el = inputEls[i];
 
             if(checked){
 
                 if( !$(el).is(':checked') ){
                     $(el).click();
+                    appName = $(el).next().text();
                 }
 
             }else {
@@ -274,6 +363,12 @@ var GraphControlsView = new Class({
 
             }
         }
+
+        //Reenable saveState
+        APPS_PAGE.disableSaveState = false;
+
+        //Save the new application selection state
+        APPS_PAGE.saveState();
     },
     selectApplications: function(testIds){
 
@@ -396,6 +491,12 @@ var GraphControlsView = new Class({
     selectDefaultTimeRange: function(range){
         var optionEl = $(this.timeRangeSel).find('[value="' + range + '"]');
         $(optionEl).attr('selected', 'selected');
+    },
+    getAppSeriesSel: function(id){
+        return '#' + this.appSeriesIdPrefix + id;
+    },
+    getTestSeriesSel: function(id){
+        return '#' + this.testSeriesIdPrefix + id;
     }
 });
 var GraphControlsModel = new Class({
@@ -414,7 +515,7 @@ var GraphControlsModel = new Class({
 
     getBranches: function(context, fnSuccess){
 
-        var uri = '/' + APPS_PAGE.refData.project + '/refdata/perftest/ref_data/products';
+        var uri = APPS_PAGE.urlBase + '/refdata/perftest/ref_data/products';
 
         jQuery.ajax( uri, {
             accepts:'application/json',
@@ -428,7 +529,7 @@ var GraphControlsModel = new Class({
     },
     getApps: function(context, fnSuccess){
 
-        var uri = '/' + APPS_PAGE.refData.project + '/refdata/perftest/ref_data/tests';
+        var uri = APPS_PAGE.urlBase + '/refdata/perftest/ref_data/tests';
 
         jQuery.ajax( uri, {
             accepts:'application/json',
@@ -443,7 +544,7 @@ var GraphControlsModel = new Class({
 
     getTests: function(context, fnSuccess){
 
-        var uri = '/' + APPS_PAGE.refData.project + '/refdata/perftest/ref_data/pages';
+        var uri = APPS_PAGE.urlBase + '/refdata/perftest/ref_data/pages';
 
         jQuery.ajax( uri, {
             accepts:'application/json',

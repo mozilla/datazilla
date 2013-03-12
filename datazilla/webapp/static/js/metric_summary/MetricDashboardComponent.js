@@ -211,7 +211,7 @@ var MetricDashboardView = new Class({
             );
 
         MS_PAGE.metricGridComponent.view.showNoDataMessage();
-        MS_PAGE.trendLineComponent.view.showNoDataMessage();
+        //MS_PAGE.trendLineComponent.view.showNoDataMessage();
 
     },
     animateProgressBars: function(){

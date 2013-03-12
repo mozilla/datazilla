@@ -143,35 +143,6 @@ div.app-no-data-message {
     font-size: 18px;
     font-weight: bold;
 }
-.app-arrow-box {
-    position: relative;
-    background: #ffffff;
-    border: 2px solid #5CB2CB;
-}
-.app-arrow-box:after, .app-arrow-box:before {
-    bottom: 100%;
-    border: solid transparent;
-    content: " ";
-    height: 0;
-    width: 0;
-    position: absolute;
-    pointer-events: none;
-}
-
-.app-arrow-box:after {
-    border-color: rgba(255, 255, 255, 0);
-    border-bottom-color: #ffffff;
-    border-width: 10px;
-    left: 50%;
-    margin-left: -10px;
-}
-.app-arrow-box:before {
-    border-color: rgba(92, 178, 203, 0);
-    border-bottom-color: #5CB2CB;
-    border-width: 13px;
-    left: 50%;
-    margin-left: -13px;
-}
 button:hover {
     cursor:pointer;
 }
