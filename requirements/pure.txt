@@ -5,6 +5,7 @@ python-memcached==1.48
 oauth2==1.5.211
 httplib2==0.7.4
 lockfile==0.9.1
+django-cors-headers==0.06
 
 git+git://github.com/jeads/datasource@97ce9bb710
 git+git://github.com/mozilla/datazilla-metrics@3168305e76

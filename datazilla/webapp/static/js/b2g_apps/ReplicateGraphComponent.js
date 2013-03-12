@@ -144,6 +144,8 @@ var ReplicateGraphComponent = new Class({
         APPS_PAGE.performanceGraphComponent.plot.highlight(
             this.seriesIndex, this.dataIndex);
 
+        APPS_PAGE.saveState();
+
     },
     _hoverPlot: function(event, pos, item){
 
@@ -384,7 +386,7 @@ var ReplicateGraphModel = new Class({
         testType
         ){
 
-        var uri = '/' + APPS_PAGE.refData.project +
+        var uri = APPS_PAGE.urlBase +
             '/refdata/objectstore/json_blob/revisions?branch=' + branch +
             '&gaia_revision=' + gaiaRevision +
             '&gecko_revision=' + geckoRevision +

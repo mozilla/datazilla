@@ -20,22 +20,130 @@ var AppsPage = new Class( {
         this.gaiaHrefBase = "https://github.com/mozilla-b2g/gaia/commit/";
         this.geckoHrefBase = "http://git.mozilla.org/?p=releases/gecko.git;a=commit;h=";
         this.buildHrefBase = "https://github.com/mozilla-b2g/platform_build/commit/";
-    },
 
+        this.history = window.History;
+
+        this.stateChangeEvent = 'STATE_CHANGE_EV';
+
+        this.appContainerSel = '#app_container';
+
+        //If it's set to true the STATE_CHANGE_EV is from a
+        //change in history (back/forward button clicked)
+        this.historyEvent = false;
+
+        //If set to true, it disables the abbility to saveState
+        //this allows component defined events to specify whether
+        //they are added to the history
+        this.disableSaveState = false;
+
+        this.history.Adapter.bind(
+            window, 'statechange', _.bind(this.stateChange, this)
+            );
+
+        this.paramKeys = [ 'branch', 'range', 'test', 'app', 'app_list',
+                           'gaia_rev', 'gecko_rev' ];
+
+    },
+    saveState: function(){
+
+        if( (this.historyEvent === true) || (this.disableSaveState === true) ){
+            this.historyEvent = false;
+            return;
+        }
+
+        var params = this.getParams();
+        var paramData = this.getParamsStrAndHash(params.params);
+
+        paramData['lookup'] = params['lookup'];
+
+        this.history.pushState(
+            {state:paramData},
+            "Perf-o-Matic",
+            this.refData.project + '?' + paramData['params_str']
+            );
+
+    },
+    getParams: function(){
+
+        var view = this.performanceGraphComponent.view;
+
+        var params = [];
+        var lookup = {};
+
+        var branch = $(view.branchSel).find(":selected").text();
+        if(branch != ""){
+            params.push('branch=' + branch);
+            lookup['branch'] = branch;
+        }
+
+        var range = $(view.timeRangeSel).find(":selected").val();
+        if(range != ""){
+            params.push('range=' + range);
+            lookup['range'] = range;
+        }
+
+        var test = $(view.testSeriesSel).find('input:checked').next().text();
+        if(test != ""){
+            params.push('test=' + test);
+            lookup['test'] = test;
+        }
+
+        var app = $(view.appNameSpanSel).text();
+        if(app != ""){
+            params.push('app=' + app);
+            lookup['app'] = app;
+        }
+
+        var appListEls = $(view.appSeriesSel).find("input:checkbox:checked");
+        var appList = [];
+        _.map(appListEls, function(el){
+                appList.push( $(el).next().text() );
+            });
+
+        if(appList.length > 0){
+            params.push('app_list=' + appList.join(','));
+        }
+        //Always store the app_list lookup so we can represent
+        //0 selected apps in the app_list
+        lookup['app_list'] = appList;
+
+        var gaiaRev = $(view.gaiaRevisionSel).text();
+        if(gaiaRev != ""){
+            params.push('gaia_rev=' + gaiaRev);
+            lookup['gaia_rev'] = gaiaRev;
+        }
+
+        var geckoRev = $(view.geckoRevisionSel).text();
+        if(geckoRev != ""){
+            params.push('gecko_rev=' + geckoRev);
+            lookup['gecko_rev'] = geckoRev;
+        }
+
+        return { 'params':params , 'lookup':lookup };
+
+    },
+    getParamsStrAndHash: function(params){
+
+        var paramsStr = params.join('&');
+
+        return { 'params_str':paramsStr,
+                 'params':params,
+                 'hash':paramsStr.hashCode() };
+    },
     setRefData: function(){
 
-        APPS_PAGE.refData = {};
+        this.refData = {};
 
-        var urlObj = APPS_PAGE.urlObj.data;
-        APPS_PAGE.refData.project = urlObj.seg.path[0];
+        var urlObj = jQuery.url(window.location).data;
+        this.refData.project = urlObj.seg.path[0];
 
-        APPS_PAGE.urlBase = urlObj.attr.base + urlObj.attr.directory;
+        this.urlBase = urlObj.attr.base + urlObj.attr.directory;
 
-        APPS_PAGE.defaults = {};
-        APPS_PAGE.defaults['branch'] = urlObj.param.query.branch;
-        APPS_PAGE.defaults['range'] = urlObj.param.query.range;
-        APPS_PAGE.defaults['test'] = urlObj.param.query.test;
-        APPS_PAGE.defaults['app'] = urlObj.param.query.app;
+        this.defaults = {};
+        this.defaults['branch'] = urlObj.param.query.branch;
+        this.defaults['range'] = urlObj.param.query.range;
+        this.defaults['test'] = urlObj.param.query.test;
+        this.defaults['app'] = urlObj.param.query.app;
 
         if( urlObj.param.query.app_list != undefined ){
 
@@ -48,15 +156,78 @@ var AppsPage = new Class( {
                 }
                 );
 
-            APPS_PAGE.defaults['app_list'] = appLookup;
+            this.defaults['app_list'] = appLookup;
         }
 
-        APPS_PAGE.defaults['gaia_rev'] = urlObj.param.query.gaia_rev;
-        APPS_PAGE.defaults['gecko_rev'] = urlObj.param.query.gecko_rev;
+        this.defaults['gaia_rev'] = urlObj.param.query.gaia_rev;
+        this.defaults['gecko_rev'] = urlObj.param.query.gecko_rev;
 
     },
     getRevisionSlice: function(revision){
         return revision.slice(0, this.revisionLength);
+    },
+    stateChange: function(){
+
+        this.setRefData();
+
+        var historyState = this.history.getState();
+        var params = this.getParams();
+        var paramData = this.getParamsStrAndHash(params.params);
+
+        if(this.isHistoryStateChange(historyState, paramData)){
+
+            var modifiedParams = this.getModifiedParams(
+                historyState.data.state.lookup, params.lookup
+                );
+
+            this.historyEvent = true;
+
+            $(this.appContainerSel).trigger(
+                this.stateChangeEvent, modifiedParams
+                )
+        }
+    },
+    isHistoryStateChange: function(historyState, paramData){
+
+        var historyStateChange = false;
+
+        if( (historyState.data.state != undefined) &&
+            (historyState.data.state.hash != paramData.hash) ){
+            historyStateChange = true;
+        }
+
+        return historyStateChange;
+    },
+    getModifiedParams: function(oldParams, newParams){
+
+        var key = "";
+        var modifiedParams = {};
+        var i  = 0;
+
+        for(i=0; i < this.paramKeys.length; i++){
+
+            key = this.paramKeys[i];
+
+            if(oldParams[key] != newParams[key]){
+                modifiedParams[key] = oldParams[key];
+            }
+        }
+
+        var keyHash = this.getDatapointHashCode(
+            oldParams['app'], oldParams['gaia_rev'],
+            oldParams['gecko_rev']
+            );
+
+        modifiedParams['datapoint_hash'] = keyHash;
+
+        return modifiedParams;
+    },
+    getDatapointHashCode: function(appName, gaiaRevision, geckoRevision){
+
+        var key = appName +
+                  this.getRevisionSlice(gaiaRevision) +
+                  this.getRevisionSlice(geckoRevision);
+        return key.hashCode();
     }
 
 });
@@ -70,5 +241,6 @@ $(document).ready(function() {
     APPS_PAGE.graphControlsComponent = new GraphControlsComponent();
     APPS_PAGE.performanceGraphComponent = new PerformanceGraphComponent();
     APPS_PAGE.replicateGaphComponent = new ReplicateGraphComponent();
+
 
 });

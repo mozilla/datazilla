@@ -30,6 +30,10 @@ var PerformanceGraphComponent = new Class({
         this.checkedApps = {};
         this.data = {};
 
+        //Caches arguments for _clickPlot for each selected datapoint
+        //for handling stateChange
+        this.datapointCache = {};
+
         this.replicatesInitialized = false;
         this.testToggled = false;
 
@@ -63,11 +67,11 @@ var PerformanceGraphComponent = new Class({
             }
         };
 
-        $(this.view.appContainerSel).bind(
+        $(APPS_PAGE.appContainerSel).bind(
             this.appToggleEvent, _.bind( this.appToggle, this )
             );
 
-        $(this.view.appContainerSel).bind(
+        $(APPS_PAGE.appContainerSel).bind(
             this.testToggleEvent, _.bind( this.testToggle, this )
             );
 
@@ -86,11 +90,18 @@ var PerformanceGraphComponent = new Class({
         $(this.view.branchSel).bind(
             'change', _.bind(this.changeTimeRange, this)
             );
+
+        $(APPS_PAGE.appContainerSel).bind(
+            APPS_PAGE.stateChangeEvent,
+            _.bind(this.stateChange, this)
+            );
     },
     formatLabel: function(label, series){
         return this.tickDisplayDates[label] || "";
     },
     changeTimeRange: function(event){
+
+        var optionVal = $(event.target).find(":selected").val();
         this.testToggle(event, this.testData);
     },
     appToggle: function(event, data){
@@ -196,8 +207,6 @@ var PerformanceGraphComponent = new Class({
                 );
         }
 
-        //Only display app names that are found in the dataset
-        APPS_PAGE.graphControlsComponent.displayApps(appNames);
 
         var chart = [];
         var testIds = _.keys(this.chartData);
@@ -223,6 +232,9 @@ var PerformanceGraphComponent = new Class({
                 dsIndex = seriesIndex;
             }
         }
+
+        //Only display app names that are found in the dataset
+        APPS_PAGE.graphControlsComponent.displayApps(appNames);
 
         this.view.showData(_.isEmpty(this.data));
 
@@ -254,19 +266,49 @@ var PerformanceGraphComponent = new Class({
 
             //Simulate plot click on first series, last datapoint
             this._clickPlot(
-                {}, {}, { 'seriesIndex':dsIndex, 'dataIndex':dpIndex }
+                {}, {}, {'seriesIndex':dsIndex, 'dataIndex':dpIndex}
                 );
 
             this.view.resetSeriesLabelBackground(this.chartData);
             this.replicatesInitialized = true;
 
+        }else {
+            APPS_PAGE.saveState();
+        }
+    },
+    stateChange: function(event, data){
+
+        if(data['branch'] != undefined) {
+
+            this.view.selectOption(data['branch'], this.view.branchSel);
+
+        }else if(data['range'] != undefined){
+
+            this.view.selectOption(data['range'], this.view.timeRangeSel);
+
+        }else if( (data['app'] != undefined) ||
+                  (data['gaia_rev'] != undefined) ||
+                  (data['gecko_rev'] != undefined)  ){
+
+            var args = this.datapointCache[ data['datapoint_hash'] ];
+            this._clickPlot(args['ev'], args['pos'], args['item']);
         }
     },
     _clickPlot: function(event, pos, item){
 
         if(item != null){
+
             var seriesDatum = this.seriesIndexDataMap[ item.seriesIndex ];
             var datapointDatum = this.seriesIndexDataMap[ item.seriesIndex ]['full_data'][ item.dataIndex ];
+
+            var keyHash = APPS_PAGE.getDatapointHashCode(
+                seriesDatum.name, datapointDatum[0].revision,
+                datapointDatum[0].gecko_revision
+                );
+
+            this.datapointCache[keyHash] = {
+                'ev':event, 'pos':pos, 'item':item
+                };
 
             this.plot.unhighlight();
 
@@ -276,7 +318,7 @@ var PerformanceGraphComponent = new Class({
 
             datapointDatum[0]['branch'] = $(this.view.branchSel).val();
 
-            $(this.view.appContainerSel).trigger(
+            $(APPS_PAGE.appContainerSel).trigger(
                 this.perfPlotClickEvent,
                 { 'seriesIndex':item.seriesIndex,
                   'dataIndex':item.dataIndex,
@@ -309,8 +351,6 @@ var PerformanceGraphView = new Class({
 
         this.parent(options);
 
-        this.appContainerSel = '#app_container';
-
         this.timeRangeSel = '#app_time_range';
         this.branchSel = '#app_branch';
         this.chartContainerSel = '#app_perf_chart';
@@ -319,9 +359,6 @@ var PerformanceGraphView = new Class({
         this.graphDetailContainerSel = '#app_perf_detail_container';
         this.perfDataContainerSel = '#app_perf_data_container';
         this.perfWaitSel = '#app_perf_wait';
-
-        this.permalinkSel = '#app_permalink';
-        this.permalinkContainerSel = '#app_link';
 
         this.testNameSpanSel = '#app_replicate_test';
         this.appNameSpanSel = '#app_replicate_application';
@@ -338,73 +375,6 @@ var PerformanceGraphView = new Class({
         this.appDetailIdSel = '#' + this.detailIdPrefix + 'application';
 
         this.appSeriesIdPrefix = 'app_series_';
-
-        $(this.permalinkSel).bind(
-            'click', _.bind(this.setPermalinkHref, this)
-            );
-
-        $(document).bind(
-            'click', _.bind(this.hidePermalink, this)
-            );
-    },
-    hidePermalink: function(event){
-
-        if(event != undefined){
-            var targetId = $(event.target).attr('id');
-            var permalinkId = this.permalinkSel.replace('#', '');
-
-            if(targetId != permalinkId){
-                $(this.permalinkContainerSel).css('display', 'none');
-            }
-
-        }else {
-            $(this.permalinkContainerSel).css('display', 'none');
-        }
-    },
-    setPermalinkHref: function(event){
-
-        var display = $(this.permalinkContainerSel).css('display');
-
-        if(display === 'block'){
-            this.hidePermalink();
-            return;
-        }
-
-        var params = [];
-
-        var branch = $(this.branchSel).find(":selected").text();
-        params.push('branch=' + branch);
-
-        var range = $(this.timeRangeSel).find(":selected").val();
-        params.push('range=' + range);
-
-        var test = $(this.testSeriesSel).find('input:checked').next().text();
-        params.push('test=' + test);
-
-        var app = $(this.appNameSpanSel).text();
-        params.push('app=' + app);
-
-        var appListEls = $(this.appSeriesSel).find("input:checkbox:checked");
-        var appList = [];
-        _.map(appListEls, function(el){
-                appList.push( $(el).next().text() );
-            });
-        params.push('app_list=' + appList.join(','));
-
-        var gaiaRev = $(this.gaiaRevisionSel).text();
-        params.push('gaia_rev=' + gaiaRev);
-
-        var geckoRev = $(this.geckoRevisionSel).text();
-        params.push('gecko_rev=' + geckoRev);
-
-        var href = APPS_PAGE.urlBase + '?' + params.join('&');
-
-        var inputEl = $(this.permalinkContainerSel).find("input");
-        $(inputEl).val(href);
-
-        $(this.permalinkContainerSel).css('display', 'block');
-
-        $(inputEl).select();
 
     },
     showData: function(noData){
@@ -481,6 +451,21 @@ var PerformanceGraphView = new Class({
 
             $(idSel).text( datapointDatum[fieldName] );
         }
+    },
+    selectOption: function(val, target){
+
+        //Unselect whatever is selected
+        var currentSelectedVal = $(target).find(":selected");
+        $(currentSelectedVal).attr('selected', '');
+
+        //Get the option that corresponds to the value
+        var optionEl = $(target).find('[value="' + val + '"]');
+
+        //Select the matching option
+        $(optionEl).attr("selected", "selected");
+
+        //fire the change event
+        $(target).change();
     }
 });
 var PerformanceGraphModel = new Class({
@@ -499,7 +484,7 @@ var PerformanceGraphModel = new Class({
 
     getAppData: function(context, fnSuccess, testIds, pageName, range, branch){
 
-        var uri = '/' + APPS_PAGE.refData.project + '/testdata/test_values?' + 
+        var uri = APPS_PAGE.urlBase + '/testdata/test_values?' +
             'branch=BRANCH&test_ids=TEST_IDS&page_name=PAGE_NAME&range=RANGE';
 
         uri = uri.replace('BRANCH', branch);
