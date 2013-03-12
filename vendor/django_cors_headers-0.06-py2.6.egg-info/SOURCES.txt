@@ -1,0 +1,9 @@
+setup.cfg
+setup.py
+corsheaders/__init__.py
+corsheaders/defaults.py
+corsheaders/middleware.py
+django_cors_headers.egg-info/PKG-INFO
+django_cors_headers.egg-info/SOURCES.txt
+django_cors_headers.egg-info/dependency_links.txt
+django_cors_headers.egg-info/top_level.txt

@@ -1,0 +1,11 @@
+../corsheaders/defaults.py
+../corsheaders/middleware.py
+../corsheaders/__init__.py
+../corsheaders/defaults.pyc
+../corsheaders/middleware.pyc
+../corsheaders/__init__.pyc
+./
+SOURCES.txt
+dependency_links.txt
+top_level.txt
+PKG-INFO
