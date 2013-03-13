@@ -94,6 +94,9 @@ var ReplicateGraphComponent = new Class({
 
         var totalReplicates = 1;
 
+        var chartIndex = 0;
+        var detailStructId = 0;
+
         for(j=0; j<data.length; j++){
 
             results = data[j]['json_blob']['results'][this.datapoint.url];
@@ -106,19 +109,16 @@ var ReplicateGraphComponent = new Class({
             this.data[j]['replicate_range']['start'] = totalReplicates;
 
             for(i=0; i<results.length; i++){
-
-                this.chartData['data'].push( [ totalReplicates, results[i] ] );
+                chartIndex = this.chartData['data'].push( [ totalReplicates, results[i] ] );
+                if(chartIndex === 1){
+                    detailStructId = j;
+                }
                 this.hoverData[ totalReplicates ] = j;
 
                 totalReplicates++;
             }
 
             this.data[j]['replicate_range']['end'] = totalReplicates - 1;
-
-            if( j === 0 ){
-                this.view.setDetailContainer(
-                    this.series, this.datapoint, this.data[j]);
-            }
 
             this.view.showData(_.isEmpty(this.data));
         }
@@ -129,9 +129,13 @@ var ReplicateGraphComponent = new Class({
             this.chartOptions
             );
 
+        this.view.setDetailContainer(
+            this.series, this.datapoint, this.data[detailStructId]
+            );
+
         //Initialize the replicate detail to first replicate
         if(results != undefined){
-            this.view.setHoverData(1, results[0]);
+            this.view.setHoverData(1, this.chartData['data'][0][1]);
         }
 
         /******
