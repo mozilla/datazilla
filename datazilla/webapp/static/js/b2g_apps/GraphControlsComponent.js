@@ -207,7 +207,7 @@ var GraphControlsComponent = new Class({
 
             for(j=0; j<inputEls.length; j++){
 
-                idAttr = $(inputEls[j]).parent().parent().attr('id');
+                idAttr = $(inputEls[j]).parent().attr('id');
                 id = this.view.getId(idAttr);
 
                 if( checkedAllowed[id] === undefined ){
@@ -239,7 +239,7 @@ var GraphControlsComponent = new Class({
     },
     toggleAppSeries: function(event){
 
-        var idAttr = $(event.currentTarget).parent().parent().attr('id');
+        var idAttr = $(event.currentTarget).parent().attr('id');
         var id = this.view.getId(idAttr);
 
         $(APPS_PAGE.appContainerSel).trigger(
@@ -250,7 +250,7 @@ var GraphControlsComponent = new Class({
     },
     toggleTestSeries: function(event){
 
-        var idAttr = $(event.currentTarget).parent().parent().attr('id');
+        var idAttr = $(event.currentTarget).parent().attr('id');
         var id = this.view.getId(idAttr);
 
         var eventData = this.testLookup[id];
@@ -388,7 +388,7 @@ var GraphControlsView = new Class({
         for(var i=0; i<inputEls.length; i++){
 
             inputEl = inputEls[i];
-            idAttr = $(inputEl).parent().parent().attr('id');
+            idAttr = $(inputEl).parent().attr('id');
             checked = $(inputEl).attr('checked');
             id = this.getId(idAttr);
 
@@ -430,11 +430,12 @@ var GraphControlsView = new Class({
             label = seriesDatum.name;
         }
 
-        var legendClone = $(legendIdSel).clone();
+        var labelClone = $(legendIdSel).parent().clone();
+        var legendClone = $(labelClone).children();
+
         $(legendClone).attr(
             'id', idPrefix + seriesDatum.id
             );
-
 
         var inputEl = $(legendClone).find('input');
         $(inputEl).bind('click', _.bind( fnCallback, context ) );
@@ -464,7 +465,7 @@ var GraphControlsView = new Class({
             }
         );
 
-        $(containerSel).append(legendClone);
+        $(containerSel).append(labelClone);
 
     },
     getId: function(idAttr){
@@ -515,7 +516,7 @@ var GraphControlsModel = new Class({
 
     getBranches: function(context, fnSuccess){
 
-        var uri = APPS_PAGE.urlBase + '/refdata/perftest/ref_data/products';
+        var uri = APPS_PAGE.urlBase + 'refdata/perftest/ref_data/products';
 
         jQuery.ajax( uri, {
             accepts:'application/json',
@@ -529,7 +530,7 @@ var GraphControlsModel = new Class({
     },
     getApps: function(context, fnSuccess){
 
-        var uri = APPS_PAGE.urlBase + '/refdata/perftest/ref_data/tests';
+        var uri = APPS_PAGE.urlBase + 'refdata/perftest/ref_data/tests';
 
         jQuery.ajax( uri, {
             accepts:'application/json',
@@ -544,7 +545,7 @@ var GraphControlsModel = new Class({
 
     getTests: function(context, fnSuccess){
 
-        var uri = APPS_PAGE.urlBase + '/refdata/perftest/ref_data/pages';
+        var uri = APPS_PAGE.urlBase + 'refdata/perftest/ref_data/pages';
 
         jQuery.ajax( uri, {
             accepts:'application/json',
