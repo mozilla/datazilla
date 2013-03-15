@@ -391,7 +391,7 @@ var ReplicateGraphModel = new Class({
         ){
 
         var uri = APPS_PAGE.urlBase +
-            '/refdata/objectstore/json_blob/revisions?branch=' + branch +
+            'refdata/objectstore/json_blob/revisions?branch=' + branch +
             '&gaia_revision=' + gaiaRevision +
             '&gecko_revision=' + geckoRevision +
             '&test_id=' + testId + '&test_type=' + testType;

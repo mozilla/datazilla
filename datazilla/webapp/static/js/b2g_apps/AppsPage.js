@@ -59,7 +59,8 @@ var AppsPage = new Class( {
         this.history.pushState(
             {state:paramData},
             "Perf-o-Matic",
-            this.refData.project + '?' + paramData['params_str']
+            //this.refData.project + '?' + paramData['params_str']
+            '?' + paramData['params_str']
             );
 
     },
@@ -136,6 +137,10 @@ var AppsPage = new Class( {
 
         var urlObj = jQuery.url(window.location).data;
         this.refData.project = urlObj.seg.path[0];
+
+        if(urlObj.attr.directory.search(/\/$/) === -1){
+            urlObj.attr.directory += '/';
+        }
 
         this.urlBase = urlObj.attr.base + urlObj.attr.directory;
 
