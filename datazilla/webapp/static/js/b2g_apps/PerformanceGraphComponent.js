@@ -484,7 +484,7 @@ var PerformanceGraphModel = new Class({
 
     getAppData: function(context, fnSuccess, testIds, pageName, range, branch){
 
-        var uri = APPS_PAGE.urlBase + '/testdata/test_values?' +
+        var uri = APPS_PAGE.urlBase + 'testdata/test_values?' +
             'branch=BRANCH&test_ids=TEST_IDS&page_name=PAGE_NAME&range=RANGE';
 
         uri = uri.replace('BRANCH', branch);
