@@ -1,7 +1,7 @@
 ../memcache.py
 ../memcache.pyc
 ./
-dependency_links.txt
-PKG-INFO
 SOURCES.txt
+dependency_links.txt
 top_level.txt
+PKG-INFO
