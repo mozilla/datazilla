@@ -89,24 +89,24 @@ var AppsPage = new Class( {
             lookup['test'] = test;
         }
 
-        var app = $(view.appNameSpanSel).text();
-        if(app != ""){
-            params.push('app=' + app);
-            lookup['app'] = app;
-        }
-
         var appListEls = $(view.appSeriesSel).find("input:checkbox:checked");
         var appList = [];
         _.map(appListEls, function(el){
                 appList.push( $(el).next().text() );
             });
-
         if(appList.length > 0){
             params.push('app_list=' + appList.join(','));
         }
         //Always store the app_list lookup so we can represent
         //0 selected apps in the app_list
         lookup['app_list'] = appList;
+
+        var app = $(view.appNameSpanSel).text();
+        if( (app != "") && (appList.length > 0)){
+            params.push('app=' + app);
+            lookup['app'] = app;
+        }
+
 
         var gaiaRev = $(view.gaiaRevisionSel).text();
         if(gaiaRev != ""){
@@ -143,11 +143,12 @@ var AppsPage = new Class( {
         }
 
         this.urlBase = urlObj.attr.base + urlObj.attr.directory;
+this.urlBase = 'https://datazilla.mozilla.org/b2g/';
 
         this.defaults = {};
         this.defaults['branch'] = urlObj.param.query.branch;
         this.defaults['range'] = urlObj.param.query.range;
-        this.defaults['test'] = urlObj.param.query.test;
+        this.defaults['test'] = urlObj.param.query.test || 'cold_load_time';
         this.defaults['app'] = urlObj.param.query.app;
 
         if( urlObj.param.query.app_list != undefined ){

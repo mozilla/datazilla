@@ -1121,6 +1121,46 @@ class MetricsTestModel(DatazillaModelBase):
 
         return log
 
+    def compute_inline_metrics(self, data):
+
+        product = data['test_build']['name']
+        branch = data['test_build']['branch']
+        branch_version = data['test_build']['version']
+        operating_system_name = data['test_build']['name']
+        operating_system_version = data['test_machine']['osversion']
+        processor = data['test_machine']['platform']
+        test_name = data['testrun']['suite']
+
+        pages = data['results'].keys()
+
+        product_iter = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_product_id',
+            debug_show=self.DEBUG,
+            placeholders=[product, branch, branch_version],
+            return_type='iter',
+            )
+        product_id = product_iter.get_column_data('id')
+
+        os_iter = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_os_id',
+            debug_show=self.DEBUG,
+            placeholders=[operating_system_name, operating_system_version],
+            return_type='iter',
+            )
+        os_id = os_iter.get_column_data('id')
+
+        test_iter = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_test_id',
+            debug_show=self.DEBUG,
+            placeholders=[test_name, 1],
+            return_type='iter',
+            )
+        test_id = os_iter.get_column_data('id')
+
+        ##Get the relevant ids##
+
+        ##TODO: Finish this function or remove it
+
     def _get_metric_collection(self):
         proc = 'perftest.selects.get_metric_collection'
 
@@ -1688,6 +1728,7 @@ class TtestMethod(MetricMethodBase):
 
         else:
             return value
+
 
     def _get_summary_data_lookup(self, data):
 
