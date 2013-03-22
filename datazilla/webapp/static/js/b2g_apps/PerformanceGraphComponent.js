@@ -116,7 +116,8 @@ var PerformanceGraphComponent = new Class({
 
         }
 
-        if(!_.isEmpty(this.data) && (this.testToggled === true)){
+        //if(!_.isEmpty(this.data) && (this.testToggled === true)){
+        if(!_.isEmpty(this.data)){
             this.renderPlot(this.data);
         }
 
@@ -207,7 +208,6 @@ var PerformanceGraphComponent = new Class({
                 );
         }
 
-
         var chart = [];
         var testIds = _.keys(this.chartData);
 
@@ -234,7 +234,7 @@ var PerformanceGraphComponent = new Class({
         }
 
         //Only display app names that are found in the dataset
-        APPS_PAGE.graphControlsComponent.displayApps(appNames);
+        APPS_PAGE.graphControlsComponent.displayApps(appNames, this.testToggled);
 
         this.view.showData(_.isEmpty(this.data));
 
@@ -275,6 +275,7 @@ var PerformanceGraphComponent = new Class({
         }else {
             APPS_PAGE.saveState();
         }
+
     },
     stateChange: function(event, data){
 

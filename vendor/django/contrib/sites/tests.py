@@ -3,6 +3,7 @@ from django.contrib.sites.models import Site, RequestSite, get_current_site
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest
 from django.test import TestCase
+from django.test.utils import override_settings
 
 
 class SitesFrameworkTests(TestCase):
@@ -14,6 +15,12 @@ class SitesFrameworkTests(TestCase):
 
     def tearDown(self):
         Site._meta.installed = self.old_Site_meta_installed
+
+    def test_save_another(self):
+        # Regression for #17415
+        # On some backends the sequence needs reset after save with explicit ID.
+        # Test that there is no sequence collisions by saving another site.
+        Site(domain="example2.com", name="example2.com").save()
 
     def test_site_manager(self):
         # Make sure that get_current() does not return a deleted Site object.
@@ -33,6 +40,7 @@ class SitesFrameworkTests(TestCase):
         site = Site.objects.get_current()
         self.assertEqual(u"Example site", site.name)
 
+    @override_settings(ALLOWED_HOSTS=['example.com'])
     def test_get_current_site(self):
         # Test that the correct Site object is returned
         request = HttpRequest()

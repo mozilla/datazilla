@@ -1,4 +1,5 @@
 import json
+import os
 import datetime
 import copy
 import urllib
@@ -787,6 +788,18 @@ def setup_pushlog_walk_tests(
     setup_data['target_revision_index'] = revision_count - 1
 
     return setup_data
+
+def test_compute_inline_metrics(mtm):
+
+    sample_data_path =  os.path.dirname(__file__) + '/sample_data/tp5o.json'
+    sample_json = ""
+
+    with open(sample_data_path) as f:
+        sample_json = json.loads( f.read() )
+
+    for data in sample_json:
+
+        mtm.compute_inline_metrics(data)
 
 def _adapt_data(mtm, data):
 

@@ -1,3 +1,6 @@
+import json
+import os
+
 from datazilla.model.base import TestData
 
 from ..sample_data import perftest_data
@@ -50,6 +53,4 @@ def test_ttest_nan():
         assert "p value is not a number" in unicode(e)
     else:
         raise Exception('Failed to raise MetricMethodError')
-
-
 
