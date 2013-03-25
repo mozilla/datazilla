@@ -102,6 +102,15 @@ var AppsPage = new Class( {
         lookup['app_list'] = appList;
 
         var app = $(view.appNameSpanSel).text();
+        //If there's only one app in the applist or the app
+        //is not in the app_list make sure the selected app
+        //is set to the first app in app_list
+        if((appList.length === 1) ||
+           (_.lastIndexOf(appList, app) === -1) ){
+
+            app = appList[0];
+        }
+
         if( (app != "") && (appList.length > 0)){
             params.push('app=' + app);
             lookup['app'] = app;
