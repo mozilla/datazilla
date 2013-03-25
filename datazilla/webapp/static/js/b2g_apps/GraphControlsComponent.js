@@ -344,16 +344,6 @@ var GraphControlsView = new Class({
         //added to history
         APPS_PAGE.disableSaveState = true;
 
-        //Use the change event to synchronize saving state to after
-        //the last checkbox is selected
-        $(inputEls[ inputEls.length-1 ]).unbind('change');
-        $(inputEls[ inputEls.length-1 ]).bind('change', function(event){
-            //Reenable saveState
-            APPS_PAGE.disableSaveState = false;
-            //Save the new application selection state
-            APPS_PAGE.saveState(true);
-            });
-
         for(var i=0; i<inputEls.length; i++){
 
             var el = inputEls[i];
@@ -372,6 +362,11 @@ var GraphControlsView = new Class({
 
             }
         }
+
+        APPS_PAGE.disableSaveState = false;
+
+        //Save the new application selection state
+        APPS_PAGE.saveState(true);
 
     },
     selectApplications: function(testIds){
