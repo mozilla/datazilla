@@ -165,6 +165,12 @@ var PerformanceGraphComponent = new Class({
             testId = data[i]['test_id'];
 
             appName = this.testData['test_ids'][testId]['name'];
+
+            if((appName == undefined) ||
+                (APPS_PAGE.excludeList[appName] != undefined)){
+                continue;
+            }
+
             appColor = this.testData['test_ids'][testId]['color'];
 
             //appNames to display

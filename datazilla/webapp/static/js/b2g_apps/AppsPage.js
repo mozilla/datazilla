@@ -43,6 +43,24 @@ var AppsPage = new Class( {
         this.paramKeys = [ 'branch', 'range', 'test', 'app', 'app_list',
                            'gaia_rev', 'gecko_rev' ];
 
+        this.excludeList = {
+            'ftu':true,
+            'marketplace':true,
+            'b2g_gaia_launch_perf': true,
+            'gallery_load_end': true,
+            'camera_load_end': true,
+            'phone_time_to_paint': true,
+            'music_time_to_paint': true,
+            'music_load_end': true,
+            'messages_load_end': true,
+            'messages_time_to_paint': true,
+            'phone_load_end': true,
+            'camera_time_to_paint': true,
+            'settings_load_end': true,
+            'gallery_time_to_paint': true,
+            'settings_time_to_paint': true,
+            };
+
     },
     saveState: function(){
 
