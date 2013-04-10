@@ -32,22 +32,6 @@ var GraphControlsComponent = new Class({
         this.appToggleEvent = 'APP_TOGGLE_EV';
         this.testToggleEvent = 'TEST_TOGGLE_EV';
 
-        this.excludeList = {
-            'b2g_gaia_launch_perf': true,
-            'gallery_load_end': true,
-            'camera_load_end': true,
-            'phone_time_to_paint': true,
-            'music_time_to_paint': true,
-            'music_load_end': true,
-            'messages_load_end': true,
-            'messages_time_to_paint': true,
-            'phone_load_end': true,
-            'camera_time_to_paint': true,
-            'settings_load_end': true,
-            'gallery_time_to_paint': true,
-            'settings_time_to_paint': true,
-            };
-
         $(APPS_PAGE.appContainerSel).bind(
             APPS_PAGE.stateChangeEvent,
             _.bind(this.stateChange, this)
@@ -64,7 +48,7 @@ var GraphControlsComponent = new Class({
 
             var seriesDatum = data[ this.appSortOrder[i] ];
 
-            if( this.excludeList[ seriesDatum.name ] != undefined ){
+            if( APPS_PAGE.excludeList[ seriesDatum.name ] != undefined ){
 
                 delete this.appSortOrder[i];
 
@@ -121,7 +105,7 @@ var GraphControlsComponent = new Class({
 
             var seriesDatum = data[ sortOrder[i] ];
 
-            if( this.excludeList[ seriesDatum.url ] != undefined){
+            if( APPS_PAGE.excludeList[ seriesDatum.url ] != undefined){
                 continue;
             }
 
@@ -258,11 +242,12 @@ var GraphControlsComponent = new Class({
         this.view.selectApplications(eventData.test_ids);
 
         for( var tId in eventData['test_ids'] ){
-
-            eventData['test_ids'][ tId ] = {
-                'name':this.appLookup[ tId ]['name'],
-                'color':this.appLookup[ tId ]['color']
-                };
+            if(this.appLookup[tId] != undefined){
+                eventData['test_ids'][ tId ] = {
+                    'name':this.appLookup[ tId ]['name'],
+                    'color':this.appLookup[ tId ]['color']
+                    };
+            }
         }
 
         $(APPS_PAGE.appContainerSel).trigger(
