@@ -1222,7 +1222,7 @@ class PerformanceTestModel(DatazillaModelBase):
             debug_show=self.DEBUG
             )
 
-        return self._get_last_insert_id()
+        return self._get_last_insert_id(source='objectstore')
 
 
     def retrieve_test_data(self, limit):
