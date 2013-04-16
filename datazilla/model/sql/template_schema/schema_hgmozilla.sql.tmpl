@@ -99,7 +99,7 @@ CREATE TABLE `pushlogs` (
   `user` varchar(100) COLLATE utf8_bin DEFAULT NULL,
   `branch_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_push` (`push_id`),
+  UNIQUE KEY `uq_push` (`push_id`, `branch_id`),
   KEY `branch` (`branch_id`),
   CONSTRAINT `branch` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
