@@ -542,7 +542,6 @@ def test_load_test_data(ptm):
     """Loads a TestData instance into db and returns test_run_id."""
     data = TestData(perftest_data())
     test_run_id = ptm.load_test_data(data)
-
     test_run_data = ptm.sources["perftest"].dhub.execute(
         proc="perftest_test.selects.test_run", placeholders=[test_run_id])[0]
 

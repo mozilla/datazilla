@@ -1,8 +1,11 @@
+import signal
+import os
+import sys
+import errno
+import time
+
 from optparse import make_option
-from lockfile import FileLock, AlreadyLocked
-
 from django.core.management.base import BaseCommand, CommandError
-
 from datazilla.model import PushLogModel
 
 
@@ -67,7 +70,6 @@ class Command(BaseCommand):
     def println(self, val):
         self.stdout.write("{0}\n".format(str(val)))
 
-
     def handle(self, *args, **options):
         """ Store pushlog data in the database. """
 
@@ -99,28 +101,79 @@ class Command(BaseCommand):
                 except ValueError:
                     raise CommandError("hours must be an integer.")
 
-        lock = FileLock(self.LOCK_FILE)
-        try:
-            lock.acquire(timeout=0)
-            try:
-                plm = PushLogModel(project=project, out=self.stdout, verbosity=verbosity)
+        pidfile = "{0}.pid".format(self.LOCK_FILE)
 
-                # store the pushlogs for the branch specified, or all branches
-                summary = plm.store_pushlogs(repo_host, numdays, hours, enddate, branch)
-                self.println(("Branches: {0}\nPushlogs stored: {1}, skipped: {2}\n" +
-                              "Changesets stored: {3}, skipped: {4}").format(
+        if os.path.isfile(pidfile):
+
+            pid = ""
+            with open(pidfile) as f:
+                pid = f.readline().strip()
+
+            ####
+            #If we have a pid file assume the update_pushlog command is
+            #hanging on an intermitent urllib timeout from the call to the
+            #json-pushes web service method and kill the hanging program.
+            ####
+            if pid:
+
+                logfile_name = "{0}.log".format(self.LOCK_FILE)
+                time_stamp = str( time.time() ).split('.')[0]
+
+                try:
+
+                    os.kill(int(pid), signal.SIGKILL)
+
+                except OSError, err:
+
+                    log_file = open(logfile_name, 'a+')
+
+                    msg = ""
+                    if err.errno == errno.ESRCH:
+                        msg = "pid:{0} time:{1}, Not running\n".format(
+                            pid, time_stamp)
+                    elif err.errno == errno.EPERM:
+                        msg = "pid:{0} time:{1}, No permission to signal process\n".format(
+                            pid, time_stamp)
+                    else:
+                        msg = "pid:{0} time:{1}, Generated unknown error {2}\n".format(
+                            pid, str(err), time_stampe)
+
+                    log_file.write(msg)
+                    log_file.close()
+
+                    #make sure we get rid of any pid file on error
+                    os.unlink(pidfile)
+
+                else:
+
+                    #log the kill
+                    log_file = open(logfile_name, 'a+')
+                    log_file.write("pid:{0} time:{1}, Killed\n".format(
+                        pid, time_stamp))
+                    log_file.close()
+
+                    #remove any existing pidfile
+                    os.unlink(pidfile)
+
+        #Write pid file
+        pid = str(os.getpid())
+        file(pidfile, 'w').write(pid)
+
+        plm = PushLogModel(project=project, out=self.stdout, verbosity=verbosity)
+
+        # store the pushlogs for the branch specified, or all branches
+        summary = plm.store_pushlogs(repo_host, numdays, hours, enddate, branch)
+        self.println(("Branches: {0}\nPushlogs stored: {1}, skipped: {2}\n" +
+                      "Changesets stored: {3}, skipped: {4}").format(
                         summary["branches"],
                         summary["pushlogs_stored"],
                         summary["pushlogs_skipped"],
                         summary["changesets_stored"],
                         summary["changesets_skipped"],
-                        ))
-                plm.disconnect()
+            ))
 
-            finally:
-                lock.release()
+        plm.disconnect()
 
-        except AlreadyLocked:
-            self.println("This command is already being run elsewhere.  Please try again later.")
+        os.unlink(pidfile)
 
 
