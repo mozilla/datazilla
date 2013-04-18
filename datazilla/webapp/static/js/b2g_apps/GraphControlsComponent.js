@@ -39,6 +39,23 @@ var GraphControlsComponent = new Class({
     },
     initializeAppList: function(data){
 
+        //Change name of email app to email FTU.
+        //This should be removed once the email application
+        //is a full featured email app and not a first time use
+        //application.
+        if( data['email'] != undefined ){
+
+            var oldEmailName = 'email';
+            var newEmailName = 'email FTU';
+
+            data['email']['name'] = newEmailName;
+            data[ newEmailName ] = jQuery.extend(
+                true, {}, data[oldEmailName]);
+
+            delete data[oldEmailName];
+        }
+
+
         this.appSortOrder = this.view.getAlphabeticalSortKeys(data);
         var colorIndex = 0;
         var colorCount = this.view.colors.length - 1;
