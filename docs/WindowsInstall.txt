@@ -1,0 +1,58 @@
+################################################################################
+## WINDOWS 7 INSTALL INSTRUCTIONS (by Kyle Lahnakoski, April 2013)
+
+## INSTALL PYTHON 2.7 (32bit ONLY!!!, MANY NATIVE LIBS ARE 32BIT ONLY)
+## INSTALL PYTHON AT c:\Python27
+## ADD TO PATH c:\Python27;c:\Python27\scripts;
+
+## DOWNLOAD http://python-distribute.org/distribute_setup.py
+CALL python distribute_setup.py
+CALL easy_install pip
+CALL easy_install virtualenv
+
+################################################################################
+## MANY "PYTHON POWERED" NATIVE INSTALLS REQUIRE A POINTER TO THE PYTHON INSTALL
+## BUT THEY HAVE NO IDEA WHERE TO LOOK ON A 64bit WINDOWS
+
+## ALTER REGISTRY (SEE http://stackoverflow.com/questions/3652625/installing-setuptools-on-64-bit-windows)
+## SET HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Python\PythonCore\2.7\InstallPath = "C:\Python27"
+
+## INSTALL MySqldb 
+## http://sourceforge.net/projects/mysql-python/files/mysql-python/
+
+## INSTALL numpy (32bit ONLY!!!)
+## http://sourceforge.net/projects/numpy/files/NumPy/1.7.1/numpy-1.7.1-win32-superpack-python2.7.exe/download
+
+## INSTALL scipy (32bit ONLY!!!)
+## http://www.scipy.org/Download
+
+################################################################################
+## INSTALL DATAZILLA DEPENDENCIES
+pip install -r requirements/pure.txt
+pip install -r requirements/dev.txt
+
+
+################################################################################
+## SET YOUR ENVIRONMETN VARIABLES BEFORE RUNNING
+SET DATAZILLA_DATABASE_NAME=datazilla
+SET DATAZILLA_DATABASE_USER=mozauto 
+SET DATAZILLA_DATABASE_PASSWORD=
+SET DATAZILLA_DATABASE_HOST=s4n4.qa.phx1.mozilla.com
+SET DATAZILLA_DATABASE_PORT=3306
+SET DATAZILLA_MEMCACHED=127.0.0.1:11211
+SET DATAZILLA_DEBUG=1
+SET DATAZILLA_RO_DATABASE_NAME=datazilla
+SET DATAZILLA_RO_DATABASE_USER=mozauto 
+
+
+
+
+################################################################################
+## OTHER NOTES
+## 
+## LIKE WITH MANY NATIVE PYTHON INSTALLS, THEY GET VERY CONFUSED WITH x64: 
+## USE THE DEPENDENCY WALKER IF YOU FIND THE import <NATIVE>.pyd IS FAILING 
+## http://www.dependencywalker.com/
+
+
+

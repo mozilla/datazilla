@@ -4,3 +4,5 @@ htmlcov/
 datazilla/settings/local.py
 docs/_build/
 .DS_Store
+.idea
+datazilla.iml
