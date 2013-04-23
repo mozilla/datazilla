@@ -448,6 +448,7 @@ var PerformanceGraphView = new Class({
             idSel = '#' + this.detailIdPrefix + fieldName;
 
             value = datapointDatum[fieldName];
+
             if(fieldName === 'revision'){
                 value = APPS_PAGE.getRevisionSlice(
                     datapointDatum[fieldName]
@@ -456,7 +457,7 @@ var PerformanceGraphView = new Class({
                 $(idSel).attr('href', APPS_PAGE.gaiaHrefBase + value);
             }
 
-            $(idSel).text( datapointDatum[fieldName] );
+            $(idSel).text( value );
         }
     },
     selectOption: function(val, target){
