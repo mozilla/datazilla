@@ -1245,7 +1245,6 @@ class PerformanceTestModel(DatazillaModelBase):
 
         return json_blobs
 
-
     def load_test_data(self, data):
         """Load TestData instance into perftest db, return test_run_id."""
 

@@ -1090,6 +1090,28 @@ class MetricsTestModel(DatazillaModelBase):
             placeholders=placeholders
             )
 
+    def load_test_data_all_dimensions(self, test_run_ids):
+
+        where_in_clause = ','.join( map( lambda v:'%s', test_run_ids ) )
+        ####
+        # Retrieve all available metrics data
+        ###
+        metrics_data = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_test_evaluations_from_test_run_ids',
+            debug_show=self.DEBUG,
+            placeholders=test_run_ids,
+            replace=[where_in_clause])
+
+
+        print metrics_data
+
+        #for d in metrics_data:
+
+        ####
+        # If no metrics data is available compute mean/std from
+        # replicates
+        ####
+
     def log_msg(self, revision, test_run_id, msg_type, msg):
 
         proc = 'perftest.inserts.set_application_msg'

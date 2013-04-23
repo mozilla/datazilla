@@ -12,6 +12,8 @@ class TestSetTestData(object):
         row_data = ptm.sources["objectstore"].dhub.execute(
             proc="objectstore_test.selects.all")[0]
 
+        print response
+
         assert json.loads(row_data["json_blob"]) == {"test": "foo"}
         assert response.json['status'] == u"well-formed JSON stored"
 

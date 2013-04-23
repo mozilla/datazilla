@@ -684,6 +684,18 @@ def examine_metric_key_lookup(mtm, sample_data, model_data):
     #the data from the model
     assert reference_value_count == model_value_count
 
+def test_load_test_data_all_dimensions(mtm, ptm, plm, monkeypatch):
+
+    setup_data = setup_pushlog_walk_tests(
+        mtm, ptm, plm, monkeypatch, load_objects=True)
+
+    test_run_ids = []
+
+    for revision in setup_data['test_run_ids']:
+       test_run_ids.append( str(setup_data['test_run_ids'][revision][0]) )
+
+    mtm.load_test_data_all_dimensions(test_run_ids)
+
 def setup_pushlog_walk_tests(
     mtm, ptm, plm, monkeypatch, load_objects=False
     ):
