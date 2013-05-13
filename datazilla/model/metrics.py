@@ -64,6 +64,33 @@ class MetricsTestModel(DatazillaModelBase):
     #used in the revision string
     REVISION_CHAR_COUNT = 12
 
+    ALL_DIMENSION_COLUMN_KEY = {
+        "ti":"test_run_id",
+        "dr":"date received",
+        "r":"revision",
+        "p":"product",
+        "b":"branch",
+        "bv":"branch version",
+        "osn":"operating system",
+        "osv":"operating system version",
+        "pr":"processor",
+        "bt":"build type",
+        "mn":"machine name",
+        "pi":"pushlog_id",
+        "pd":"push date",
+        "tn":"test name",
+        "pu":"page url",
+        "m":"mean",
+        "s":"std",
+        "hr":"h0 rejected",
+        "pv":"p value",
+        "nr":"replicates",
+        "f":"false discovery rate",
+        "tm":"trend mean",
+        "ts":"trend std",
+        "te":"test evaluation"
+        }
+
     def __init__(self, project=None, metrics=()):
         super(MetricsTestModel, self).__init__(project)
         self.skip_revisions = set()
@@ -1092,25 +1119,230 @@ class MetricsTestModel(DatazillaModelBase):
 
     def load_test_data_all_dimensions(self, test_run_ids):
 
+        if not test_run_ids:
+            return {}
+
+        ordered_columns = [
+            'test_run_id',
+            'product_id',
+            'operating_system_id',
+            'test_id',
+            'page_id',
+            'date_received',
+            'revision',
+            'product',
+            'branch',
+            'branch_version',
+            'operating_system_name',
+            'operating_system_version',
+            'processor',
+            'build_type',
+            'machine_name',
+            'pushlog_id',
+            'push_date',
+            'test_name',
+            'page_url',
+            'mean',
+            'std',
+            'h0_rejected',
+            'p',
+            'n_replicates',
+            'fdr',
+            'trend_mean',
+            'trend_std',
+            'test_evaluation'
+            ]
+
+        columns = {}
+        for c in ordered_columns:
+            columns[c] = None
+
         where_in_clause = ','.join( map( lambda v:'%s', test_run_ids ) )
+
         ####
         # Retrieve all available metrics data
         ###
-        metrics_data = self.sources["perftest"].dhub.execute(
+        computed_metrics = self.sources["perftest"].dhub.execute(
             proc='perftest.selects.get_test_evaluations_from_test_run_ids',
             debug_show=self.DEBUG,
             placeholders=test_run_ids,
             replace=[where_in_clause])
 
+        aggregate_data = {}
+        test_run_ids_with_metrics = set()
 
-        print metrics_data
+        for d in computed_metrics:
 
-        #for d in metrics_data:
+            key = self.get_metrics_key(d)
+
+            value_name = d['metric_value_name']
+
+            if key not in aggregate_data:
+
+                aggregate_data[ key ] = columns.copy()
+
+                aggregate_data[key]['test_run_id'] = d['test_run_id']
+                test_run_ids_with_metrics.add(d['test_run_id'])
+
+                aggregate_data[key]['product_id'] = d['product_id']
+                aggregate_data[key]['operating_system_id'] = d['operating_system_id']
+                aggregate_data[key]['test_id'] = d['test_id']
+                aggregate_data[key]['page_id'] = d['page_id']
+                aggregate_data[key]['test_name'] = d['test_name']
+                aggregate_data[key]['page_url'] = d['page_name']
+                aggregate_data[key]['date_received'] = d['date']
+                aggregate_data[key]['revision'] = d['revision']
+                aggregate_data[key]['product'] = d['product_name']
+                aggregate_data[key]['branch'] = d['product_branch']
+                aggregate_data[key]['branch_version'] = d['product_version']
+                aggregate_data[key]['operating_system_name'] = d['operating_system_name']
+                aggregate_data[key]['operating_system_version'] = d['operating_system_version']
+                aggregate_data[key]['processor'] = d['processor']
+                aggregate_data[key]['build_type'] = d['build_type']
+                aggregate_data[key]['machine_name'] = d['machine_name']
+
+            if value_name == 'trend_stddev':
+                aggregate_data[key]['trend_std'] = d['value']
+            else:
+                aggregate_data[key][value_name] = d['value']
+
+        test_run_ids_set = set(test_run_ids)
+
+        test_run_ids_no_metrics_data = test_run_ids_with_metrics.difference(
+            test_run_ids_set)
+
+        if not test_run_ids_with_metrics and not test_run_ids_no_metrics_data:
+            test_run_ids_no_metrics_data = set( test_run_ids )
 
         ####
-        # If no metrics data is available compute mean/std from
+        # If no metrics data is available for a test_run_id compute mean/std from
         # replicates
         ####
+        if test_run_ids_no_metrics_data:
+
+            where_in_clause = ','.join(
+                map( lambda v:'%s', test_run_ids_no_metrics_data )
+                )
+
+            computed_mean = self.sources["perftest"].dhub.execute(
+                proc='perftest.selects.get_test_run_value_full_summary',
+                debug_show=self.DEBUG,
+                placeholders=list(test_run_ids_no_metrics_data),
+                replace=[where_in_clause])
+
+            for d in computed_mean:
+
+                key = self.get_metrics_key(d)
+
+                if key not in aggregate_data:
+
+                    aggregate_data[key] = columns.copy()
+
+                    aggregate_data[key]['test_run_id'] = d['test_run_id']
+                    aggregate_data[key]['product_id'] = d['product_id']
+                    aggregate_data[key]['operating_system_id'] = d['operating_system_id']
+                    aggregate_data[key]['test_id'] = d['test_id']
+                    aggregate_data[key]['page_id'] = d['page_id']
+                    aggregate_data[key]['test_name'] = d['test_name']
+                    aggregate_data[key]['page_url'] = d['page_name']
+                    aggregate_data[key]['date_received'] = d['date']
+                    aggregate_data[key]['revision'] = d['revision']
+                    aggregate_data[key]['product'] = d['product_name']
+                    aggregate_data[key]['branch'] = d['product_branch']
+                    aggregate_data[key]['branch_version'] = d['product_version']
+                    aggregate_data[key]['operating_system_name'] = d['operating_system_name']
+                    aggregate_data[key]['operating_system_version'] = d['operating_system_version']
+                    aggregate_data[key]['processor'] = d['processor']
+                    aggregate_data[key]['build_type'] = d['build_type']
+                    aggregate_data[key]['machine_name'] = d['machine_name']
+
+                aggregate_data[key]['mean'] = d['mean']
+                aggregate_data[key]['std'] = d['std']
+
+        unique_key_columns = [
+            'product_id', 'operating_system_id', 'processor', 'build_type',
+            'test_id', 'page_id'
+            ]
+
+        insert_placeholder_keys = ordered_columns + unique_key_columns
+
+        revisions_without_push_data = {}
+
+        executemany_placeholders = []
+        for key in aggregate_data:
+
+            placeholder_values = []
+            for value in insert_placeholder_keys:
+               placeholder_values.append( aggregate_data[key][value] )
+            executemany_placeholders.append(placeholder_values)
+
+            if not aggregate_data[key]['pushlog_id'] and \
+                not aggregate_data[key]['push_date']:
+                    revisions_without_push_data[ aggregate_data[key]['revision'] ] = \
+                        aggregate_data[key]['branch']
+
+        self.sources["perftest"].dhub.execute(
+            proc='perftest.inserts.set_test_data_all_dimensions',
+            debug_show=self.DEBUG,
+            executemany=True,
+            placeholders=executemany_placeholders)
+
+        return revisions_without_push_data
+
+    def get_data_all_dimensions(self, date_begin, date_end):
+
+        data = {
+            'min_date_data_received':"",
+            'max_date_data_received':"",
+            'data':[],
+            'column_key':MetricsTestModel.ALL_DIMENSION_COLUMN_KEY
+            }
+
+        min_max_data = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_date_range_all_dimensions',
+            debug_show=self.DEBUG)
+
+        data['min_date_data_received'] = min_max_data[0]['min_date_data_received']
+        data['max_date_data_received'] = min_max_data[0]['max_date_data_received']
+
+        data['data'] = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_test_data_all_dimensions',
+            debug_show=self.DEBUG,
+            placeholders=[date_begin, date_end])
+
+        return data
+
+    def set_push_data_all_dimensions(self, revision_nodes):
+
+        placeholders = []
+
+        for revision in revision_nodes:
+
+            if 'alt_name' in revision_nodes[revision]:
+                placeholders.append(
+                    [ revision_nodes[revision]['pushlog_id'],
+                      revision_nodes[revision]['date'],
+                      revision,
+                      revision_nodes[revision]['alt_name']
+                        ]
+                    )
+
+            placeholders.append(
+                [ revision_nodes[revision]['pushlog_id'],
+                  revision_nodes[revision]['date'],
+                  revision,
+                  revision_nodes[revision]['name']
+                    ]
+                )
+
+        proc = 'perftest.inserts.set_push_data_all_dimension'
+
+        self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            placeholders=placeholders,
+            executemany=True,
+            )
 
     def log_msg(self, revision, test_run_id, msg_type, msg):
 
@@ -1360,7 +1592,7 @@ class MetricMethodBase(MetricMethodInterface):
 
             msg = (
                 "Class, {0}, must set cls.NAME to a valid metric name "
-                "found in the `metric` table in the "
+                "found in the 'metric' table in the "
                 "perftest schema"
                 ).format(self.__class__.__name__)
 
@@ -1370,7 +1602,7 @@ class MetricMethodBase(MetricMethodInterface):
 
             msg = (
                 "Class, {0}, must set cls.SUMMARY_NAME to a valid "
-                "metric value name found in the `metric_value` table "
+                "metric value name found in the 'metric_value' table "
                 "in the perftest schema or to None if there is no metric "
                 "summary available."
                 ).format(self.__class__.__name__)
@@ -1396,7 +1628,7 @@ class MetricMethodBase(MetricMethodInterface):
         classes.  Requires derived classes set cls.NAME to a metric name
         found in the metric table in the perftest schema and
         cls.SUMMARY_NAME to a valid metric value name found in the
-        `metric_value` table in the perftest schema or None if there is
+        'metric_value' table in the perftest schema or None if there is
         no metric summary for the method.
         """
 

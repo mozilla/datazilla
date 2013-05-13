@@ -4,6 +4,9 @@ from datazilla.webapp.apps.datazilla import views
 urlpatterns = patterns('',
 
                        #Loads JSON object into objectstore
+                       (r'^$', views.homepage),
+
+                       #Loads JSON object into objectstore
                        (r'^load_test/?$', views.set_test_data),
 
                        #return reference data

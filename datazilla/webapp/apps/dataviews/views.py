@@ -18,6 +18,7 @@ from datazilla.model import DatasetNotFoundError
 
 APP_JS = 'application/json'
 
+
 def graphs(request, project=""):
 
     ####

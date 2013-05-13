@@ -22,9 +22,11 @@ urlpatterns = patterns('',
         "User-agent: *\nDisallow: /", mimetype="text/plain"
         )),
 
+    #default UI
+    (r'^/?$', include('datazilla.webapp.apps.datazilla.urls')),
+
     (r'^b2g/?', include('datazilla.webapp.apps.summary.b2g_app_urls')),
 
-    #default UI
     (r'^(?P<project>{0})/?$'.format(project_list), include('datazilla.webapp.apps.dataviews.urls')),
 
     #dataview application
@@ -41,5 +43,6 @@ urlpatterns = patterns('',
 
     # return reference data about Datazilla, not particular to a project
     (r'^refdata/', include("datazilla.webapp.apps.datazilla.refdata.urls_no_project")),
+
 
     )

@@ -15,6 +15,7 @@ from django.http import HttpResponse
 from datazilla.model import PerformanceTestModel
 from datazilla.model import utils
 from datazilla.model import DatasetNotFoundError
+from datazilla.model import DataSource
 
 APP_JS = 'application/json'
 
@@ -142,4 +143,16 @@ def set_test_data(request, project=""):
 
 
     return HttpResponse(json.dumps(result), mimetype=APP_JS, status=status)
+
+def homepage(request):
+
+    template_context = {
+        'DEBUG':settings.DEBUG,
+        'PROJECTS':DataSource.objects.filter(
+            contenttype="perftest").values_list("project", flat=True)
+        }
+
+    return render_to_response(
+        'homepage.html', template_context
+        )
 

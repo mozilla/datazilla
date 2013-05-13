@@ -245,4 +245,12 @@ def get_test_value_summary(project, branch, test_ids, url, begin, now):
 
     return data
 
+def get_test_data_all_dimensions(project, min_timestamp, max_timestamp):
+
+    mtm = factory.get_mtm(project)
+    data = mtm.get_data_all_dimensions(min_timestamp, max_timestamp)
+    mtm.disconnect()
+
+    return data
+
 

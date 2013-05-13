@@ -1,6 +1,6 @@
 from optparse import make_option
 
-from datazilla.model import PerformanceTestModel
+from datazilla.model import PerformanceTestModel, MetricsTestModel, PushLogModel
 from base import ProjectBatchCommand
 
 from datazilla.controller.admin.metrics.perftest_metrics import compute_test_run_metrics
@@ -62,4 +62,26 @@ class Command(ProjectBatchCommand):
             compute_test_run_metrics(
                 project, pushlog_project, debug, replicate_min, test_run_ids
                 )
+
+        mtm = MetricsTestModel(project)
+        revisions_without_push_data = mtm.load_test_data_all_dimensions(
+            test_run_ids)
+
+        if revisions_without_push_data:
+
+            revision_nodes = {}
+            plm = PushLogModel()
+
+            for revision in revisions_without_push_data:
+
+                node = plm.get_node_from_revision(
+                    revision, revisions_without_push_data[revision])
+
+                revision_nodes[revision] = node
+
+            plm.disconnect()
+            mtm.set_push_data_all_dimensions(revision_nodes)
+
+        mtm.disconnect()
+
 

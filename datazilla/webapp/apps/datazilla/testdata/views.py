@@ -246,3 +246,22 @@ def get_test_value_summary(request, project):
         content_type=API_CONTENT_TYPE,
         )
 
+def get_data_all_dimensions(request, project=""):
+
+    #default: last 7 days
+    start_time = request.GET.get('start', int(time.time()) - 2592000)
+    #default: now
+    end_time = request.GET.get('stop', int(time.time()))
+
+    data = testdata.get_test_data_all_dimensions(
+        project, start_time, end_time)
+
+    data['start'] = start_time
+    data['stop'] = end_time
+
+    return HttpResponse(
+        json.dumps(data), content_type=API_CONTENT_TYPE)
+
+
+
+
