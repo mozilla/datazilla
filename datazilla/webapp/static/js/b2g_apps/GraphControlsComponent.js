@@ -93,7 +93,30 @@ var GraphControlsComponent = new Class({
         this.appSortOrder = _.compact(this.appSortOrder);
 
         this.model.getBranches(this, this.initializeBranchList);
+        this.model.getDeviceTypes(this, this.initializeDeviceList);
 
+    },
+    initializeDeviceList: function(data){
+
+        var deviceTypes = {};
+        var keys = _.keys(data);
+        var type = "";
+
+        for(i = 0; i<keys.length; i++){
+
+            if(data[ keys[i] ][ 'type' ] != undefined){
+                type = data[ keys[i] ][ 'type' ];
+                if(deviceTypes[type] === undefined){
+                    deviceTypes[type] = true;
+                    this.view.addDevice(type);
+                }
+            }
+        }
+
+        //If we don't get a machine type use the default
+        if(_.isEmpty(deviceTypes)){
+            this.view.addDevice(this.view.defaultDeviceOption);
+        }
     },
     initializeBranchList: function(data){
 
@@ -306,6 +329,7 @@ var GraphControlsView = new Class({
         this.testSeriesContainerSel = '#test_series';
 
         this.branchSelectMenuSel = '#app_branch';
+        this.deviceSelectMenuSel = '#app_device';
 
         this.idRegex = /^.*_(\d+)$/;
 
@@ -316,9 +340,14 @@ var GraphControlsView = new Class({
         this.testColor = '#5CB2CB';
 
         this.defaultBranchOption = 'master';
+        this.defaultDeviceOption = 'unagi';
 
         if(APPS_PAGE.defaults['branch'] != undefined){
             this.defaultBranchOption = APPS_PAGE.defaults['branch'];
+        }
+
+        if(APPS_PAGE.defaults['device'] != undefined){
+            this.defaultDeviceOption = APPS_PAGE.defaults['device'];
         }
 
         //series label ids
@@ -490,6 +519,17 @@ var GraphControlsView = new Class({
         $(optionEl).text(branch);
         $(this.branchSelectMenuSel).append(optionEl);
     },
+    addDevice: function(device){
+        var optionEl = $('<option></option>');
+        $(optionEl).attr('value', device);
+
+        if(device === this.defaultDeviceOption){
+            $(optionEl).attr('selected', 'selected');
+        }
+
+        $(optionEl).text(device);
+        $(this.deviceSelectMenuSel).append(optionEl);
+    },
     selectDefaultTimeRange: function(range){
         var optionEl = $(this.timeRangeSel).find('[value="' + range + '"]');
         $(optionEl).attr('selected', 'selected');
@@ -515,6 +555,20 @@ var GraphControlsModel = new Class({
 
     },
 
+    getDeviceTypes: function(context, fnSuccess){
+
+        var uri = APPS_PAGE.urlBase + 'refdata/perftest/ref_data/machines';
+
+        jQuery.ajax( uri, {
+            accepts:'application/json',
+            dataType:'json',
+            cache:false,
+            type:'GET',
+            data:data,
+            context:context,
+            success:fnSuccess,
+        });
+    },
     getBranches: function(context, fnSuccess){
 
         var uri = APPS_PAGE.urlBase + 'refdata/perftest/ref_data/products';

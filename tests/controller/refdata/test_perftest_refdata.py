@@ -134,7 +134,8 @@ def test_get_ref_data_machines(ptm):
         del(item["id"])
 
     exp = {'qm-pxp01': {'name': 'qm-pxp01'}}
-    assert exp == ref_data
+
+    assert exp['qm-pxp01']['name'] == ref_data['qm-pxp01']['name']
 
 
 def test_get_ref_data_operating_systems(ptm):

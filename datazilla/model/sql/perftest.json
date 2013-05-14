@@ -348,6 +348,15 @@
                WHERE id = ?",
 
         "host":"master_host"
+    },
+    "set_machine_type":{
+
+        "sql":"UPDATE machine
+               SET type = ?
+               WHERE id = ?",
+
+        "host":"master_host"
+
     }
   },
   "selects":{
@@ -543,7 +552,7 @@
          "host":"read_host"
 
     },
-    "get_value_summary_by_test_id":{
+    "get_b2g_value_summary_by_test_id":{
 
         "sql":"SELECT tv.test_run_id,
                       tv.page_id,
@@ -554,6 +563,7 @@
                       tr.date_run,
                       b.product_id,
                       m.operating_system_id,
+                      m.type,
                       p.url,
                       ROUND( AVG(tv.value), 2 ) AS avg,
                       ROUND( MIN(tv.value), 2 ) AS min,
@@ -566,7 +576,7 @@
               LEFT JOIN machine AS m ON tr.machine_id = m.id
               LEFT JOIN build AS b ON tr.build_id = b.id
               LEFT JOIN product AS pr ON b.product_id = pr.id
-              WHERE tr.test_id IN (REP0) AND pr.branch = ? AND p.url = ? AND tr.date_run >= ? AND tr.date_run <= ?
+              WHERE tr.test_id IN (REP0) AND pr.branch = ? AND m.type = ? AND p.url = ? AND tr.date_run >= ? AND tr.date_run <= ?
               GROUP BY tr.revision, tr.gecko_revision, tr.test_id, p.url
               ORDER BY tr.date_run, tr.id DESC",
 
@@ -676,7 +686,7 @@
     },
     "get_machines":{
 
-        "sql":"SELECT `id`, `name` FROM `machine`",
+        "sql":"SELECT * FROM `machine`",
 
         "host":"read_host"
 

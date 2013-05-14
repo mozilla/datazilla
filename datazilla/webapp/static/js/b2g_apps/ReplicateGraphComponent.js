@@ -97,11 +97,17 @@ var ReplicateGraphComponent = new Class({
         var chartIndex = 0;
         var detailStructId = 0;
 
+        var device = this.view.getSelectedDevice();
+        var deviceType = "";
+
         for(j=0; j<data.length; j++){
 
             results = data[j]['json_blob']['results'][this.datapoint.url];
 
-            if(results === undefined){
+            //There are some data structures without an explicit test machine type
+            //attribute. These are all the defaultDeviceOption
+            deviceType = data[j]['json_blob']['test_machine']['type'] || APPS_PAGE.graphControlsComponent.view.defaultDeviceOption;
+            if( (results === undefined) || (device != deviceType ) ){
                 continue;
             }
 
@@ -134,7 +140,7 @@ var ReplicateGraphComponent = new Class({
             );
 
         //Initialize the replicate detail to first replicate
-        if(results != undefined){
+        if( (results != undefined) && (this.chartData['data'][0] != undefined) ){
             this.view.setHoverData(1, this.chartData['data'][0][1]);
         }
 
@@ -177,6 +183,7 @@ var ReplicateGraphView = new Class({
         this.parent(options);
 
         this.appContainerSel = '#app_container';
+        this.deviceSel = '#app_device';
         this.chartContainerSel = '#app_replicate_chart';
         this.noChartDataMessageSel = '#app_rep_no_chartdata';
         this.buildDataContainerSel = '#app_replicate_build_data';
@@ -191,6 +198,9 @@ var ReplicateGraphView = new Class({
             'gecko_revision', 'avg', 'min', 'max', 'std'
             ];
 
+    },
+    getSelectedDevice: function(){
+        return $(this.deviceSel).val();
     },
     showData: function(noData){
 
@@ -283,14 +293,18 @@ var ReplicateGraphView = new Class({
 
         $(this.buildDataContainerSel).empty();
 
-        var replicateRange = jsonData['replicate_range']['start'] + " - " +
-            jsonData['replicate_range']['end'];
+        var replicateRange = "";
 
-        this.loadField(
-            'replicate range',
-            replicateRange,
-            this.buildDataContainerSel
-            );
+        if(jsonData['replicate_range'] != undefined){
+            replicateRange = jsonData['replicate_range']['start'] + " - " +
+                jsonData['replicate_range']['end'];
+
+            this.loadField(
+                'replicate range',
+                replicateRange,
+                this.buildDataContainerSel
+                );
+        }
 
         this.loadField(
             'date',
