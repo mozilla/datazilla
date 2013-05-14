@@ -221,6 +221,7 @@ def get_test_value_summary(request, project):
     test_ids = utils.get_id_list(request.GET['test_ids'])
     page_name = request.GET.get("page_name", "")
     range = request.GET.get("range", 7)
+    device = request.GET.get("device", "unagi")
 
     #make sure we're operating on an int
     try:
@@ -241,7 +242,7 @@ def get_test_value_summary(request, project):
 
     return HttpResponse(
         json.dumps(testdata.get_test_value_summary(
-            project, branch, test_ids, page_name, begin, now
+            project, branch, device, test_ids, page_name, begin, now
             )),
         content_type=API_CONTENT_TYPE,
         )
