@@ -95,6 +95,12 @@ var AppsPage = new Class( {
             lookup['branch'] = branch;
         }
 
+        var device = $(view.deviceSel).find(":selected").text();
+        if(device != ""){
+            params.push('device=' + device);
+            lookup['device'] = device;
+        }
+
         var range = $(view.timeRangeSel).find(":selected").val();
         if(range != ""){
             params.push('range=' + range);
@@ -173,6 +179,7 @@ var AppsPage = new Class( {
 
         this.defaults = {};
         this.defaults['branch'] = urlObj.param.query.branch;
+        this.defaults['device'] = urlObj.param.query.device;
         this.defaults['range'] = urlObj.param.query.range;
         this.defaults['test'] = urlObj.param.query.test || 'cold_load_time';
         this.defaults['app'] = urlObj.param.query.app;
