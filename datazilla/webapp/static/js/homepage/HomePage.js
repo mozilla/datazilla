@@ -16,6 +16,14 @@ var HomePage = new Class( {
 
         this.parent(options);
 
+        this.projectDefaults = {
+            'default':{
+                'product':'Firefox',
+                'repository':'Mozilla-Inbound',
+                'arch':'x86_64',
+                }
+            };
+
     },
     saveState: function(){
 
@@ -55,7 +63,17 @@ var HomePage = new Class( {
         var urlObj = jQuery.url(window.location).data;
 
         this.refData.project = urlObj.param.query.project || 'jeads';
-console.log(this.refData.project);
+
+        var defaults = {};
+        if(this.projectDefaults[this.refData.project] === undefined){
+            defaults = this.projectDefaults['default'];
+        }else{
+            defaults = this.projectDefaults[this.refData.project];
+        }
+
+        this.refData.arch = urlObj.param.query.arch || defaults.arch;
+        this.refData.product = urlObj.param.query.product || defaults.product;
+        this.refData.repository = urlObj.param.query.repository || defaults.repository;
 
         if(urlObj.attr.directory.search(/\/$/) === -1){
             urlObj.attr.directory += '/';
@@ -111,5 +129,7 @@ $(document).ready(function() {
     HOME_PAGE.setRefData();
 
     HOME_PAGE.SliderComponent = new SliderComponent();
+    HOME_PAGE.NavComponent = new NavComponent();
+    HOME_PAGE.LineGraphComponent = new LineGraphComponent();
 
 });

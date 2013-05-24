@@ -46,19 +46,7 @@
                 <div class="hp-control-element" style="margin-left:10px; margin-right:20px;">
                     Product/Repository:
                     <select id="hp_repository">
-                        <option value="Firefox">Firefox</option>
-                    </select>
-                </div>
-                <div class="hp-control-element" style="margin-left:10px; margin-right:20px;">
-                    Arch:
-                    <select id="hp_arch">
-                        <option value="x86">x86</option>
-                    </select>
-                </div>
-                <div class="hp-control-element" style="margin-left:10px; margin-right:20px;">
-                    Test Machines:
-                    <select id="hp_machines">
-                        <option value="machine">machine</option>
+                        <option value="Firefox"></option>
                     </select>
                 </div>
 
@@ -67,28 +55,46 @@
 
         <div class="su-large-text" style="margin-left:380px; margin-top:50px;">Adjust time range to retrieve corresponding data.</div>
 
-        <div id="slider" style="width:80%; margin-top:50px; margin-left:100px;"></div>
+        <div id="slider" style="width:85%; margin-top:50px; margin-left:100px;"></div>
 
-    <div id="hp-tabs" style="margin-top:100px;">
+    <div id="hp_tabs" style="margin-top:100px;">
         <ul>
             <li><a href="#hp-metrics">Metrics</a></li>
             <li><a href="#hp-metrics">Machine Summary</a></li>
             <li><a href="#hp-json">JSON Objects</a></li>
             <li><a href="#hp-database">Database Summary</a></li>
         </ul>
-        <div id="hp-metrics">
+        <div id="hp-metrics" style="height:1000px;">
 
-            <div style="margin-left:0px;">
-                <!--
-                <ul id="hp-platform-menu">
-                    Browse By Platform
-                </ul>
-                <ul id="hp-test-menu">
-                    Browse By Test
-                </ul>
-                -->
-                <div id="yearly-bubble-chart" class="dc-chart"></div>
+            <div class="hp-list">
+                <div class="ui-widget ui-widget-header ui-corner-top hp-list-controls">
+                    <div style="padding:5px;">Browse By Platform</div>
+                </div>
+                <div id="hp_platform_menu" class="ui-corner-bottom"></div>
+                <div style="margin-top:5px;" class="ui-widget ui-widget-header ui-corner-top hp-list-controls">
+                    <div style="padding:5px;">Browse By Test </div>
+                </div>
+                <div id="hp_test_menu" class="ui-corner-bottom">
+                </div>
             </div>
+            <div class="ui-widget ui-widget-header ui-corner-top hp-graph-controls">
+                <div id="hp_nav" class="hp-control-element" style="float:left; margin-left:10px; margin-right:20px;"></div>
+                <div class="hp-control-element" style="float:right; margin-left:10px; margin-right:20px;">
+                    Arch:
+                    <select id="hp_arch">
+                        <option value="x86"></option>
+                    </select>
+                </div>
+                <div class="hp-control-element" style="float:right; margin-left:10px; margin-right:20px;">
+                    Machines:
+                    <select id="hp_machines">
+                        <option value="machine"></option>
+                    </select>
+                </div>
+                <div id="hp_linegraphs" class="hp-line-graph-container">
+                </div>
+            </div>
+    
         </div>
         <div id="hp-json">
             <p>Morbi tincidunt, dui sit amet facilisis feugiat, odio metus gravida ante, ut pharetra massa metus id nunc. Duis scelerisque molestie turpis. Sed fringilla, massa eget luctus malesuada, metus eros molestie lectus, ut tempus eros massa ut dolor. Aenean aliquet fringilla sem. Suspendisse sed ligula in ligula suscipit aliquam. Praesent in eros vestibulum mi adipiscing adipiscing. Morbi facilisis. Curabitur ornare consequat nunc. Aenean vel metus. Ut posuere viverra nulla. Aliquam erat volutpat. Pellentesque convallis. Maecenas feugiat, tellus pellentesque pretium posuere, felis lorem euismod felis, eu ornare leo nisi vel felis. Mauris consectetur tortor et purus.</p>
@@ -107,8 +113,7 @@
 <script type="text/javascript" src="/static/js/plugins/jquery.history.js"></script>
 <script type="text/javascript" src="/static/js/plugins/jquery.url.js"></script>
 <script type="text/javascript" src="/static/js/plugins/d3.v2.min.js"></script>
-<script type="text/javascript" src="/static/js/plugins/dc.min.js"></script>
-<script type="text/javascript" src="/static/js/plugins/crossfilter.min.js"></script>
+
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.min.js"></script>
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.selection.min.js"></script>
 
@@ -120,12 +125,17 @@
 <!-- Gives core mootools class functionality to jQuery -->
 <script type="text/javascript" src="/static/js/plugins/mootools-core-1.4.0.js"></script>
 <script type="text/javascript" src="/static/js/plugins/moo4q/Source/Class.Mutators.jQuery.js"></script>
+<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.selection.min.js"></script>
 <script type="text/javascript" src="/static/js/plugins/json2.js"></script>
+<script type="text/javascript" src="/static/js/plugins/d3.v2.min.js"></script>
 
 <!-- Homepage classes -->
 <script type="text/javascript" src="/static/js/data_views/Bases.js"></script>
 <script type="text/javascript" src="/static/js/homepage/HomePage.js"></script>
 <script type="text/javascript" src="/static/js/homepage/SliderComponent.js"></script>
+<script type="text/javascript" src="/static/js/homepage/NavComponent.js"></script>
+<script type="text/javascript" src="/static/js/homepage/LineGraphComponent.js"></script>
 
 {% else %}
 <script type="text/javascript" src="/static/js/homepage-min.js"></script>
