@@ -357,7 +357,7 @@ var ReplicateGraphView = new Class({
 
             var divEl = $('<div></div>');
             $(divEl).addClass('app-control-element app-control-small-element app-build-data');
-            $(divEl).append('Build Revision: ');
+            $(divEl).append('build revision: ');
 
             var aEl = $('<a></a>');
             $(aEl).attr('href', APPS_PAGE.buildHrefBase + fullBuildRevision);
@@ -369,6 +369,12 @@ var ReplicateGraphView = new Class({
             $(this.buildDataContainerSel).append(divEl);
         }
 
+        var deviceType = jsonData['json_blob']['test_machine']['type'] || APPS_PAGE.graphControlsComponent.view.defaultDeviceOption;
+        this.loadField(
+            'device type',
+            deviceType,
+            this.buildDataContainerSel
+            );
     },
     loadField: function(fieldName, value, container){
 
