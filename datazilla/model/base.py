@@ -1442,7 +1442,7 @@ class PerformanceTestModel(DatazillaModelBase):
     def _update_b2g_machine_type(self, data, machine_id):
 
         if 'type' in data['test_machine']:
-            machine_type_proc = 'perftest.inserts.set_build_revision'
+            machine_type_proc = 'perftest.inserts.set_machine_type'
 
             self.sources["perftest"].dhub.execute(
                 proc=machine_type_proc,
