@@ -91,6 +91,10 @@ var PerformanceGraphComponent = new Class({
             'change', _.bind(this.changeTimeRange, this)
             );
 
+        $(this.view.deviceSel).bind(
+            'change', _.bind(this.changeTimeRange, this)
+            );
+
         $(APPS_PAGE.appContainerSel).bind(
             APPS_PAGE.stateChangeEvent,
             _.bind(this.stateChange, this)
@@ -101,7 +105,7 @@ var PerformanceGraphComponent = new Class({
     },
     changeTimeRange: function(event){
 
-        var optionVal = $(event.target).find(":selected").val();
+        //var optionVal = $(event.target).find(":selected").val();
         this.testToggle(event, this.testData);
     },
     appToggle: function(event, data){
@@ -132,6 +136,7 @@ var PerformanceGraphComponent = new Class({
 
         var range = $(this.view.timeRangeSel).val();
         var branch = $(this.view.branchSel).val();
+        var device = $(this.view.deviceSel).val();
 
         this.view.hideData();
 
@@ -139,7 +144,7 @@ var PerformanceGraphComponent = new Class({
 
         this.model.getAppData(
             this, this.renderPlot, testIds.join(','), data.url, range,
-            branch
+            branch, device
             );
     },
     renderPlot: function(data){
@@ -360,6 +365,7 @@ var PerformanceGraphView = new Class({
 
         this.timeRangeSel = '#app_time_range';
         this.branchSel = '#app_branch';
+        this.deviceSel = '#app_device';
         this.chartContainerSel = '#app_perf_chart';
         this.noChartDataMessageSel = '#app_perf_no_chartdata';
         this.appTestName = '#app_test_name';
@@ -448,6 +454,7 @@ var PerformanceGraphView = new Class({
             idSel = '#' + this.detailIdPrefix + fieldName;
 
             value = datapointDatum[fieldName];
+
             if(fieldName === 'revision'){
                 value = APPS_PAGE.getRevisionSlice(
                     datapointDatum[fieldName]
@@ -456,7 +463,7 @@ var PerformanceGraphView = new Class({
                 $(idSel).attr('href', APPS_PAGE.gaiaHrefBase + value);
             }
 
-            $(idSel).text( datapointDatum[fieldName] );
+            $(idSel).text( value );
         }
     },
     selectOption: function(val, target){
@@ -489,15 +496,18 @@ var PerformanceGraphModel = new Class({
 
     },
 
-    getAppData: function(context, fnSuccess, testIds, pageName, range, branch){
+    getAppData: function(
+        context, fnSuccess, testIds, pageName, range, branch, device){
 
         var uri = APPS_PAGE.urlBase + 'testdata/test_values?' +
-            'branch=BRANCH&test_ids=TEST_IDS&page_name=PAGE_NAME&range=RANGE';
+            'branch=BRANCH&test_ids=TEST_IDS&page_name=PAGE_NAME&' +
+            'range=RANGE&device=DEVICE';
 
         uri = uri.replace('BRANCH', branch);
         uri = uri.replace('TEST_IDS', testIds);
         uri = uri.replace('PAGE_NAME', pageName);
         uri = uri.replace('RANGE', range);
+        uri = uri.replace('DEVICE', device);
 
         jQuery.ajax( uri, {
             accepts:'application/json',

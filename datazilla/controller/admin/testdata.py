@@ -233,12 +233,13 @@ def get_default_version(project, branch, product_name):
 
     return version
 
-def get_test_value_summary(project, branch, test_ids, url, begin, now):
+def get_test_value_summary(
+    project, branch, device, test_ids, url, begin, now):
 
     ptm = factory.get_ptm(project)
 
-    data = ptm.get_value_summary_by_test_ids(
-        branch, test_ids, url, begin, now
+    data = ptm.get_b2g_value_summary_by_test_ids(
+        branch, device, test_ids, url, begin, now
         )
 
     ptm.disconnect()
