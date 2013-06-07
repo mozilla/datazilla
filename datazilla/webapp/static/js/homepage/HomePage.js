@@ -17,10 +17,23 @@ var HomePage = new Class( {
         this.parent(options);
 
         this.projectDefaults = {
+            'b2g':{
+                'product':'B2G',
+                'repository':'master',
+                'arch':'Gonk',
+                'test_name':'phone'
+                },
+            'talos':{
+                'product':'Firefox',
+                'repository':'Mozilla-Inbound',
+                'arch':'x86_64',
+                'test_name':'tp5o',
+                },
             'default':{
                 'product':'Firefox',
                 'repository':'Mozilla-Inbound',
                 'arch':'x86_64',
+                'test_name':'tp5o'
                 }
             };
 
@@ -74,6 +87,7 @@ var HomePage = new Class( {
         this.refData.arch = urlObj.param.query.arch || defaults.arch;
         this.refData.product = urlObj.param.query.product || defaults.product;
         this.refData.repository = urlObj.param.query.repository || defaults.repository;
+        this.refData.test_name = urlObj.param.query.test_name || defaults.test_name;
 
         if(urlObj.attr.directory.search(/\/$/) === -1){
             urlObj.attr.directory += '/';

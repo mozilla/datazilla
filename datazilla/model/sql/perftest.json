@@ -132,17 +132,7 @@
                     `trend_std`,
                     `test_evaluation`
                 )
-                SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-                FROM DUAL
-                WHERE NOT EXISTS (
-                    SELECT `product_id`,`operating_system_id`,`processor`,`build_type`,`test_id`,`page_id`
-                    FROM `test_data_all_dimensions`
-                    WHERE `product_id` = ? AND
-                          `operating_system_id` = ? AND
-                          `processor` = ? AND
-                          `build_type` = ? AND
-                          `test_id` = ? AND
-                          `page_id` = ? )",
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 
          "host":"master_host"
 
@@ -408,6 +398,19 @@
   },
   "selects":{
 
+      "get_test_run_ids_not_in_all_dimensions":{
+
+        "sql":"SELECT tr.id
+               FROM test_run AS tr
+               WHERE tr.id NOT IN (
+                  SELECT tdad.test_run_id
+                  FROM test_data_all_dimensions AS tdad
+                  WHERE tdad.date_received >= ? )
+               AND tr.date_run >= ?",
+
+        "host":"read_host"
+      },
+
       "get_test_data_all_dimensions":{
 
          "sql":"SELECT `test_run_id` AS 'ti',
@@ -435,7 +438,25 @@
                     `trend_std` AS 'ts',
                     `test_evaluation` AS 'te'
                 FROM `test_data_all_dimensions`
-                WHERE date_received >= ? AND date_received <= ?
+                WHERE `product` = ? AND `branch` = ? AND date_received >= ? AND date_received <= ? AND status = 1
+                ORDER BY date_received DESC",
+
+         "host":"read_host"
+
+      },
+      "get_all_dimensions_platforms_and_tests":{
+
+         "sql":"SELECT `product` AS 'p',
+                    `branch` AS 'b',
+                    `branch_version` AS 'bv',
+                    `operating_system_name` AS 'osn',
+                    `operating_system_version` AS 'osv',
+                    `test_name` AS 'tn',
+                    `page_url` AS 'pu'
+                FROM `test_data_all_dimensions`
+                WHERE `product` = ? AND `branch` = ? AND `date_received` >= ? AND
+                      `date_received` <= ? AND `status` = 1
+                GROUP BY `product`, `branch`, `branch_version`, `operating_system_name`, `operating_system_version`, `test_name`, `page_url`
                 ORDER BY date_received DESC",
 
          "host":"read_host"

@@ -245,12 +245,21 @@ def get_test_value_summary(project, branch, test_ids, url, begin, now):
 
     return data
 
-def get_test_data_all_dimensions(project, min_timestamp, max_timestamp):
+def get_test_data_all_dimensions(project, product, branch, min_timestamp, max_timestamp):
 
     mtm = factory.get_mtm(project)
-    data = mtm.get_data_all_dimensions(min_timestamp, max_timestamp)
+    data = mtm.get_data_all_dimensions(
+        product, branch, min_timestamp, max_timestamp)
     mtm.disconnect()
 
     return data
 
+def get_platforms_and_tests(project, product, branch, min_timestamp, max_timestamp):
+
+    mtm = factory.get_mtm(project)
+    data = mtm.get_platforms_and_tests(
+        product, branch, min_timestamp, max_timestamp)
+    mtm.disconnect()
+
+    return data
 

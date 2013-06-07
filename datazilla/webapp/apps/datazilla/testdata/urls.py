@@ -7,6 +7,8 @@ urlpatterns = patterns(
 
     (r"^all_data/?$", "views.get_data_all_dimensions"),
 
+    (r"^platforms_tests/?$", "views.get_platforms_and_tests"),
+
     (r"^test_values/?$", "views.get_test_value_summary"),
 
     (r"^metrics/(?P<branch>.+)/(?P<revision>\w+)/pushlog/?$",

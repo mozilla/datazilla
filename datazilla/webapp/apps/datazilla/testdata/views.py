@@ -22,6 +22,14 @@ REQUIRE_PAGE_NAME = """Invalid Request: Require page_name parameter.
 
 API_CONTENT_TYPE = 'application/json; charset=utf-8'
 
+DEFAULT_BRANCH_PROJECT_MAP = {
+    'talos':{'branch':'Mozilla-Inbound', 'product':'Firefox' },
+    'b2g':{'branch':'master', 'product':'B2G'},
+    'stoneridge':{'branch':'broadband', 'product':'Firefox'},
+    'test':{'branch':'Mozilla-Inbound-Non-PGO', 'product':'Firefox'},
+    'default':{'branch':'Mozilla-Inbound', 'product':'Firefox'},
+}
+
 def get_testdata(request, project, branch, revision):
     """
     Apply data filters and return all test data objects associated with the
@@ -248,13 +256,56 @@ def get_test_value_summary(request, project):
 
 def get_data_all_dimensions(request, project=""):
 
-    #default: last 7 days
     start_time = request.GET.get('start')
-    #default: now
+
     end_time = request.GET.get('stop')
 
+    product = request.GET.get('product')
+
+    branch = request.GET.get('branch')
+
+    if not branch:
+        if project in DEFAULT_BRANCH_PROJECT_MAP:
+            branch = DEFAULT_BRANCH_PROJECT_MAP[project]['branch']
+        else:
+            branch = DEFAULT_BRANCH_PROJECT_MAP['default']['branch']
+
+    if not product:
+        if project in DEFAULT_BRANCH_PROJECT_MAP:
+            product = DEFAULT_BRANCH_PROJECT_MAP[project]['product']
+        else:
+            product = DEFAULT_BRANCH_PROJECT_MAP['default']['product']
+
     data = testdata.get_test_data_all_dimensions(
-        project, start_time, end_time)
+        project, product, branch, start_time, end_time)
+
+    return HttpResponse(
+        json.dumps(data), content_type=API_CONTENT_TYPE)
+
+def get_platforms_and_tests(request, project=""):
+
+    start_time = request.GET.get('start')
+
+    end_time = request.GET.get('stop')
+
+    product = request.GET.get('product')
+
+    branch = request.GET.get('branch')
+
+    if not branch:
+        if project in DEFAULT_BRANCH_PROJECT_MAP:
+            branch = DEFAULT_BRANCH_PROJECT_MAP[project]['branch']
+        else:
+            branch = DEFAULT_BRANCH_PROJECT_MAP['default']['branch']
+
+    if not product:
+        if project in DEFAULT_BRANCH_PROJECT_MAP:
+            product = DEFAULT_BRANCH_PROJECT_MAP[project]['product']
+        else:
+            product = DEFAULT_BRANCH_PROJECT_MAP['default']['product']
+
+    data = testdata.get_platforms_and_tests(
+        project, product, branch, start_time, end_time)
 
     return HttpResponse(
         json.dumps(data), content_type=API_CONTENT_TYPE)

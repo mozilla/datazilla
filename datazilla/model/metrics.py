@@ -140,6 +140,20 @@ class MetricsTestModel(DatazillaModelBase):
         m = self.mf.get_metric_method(test_name)
         return m.SUMMARY_NAME
 
+    def get_test_runs_not_in_all_dimensions(self, time_constraint):
+
+        proc = 'perftest.selects.get_test_run_ids_not_in_all_dimensions'
+
+        test_run_ids = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            key_column='id',
+            placeholders=[time_constraint, time_constraint],
+            return_type='set',
+            )
+
+        return list(test_run_ids)
+
     def get_test_values_by_test_run_id(self, test_run_id):
         """
         Retrieve all test values associated with a given test_run_id.
@@ -1202,8 +1216,14 @@ class MetricsTestModel(DatazillaModelBase):
                 aggregate_data[key]['machine_name'] = d['machine_name']
 
             if value_name == 'trend_stddev':
+                #map column name
                 aggregate_data[key]['trend_std'] = d['value']
+            elif value_name == 'stddev':
+                #map column name
+                aggregate_data[key]['std'] = d['value']
             else:
+                #The rest of the column names match, use value name
+                #as the column name
                 aggregate_data[key][value_name] = d['value']
 
         test_run_ids_set = set(test_run_ids)
@@ -1259,20 +1279,13 @@ class MetricsTestModel(DatazillaModelBase):
                 aggregate_data[key]['mean'] = d['mean']
                 aggregate_data[key]['std'] = d['std']
 
-        unique_key_columns = [
-            'product_id', 'operating_system_id', 'processor', 'build_type',
-            'test_id', 'page_id'
-            ]
-
-        insert_placeholder_keys = ordered_columns + unique_key_columns
-
         revisions_without_push_data = {}
 
         executemany_placeholders = []
         for key in aggregate_data:
 
             placeholder_values = []
-            for value in insert_placeholder_keys:
+            for value in ordered_columns:
                placeholder_values.append( aggregate_data[key][value] )
             executemany_placeholders.append(placeholder_values)
 
@@ -1289,7 +1302,7 @@ class MetricsTestModel(DatazillaModelBase):
 
         return revisions_without_push_data
 
-    def get_data_all_dimensions(self, date_begin, date_end):
+    def get_data_all_dimensions(self, product, branch, date_begin, date_end):
 
         if not date_end:
             date_data = self.sources["perftest"].dhub.execute(
@@ -1302,7 +1315,7 @@ class MetricsTestModel(DatazillaModelBase):
                 date_end = int(time.time())
 
         if not date_begin:
-            date_begin = date_end - 2592000
+            date_begin = date_end - 86400
 
         data = {
             'min_date_data_received':"",
@@ -1321,7 +1334,46 @@ class MetricsTestModel(DatazillaModelBase):
         data['data'] = self.sources["perftest"].dhub.execute(
             proc='perftest.selects.get_test_data_all_dimensions',
             debug_show=self.DEBUG,
-            placeholders=[date_begin, date_end])
+            placeholders=[product, branch, date_begin, date_end])
+
+        data['start'] = date_begin
+        data['stop'] = date_end
+
+        return data
+
+    def get_platforms_and_tests(self, product, branch, date_begin, date_end):
+
+        if not date_end:
+            date_data = self.sources["perftest"].dhub.execute(
+                proc='perftest.selects.get_max_all_dimensions_date',
+                debug_show=self.DEBUG)
+
+            if date_data:
+                date_end = date_data[0]['max_date_received']
+            else:
+                date_end = int(time.time())
+
+        if not date_begin:
+            date_begin = date_end - 86400
+
+        data = {
+            'min_date_data_received':"",
+            'max_date_data_received':"",
+            'data':[],
+            'column_key':MetricsTestModel.ALL_DIMENSION_COLUMN_KEY
+            }
+
+        min_max_data = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_date_range_all_dimensions',
+            debug_show=self.DEBUG)
+
+        data['min_date_data_received'] = min_max_data[0]['min_date_data_received']
+        data['max_date_data_received'] = min_max_data[0]['max_date_data_received']
+
+        data['data'] = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_all_dimensions_platforms_and_tests',
+            debug_show=self.DEBUG,
+            placeholders=[product, branch, date_begin, date_end])
 
         data['start'] = date_begin
         data['stop'] = date_end
@@ -1333,6 +1385,9 @@ class MetricsTestModel(DatazillaModelBase):
         placeholders = []
 
         for revision in revision_nodes:
+
+            if not revision_nodes[revision]:
+                continue
 
             if 'alt_name' in revision_nodes[revision]:
                 placeholders.append(

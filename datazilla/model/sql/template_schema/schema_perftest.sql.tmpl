@@ -696,7 +696,6 @@ CREATE TABLE `test_data_all_dimensions` (
   `test_evaluation` tinyint(4) DEFAULT NULL,
   `status` tinyint(4) DEFAULT '1',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `test_run_uni` (`product_id`,`operating_system_id`,`processor`,`build_type`,`test_id`,`page_id`),
   KEY `test_run_id_key` (`test_run_id`),
   KEY `date_received_key` (`date_received`),
   KEY `product_id_key` (`product_id`),
@@ -709,8 +708,9 @@ CREATE TABLE `test_data_all_dimensions` (
   KEY `machine_name_key` (`machine_name`),
   KEY `test_name_key` (`test_name`),
   KEY `page_url_key` (`page_url`),
+  KEY `status_key` (`status`),
   CONSTRAINT `fk_test_run_id_tdad` FOREIGN KEY (`test_run_id`) REFERENCES `test_run` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1749 DEFAULT CHARSET=utf8 COLLATE=utf8_bin
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
