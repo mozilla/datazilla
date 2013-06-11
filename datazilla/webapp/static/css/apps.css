@@ -66,7 +66,7 @@ div.app-list {
 div.app-list-two {
     position:absolute;
     width: 150px;
-    height: 380px;
+    height: 440px;
     top: 520px;
     background: white;
     overflow: auto;
@@ -104,7 +104,7 @@ div.app-graph-container {
 div.app-graph-container-two {
     position:absolute;
     width: 958px;
-    height: 380px;
+    height: 440px;
     background: white;
     left: 160px;
     top:520px;
