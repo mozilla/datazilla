@@ -293,6 +293,11 @@ var ReplicateGraphView = new Class({
 
         $(this.buildDataContainerSel).empty();
 
+        this.loadAllDetailFields(jsonData);
+
+    },
+    loadAllDetailFields: function(jsonData){
+
         var replicateRange = "";
 
         if(jsonData['replicate_range'] != undefined){
@@ -361,6 +366,7 @@ var ReplicateGraphView = new Class({
 
             var aEl = $('<a></a>');
             $(aEl).attr('href', APPS_PAGE.buildHrefBase + fullBuildRevision);
+            $(aEl).attr('title', fullBuildRevision);
             $(aEl).attr('target', '_blank');
             $(aEl).text(truncBuildRevision);
 
@@ -373,6 +379,22 @@ var ReplicateGraphView = new Class({
         this.loadField(
             'device type',
             deviceType,
+            this.buildDataContainerSel
+            );
+
+        this.loadField(
+            'delay',
+            jsonData['json_blob']['test_build']['delay'],
+            this.buildDataContainerSel
+            );
+        this.loadField(
+            'settle time',
+            jsonData['json_blob']['test_build']['settle_time'],
+            this.buildDataContainerSel
+            );
+        this.loadField(
+            'restart',
+            jsonData['json_blob']['test_build']['restart'],
             this.buildDataContainerSel
             );
     },
