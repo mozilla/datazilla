@@ -710,7 +710,7 @@ CREATE TABLE `test_data_all_dimensions` (
   KEY `page_url_key` (`page_url`),
   KEY `status_key` (`status`),
   CONSTRAINT `fk_test_run_id_tdad` FOREIGN KEY (`test_run_id`) REFERENCES `test_run` (`id`)
-) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin
+) ENGINE={engine} DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

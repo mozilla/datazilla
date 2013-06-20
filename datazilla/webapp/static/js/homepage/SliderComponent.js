@@ -41,10 +41,12 @@ var SliderComponent = new Class({
          te:"test evaluation"
 
 
-         this.data[project][product][branch][test] = [];
+         this.data[project][product][repository] =
+            { min:
+              max:
+              data: [ ] }
 
         *******************/
-
         this.setOptions(options);
 
         this.parent(options);
@@ -61,7 +63,7 @@ var SliderComponent = new Class({
         this.machines = {};
 
         $(this.view.sliderSel).bind(
-            "valuesChanged", _.bind(this.getRange, this)
+            "valuesChanged", _.bind(this.getPlatformsAndTests, this)
             );
 
         $(this.view.projectSel).bind(
@@ -69,51 +71,44 @@ var SliderComponent = new Class({
             );
 
         $(this.view.productRepositorySel).bind(
-            "change", _.bind(this.setProductRepositoryOption, this)
+            "change", _.bind(this.getPlatformsAndTests, this)
             );
 
-        this.view.selectDefaultProject();
+        //Set the project selection
+        this.view.setProject();
+
+        var project = this.view.getProject();
 
         this.model.getProductRepositories(
-            this, _.bind(this.loadProductRepositories, this)
+            this, project, _.bind(this.loadProductRepositories, this)
             );
 
     },
     setProjectOption: function(ev){
 
-        var project = $(this.view.projectSel).find(":selected").val();
-
-        //Set refData
-        HOME_PAGE.refData.project = project;
+        var project = this.view.getProject();
 
         if(this.productRepositories[project] != undefined){
-            this.loadProductRepositories(this.productRepositories);
+            this.loadProductRepositories();
         }else {
             this.model.getProductRepositories(
-                this, _.bind(this.loadProductRepositories, this)
+                this, project, _.bind(this.loadProductRepositories, this)
                 );
         }
-
-        this.view.setSelectMenu(
-            this.view.productRepositorySel, this.productRepositories[project],
-            this.getProductRepositoryString(
-                HOME_PAGE.refData.product, HOME_PAGE.refData.repository
-                )
-            );
     },
     loadProductRepositories: function(data){
 
         var id = 0;
+        var project = this.view.getProject();
+
         var productRepository = "";
-        var project = HOME_PAGE.refData.project;
+        var product = "";
+        var branch = "";
 
         //First time loading data
         if(this.productRepositories[project] === undefined){
 
             this.productRepositories[project] = {};
-
-            var product = "";
-            var branch = "";
 
             for(id in data){
 
@@ -146,14 +141,16 @@ var SliderComponent = new Class({
                     }
 
                     if(this.data[project][product][branch] === undefined){
-                        this.data[project][product][branch] = [];
+                        this.data[project][product][branch] = {
+                            'min':0, 'max':0, 'tests':{}, 'platforms':{}
+                            };
                     }
 
                     if(this.sliders[project] === undefined){
 
                         this.sliders[project] = {
-                            'el':'', 'id':this.view.sliderIdBase + '_' + project,
-                            'min':0, 'max':0
+                            'el':undefined, 'id':this.view.sliderIdBase + '_' + project,
+                            'min':0, 'max':0, 'data_initialized':false
                             };
                     }
                 }
@@ -162,120 +159,135 @@ var SliderComponent = new Class({
 
         this.view.setSelectMenu(
             this.view.productRepositorySel, this.productRepositories[project],
-            this.getProductRepositoryString(product, branch)
+            this.getProductRepositoryString(product, HOME_PAGE.refData.repository)
             );
 
         this.view.setSliderEl(project, this.sliders);
-        this.getRange();
+
+        this.getPlatformsAndTests();
     },
-    setProductRepositoryOption: function(ev){
+    getPlatformsAndTests: function(){
 
-        var selectedOption = $(this.view.productRepositorySel).find(":selected");
-        var data = $(selectedOption).attr('internal_data');
-        data = this.getInternalDataObject(data);
+        var project = this.view.getProject();
 
-        HOME_PAGE.refData.product = data.p;
-        HOME_PAGE.refData.repository = data.b;
+        var prData = this.view.getProductRepository();
+        var product = prData.product;
+        var repository = prData.repository;
 
-    },
-    getRange: function(ev, data){
+console.log(this.sliders);
+        //Get the start and stop time from the slider to
+        var values = this.getSliderValues(project);
 
-        var project = HOME_PAGE.refData.project;
-        var product = HOME_PAGE.refData.product;
-        var repository = HOME_PAGE.refData.repository;
+        if( (values.min === 0 && values.max === 0) ||
+            (values.min < this.data[project][product][repository]['min']) ||
+            (values.max > this.data[project][product][repository]['max']) ){
 
-        if(this.data[project] === undefined){
-            //First data load for the project
-            this.model.getDataAllDimensions(
-                project, product, repository, this, this.loadData
+            //Retrieve data from server
+            this.model.getPlatformsAndTests(
+                project, product, repository, this,
+                this.loadPlatformsAndTests,
+                parseInt(values.min/1000), parseInt(values.max/1000)
                 );
 
-        }else{
+        }else {
+            //Data has already been retrieved, load it
+            this.loadPlatformsAndTests({});
+        }
 
-            this.sliders[project].min = parseInt(data.values.min.getTime()/1000);
-            this.sliders[project].max = parseInt(data.values.max.getTime()/1000);
+    },
+    loadPlatformsAndTests: function(data){
 
-            var dl = this.data[project][product][repository].length - 1;
+        var project = this.view.getProject();
 
-            //Get the last data point
-            var lastDate = parseInt(
-                this.data[project][product][repository][dl].dr - 1
-                );
+        var prData = this.view.getProductRepository();
+        var product = prData.product;
+        var repository = prData.repository;
+        var values = {};
 
-            if(this.sliders[project].min < lastDate){
-                //Data out of range retrieve new data
-                this.model.getDataAllDimensions(
-                    project, product, repository, this, this.loadData,
-                    this.sliders[project].min, lastDate
-                    );
-            }else{
+        //Initialize the slider
+        this.view.setSliderEl(project, this.sliders);
 
-                //Data already loaded retrieve slice
-                this.getTimeSlice();
+        if(this.sliders[project].el === undefined){
 
-                $(this.view.hpContainerSel).trigger(
-                    this.sliderSliceEvent,
-                    { 'machine_graph':this.machineGraph,
-                      'test_graph':this.testGraph,
-                      'platform_graph':this.platformGraph,
-                      'graph_size':this.graphSize,
-                      'slider_min':this.sliders[project].min,
-                      'slider_max':this.sliders[project].min }
-                    );
+            //Initialize slider
+            var dates = this.getMinMaxDate(data, project, product, repository);
 
+            this.sliders[project].min = parseInt(dates.min);
+            this.sliders[project].max = parseInt(dates.max);
+
+            var sliderSel = '#' + this.sliders[project].id;
+
+            this.sliders[project].el = $(sliderSel).dateRangeSlider({
+                'arrows':true,
+                'bounds': {
+                    min: new Date(parseInt(data['min_date_data_received']*1000)),
+                    max: new Date(this.sliders[project].max),
+                    },
+                'defaultValues': {
+                    min: new Date(this.sliders[project].min),
+                    max: new Date(this.sliders[project].max)
+                    }
+                });
+
+            this.data[project][product][repository]['min'] = this.sliders[project].min;
+            this.data[project][product][repository]['max'] = this.sliders[project].max;
+
+
+            values = this.getSliderValues(project);
+
+        } else {
+
+            values = this.getSliderValues(project);
+
+            if(values.min < this.data[project][product][repository]['min']){
+                this.data[project][product][repository]['min'] = values.min;
             }
-        }
-    },
-    getTimeSlice: function(){
-
-        this.arch = {};
-        this.machines = {};
-
-        this.testGraph = {};
-        this.platformGraph = {};
-        this.machineGraph = {};
-
-        this.graphSize = 0;
-
-        var productRepositoryData = $(this.view.productRepositorySel).attr(
-            'internal_data');
-
-        var archData = $(this.view.archSel).attr('internal_data');
-
-        var productFilter = "", repositoryFilter = "", archFilter = "";
-
-        var project = HOME_PAGE.refData.project;
-        var product = HOME_PAGE.refData.product;
-        var repository = HOME_PAGE.refData.repository;
-
-        if(productRepositoryData){
-            var pr = jQuery.parseJSON(
-                this.getInternalDataObject(productRepositoryData)
-                );
-            productFilter = pr.p;
-            repositoryFilter = pr.b;
-        }else{
-            productFilter = product;
-            repositoryFilter = repository;
-        }
-
-        if(archData){
-            archFilter = jQuery.parseJSON(ar).pr;
-        }else{
-            archFilter = HOME_PAGE.refData.arch;
+            if(values.max > this.data[project][product][repository]['max']){
+                this.data[project][product][repository]['max'] = values.max;
+            }
         }
 
         _.map(
-            this.data[project][product][repository],
+            data.data,
             _.bind(
-                this.aggregateData, this, productFilter,
-                repositoryFilter, archFilter, project )
+                this.aggregateTestsAndPages, this, project, product,
+                repository )
             );
 
-        this.view.setSelectMenu(
-            this.view.archSel, this.arch,
-            HOME_PAGE.refData.arch
+        $(this.view.hpContainerSel).trigger(
+            this.sliderSliceEvent,
+            { 'project':project,
+              'product':product,
+              'repository':repository,
+              'data':this.data[project][product][repository],
+              'slider_min':values.min,
+              'slider_max':values.max }
             );
+    },
+    aggregateTestsAndPages: function(project, product, repository, obj){
+
+        var platform = obj.osn + ' ' + obj.osv;
+
+        //Load platforms
+        if(this.data[project][product][repository]['platforms'][platform] === undefined){
+            this.data[project][product][repository]['platforms'][platform] = {};
+        }
+
+        //Load tests
+        if(obj.tn != 'undefined'){
+            if(this.data[project][product][repository]['tests'][obj.tn] === undefined){
+                this.data[project][product][repository]['tests'][obj.tn] = {};
+            }
+            if(this.data[project][product][repository]['platforms'][platform][obj.tn] === undefined){
+                this.data[project][product][repository]['platforms'][platform][obj.tn] = [];
+            }
+        }
+        //Load test pages
+        if(obj.pu != 'undefined'){
+            if(this.data[project][product][repository]['tests'][obj.tn][obj.pu] === undefined){
+                this.data[project][product][repository]['tests'][obj.tn][obj.pu] = [];
+            }
+        }
     },
     aggregateData: function(productFilter, repositoryFilter, archFilter, project, obj){
 
@@ -343,77 +355,28 @@ var SliderComponent = new Class({
     getProductRepositoryString: function(product, repository){
         return product + ' ' + repository;
     },
-    loadData: function(data){
-
-        var project = HOME_PAGE.refData.project;
-        var product = HOME_PAGE.refData.product;
-        var repository = HOME_PAGE.refData.repository;
-
-        this.data[project][product][repository] = this.data[project][product][repository].concat(data['data']);
-
-        if(this.sliders[project] === undefined){
-
-            this.view.setSliderEl(project, this.sliders);
-
-            //Initialize slider
-            var maxDate = 0;
-            var minDate = 0;
-
-            var dates = this.getMinMaxDate(data, project, product, repository);
-
-            this.sliders[project]['min'] = parseInt(dates.min);
-            this.sliders[project]['max'] = parseInt(dates.max);
-
-            var sliderSel = '#' + this.sliders[project]['id'];
-
-            this.sliders[project]['el'] = $(sliderSel).dateRangeSlider({
-                'arrows':true,
-                'bounds': {
-                    min: new Date(parseInt(data['min_date_data_received']*1000)),
-                    max: new Date(this.sliders[project]['max']),
-                    },
-                'defaultValues': {
-                    min: new Date(this.sliders[project]['min']),
-                    max: new Date(this.sliders[project]['max'])
-                    }
-                });
-
-        }else {
-            this.view.setSliderEl(project, this.sliders);
-        }
-
-        this.getTimeSlice();
-
-        $(this.view.hpContainerSel).trigger(
-            this.sliderSliceEvent,
-            { 'machine_graph':this.machineGraph,
-              'test_graph':this.testGraph,
-              'platform_graph':this.platformGraph,
-              'graph_size':this.graphSize,
-              'slider_min':this.sliders[project]['min'],
-              'slider_max':this.sliders[project]['max'] }
-            );
-    },
     getMinMaxDate: function(data, project, product, repository){
 
         var dates = { 'min':0, 'max':0 };
 
-        if(this.data[project][product][repository].length > 0){
-
-            dates['max'] = this.data[project][product][repository][0].dr*1000;
-            minIndex = this.data[project][product][repository].length - 1;
-            dates['min'] = this.data[project][product][repository][minIndex].dr*1000;
-
-        }else{
-
-            dates['max'] = data['min_date_data_received']*1000;
-            dates['min'] = data['start']*1000;
-        }
+        dates['max'] = data['max_date_data_received']*1000;
+        dates['min'] = data['start']*1000;
 
         return dates;
     },
-    getInternalDataObject: function(obj){
-        return jQuery.parseJSON( obj.replace(/'/g, '"') );
+    getSliderValues: function(project){
+
+        var values = { 'min':0, 'max':0 };
+
+        if(this.sliders[project].el != undefined){
+
+            var dates = this.sliders[project].el.dateRangeSlider('values');
+            values.min = parseInt( dates.min.getTime() );
+            values.max = parseInt( dates.max.getTime() );
+
+        }
+
+        return values;
     }
 });
 var SliderView = new Class({
@@ -469,10 +432,8 @@ var SliderView = new Class({
         if(!defaultSelection){
             defaultSelection = value;
         }
+
         $(selector).val(defaultSelection);
-    },
-    selectDefaultProject: function(){
-        $(this.projectSel).val(HOME_PAGE.refData.project);
     },
     setSliderEl: function(project, sliders){
 
@@ -498,6 +459,35 @@ var SliderView = new Class({
                 $(sliderSel).css('display', 'block');
             }
         }
+    },
+    getProject: function(){
+        return $(this.projectSel).find(":selected").val() || HOME_PAGE.refData.project;
+    },
+    setProject: function(project){
+        $(this.projectSel).val(project || HOME_PAGE.refData.project);
+    },
+    getProductRepository: function(){
+
+        var selectedOption = $(this.productRepositorySel).find(":selected");
+
+        var data = {
+            'product':HOME_PAGE.refData.product,
+            'repository':HOME_PAGE.refData.repository
+            };
+
+        if(selectedOption){
+
+            var optDataStr = $(selectedOption).attr('internal_data');
+            optData = this.getInternalDataObject(optDataStr);
+            data.product = optData.p;
+            data.repository = optData.b;
+
+        }
+
+        return data;
+    },
+    getInternalDataObject: function(obj){
+        return jQuery.parseJSON( obj.replace(/'/g, '"') );
     }
 });
 var SliderModel = new Class({
@@ -513,9 +503,9 @@ var SliderModel = new Class({
         this.parent(options);
 
     },
-    getProductRepositories: function(context, fnSuccess){
+    getProductRepositories: function(context, project, fnSuccess){
 
-        var uri = HOME_PAGE.urlBase +  HOME_PAGE.refData.project + '/refdata/perftest/ref_data/products';
+        var uri = HOME_PAGE.urlBase +  project + '/refdata/perftest/ref_data/products';
 
         jQuery.ajax( uri, {
             accepts:'application/json',
@@ -526,12 +516,34 @@ var SliderModel = new Class({
             success:fnSuccess,
         });
     },
+    getPlatformsAndTests: function(project, product, repository, context, fnSuccess, start, stop){
+
+        var uri = HOME_PAGE.urlBase +  project + '/testdata/platforms_tests?';
+
+        uri += 'product=' + product + '&';
+        uri += 'branch=' + repository + '&';
+
+        if(start && stop){
+            uri += 'start=' + start + '&stop=' + stop;
+        }
+
+        jQuery.ajax( uri, {
+            accepts:'application/json',
+            dataType:'json',
+            cache:false,
+            type:'GET',
+            context:context,
+            success:fnSuccess,
+        });
+
+    },
     getDataAllDimensions: function(project, product, repository, context, fnSuccess, start, stop){
 
         var uri = HOME_PAGE.urlBase +  project + '/testdata/all_data?';
 
         uri += 'product=' + product + '&';
         uri += 'branch=' + repository + '&';
+        uri += 'test=' + repository + '&';
 
         if(start && stop){
             uri += 'start=' + start + '&stop=' + stop;

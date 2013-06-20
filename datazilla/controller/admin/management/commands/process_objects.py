@@ -70,7 +70,7 @@ class Command(ProjectBatchCommand):
         if revisions_without_push_data:
 
             revision_nodes = {}
-            plm = PushLogModel()
+            plm = PushLogModel(pushlog_project)
 
             for revision in revisions_without_push_data:
 
