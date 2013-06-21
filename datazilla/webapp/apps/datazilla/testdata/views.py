@@ -310,6 +310,10 @@ def get_platforms_and_tests(request, project=""):
     return HttpResponse(
         json.dumps(data), content_type=API_CONTENT_TYPE)
 
+def get_all_data_date_range(request, project=""):
 
+    data = testdata.get_all_dimension_data_range(project)
 
+    return HttpResponse(
+        json.dumps(data), content_type=API_CONTENT_TYPE)
 

@@ -263,3 +263,11 @@ def get_platforms_and_tests(project, product, branch, min_timestamp, max_timesta
 
     return data
 
+def get_all_dimension_data_range(project):
+
+    mtm = factory.get_mtm(project)
+    data = mtm.get_all_dimension_data_range(None, None)
+    mtm.disconnect()
+
+    return data
+

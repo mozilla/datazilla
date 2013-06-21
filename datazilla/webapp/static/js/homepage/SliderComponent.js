@@ -62,6 +62,10 @@ var SliderComponent = new Class({
         this.arch = {};
         this.machines = {};
 
+        //Used as a switch to prevent loading the same set of platforms
+        //and tests twice.
+        this.firstLoad = true;
+
         $(this.view.sliderSel).bind(
             "valuesChanged", _.bind(this.getPlatformsAndTests, this)
             );
@@ -76,34 +80,82 @@ var SliderComponent = new Class({
 
         //Set the project selection
         this.view.setProject();
+        this.setProjectOption();
 
         var project = this.view.getProject();
-
-        this.model.getProductRepositories(
-            this, project, _.bind(this.loadProductRepositories, this)
+        this.model.getDateRange(
+            this, project, _.bind(this.initializeSlider, this)
             );
 
     },
-    setProjectOption: function(ev){
+    initializeSlider: function(data){
 
         var project = this.view.getProject();
 
-        if(this.productRepositories[project] != undefined){
-            this.loadProductRepositories();
-        }else {
-            this.model.getProductRepositories(
-                this, project, _.bind(this.loadProductRepositories, this)
-                );
+        var prData = this.view.getProductRepository();
+        var product = prData.product;
+        var repository = prData.repository;
+
+        this.initializeProjectData(project, product, repository);
+
+        this.sliders[project] = {
+            'el':undefined, 'id':this.view.sliderIdBase + '_' + project,
+            'min':0, 'max':0
+        };
+
+        this.view.setSliderEl(project, this.sliders);
+
+        var dates = this.getMinMaxDate(data, project, product, repository);
+
+        this.sliders[project].min = parseInt(dates.min);
+        this.sliders[project].max = parseInt(dates.max);
+
+        var sliderSel = '#' + this.sliders[project].id;
+
+        //Initialize slider
+        this.sliders[project].el = $(sliderSel).dateRangeSlider({
+            'arrows':false,
+            'bounds': {
+                min: new Date(parseInt(data['min_date_data_received']*1000)),
+                max: new Date(this.sliders[project].max),
+                },
+            'defaultValues': {
+                min: new Date(this.sliders[project].min),
+                max: new Date(this.sliders[project].max)
+                }
+            });
+
+        //Initialize to 0 here to trigger data retrieval when the
+        //slider initializes
+        this.data[project][product][repository]['min'] = 0;
+        this.data[project][product][repository]['max'] = 0;
+
+    },
+    initializeProjectData: function(project, product, repository){
+
+        if(this.data[project] === undefined){
+            this.data[project] = {};
         }
+
+        if(this.data[project][product] === undefined){
+            this.data[project][product] = {};
+        }
+
+        if(this.data[project][product][repository] === undefined){
+            this.data[project][product][repository] = {
+                'min':0, 'max':0, 'tests':{}, 'platforms':{}
+                };
+         }
     },
     loadProductRepositories: function(data){
 
         var id = 0;
         var project = this.view.getProject();
 
+
         var productRepository = "";
         var product = "";
-        var branch = "";
+        var repository = "";
 
         //First time loading data
         if(this.productRepositories[project] === undefined){
@@ -123,77 +175,36 @@ var SliderComponent = new Class({
 
                     productRepository = data[id]['product'] + ' ' + data[id]['branch'];
 
-                    branch = data[id]['branch'];
+                    repository = data[id]['branch'];
                     product = data[id]['product'];
 
                     if(this.productRepositories[project][productRepository] === undefined){
                         this.productRepositories[project][productRepository] = {
-                            'b':branch, 'p':product
+                            'b':repository, 'p':product
                             };
                     }
 
-                    if(this.data[project] === undefined){
-                        this.data[project] = {};
-                    }
-
-                    if(this.data[project][product] === undefined){
-                        this.data[project][product] = {};
-                    }
-
-                    if(this.data[project][product][branch] === undefined){
-                        this.data[project][product][branch] = {
-                            'min':0, 'max':0, 'tests':{}, 'platforms':{}
-                            };
-                    }
-
-                    if(this.sliders[project] === undefined){
-
-                        this.sliders[project] = {
-                            'el':undefined, 'id':this.view.sliderIdBase + '_' + project,
-                            'min':0, 'max':0, 'data_initialized':false
-                            };
-                    }
+                    this.initializeProjectData(project, product, repository);
                 }
             }
         }
 
+        var prData = this.view.getProductRepository();
+        product = prData.product;
+        repository = prData.repository;
+
         this.view.setSelectMenu(
             this.view.productRepositorySel, this.productRepositories[project],
-            this.getProductRepositoryString(product, HOME_PAGE.refData.repository)
+            this.getProductRepositoryString(product, repository)
             );
 
         this.view.setSliderEl(project, this.sliders);
 
-        this.getPlatformsAndTests();
-    },
-    getPlatformsAndTests: function(){
-
-        var project = this.view.getProject();
-
-        var prData = this.view.getProductRepository();
-        var product = prData.product;
-        var repository = prData.repository;
-
-console.log(this.sliders);
-        //Get the start and stop time from the slider to
-        var values = this.getSliderValues(project);
-
-        if( (values.min === 0 && values.max === 0) ||
-            (values.min < this.data[project][product][repository]['min']) ||
-            (values.max > this.data[project][product][repository]['max']) ){
-
-            //Retrieve data from server
-            this.model.getPlatformsAndTests(
-                project, product, repository, this,
-                this.loadPlatformsAndTests,
-                parseInt(values.min/1000), parseInt(values.max/1000)
-                );
-
-        }else {
-            //Data has already been retrieved, load it
-            this.loadPlatformsAndTests({});
+        if(this.firstLoad === true){
+            this.firstLoad = false;
+        }else{
+            this.getPlatformsAndTests();
         }
-
     },
     loadPlatformsAndTests: function(data){
 
@@ -207,44 +218,18 @@ console.log(this.sliders);
         //Initialize the slider
         this.view.setSliderEl(project, this.sliders);
 
-        if(this.sliders[project].el === undefined){
+        values = this.getSliderValues(project);
 
-            //Initialize slider
-            var dates = this.getMinMaxDate(data, project, product, repository);
+        if( (values.min < this.data[project][product][repository]['min']) ||
+            (this.data[project][product][repository]['min'] === 0) ){
 
-            this.sliders[project].min = parseInt(dates.min);
-            this.sliders[project].max = parseInt(dates.max);
+            this.data[project][product][repository]['min'] = values.min;
 
-            var sliderSel = '#' + this.sliders[project].id;
+        }
+        if(values.max > this.data[project][product][repository]['max']){
 
-            this.sliders[project].el = $(sliderSel).dateRangeSlider({
-                'arrows':true,
-                'bounds': {
-                    min: new Date(parseInt(data['min_date_data_received']*1000)),
-                    max: new Date(this.sliders[project].max),
-                    },
-                'defaultValues': {
-                    min: new Date(this.sliders[project].min),
-                    max: new Date(this.sliders[project].max)
-                    }
-                });
+            this.data[project][product][repository]['max'] = values.max;
 
-            this.data[project][product][repository]['min'] = this.sliders[project].min;
-            this.data[project][product][repository]['max'] = this.sliders[project].max;
-
-
-            values = this.getSliderValues(project);
-
-        } else {
-
-            values = this.getSliderValues(project);
-
-            if(values.min < this.data[project][product][repository]['min']){
-                this.data[project][product][repository]['min'] = values.min;
-            }
-            if(values.max > this.data[project][product][repository]['max']){
-                this.data[project][product][repository]['max'] = values.max;
-            }
         }
 
         _.map(
@@ -352,6 +337,35 @@ console.log(this.sliders);
             }
         }
     },
+    getPlatformsAndTests: function(){
+
+        var project = this.view.getProject();
+
+        var prData = this.view.getProductRepository();
+        var product = prData.product;
+        var repository = prData.repository;
+
+        //Get the start and stop time from the slider to
+        var values = this.getSliderValues(project);
+
+console.log([values.min, this.data[project][product][repository]['min'], values.max, this.data[project][product][repository]['max']]);
+        if( (values.min === 0 && values.max === 0) ||
+            (values.min < this.data[project][product][repository]['min']) ||
+            (values.max > this.data[project][product][repository]['max']) ){
+
+            //Retrieve data from server
+            this.model.getPlatformsAndTests(
+                project, product, repository, this,
+                this.loadPlatformsAndTests,
+                parseInt(values.min/1000), parseInt(values.max/1000)
+                );
+
+        }else {
+            //Data has already been retrieved, load it
+            this.loadPlatformsAndTests({});
+        }
+
+    },
     getProductRepositoryString: function(product, repository){
         return product + ' ' + repository;
     },
@@ -377,6 +391,18 @@ console.log(this.sliders);
         }
 
         return values;
+    },
+    setProjectOption: function(ev){
+console.log('setProjectOption called');
+        var project = this.view.getProject();
+
+        if(this.productRepositories[project] != undefined){
+            this.loadProductRepositories();
+        }else {
+            this.model.getProductRepositories(
+                this, project, _.bind(this.loadProductRepositories, this)
+                );
+        }
     }
 });
 var SliderView = new Class({
@@ -457,6 +483,7 @@ var SliderView = new Class({
                 $(sliderSel).css('display', 'none');
             }else{
                 $(sliderSel).css('display', 'block');
+                $(sliderSel).resize();
             }
         }
     },
@@ -475,7 +502,7 @@ var SliderView = new Class({
             'repository':HOME_PAGE.refData.repository
             };
 
-        if(selectedOption){
+        if(selectedOption.length > 0){
 
             var optDataStr = $(selectedOption).attr('internal_data');
             optData = this.getInternalDataObject(optDataStr);
@@ -501,6 +528,20 @@ var SliderModel = new Class({
         this.setOptions(options);
 
         this.parent(options);
+
+    },
+    getDateRange: function(context, project, fnSuccess){
+
+        var uri = HOME_PAGE.urlBase +  project + '/testdata/all_data_date_range';
+
+        jQuery.ajax( uri, {
+            accepts:'application/json',
+            dataType:'json',
+            cache:false,
+            type:'GET',
+            context:context,
+            success:fnSuccess,
+        });
 
     },
     getProductRepositories: function(context, project, fnSuccess){

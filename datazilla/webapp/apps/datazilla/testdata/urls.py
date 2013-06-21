@@ -9,6 +9,8 @@ urlpatterns = patterns(
 
     (r"^platforms_tests/?$", "views.get_platforms_and_tests"),
 
+    (r"^all_data_date_range/?$", "views.get_all_data_date_range"),
+
     (r"^test_values/?$", "views.get_test_value_summary"),
 
     (r"^metrics/(?P<branch>.+)/(?P<revision>\w+)/pushlog/?$",
