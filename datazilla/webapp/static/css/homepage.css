@@ -1,0 +1,102 @@
+body {
+    font-family: helvetica, arial, sans-serif;
+    margin: 0;
+    font-size: 10px;
+    padding: 0;
+    border-top: 2px solid #676767;
+    min-width: 1120px;
+}
+div.hp-toppanel {
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    border: 0 solid #000;
+    background: -moz-linear-gradient(-90deg, #5CB2CB, #297E96);
+    background: -webkit-gradient(linear, left top, left bottom, from(#5CB2CB), to(#297E96));
+    height: 50px;
+    width: 1120px;
+    margin-top: 20px;
+    padding-top: 10px;
+}
+div.hp-title {
+  background: url("/static/images/title.png") no-repeat scroll 0 center transparent;
+  position: absolute;
+  left: 15px;
+  width:400px;
+  height:100%;
+  top: 0;
+  z-index: 1;
+}
+a {
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+div.hp-container {
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    border: 0 solid #000;
+    width: 1120px;
+    padding-top: 10px;
+    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+    background:white;
+}
+.ui-menu {
+    width: 156px;
+    z-index: 100;
+    background:white;
+}
+div.hp-linegraph-container {
+    float:left;
+    width: 910px;
+    height: 1000px;
+    background: white;
+    overflow-y: auto;
+}
+div.hp-graph-controls {
+    float:left;
+    width: 910px;
+    height: 25px;
+    background: white;
+    margin-left: 10px;
+}
+div.hp-list-controls {
+    float:left;
+    width: 160px;
+    height: 25px;
+    background: white;
+}
+div.hp-list {
+    float:left;
+    width: 160px;
+    background: white;
+}
+div.hp-control-container {
+    position:absolute;
+    width: 1120px;
+    height: 25px;
+    background: white;
+    top:10px;
+}
+div.hp-control-element {
+    padding: 4px;
+    float: left;
+}
+button:hover {
+    cursor:pointer;
+}
+div.hp-line-plot {
+    width: 800px;
+    height: 190px;
+    margin-left: 40px;
+    margin-bottom: 25px;
+    margin-top: 25px;
+}
+div.hp-line-graph-container {
+    margin-top:50px;
+}
+.hp-graph-name {
+    position:absolute;
+    top: -20px;
+}
