@@ -59,42 +59,40 @@ var SliderComponent = new Class({
         this.sliders = {};
         this.data = {};
         this.productRepositories = {};
+        this.selectedData = {};
         this.arch = {};
         this.machines = {};
 
-        //Used as a switch to prevent loading the same set of platforms
-        //and tests twice.
-        this.firstLoad = true;
-
-        $(this.view.sliderSel).bind(
-            "valuesChanged", _.bind(this.getPlatformsAndTests, this)
-            );
-
+        //User selects a project
         $(this.view.projectSel).bind(
             "change", _.bind(this.setProjectOption, this)
             );
 
+        //User selects a product/repository
         $(this.view.productRepositorySel).bind(
-            "change", _.bind(this.getPlatformsAndTests, this)
+            "change", _.bind(this.setProductRepositoryOption, this)
             );
 
-        //Set the project selection
-        this.view.setProject();
-        this.setProjectOption();
-
-        var project = this.view.getProject();
-        this.model.getDateRange(
-            this, project, _.bind(this.initializeSlider, this)
+        //This is triggered the first time the slider
+        //initializes and when a user drags the date
+        //controls.
+        $(this.view.sliderSel).bind(
+            "valuesChanged", _.bind(this.getPlatformsAndTests, this)
             );
+
+        var projectData = HOME_PAGE.selectionState.getSelectedProjectData();
+        this.view.setProject(projectData.project);
+
+        this.setProjectOption(projectData);
 
     },
     initializeSlider: function(data){
 
         var project = this.view.getProject();
+        var projectData = HOME_PAGE.selectionState.getProjectData(project);
 
-        var prData = this.view.getProductRepository();
-        var product = prData.product;
-        var repository = prData.repository;
+        var product = projectData.product;
+        var repository = projectData.repository;
 
         this.initializeProjectData(project, product, repository);
 
@@ -150,15 +148,16 @@ var SliderComponent = new Class({
     loadProductRepositories: function(data){
 
         var id = 0;
+
         var project = this.view.getProject();
-
-
-        var productRepository = "";
-        var product = "";
-        var repository = "";
+        var projectData = HOME_PAGE.selectionState.getProjectData(project);
 
         //First time loading data
         if(this.productRepositories[project] === undefined){
+
+            var productRepository = "";
+            var product = "";
+            var repository = "";
 
             this.productRepositories[project] = {};
 
@@ -189,30 +188,21 @@ var SliderComponent = new Class({
             }
         }
 
-        var prData = this.view.getProductRepository();
-        product = prData.product;
-        repository = prData.repository;
-
         this.view.setSelectMenu(
             this.view.productRepositorySel, this.productRepositories[project],
-            this.getProductRepositoryString(product, repository)
+            this.getProductRepositoryString(
+                projectData.product, projectData.repository)
             );
 
         this.view.setSliderEl(project, this.sliders);
-
-        if(this.firstLoad === true){
-            this.firstLoad = false;
-        }else{
-            this.getPlatformsAndTests();
-        }
     },
     loadPlatformsAndTests: function(data){
 
         var project = this.view.getProject();
+        var projectData = HOME_PAGE.selectionState.getProjectData(project);
+        var product = projectData.product;
+        var repository = projectData.repository;
 
-        var prData = this.view.getProductRepository();
-        var product = prData.product;
-        var repository = prData.repository;
         var values = {};
 
         //Initialize the slider
@@ -337,18 +327,29 @@ var SliderComponent = new Class({
             }
         }
     },
+    setProductRepositoryOption: function(){
+
+        var project = this.view.getProject();
+        var prData = this.view.getProductRepository();
+
+        HOME_PAGE.selectionState.setProduct(project, prData.product);
+        HOME_PAGE.selectionState.setRepository(project, prData.repository);
+
+        this.getPlatformsAndTests();
+
+    },
     getPlatformsAndTests: function(){
 
         var project = this.view.getProject();
 
-        var prData = this.view.getProductRepository();
-        var product = prData.product;
-        var repository = prData.repository;
+        var projectData = HOME_PAGE.selectionState.getProjectData(project);
+
+        var product = projectData.product;
+        var repository = projectData.repository;
 
         //Get the start and stop time from the slider to
         var values = this.getSliderValues(project);
 
-console.log([values.min, this.data[project][product][repository]['min'], values.max, this.data[project][product][repository]['max']]);
         if( (values.min === 0 && values.max === 0) ||
             (values.min < this.data[project][product][repository]['min']) ||
             (values.max > this.data[project][product][repository]['max']) ){
@@ -392,16 +393,27 @@ console.log([values.min, this.data[project][product][repository]['min'], values.
 
         return values;
     },
-    setProjectOption: function(ev){
-console.log('setProjectOption called');
+    setProjectOption: function(){
+
         var project = this.view.getProject();
 
+        HOME_PAGE.selectionState.setProject(project);
+
         if(this.productRepositories[project] != undefined){
-            this.loadProductRepositories();
+            //Already have the data, load it
+            this.loadProductRepositories({});
+            this.loadPlatformsAndTests({});
+
         }else {
+            //Retrieve data
+            this.model.getDateRange(
+                this, project, _.bind(this.initializeSlider, this)
+                );
+
             this.model.getProductRepositories(
                 this, project, _.bind(this.loadProductRepositories, this)
                 );
+
         }
     }
 });
@@ -464,42 +476,45 @@ var SliderView = new Class({
     setSliderEl: function(project, sliders){
 
         //Create slider div if it doesn't exist
-        var projectSliderSel = '#' + sliders[project].id;
+        if(sliders[project] != undefined){
 
-        if( $(projectSliderSel).length === 0 ){
-            var div = $(document.createElement('div'));
-            $(div).attr('id', sliders[project].id);
-            $(this.sliderSel).append(div);
-        }
+            var projectSliderSel = '#' + sliders[project].id;
 
-        //Hide all other sliders
-        var sliderProject = "";
-        var sliderSel = "";
-        for(sliderProject in sliders){
+            if( $(projectSliderSel).length === 0 ){
+                var div = $(document.createElement('div'));
+                $(div).attr('id', sliders[project].id);
+                $(this.sliderSel).append(div);
+            }
 
-            sliderSel = '#' + sliders[sliderProject].id;
+            //Hide all other sliders
+            var sliderProject = "";
+            var sliderSel = "";
+            for(sliderProject in sliders){
 
-            if(sliderProject != project){
-                $(sliderSel).css('display', 'none');
-            }else{
-                $(sliderSel).css('display', 'block');
-                $(sliderSel).resize();
+                sliderSel = '#' + sliders[sliderProject].id;
+
+                if(sliderProject != project){
+                    $(sliderSel).css('display', 'none');
+                }else{
+                    $(sliderSel).css('display', 'block');
+                    $(sliderSel).resize();
+                }
             }
         }
     },
     getProject: function(){
-        return $(this.projectSel).find(":selected").val() || HOME_PAGE.refData.project;
+        return $(this.projectSel).find(":selected").val() || HOME_PAGE.selectionState.defaultProject;
     },
     setProject: function(project){
-        $(this.projectSel).val(project || HOME_PAGE.refData.project);
+        $(this.projectSel).val(project || HOME_PAGE.selectionState.defaultProject);
     },
     getProductRepository: function(){
 
         var selectedOption = $(this.productRepositorySel).find(":selected");
 
         var data = {
-            'product':HOME_PAGE.refData.product,
-            'repository':HOME_PAGE.refData.repository
+            'product':"",
+            'repository':""
             };
 
         if(selectedOption.length > 0){
