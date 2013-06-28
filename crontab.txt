@@ -9,6 +9,7 @@ DATAZILLA_HOME=/usr/local/datazilla
 */2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --load --project microperf
 */2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --load --project marketapps
 */2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --load --project games
+*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --load --project webpagetest
 
 */2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py set_default_product --project stoneridge
 */2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py set_default_product --project b2g
@@ -17,6 +18,7 @@ DATAZILLA_HOME=/usr/local/datazilla
 */2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py set_default_product --project microperf
 */2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py set_default_product --project marketapps
 */2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py set_default_product --project games
+*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py set_default_product --project webpagetest
 
 # run twice every minute
 * * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --cron_batch small --loadlimit 25 && $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --cron_batch small --loadlimit 25
