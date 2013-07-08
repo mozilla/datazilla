@@ -13,6 +13,8 @@ var SelectionState = new Class({
                 'selected':false,
                 'product':'',
                 'repository':'',
+                'os':'',
+                'os_version':'',
                 'arch':'',
                 'test':'',
                 'page':''
@@ -52,7 +54,7 @@ var SelectionState = new Class({
         var project = "";
         for(project in this.selections){
             if(this.selections.hasOwnProperty(project)){
-                if(this.selections[project].selected === true){
+                if(this.selections[project]['selected'] === true){
                     selectedProject = this.selections[project];
                     selectedProject['project'] = project;
                 }
@@ -105,14 +107,14 @@ var SelectionState = new Class({
         }
 
         this.setDefaults(project);
-        this.selections[project].selected = true;;
+        this.selections[project]['selected'] = true;
 
         //Unselect any previously selected projects
         var p = "";
         for(p in this.selections){
             if(this.selections.hasOwnProperty(p)){
                 if(p != project){
-                    this.selections[p].selected = false;
+                    this.selections[p]['selected'] = false;
                 }
             }
         }
@@ -123,7 +125,7 @@ var SelectionState = new Class({
             return;
         }
         this.setDefaults(project);
-        this.selections[project].product = product;
+        this.selections[project]['product'] = product;
     },
     setRepository: function(project, repository){
 
@@ -131,35 +133,43 @@ var SelectionState = new Class({
             return;
         }
         this.setDefaults(project);
-        this.selections[project].repository = repository;
+        this.selections[project]['repository'] = repository;
     },
-    setPlatform: function(project, platform){
+    setOs: function(project, os){
 
-        if(!_.isString(platform)){
+        if(!_.isString(os)){
             return;
         }
         this.setDefaults(project);
-        this.selections[project].platform = platform;
+        this.selections[project]['os'] = os;
+    },
+    setOsVersion: function(project, osVersion){
+
+        if(!_.isString(osVersion)){
+            return;
+        }
+        this.setDefaults(project);
+        this.selections[project]['os_version'] = osVersion;
     },
     setArchitecture: function(project, architecture){
         if(!_.isString(architecture)){
             return;
         }
         this.setDefaults(project);
-        this.selections[project].arch = architecture;
+        this.selections[project]['arch'] = architecture;
     },
-    setTest: function(test){
+    setTest: function(project, test){
         if(!_.isString(test)){
             return;
         }
         this.setDefaults(project);
-        this.selections[project].test = test;
+        this.selections[project]['test'] = test;
     },
-    setPage: function(page){
+    setPage: function(project, page){
         if(!_.isString(page)){
             return;
         }
         this.setDefaults(project);
-        this.selections[project].page = page;
+        this.selections[project]['page'] = page;
     }
 });

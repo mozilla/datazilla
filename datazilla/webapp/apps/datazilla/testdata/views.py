@@ -256,28 +256,25 @@ def get_test_value_summary(request, project):
 
 def get_data_all_dimensions(request, project=""):
 
-    start_time = request.GET.get('start')
-
-    end_time = request.GET.get('stop')
-
     product = request.GET.get('product')
 
     branch = request.GET.get('branch')
 
-    if not branch:
-        if project in DEFAULT_BRANCH_PROJECT_MAP:
-            branch = DEFAULT_BRANCH_PROJECT_MAP[project]['branch']
-        else:
-            branch = DEFAULT_BRANCH_PROJECT_MAP['default']['branch']
+    os = request.GET.get('os')
 
-    if not product:
-        if project in DEFAULT_BRANCH_PROJECT_MAP:
-            product = DEFAULT_BRANCH_PROJECT_MAP[project]['product']
-        else:
-            product = DEFAULT_BRANCH_PROJECT_MAP['default']['product']
+    os_version = request.GET.get('os_version')
+
+    test = request.GET.get('test')
+
+    page = request.GET.get('page')
+
+    start_time = request.GET.get('start')
+
+    stop_time = request.GET.get('stop')
 
     data = testdata.get_test_data_all_dimensions(
-        project, product, branch, start_time, end_time)
+        project, product, branch, os, os_version, test, page,
+        start_time, stop_time)
 
     return HttpResponse(
         json.dumps(data), content_type=API_CONTENT_TYPE)

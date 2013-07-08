@@ -87,7 +87,7 @@ var LineGraphView = new Class({
         this.minContainerHeight = 1000;
     },
     loadGraphs: function(ev, data){
-
+console.log(data);
         var sortedKeys = this.getAlphabeticalSortKeys(data.data);
 
         $(this.lineGraphsSel).empty();

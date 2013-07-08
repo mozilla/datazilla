@@ -438,7 +438,7 @@
                     `trend_std` AS 'ts',
                     `test_evaluation` AS 'te'
                 FROM `test_data_all_dimensions`
-                WHERE `product` = ? AND `branch` = ? AND date_received >= ? AND date_received <= ? AND status = 1
+                WHERE REP0 date_received >= ? AND date_received <= ? AND status = 1
                 ORDER BY date_received DESC",
 
          "host":"read_host"

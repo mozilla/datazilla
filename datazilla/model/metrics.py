@@ -1311,14 +1311,39 @@ class MetricsTestModel(DatazillaModelBase):
 
         return revisions_without_push_data
 
-    def get_data_all_dimensions(self, product, branch, date_begin, date_end):
+    def get_data_all_dimensions(
+        self, product, branch, os, os_version, test, page, start_time,
+        stop_time):
 
-        data = self.get_all_dimension_data_range(date_begin, date_end)
+        data = self.get_all_dimension_data_range(start_time, stop_time)
+
+        column_value_map = [
+            ['product', product],
+            ['branch', branch],
+            ['operating_system_name', os],
+            ['operating_system_version', os_version],
+            ['test_name', test],
+            ['page_url', page]
+            ]
+
+        replace = ''
+        placeholders = []
+
+        for v in column_value_map:
+            key = v[0]
+            value = v[1]
+            if value:
+                replace += key + '= %s AND '
+                placeholders.append(value)
+
+        placeholders.append(data['start'])
+        placeholders.append(data['stop'])
 
         data['data'] = self.sources["perftest"].dhub.execute(
             proc='perftest.selects.get_test_data_all_dimensions',
             debug_show=self.DEBUG,
-            placeholders=[product, branch, data['start'], data['stop']])
+            placeholders=placeholders,
+            replace=[replace])
 
         return data
 

@@ -254,7 +254,7 @@ var SliderComponent = new Class({
                 this.data[project][product][repository]['tests'][obj.tn] = {};
             }
             if(this.data[project][product][repository]['platforms'][platform][obj.tn] === undefined){
-                this.data[project][product][repository]['platforms'][platform][obj.tn] = [];
+                this.data[project][product][repository]['platforms'][platform][obj.tn] = { 'os':obj.osn, 'version':obj.osv, 'data':[] };
             }
         }
         //Load test pages
@@ -405,11 +405,12 @@ var SliderComponent = new Class({
             this.loadPlatformsAndTests({});
 
         }else {
-            //Retrieve data
+            //Retrieve the date range to initialize the slider with
             this.model.getDateRange(
                 this, project, _.bind(this.initializeSlider, this)
                 );
 
+            //Retrieve the product/Repositories associated with the project
             this.model.getProductRepositories(
                 this, project, _.bind(this.loadProductRepositories, this)
                 );
