@@ -1413,7 +1413,6 @@ class PerformanceTestModel(DatazillaModelBase):
         #in buildbot.  To account for this we append -Non-PGO to the
         #branch name for all branches for "mac os x".
         ###
-        #if self.project == 'talos' or self.project == 'jeads':
         if self.project == 'talos':
 
             os = data['test_machine']['os'].lower()
