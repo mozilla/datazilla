@@ -665,7 +665,6 @@ CREATE TABLE `value` (
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 CREATE TABLE `test_data_all_dimensions` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `test_run_id` int(11) NOT NULL,
   `product_id` int(11) NOT NULL,
   `operating_system_id` int(11) NOT NULL,
@@ -695,7 +694,6 @@ CREATE TABLE `test_data_all_dimensions` (
   `trend_std` double DEFAULT NULL,
   `test_evaluation` tinyint(4) DEFAULT NULL,
   `status` tinyint(4) DEFAULT '1',
-  PRIMARY KEY (`id`),
   KEY `test_run_id_key` (`test_run_id`),
   KEY `date_received_key` (`date_received`),
   KEY `product_id_key` (`product_id`),
