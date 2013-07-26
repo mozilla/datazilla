@@ -7,10 +7,7 @@
     <link rel="stylesheet" href="/static/css/jquery-ui/jquery-ui-1.10.2.custom.min.css" type="text/css"/>
     <link rel="stylesheet" href="/static/css/Aristo/jquery-ui-1.8.7.custom.css" type="text/css"/>
     <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" />
-
     <link rel="stylesheet" href="/static/js/plugins/jQRangeSlider-min/css/iThing.css" />
-
-    <link rel="stylesheet" href="/static/css/summary.css" type="text/css"/>
     <link rel="stylesheet" href="/static/css/homepage.css" type="text/css"/>
 {% else %}
     <link rel="stylesheet" href="/static/css/homepage-min.css" type="text/css"/>
@@ -21,40 +18,40 @@
 <body>
 
 <!--Toppanel-->
-<div class="ui-widget ui-widget-header ui-corner-top su-toolbar-base hp-toppanel">
-   <div class="hp-title">
-        <a href=""><span id="logo"></span></a>
-   </div>
-</div>
 
-<div id="hp_container" class="ui-widget ui-widget-header ui-corner-top hp-container su-light-text">
+<div class="ui-widget ui-widget-header hp-container hp-light-text">
+    <div class="hp-toppanel">
+        <div class="hp-title">
+            <a href=""><span id="logo"></span></a>
+        </div>
+    </div>
+    <div style="top:30px;" class="ui-widget ui-widget-header hp-control-container">
 
-        <div class="ui-widget ui-widget-header ui-corner-all hp-control-container">
-
-            <div style="display:inline;">
-
-                <div class="hp-control-element su-large-text">Data Filters</div>
-                <div class="hp-control-element" style="margin-left:10px; margin-right:20px;">
-                    Project:
-                    <select id="hp_project">
-                        {% for p in PROJECTS %}
+        <div style="display:inline;" class="hp-light-text">
+            <div class="hp-control-element">
+                Project:
+                <select id="hp_project">
+                    {% for p in PROJECTS %}
                         <option value="{{ p }}">{{ p }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="hp-control-element" style="margin-left:10px; margin-right:20px;">
-                    Product/Repository:
-                    <select id="hp_repository">
-                    </select>
-                </div>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="hp-control-element">
+                Product/Repository:
+                <select id="hp_repository"></select>
+            </div>
 
+            <div class="hp-control-element" style="float:right;" title="Search a comma delimited list of revisions or machine names">
+                Revision/Machine:
+                <input id="hp_input" type="text" size="40"></input>
             </div>
         </div>
+    </div>
+</div>
 
-        <div class="su-large-text" style="margin-left:380px; margin-top:50px;">Adjust time range to retrieve corresponding data.</div>
-
-        <div id="slider" style="width:75%; margin-top:50px; margin-left:100px;"></div>
-
+<div id="hp_container" class="ui-widget ui-widget-header ui-corner-top hp-container-two hp-light-text">
+    <!--<div id="slider" style="position:relative; width:90%; margin-top:50px; margin-left:100px;"></div>-->
+    <div id="slider" style="position:relative;" class="ui-rangeSlider ui-dateRangeSlider"></div>
     <div id="hp_tabs" style="margin-top:100px;">
         <ul>
             <li><a href="#hp-metrics">Metrics</a></li>
@@ -76,24 +73,30 @@
                 </div>
             </div>
             <div class="ui-widget ui-widget-header ui-corner-top hp-graph-controls">
-                <div id="hp_nav" class="hp-control-element" style="float:left; margin-left:10px; margin-right:20px;"></div>
-                <div class="hp-control-element" style="float:right; margin-left:10px; margin-right:20px;">
-                    Arch:
-                    <select id="hp_arch">
-                        <option value="x86"></option>
-                    </select>
-                </div>
+                <div id="hp_nav" class="hp-control-element"></div>
                 <div id="hp_linegraphs" class="hp-line-graph-container">
                 </div>
             </div>
     
         </div>
-        <div id="hp-json">
-            <p>Morbi tincidunt, dui sit amet facilisis feugiat, odio metus gravida ante, ut pharetra massa metus id nunc. Duis scelerisque molestie turpis. Sed fringilla, massa eget luctus malesuada, metus eros molestie lectus, ut tempus eros massa ut dolor. Aenean aliquet fringilla sem. Suspendisse sed ligula in ligula suscipit aliquam. Praesent in eros vestibulum mi adipiscing adipiscing. Morbi facilisis. Curabitur ornare consequat nunc. Aenean vel metus. Ut posuere viverra nulla. Aliquam erat volutpat. Pellentesque convallis. Maecenas feugiat, tellus pellentesque pretium posuere, felis lorem euismod felis, eu ornare leo nisi vel felis. Mauris consectetur tortor et purus.</p>
+        <div id="hp-json"></div>
+        <div id="hp-database"></div>
+    </div>
+    <!--This div insures that the last graph is visible above the detail panel -->
+    <div style="height:225px;"></div>
+    <div id="hp_detail_panel" class="ui-widget ui-widget-header ui-corner-bottom hp-graph-control-container">
+
+        <div class="ui-widget ui-widget-header hp-tip-control-panel">
+            <div id="hp_toolbar_details" style="display:inline; float:left;"></div>
+            <div style="display:inline; float:left;" class="hp-hover-inline-datum">
+                <span class="hp-light-text">min:</span><span id="hp_replicate_min"></span><span style="margin-left:10px;" class="hp-light-text">max:</span><span id="hp_replicate_max"></span><span style="margin-left:35px;" class="hp-light-text">search by:</span><a id="hp_search_machine" title="Click the machine name to highlight it in all graphs" href="#"></a>
+            </div>
+            <span id="hp_close_detail_panel" style="float:right; margin-right:10px;" class="ui-icon ui-icon-close" title="Close detail panel" ></span>
         </div>
-        <div id="hp-database">
-            <p>Mauris eleifend est et turpis. Duis id erat. Suspendisse potenti. Aliquam vulputate, pede vel vehicula accumsan, mi neque rutrum erat, eu congue orci lorem eget lorem. Vestibulum non ante. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Fusce sodales. Quisque eu urna vel enim commodo pellentesque. Praesent eu risus hendrerit ligula tempus pretium. Curabitur lorem enim, pretium nec, feugiat nec, luctus a, lacus.</p>
-            <p>Duis cursus. Maecenas ligula eros, blandit nec, pharetra at, semper at, magna. Nullam ac lacus. Nulla facilisi. Praesent viverra justo vitae neque. Praesent blandit adipiscing velit. Suspendisse potenti. Donec mattis, pede vel pharetra blandit, magna ligula faucibus eros, id euismod lacus dolor eget odio. Nam scelerisque. Donec non libero sed nulla mattis commodo. Ut sagittis. Donec nisi lectus, feugiat porttitor, tempor ac, tempor vitae, pede. Aenean vehicula velit eu tellus interdum rutrum. Maecenas commodo. Pellentesque nec elit. Fusce in lacus. Vivamus a libero vitae lectus hendrerit hendrerit.</p>
+        <div id="hp_hover_detail_one" class="hp-tip-panel"></div>
+        <div id="hp_replicates" style="margin-left: 270px; margin-top: 25px; width:550px; height:125px;"></div>
+        <div id="hp_hover_detail_two" class="hp-replicate-hover-panel">
+            <div><span class="hp-light-text">Replicate:</span><span id="hp_replicate_num"></span><span style="margin-left:10px;" class="hp-light-text">Run Time:</span><span id="hp_replicate_run_time"></span><span style="margin-left:3px;" class="hp-light-text">ms</span></div>
         </div>
     </div>
 </div>

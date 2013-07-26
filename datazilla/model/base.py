@@ -1224,6 +1224,30 @@ class PerformanceTestModel(DatazillaModelBase):
 
         return self._get_last_insert_id(source='objectstore')
 
+    def pre_process_data(self, unquoted_json_data, deserialized_json):
+        """Carry out project specific pre-processing of JSON objects."""
+
+        #If it's malformed json this will not be defined
+        if deserialized_json:
+
+            if (self.project == 'talos') and \
+               ('tp5' in deserialized_json['testrun']['suite']):
+
+                new_key = 'talos_aux'
+
+                results_aux = deserialized_json.get('results_aux', {})
+
+                if results_aux:
+                    #Insure that auxilliary data is not indexed
+                    #for tp5*. The auxilliary data should be placed
+                    #in a top level key that is not indexed.
+                    deserialized_json[new_key] = results_aux
+
+                    del deserialized_json['results_aux']
+
+                    unquoted_json_data = json.dumps(deserialized_json)
+
+        return unquoted_json_data
 
     def retrieve_test_data(self, limit):
         """
@@ -1272,7 +1296,7 @@ class PerformanceTestModel(DatazillaModelBase):
         self._set_test_values(data, test_id, test_run_id)
         self._set_test_aux_data(data, test_id, test_run_id)
 
-        # Make project specific changes
+        # Make project specific changes that require table ids
         self._adapt_project_specific_data(data, test_run_id)
 
         return test_run_id
@@ -1389,11 +1413,29 @@ class PerformanceTestModel(DatazillaModelBase):
         #in buildbot.  To account for this we append -Non-PGO to the
         #branch name for all branches for "mac os x".
         ###
-        os = data['test_machine']['os'].lower()
-        osversion = data['test_machine']['osversion'].lower()
+        #if self.project == 'talos' or self.project == 'jeads':
+        if self.project == 'talos':
 
-        if ('mac' in os) and ('os x' in osversion):
-            data['test_build']['branch'] += '-Non-PGO'
+            os = data['test_machine']['os'].lower()
+            osversion = data['test_machine']['osversion'].lower()
+
+            if ('mac' in os) and ('os x' in osversion):
+                data['test_build']['branch'] += '-Non-PGO'
+
+            #REMOVE AFTER BACKFILL: Insure that we don't load results_aux
+            # for tp5 data in the backfill
+            if 'tp5' in data['testrun']['suite']:
+
+                new_key = 'talos_aux'
+
+                results_aux = data.get('results_aux', {})
+
+                if results_aux:
+                    #Insure that auxilliary data is not indexed
+                    #for tp5*. The auxilliary data should be placed
+                    #in a top level key that is not indexed.
+                    data[new_key] = results_aux
+                    del data['results_aux']
 
     def _adapt_project_specific_data(self, data, test_run_id):
 

@@ -2,19 +2,24 @@
 PYTHON_ROOT=/usr/bin/
 DATAZILLA_HOME=/usr/local/datazilla
 
-*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --load --project stoneridge
-*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --load --project b2g
-*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --load --project jetperf
-*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --load --project test
-*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py populate_test_collections --load --project microperf
-
-*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py set_default_product --project stoneridge
-*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py set_default_product --project b2g
-*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py set_default_product --project jetperf
-*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py set_default_product --project test
-*/2 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py set_default_product --project microperf
+*/5 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py update_pushlog --repo_host=hg.mozilla.org --hours=24
 
 # run twice every minute
-* * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --cron_batch small --loadlimit 25 && $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --cron_batch small --loadlimit 25
+* * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project b2g --loadlimit 25 && $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project b2g --loadlimit 25
 
-*/5 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py update_pushlog --repo_host=hg.mozilla.org --hours=24
+* * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project games --loadlimit 25 && $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project games --loadlimit 25
+
+* * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project jetperf --loadlimit 25 && $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project jetperf --loadlimit 25
+
+* * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project marketapps --loadlimit 25 && $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project marketapps --loadlimit 25
+
+* * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project microperf --loadlimit 25 && $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project microperf --loadlimit 25
+
+* * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project stoneridge --loadlimit 25 && $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project stoneridge --loadlimit 25
+
+* * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project talos --loadlimit 25 && $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project talos --loadlimit 25
+
+* * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project test --loadlimit 25 && $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project test --loadlimit 25
+
+* * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project webpagetest --loadlimit 25 && $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project webpagetest --loadlimit 25
+

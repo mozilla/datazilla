@@ -13,7 +13,8 @@ var SliderComponent = new Class({
 
         /****************
          Object attributes coming back from all dimension
-         web services
+         web services. This attribute to name key is stored in
+         this.columnKey and is retrieved dynamically.
 
          ti:"test_run_id",
          dr:"date received",
@@ -56,6 +57,7 @@ var SliderComponent = new Class({
 
         this.sliderSliceEvent = 'SLIDER_SLICE_EV';
 
+        this.columnKey = {};
         this.sliders = {};
         this.data = {};
         this.productRepositories = {};
@@ -88,6 +90,10 @@ var SliderComponent = new Class({
     },
     initializeSlider: function(data){
 
+        if(_.isEmpty(this.columnKey)){
+            this.columnKey = data.column_key;
+        }
+
         var project = this.view.getProject();
         var projectData = HOME_PAGE.selectionState.getProjectData(project);
 
@@ -112,7 +118,7 @@ var SliderComponent = new Class({
 
         //Initialize slider
         this.sliders[project].el = $(sliderSel).dateRangeSlider({
-            'arrows':false,
+            'arrows':true,
             'bounds': {
                 min: new Date(parseInt(data['min_date_data_received']*1000)),
                 max: new Date(this.sliders[project].max),
@@ -261,69 +267,6 @@ var SliderComponent = new Class({
         if(obj.pu != 'undefined'){
             if(this.data[project][product][repository]['tests'][obj.tn][obj.pu] === undefined){
                 this.data[project][product][repository]['tests'][obj.tn][obj.pu] = [];
-            }
-        }
-    },
-    aggregateData: function(productFilter, repositoryFilter, archFilter, project, obj){
-
-        if( (obj.dr >= this.sliders[project].min) &&
-            (obj.dr <= this.sliders[project].max) ){
-
-            productRepository = this.getProductRepositoryString(obj.p, obj.b);
-
-            if(this.arch[obj.pr] === undefined){
-                this.arch[obj.pr] = { 'pr':obj.pr };
-            }
-
-            if(this.machines[obj.mn] === undefined){
-                this.machines[obj.mn] = { 'mn':obj.mn };
-            }
-
-            //Filter conditions
-            if( ( obj.p === productFilter ) &&
-                ( obj.b === repositoryFilter ) &&
-                ( obj.pr === archFilter ) ){
-
-                platform = obj.osn + ' ' + obj.osv;
-
-                //Initialize graph level 1
-                if( this.testGraph[ obj.tn] === undefined ){
-                    this.testGraph[obj.tn] = {};
-                }
-                if( this.platformGraph[platform] === undefined ){
-                    this.platformGraph[platform] = {};
-                }
-                if( this.machineGraph[obj.mn] === undefined ){
-                    this.machineGraph[obj.mn] = {
-                        'count':0, 'test_eval':0, 'data':[]
-                        };
-                }
-
-                //Initialize graph level 2
-                if( this.testGraph[obj.tn][obj.pu] === undefined ){
-                    this.testGraph[obj.tn][obj.pu] = {};
-                }
-                if( this.platformGraph[platform][obj.tn] === undefined ){
-                    this.platformGraph[platform][obj.tn] = {};
-                }
-
-                //Initialize graph level 3
-                if( this.testGraph[obj.tn][obj.pu][platform] === undefined ){
-                    this.testGraph[obj.tn][obj.pu][platform] = [];
-                }
-                if( this.platformGraph[platform][obj.tn][obj.pu] === undefined ){
-                    this.platformGraph[platform][obj.tn][obj.pu] = [];
-                }
-
-                this.testGraph[obj.tn][obj.pu][platform].push(obj);
-                this.platformGraph[platform][obj.tn][obj.pu].push(obj);
-
-                //Load machine data
-                this.machineGraph[obj.mn]['count']++;
-                this.machineGraph[obj.mn]['test_eval'] += obj.te;
-                this.machineGraph[obj.mn]['data'].push(obj);
-
-                this.graphSize++;
             }
         }
     },
@@ -593,26 +536,5 @@ var SliderModel = new Class({
             success:fnSuccess,
         });
 
-    },
-    getDataAllDimensions: function(project, product, repository, context, fnSuccess, start, stop){
-
-        var uri = HOME_PAGE.urlBase +  project + '/testdata/all_data?';
-
-        uri += 'product=' + product + '&';
-        uri += 'branch=' + repository + '&';
-        uri += 'test=' + repository + '&';
-
-        if(start && stop){
-            uri += 'start=' + start + '&stop=' + stop;
-        }
-
-        jQuery.ajax( uri, {
-            accepts:'application/json',
-            dataType:'json',
-            cache:false,
-            type:'GET',
-            context:context,
-            success:fnSuccess,
-        });
     }
 });

@@ -5,7 +5,7 @@ from datazilla.model.utils import println
 from datazilla.controller.admin.push_walker import extend_ref_data
 
 SAFE_TESTS = set([
-    'tp5', 'tsvg', 'tsvg_opacity', 'tsvgr'
+    'tp5'
     ])
 
 BRANCHES_NOT_ALLOWED = set([

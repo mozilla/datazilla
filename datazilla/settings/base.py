@@ -1,8 +1,6 @@
 # Django settings for webapp project.
 import os, posixpath
 
-USE_APP_ENGINE = "APPENGINE_RUNTIME" in os.environ or os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine') or os.getenv('SETTINGS_MODE') == 'prod'
-
 # These settings can all be optionally set via env vars, or in local.py:
 
 # Set Database connectivity via environment
@@ -152,10 +150,6 @@ LOGGING = {
     }
 }
 
-# Import app-engine specific settings, if appropriate
-if USE_APP_ENGINE:
-    from .appengine import *
-
 # Import local settings to add to/override the above
 try:
     from .local import *
@@ -179,14 +173,13 @@ CACHES = {
         }
     }
 
-if not USE_APP_ENGINE:
-    DATABASES = {
-        "default": {
-            "ENGINE"   : "django.db.backends.mysql", # Add "postgresql_psycopg2", "postgresql", "mysql", "sqlite3" or "oracle".
-            "NAME"     : DATAZILLA_DATABASE_NAME,          # Or path to database file if using sqlite3.
-            "USER"     : DATAZILLA_DATABASE_USER,     # Not used with sqlite3.
-            "PASSWORD" : DATAZILLA_DATABASE_PASSWORD, # Not used with sqlite3.
-            "HOST"     : DATAZILLA_DATABASE_HOST,     # Set to empty string for localhost. Not used with sqlite3.
-            "PORT"     : DATAZILLA_DATABASE_PORT,     # Set to empty string for default. Not used with sqlite3.
-        }
+DATABASES = {
+    "default": {
+        "ENGINE"   : "django.db.backends.mysql", # Add "postgresql_psycopg2", "postgresql", "mysql", "sqlite3" or "oracle".
+        "NAME"     : DATAZILLA_DATABASE_NAME,          # Or path to database file if using sqlite3.
+        "USER"     : DATAZILLA_DATABASE_USER,     # Not used with sqlite3.
+        "PASSWORD" : DATAZILLA_DATABASE_PASSWORD, # Not used with sqlite3.
+        "HOST"     : DATAZILLA_DATABASE_HOST,     # Set to empty string for localhost. Not used with sqlite3.
+        "PORT"     : DATAZILLA_DATABASE_PORT,     # Set to empty string for default. Not used with sqlite3.
     }
+}

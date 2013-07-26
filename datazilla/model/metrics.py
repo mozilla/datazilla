@@ -1784,16 +1784,19 @@ class TtestMethod(MetricMethodBase):
         trend_stddev = parent_metric_data.get('trend_stddev', None)
         trend_mean = parent_metric_data.get('trend_mean', None)
 
+        #Some tests require filtering out the first replicate here
+        start_index = self.get_start_index()
+
         if (trend_mean != None) and \
            (trend_mean > 0) and \
            (trend_stddev != None):
 
             #trend line data is available use it
-            n = len(child_data)
-            s = std(child_data, ddof=1)
-            m = mean(child_data)
+            n = len(child_data[start_index:])
+            s = std(child_data[start_index:], ddof=1)
+            m = mean(child_data[start_index:])
 
-            parent_n = len(parent_data)
+            parent_n = len(parent_data[start_index:])
             trend_stddev = parent_metric_data['trend_stddev']
             trend_mean = parent_metric_data['trend_mean']
 
@@ -1814,9 +1817,7 @@ class TtestMethod(MetricMethodBase):
         else:
             #No trend line data is available use the parent
             #replicate data
-            start_index = self.get_start_index()
 
-            #Filter out the first replicate here
             result = welchs_ttest(
                 child_data[start_index:],
                 parent_data[start_index:],
