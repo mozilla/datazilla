@@ -1378,8 +1378,6 @@ class PerformanceTestModel(DatazillaModelBase):
             debug_show=self.DEBUG,
             )
 
-        resetwarnings()
-
         # Return all JSON blobs claimed by this connection ID (could possibly
         # include orphaned rows from a previous run).
         json_blobs = self.sources["objectstore"].dhub.execute(
@@ -1387,6 +1385,8 @@ class PerformanceTestModel(DatazillaModelBase):
             debug_show=self.DEBUG,
             return_type='tuple'
             )
+
+        resetwarnings()
 
         return json_blobs
 

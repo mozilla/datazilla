@@ -1,11 +1,8 @@
 import sys
 import copy
 import time
-import MySQLdb
 
 from numpy import mean, std, isnan, nan
-
-from warnings import filterwarnings, resetwarnings
 
 from django.conf import settings
 
@@ -1306,19 +1303,11 @@ class MetricsTestModel(DatazillaModelBase):
         #####
         # Load data
         #####
-
-        # NOTE: Disabling warnings here.  A warning is generated in the
-        # production environment that is specific to the master/slave
-        # configuration.
-        filterwarnings('ignore', category=MySQLdb.Warning)
-
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_test_data_all_dimensions',
             debug_show=self.DEBUG,
             executemany=True,
             placeholders=executemany_placeholders)
-
-        resetwarnings()
 
         return revisions_without_push_data
 
