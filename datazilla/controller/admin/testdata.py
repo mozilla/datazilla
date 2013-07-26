@@ -246,4 +246,33 @@ def get_test_value_summary(
 
     return data
 
+def get_test_data_all_dimensions(
+    project, product, branch, os, os_version, test, page,
+    start_time, stop_time):
+
+    mtm = factory.get_mtm(project)
+    data = mtm.get_data_all_dimensions(
+        product, branch, os, os_version, test, page, start_time,
+        stop_time
+        )
+    mtm.disconnect()
+
+    return data
+
+def get_platforms_and_tests(project, product, branch, min_timestamp, max_timestamp):
+
+    mtm = factory.get_mtm(project)
+    data = mtm.get_platforms_and_tests(
+        product, branch, min_timestamp, max_timestamp)
+    mtm.disconnect()
+
+    return data
+
+def get_all_dimension_data_range(project):
+
+    mtm = factory.get_mtm(project)
+    data = mtm.get_all_dimension_data_range(None, None)
+    mtm.disconnect()
+
+    return data
 

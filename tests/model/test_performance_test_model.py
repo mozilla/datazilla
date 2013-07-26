@@ -92,6 +92,8 @@ def test_adapt_production_data(ptm):
 
     assert '-Non-PGO' not in data['test_build']['branch']
 
+    ptm.project = 'talos'
+
     ptm._adapt_production_data(data)
 
     assert '-Non-PGO' in data['test_build']['branch']

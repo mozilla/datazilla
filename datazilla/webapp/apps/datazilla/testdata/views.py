@@ -22,6 +22,14 @@ REQUIRE_PAGE_NAME = """Invalid Request: Require page_name parameter.
 
 API_CONTENT_TYPE = 'application/json; charset=utf-8'
 
+DEFAULT_BRANCH_PROJECT_MAP = {
+    'talos':{'branch':'Mozilla-Inbound', 'product':'Firefox' },
+    'b2g':{'branch':'master', 'product':'B2G'},
+    'stoneridge':{'branch':'broadband', 'product':'Firefox'},
+    'test':{'branch':'Mozilla-Inbound-Non-PGO', 'product':'Firefox'},
+    'default':{'branch':'Mozilla-Inbound', 'product':'Firefox'},
+}
+
 def get_testdata(request, project, branch, revision):
     """
     Apply data filters and return all test data objects associated with the
@@ -221,7 +229,6 @@ def get_test_value_summary(request, project):
     test_ids = utils.get_id_list(request.GET['test_ids'])
     page_name = request.GET.get("page_name", "")
     range = request.GET.get("range", 7)
-    device = request.GET.get("device", "unagi")
 
     #make sure we're operating on an int
     try:
@@ -242,8 +249,68 @@ def get_test_value_summary(request, project):
 
     return HttpResponse(
         json.dumps(testdata.get_test_value_summary(
-            project, branch, device, test_ids, page_name, begin, now
+            project, branch, test_ids, page_name, begin, now
             )),
         content_type=API_CONTENT_TYPE,
         )
+
+def get_data_all_dimensions(request, project=""):
+
+    product = request.GET.get('product')
+
+    branch = request.GET.get('branch')
+
+    os = request.GET.get('os')
+
+    os_version = request.GET.get('os_version')
+
+    test = request.GET.get('test')
+
+    page = request.GET.get('page')
+
+    start_time = request.GET.get('start')
+
+    end_time = request.GET.get('stop')
+
+    data = testdata.get_test_data_all_dimensions(
+        project, product, branch, os, os_version, test, page,
+        start_time, end_time)
+
+    return HttpResponse(
+        json.dumps(data), content_type=API_CONTENT_TYPE)
+
+def get_platforms_and_tests(request, project=""):
+
+    start_time = request.GET.get('start')
+
+    end_time = request.GET.get('stop')
+
+    product = request.GET.get('product')
+
+    branch = request.GET.get('branch')
+
+    if not branch:
+        if project in DEFAULT_BRANCH_PROJECT_MAP:
+            branch = DEFAULT_BRANCH_PROJECT_MAP[project]['branch']
+        else:
+            branch = DEFAULT_BRANCH_PROJECT_MAP['default']['branch']
+
+    if not product:
+        if project in DEFAULT_BRANCH_PROJECT_MAP:
+            product = DEFAULT_BRANCH_PROJECT_MAP[project]['product']
+        else:
+            product = DEFAULT_BRANCH_PROJECT_MAP['default']['product']
+
+    data = testdata.get_platforms_and_tests(
+        project, product, branch, start_time, end_time)
+
+    return HttpResponse(
+        json.dumps(data), content_type=API_CONTENT_TYPE)
+
+def get_all_data_date_range(request, project=""):
+
+    data = testdata.get_all_dimension_data_range(project)
+
+    return HttpResponse(
+        json.dumps(data), content_type=API_CONTENT_TYPE)
 

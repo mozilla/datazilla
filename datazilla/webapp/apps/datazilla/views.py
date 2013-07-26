@@ -15,6 +15,7 @@ from django.http import HttpResponse
 from datazilla.model import PerformanceTestModel
 from datazilla.model import utils
 from datazilla.model import DatasetNotFoundError
+from datazilla.model import DataSource
 
 APP_JS = 'application/json'
 
@@ -110,9 +111,10 @@ def set_test_data(request, project=""):
         unquoted_json_data = urllib.unquote(json_data)
 
         error = None
+        deserialized_json = {}
 
         try:
-            json.loads( unquoted_json_data )
+            deserialized_json = json.loads( unquoted_json_data )
         except ValueError as e:
             error = "Malformed JSON: {0}".format(e.message)
             result = {"status": "Malformed JSON", "message": error}
@@ -124,7 +126,11 @@ def set_test_data(request, project=""):
 
         try:
             dm = PerformanceTestModel(project)
+
+            dm.pre_process_data(unquoted_json_data, deserialized_json)
+
             id = dm.store_test_data(unquoted_json_data, error)
+
             dm.disconnect()
         except Exception as e:
             status = 500
@@ -142,4 +148,16 @@ def set_test_data(request, project=""):
 
 
     return HttpResponse(json.dumps(result), mimetype=APP_JS, status=status)
+
+def homepage(request):
+
+    template_context = {
+        'DEBUG':settings.DEBUG,
+        'PROJECTS':DataSource.objects.filter(
+            contenttype="perftest").values_list("project", flat=True)
+        }
+
+    return render_to_response(
+        'homepage.html', template_context
+        )
 

@@ -100,6 +100,52 @@
       }
  },
  "inserts":{
+      "set_test_data_all_dimensions":{
+
+         "sql":"INSERT INTO `test_data_all_dimensions` (
+                    `test_run_id`,
+                    `product_id`,
+                    `operating_system_id`,
+                    `test_id`,
+                    `page_id`,
+                    `date_received`,
+                    `revision`,
+                    `product`,
+                    `branch`,
+                    `branch_version`,
+                    `operating_system_name`,
+                    `operating_system_version`,
+                    `processor`,
+                    `build_type`,
+                    `machine_name`,
+                    `pushlog_id`,
+                    `push_date`,
+                    `test_name`,
+                    `page_url`,
+                    `mean`,
+                    `std`,
+                    `h0_rejected`,
+                    `p`,
+                    `n_replicates`,
+                    `fdr`,
+                    `trend_mean`,
+                    `trend_std`,
+                    `test_evaluation`
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+
+         "host":"master_host"
+
+      },
+      "set_push_data_all_dimension":{
+
+         "sql":"UPDATE test_data_all_dimensions
+                SET pushlog_id = ?, push_date = ?
+                WHERE revision = ? AND branch = ?",
+
+         "host":"master_host"
+
+      },
       "set_test_ref_data":{
 
          "sql":"INSERT INTO `test` (`name`, `version`)
@@ -361,6 +407,84 @@
   },
   "selects":{
 
+      "get_test_run_ids_not_in_all_dimensions":{
+
+        "sql":"SELECT tr.id
+               FROM test_run AS tr
+               WHERE tr.id NOT IN (
+                  SELECT tdad.test_run_id
+                  FROM test_data_all_dimensions AS tdad
+                  WHERE tdad.date_received >= ? )
+               AND tr.date_run >= ?",
+
+        "host":"read_host"
+      },
+
+      "get_test_data_all_dimensions":{
+
+         "sql":"SELECT `test_run_id` AS 'ti',
+                    `date_received` AS 'dr',
+                    `revision` AS 'r',
+                    `product` AS 'p',
+                    `branch` AS 'b',
+                    `branch_version` AS 'bv',
+                    `operating_system_name` AS 'osn',
+                    `operating_system_version` AS 'osv',
+                    `processor` AS 'pr',
+                    `build_type` AS 'bt',
+                    `machine_name` AS 'mn',
+                    `pushlog_id` AS 'pi',
+                    `push_date` AS 'pd',
+                    `test_name` AS 'tn',
+                    `page_url` AS 'pu',
+                    `mean` AS 'm',
+                    `std` AS 's',
+                    `h0_rejected` AS 'hr',
+                    `p` AS 'pv',
+                    `n_replicates` AS 'nr',
+                    `fdr` AS 'f',
+                    `trend_mean` AS 'tm',
+                    `trend_std` AS 'ts',
+                    `test_evaluation` AS 'te'
+                FROM `test_data_all_dimensions`
+                WHERE REP0 date_received >= ? AND date_received <= ? AND status = 1
+                ORDER BY date_received DESC",
+
+         "host":"read_host"
+
+      },
+      "get_all_dimensions_platforms_and_tests":{
+
+         "sql":"SELECT `product` AS 'p',
+                    `branch` AS 'b',
+                    `branch_version` AS 'bv',
+                    `operating_system_name` AS 'osn',
+                    `operating_system_version` AS 'osv',
+                    `test_name` AS 'tn',
+                    `page_url` AS 'pu'
+                FROM `test_data_all_dimensions`
+                WHERE `product` = ? AND `branch` = ? AND `date_received` >= ? AND
+                      `date_received` <= ? AND `status` = 1
+                GROUP BY `product`, `branch`, `branch_version`, `operating_system_name`, `operating_system_version`, `test_name`, `page_url`
+                ORDER BY date_received DESC",
+
+         "host":"read_host"
+
+      },
+      "get_max_all_dimensions_date":{
+
+          "sql":"SELECT MAX(date_received) AS 'max_date_received' FROM test_data_all_dimensions",
+
+          "host":"read_host"
+      },
+      "get_date_range_all_dimensions":{
+
+         "sql":"SELECT MIN(date_received) AS 'min_date_data_received',
+                       MAX(date_received) AS 'max_date_data_received'
+                FROM `test_data_all_dimensions`",
+
+         "host":"read_host"
+      },
       "get_application_log":{
         "sql":"SELECT `revision`,
                       `test_run_id`,
@@ -553,6 +677,74 @@
 
     },
     "get_b2g_value_summary_by_test_id":{
+
+        "sql":"SELECT tv.test_run_id,
+                      tv.page_id,
+                      tr.revision,
+                      tr.gecko_revision,
+                      tr.build_revision,
+                      tr.test_id,
+                      tr.date_run,
+                      b.product_id,
+                      m.operating_system_id,
+                      m.type,
+                      p.url,
+                      ROUND( AVG(tv.value), 2 ) AS avg,
+                      ROUND( MIN(tv.value), 2 ) AS min,
+                      ROUND( MAX(tv.value), 2 ) AS max,
+                      ROUND( STDDEV(tv.value), 2 ) AS 'std'
+                FROM test_value AS tv
+                LEFT JOIN pages AS p ON tv.page_id = p.id
+                LEFT JOIN value AS v ON tv.value_id = v.id
+                LEFT JOIN test_run AS tr ON tv.test_run_id = tr.id
+                LEFT JOIN machine AS m ON tr.machine_id = m.id
+                LEFT JOIN build AS b ON tr.build_id = b.id
+                LEFT JOIN product AS pr ON b.product_id = pr.id
+                WHERE tr.test_id IN (REP0) AND pr.branch = ? AND m.type = ? AND p.url = ? AND tr.date_run >= ? AND tr.date_run <= ?
+                GROUP BY tr.revision, tr.gecko_revision, tr.test_id, p.url
+                ORDER BY tr.date_run, tr.id DESC",
+
+         "host":"read_host"
+
+    },
+    "get_test_run_value_full_summary":{
+
+        "sql":"SELECT tv.test_run_id,
+                        tv.page_id,
+                        tr.revision,
+                        tr.test_id,
+                        tr.date_run,
+                        tr.test_id,
+                        b.product_id,
+                        m.operating_system_id,
+                        m.name AS 'machine_name',
+                        o.name AS 'operating_system_name',
+                        o.version AS 'operating_system_version',
+                        pr.product AS 'product_name',
+                        pr.branch AS 'product_branch',
+                        pr.version AS 'product_version',
+                        b.processor,
+                        b.build_type,
+                        tr.date_run AS 'date',
+                        t.name AS 'test_name',
+                        p.url AS 'page_name',
+                        ROUND( AVG(tv.value), 2 ) AS 'mean',
+                        ROUND( STDDEV(tv.value), 2 ) AS 'std'
+               FROM test_value AS tv
+               LEFT JOIN test_run AS tr ON tv.test_run_id = tr.id
+               LEFT JOIN build AS b ON tr.build_id = b.id
+               LEFT JOIN test AS t ON tr.test_id = t.id
+               LEFT JOIN pages AS p ON tv.page_id = p.id
+               LEFT JOIN product AS pr ON b.product_id = pr.id
+               LEFT JOIN machine AS m ON tr.machine_id = m.id
+               LEFT JOIN operating_system AS o ON m.operating_system_id = o.id
+               WHERE tv.value_id = 1 AND tv.test_run_id IN (REP0)
+               GROUP BY tv.page_id",
+
+         "host":"read_host"
+
+    },
+    "get_value_summary_by_test_id":{
 
         "sql":"SELECT tv.test_run_id,
                       tv.page_id,
@@ -864,6 +1056,9 @@
                                      'trend_mean',
                                      'trend_stddev',
                                      'p',
+                                     'pushlog_id',
+                                     'fdr',
+                                     'push_date',
                                      'h0_rejected',
                                      'n_replicates')
                          AND tr.id IN (REP0)",

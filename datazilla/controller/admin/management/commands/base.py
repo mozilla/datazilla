@@ -126,7 +126,7 @@ class ProjectBatchCommand(ProjectCommand):
         else:
             projects = [project]
 
-        lock = FileLock(self.LOCK_FILE)
+        lock = FileLock(self.LOCK_FILE + '_' + str(project))
         try:
             lock.acquire(timeout=0)
             try:

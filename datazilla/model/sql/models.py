@@ -119,7 +119,6 @@ class SQLDataSource(object):
 
         return batches
 
-
     def _get_datasource(self):
         candidate_sources = []
         for source in DataSource.objects.cached():

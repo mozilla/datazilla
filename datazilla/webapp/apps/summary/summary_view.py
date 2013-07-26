@@ -8,7 +8,6 @@ from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponse
 
-
 def summary_page(request, project="", branch="", revision=""):
 
     #give template access to the DEBUG variable
