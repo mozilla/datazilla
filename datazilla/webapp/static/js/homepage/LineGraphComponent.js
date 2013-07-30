@@ -249,6 +249,8 @@ var LineGraphView = new Class({
             }
         };
 
+        this.x86ProcStr = '32bit';
+
         this.toolDetailOne = [
            [ undefined, ['r'] ],
            [ undefined, ['dr'], _.bind(this.formatTimestamp, this) ],
@@ -334,7 +336,14 @@ var LineGraphView = new Class({
         if(currentValue === ""){
             return [];
         }else{
-            return currentValue.split(',');
+            return _.map(currentValue.split(','), _.bind(function(item){
+
+                if(item === 'x86'){
+                    return this.x86ProcStr;
+                }else{
+                    return item.replace(/\s+/g, '');
+                }
+                }, this));
         }
     },
     addSearchTerm: function(term){
@@ -392,11 +401,21 @@ var LineGraphView = new Class({
             var pass = [], fail = [], trend = [], datum = "", searchKey = "";
 
             var highlightMap = {};
+            var proc;
 
             for(var j=0; j<data.data[ sortedKeys[i] ].length; j++){
 
                 datum = data.data[ sortedKeys[i] ][j];
-                searchKey = datum.r + datum.mn;
+
+                //Make a unique string for x86 so it doesn't highligh x86_64
+                //when a search is done
+                if(datum.pr == 'x86'){
+                    proc = this.x86ProcStr;
+                }else{
+                    proc = datum.pr;
+                }
+
+                searchKey = datum.r + datum.mn + proc;
 
                 if(datum.te === 1){
 
@@ -634,26 +653,21 @@ var LineGraphView = new Class({
             return;
         }
 
-        for(plotSel in this.plots){
+        var matchString = new RegExp(matchTargets.join('|'));
+        for(var plotSel in this.plots){
+            for(var searchKey in this.plots[plotSel]['highlight_map']){
+                if(searchKey.search(matchString) > -1){
 
-            var matchTarget = "";
-            var i = 0;
-            for(; i<matchTargets.length; i++){
+                    this.plots[plotSel]['plot'].highlight(
+                        this.plots[plotSel]['highlight_map'][searchKey][0],
+                        this.plots[plotSel]['highlight_map'][searchKey][1]);
 
-                matchTarget = matchTargets[i].replace(/\s+/g, '');
-                var searchKey = "";
+                    this.plots[plotSel]['plot'].draw();
+                }else{
+                    this.plots[plotSel]['plot'].unhighlight(
+                        this.plots[plotSel]['highlight_map'][searchKey][0],
+                        this.plots[plotSel]['highlight_map'][searchKey][1]);
 
-                for(searchKey in this.plots[plotSel]['highlight_map']){
-
-                    if(searchKey.search(matchTarget) > -1){
-
-                        this.plots[plotSel]['plot'].highlight(
-                            this.plots[plotSel]['highlight_map'][searchKey][0],
-                            this.plots[plotSel]['highlight_map'][searchKey][1]);
-
-                        this.plots[plotSel]['plot'].draw();
-
-                    }
                 }
             }
         }

@@ -86,7 +86,7 @@ div.hp-list {
 }
 div.hp-control-container {
     position:fixed;
-    width: 100%;
+    min-width: 1200px;
     height: 30px;
     background: white;
     top:35px;

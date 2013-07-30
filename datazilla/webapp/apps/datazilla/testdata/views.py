@@ -315,3 +315,4 @@ def get_all_data_date_range(request, project=""):
     return HttpResponse(
         json.dumps(data), content_type=API_CONTENT_TYPE)
 
+

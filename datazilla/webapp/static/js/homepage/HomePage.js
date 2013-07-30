@@ -23,7 +23,8 @@ var HomePage = new Class( {
             urlObj.attr.directory += '/';
         }
 
-        this.urlBase = urlObj.attr.base + urlObj.attr.directory;
+        //this.urlBase = urlObj.attr.base + urlObj.attr.directory;
+this.urlBase = 'https://datazilla.mozilla.org/';
     }
 
 });

@@ -20,7 +20,7 @@ var SelectionState = new Class({
                 'page':''
             };
 
-        this.defaultProject = 'jeads';
+        this.defaultProject = 'talos';
 
         this.projectDefaults = {
             'b2g':{
