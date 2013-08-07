@@ -54,8 +54,8 @@ class Command(ProjectBatchCommand):
         test_run_ids = ptm.process_objects(loadlimit)
         ptm.disconnect()
 
+        """
         metrics_exclude_projects = set(['b2g', 'games', 'jetperf', 'marketapps', 'microperf', 'stoneridge', 'test', 'webpagetest'])
-
         if project not in metrics_exclude_projects:
             #minimum required number of replicates for
             #metrics processing
@@ -63,6 +63,7 @@ class Command(ProjectBatchCommand):
             compute_test_run_metrics(
                 project, pushlog_project, debug, replicate_min, test_run_ids
                 )
+        """
 
         mtm = MetricsTestModel(project)
         revisions_without_push_data = mtm.load_test_data_all_dimensions(

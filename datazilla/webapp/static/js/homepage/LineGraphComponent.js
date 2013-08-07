@@ -45,8 +45,11 @@ var LineGraphComponent = new Class({
             //User is hovering over the replicate graph
             this.replicateGraphHover(event, pos, item);
         }else{
-            //User is hovering over line graphs
-            this.lineGraphHover(event, pos, item);
+            //User is hovering over line graphs, if the replicate display
+            //is not locked show the replicates
+            if(this.view.getLock() != true){
+                this.lineGraphHover(event, pos, item);
+            }
         }
 
     },
@@ -56,14 +59,14 @@ var LineGraphComponent = new Class({
 
         var datum = item.series.data[item.dataIndex];
 
-        if(_.isEmpty(datum[2])){
+        if(_.isEmpty(datum[3])){
             return;
         }
 
-        var testRunId = datum[2].ti;
-        var page = datum[2].pu;
+        var testRunId = datum[3].ti;
+        var page = datum[3].pu;
 
-        if(datum[2].te === 0){
+        if(datum[3].te === 0){
             this.view.replicateGraphColor = this.view.failColor;
         }else{
             this.view.replicateGraphColor = this.view.passColor;
@@ -75,36 +78,47 @@ var LineGraphComponent = new Class({
             this.testRunIdCache[projectData.project] = {};
         }
 
+        var uri = "";
+
         if(this.testRunIdCache[projectData.project][testRunId] === undefined){
-            this.model.getJsonObj(
-                projectData, datum[2], this,
+
+            this.view.hideReplicateGraph();
+
+            this.testRunIdCache[projectData.project][testRunId] = { 'uri':"", 'data':{} };
+
+            uri = this.model.getJsonObj(
+                projectData, datum[3], this,
                 _.bind(this.loadReplicates, this, testRunId,
                 projectData.project, page));
 
-            this.testRunIdCache[projectData.project][testRunId] = {};
+            this.testRunIdCache[projectData.project][testRunId]['uri'] = uri;
 
         }else{
 
-            this.hoveredDataObj = this.testRunIdCache[projectData.project][testRunId];
+            this.hoveredDataObj = this.testRunIdCache[projectData.project][testRunId]['data'];
 
             this.view.renderReplicates(
-                 page, this.testRunIdCache[projectData.project][testRunId]
+                 page, this.testRunIdCache[projectData.project][testRunId]['data']
                 );
         }
 
+        uri = this.testRunIdCache[projectData.project][testRunId]['uri'];
+
+        this.view.setJsonObjUrl(uri);
+
         this.view.loadHoverData(
-            datum[2], this.view.toolDetailOne,
+            datum[3], this.view.toolDetailOne,
             this.view.hoverToolbarDetailsSel, this.view.datumInlineCls);
 
         this.view.loadHoverData(
-            datum[2], this.view.hoverDetailOne,
+            datum[3], this.view.hoverDetailOne,
             this.view.hoverDetailOneSel, this.view.datumCls);
 
-        $(this.view.searchByMachineSel).text(datum[2].mn);
+        $(this.view.searchByMachineSel).text(datum[3].mn);
     },
     replicateGraphHover: function(event, pos, item){
 
-        if(_.isEmpty(item)){
+        if( _.isEmpty(item) ){
             return;
         }
 
@@ -120,11 +134,26 @@ var LineGraphComponent = new Class({
 
         var datum = item.series.data[item.dataIndex];
 
+
         if(event.target.id === this.view.replicatePanelSel.replace('#', '')){
             //User clicked replicate graph
         }else{
+
+            var lock = this.view.getLock();
+
+            if(lock == true){
+
+                //Replicates are already cached, just display them
+                this.lineGraphHover(event, pos, item);
+
+            }else{
+
+                $(this.view.replicateLockSel).click();
+
+            }
+
             //User clicked line graphs
-            var revision = datum[2].r;
+            var revision = datum[3].r;
 
             this.view.addSearchTerm(revision);
 
@@ -135,7 +164,7 @@ var LineGraphComponent = new Class({
     },
     loadReplicates: function(testRunId, project, page, data){
 
-        this.testRunIdCache[project][testRunId] = data;
+        this.testRunIdCache[project][testRunId]['data'] = data;
 
         this.hoveredDataObj = data;
 
@@ -156,9 +185,11 @@ var LineGraphView = new Class({
 
         this.plots = {};
         this.xaxisLabels = {};
+        this.replicatePlot = {};
 
         this.hpContainerSel = '#hp_container';
         this.lineGraphsSel = '#hp_linegraphs';
+        this.lineGraphWaitSel = '#hp_linegraph_wait';
         this.tabContainerSel = '#hp_tabs';
         this.hoverToolbarDetailsSel = '#hp_toolbar_details';
         this.hoverDetailOneSel = '#hp_hover_detail_one';
@@ -170,6 +201,7 @@ var LineGraphView = new Class({
         this.detailPanelSel = '#hp_detail_panel';
         this.closeDetailPanelSel = '#hp_close_detail_panel';
         this.replicatePanelSel = '#hp_replicates';
+        this.replicatePanelWaitSel = '#hp_replicate_wait';
 
         this.lightTextCls = 'hp-light-text';
         this.datumCls = 'hp-hover-datum';
@@ -179,10 +211,12 @@ var LineGraphView = new Class({
         this.replicateNumTimeSel = '#hp_replicate_run_time';
         this.replicateMinSel = '#hp_replicate_min';
         this.replicateMaxSel = '#hp_replicate_max';
+        this.replicateLockSel = '#hp_replicate_lock';
 
         this.searchByMachineSel = '#hp_search_machine';
 
         this.inputSel = '#hp_input';
+        this.viewJsonObjSel = '#hp_view_json_objects';
 
         this.navClickEvent = 'NAV_CLICK_EV';
 
@@ -239,7 +273,14 @@ var LineGraphView = new Class({
             'series': {
 
                 'points': {
-                    'radius': 2.5
+                    'radius': 2.5,
+                    'errorbars': 'y',
+                    'yerr': {
+                         'show': true,
+                         'upperCap':'-',
+                         'lowerCap':'-',
+                         'color': '#CCCCCC'
+                        }
                 }
             },
 
@@ -316,6 +357,33 @@ var LineGraphView = new Class({
 
             }, this));
 
+        $(window).resize(_.bind(this.resizePlots, this));
+
+    },
+    resizePlots: function(){
+
+        this.resizeReplicatePlot();
+
+        var width = $(this.lineGraphsSel).width();
+        var key = "";
+        for(key in this.plots){
+
+            //Set the width on the graph container div
+            $(this.plots[key]['graph_sel']).width(width);
+
+            this.plots[key]['plot'].resize();
+            this.plots[key]['plot'].setupGrid();
+            this.plots[key]['plot'].draw();
+
+        }
+    },
+    resizeReplicatePlot: function(){
+
+        if( !_.isEmpty(this.replicatePlot) ){
+            this.replicatePlot.resize();
+            this.replicatePlot.setupGrid();
+            this.replicatePlot.draw();
+        }
     },
     search: function(){
         var terms = this.getSearchTerms();
@@ -357,7 +425,12 @@ var LineGraphView = new Class({
             }else{
                 newValue = term;
             }
-            $(this.inputSel).val(newValue);
+
+            var terms = this.getSearchTerms();
+            //Insure search terms are not duplicated
+            if(_.indexOf(terms, term) === -1){
+                $(this.inputSel).val(newValue);
+            }
         }
     },
     formatTimestamp: function(t){
@@ -371,6 +444,7 @@ var LineGraphView = new Class({
         var sortedKeys = this.getAlphabeticalSortKeys(data.data);
 
         $(this.lineGraphsSel).empty();
+
         this.plots = {};
 
         var id = "", graphDiv = "", graphSel = "", labelDiv = "";
@@ -381,7 +455,6 @@ var LineGraphView = new Class({
         var passSeriesIndex = 0;
         var failSeriesIndex = 1;
         var trendSeriesIndex = 2;
-
 
         for(var i=0; i<sortedKeys.length; i++){
 
@@ -418,26 +491,25 @@ var LineGraphView = new Class({
                 searchKey = datum.r + datum.mn + proc;
 
                 if(datum.te === 1){
-
                     highlightMap[searchKey] = [
-                        passSeriesIndex, pass.push( [ j, datum.m, datum ]) - 1
+                        passSeriesIndex, pass.push( [ j, datum.m, datum.s, datum ]) - 1
                         ];
 
                 }else if(datum.te === 0){
 
                     highlightMap[searchKey] = [
-                        failSeriesIndex, fail.push([ j, datum.m, datum ]) - 1
+                        failSeriesIndex, fail.push([ j, datum.m, datum.s, datum ]) - 1
                         ];
 
                 }else{
 
                     highlightMap[searchKey] = [
-                        passSeriesIndex, pass.push([ j, datum.m, datum ]) - 1
+                        passSeriesIndex, pass.push([ j, datum.m, datum.s, datum ]) - 1
                         ];
                 }
 
                 if(datum.tm != null){
-                    trend.push([ j, datum.tm, datum ]);
+                    trend.push([ j, datum.tm, datum.s, datum ]);
                 }
 
                 if(this.xaxisLabels[graphSel] === undefined){
@@ -453,7 +525,9 @@ var LineGraphView = new Class({
                 'plot':this.drawGraph(
                     sortedKeys[i], pass, fail, trend, graphSel
                     ),
-                'highlight_map':highlightMap
+                'highlight_map':highlightMap,
+
+                'graph_sel':graphSel
 
                 };
 
@@ -466,10 +540,14 @@ var LineGraphView = new Class({
         if(containerHeight < this.minContainerHeight){
             containerHeight = this.minContainerHeight;
         }
+
         $(this.tabContainerSel).height(containerHeight);
 
         this.search();
 
+        this.showGraphs();
+
+        HOME_PAGE.selectionState.saveState();
     },
     sortData: function(a, b){
         //pd = push date
@@ -493,13 +571,18 @@ var LineGraphView = new Class({
               'data':fail,
               'points': {'show':true} },
 
-            { 'color':this.trendColor,
-              'data':trend,
-              'points': {'show':true} } ];
+            //{ 'color':this.trendColor,
+            //  'data':trend,
+            //  'points': {'show':true} }
+            ];
 
         var chartOptions = jQuery.extend(true, {}, this.performanceChartOptions);
         chartOptions['xaxis']['tickFormatter'] = _.bind(
             this.formatLabel, this, graphDivSel );
+
+        //Account for resize of browser
+        var width = $(this.lineGraphsSel).width();
+        $(graphDivSel).width(width);
 
         return $.plot(
             $(graphDivSel),
@@ -630,12 +713,15 @@ var LineGraphView = new Class({
 
         this.setReplicateDetails(datapoint, min, max);
 
-        this.plot = $.plot(
+        this.showReplicateGraph();
+
+        var width = $(this.replicatePanelSel).width();
+
+        this.replicatePlot = $.plot(
             $(this.replicatePanelSel),
             [chartData],
             this.replicateChartOptions
             );
-
     },
     setReplicateDetails: function(datapoint, min, max){
 
@@ -671,6 +757,43 @@ var LineGraphView = new Class({
                 }
             }
         }
+    },
+    setJsonObjUrl: function(uri){
+        $(this.viewJsonObjSel).attr('href', uri);
+    },
+    showGraphs: function(){
+
+        $(this.lineGraphWaitSel).css('display', 'none');
+        $(this.lineGraphsSel).fadeIn();
+
+        //Need to resize after making visible to set width correctly
+        this.resizePlots();
+    },
+    hideGraphs: function(){
+        $(this.lineGraphsSel).css('display', 'none');
+        $(this.lineGraphWaitSel).fadeIn();
+    },
+    showReplicateGraph: function(){
+
+        $(this.replicatePanelWaitSel).css('display', 'none');
+        $(this.replicatePanelSel).fadeIn();
+
+        //Need to resize after making visible to set width correctly
+        this.resizeReplicatePlot();
+    },
+    hideReplicateGraph: function(){
+
+        $(this.replicatePanelSel).css('display', 'none');
+
+        var width = $(this.replicatePanelSel).width();
+        $(this.replicatePanelWaitSel).width(width);
+
+        $(this.replicatePanelWaitSel).css('display', 'block');
+
+        this.resizeReplicatePlot();
+    },
+    getLock: function(){
+        return $(this.replicateLockSel).is(':checked');
     }
 });
 var LineGraphModel = new Class({
@@ -705,5 +828,7 @@ var LineGraphModel = new Class({
             context:context,
             success:fnSuccess,
         });
+
+        return uri;
     }
 });

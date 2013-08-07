@@ -37,15 +37,19 @@ var NavComponent = new Class({
 
         this.view.setList(
             this.view.testMenuSel, this.nodeClick, this, data.data.tests,
-            data.data.min, data.data.max);
+            data.slider_min, data.slider_max);
 
         this.view.setList(
             this.view.platformMenuSel, this.nodeClick, this, data.data.platforms,
-            data.data.min, data.data.max);
+            data.slider_min, data.slider_max);
+
+        //Simulate node click so we load a graph
+        this.nodeClick({'min':data.slider_min, 'max':data.slider_max});
+
     },
     nodeClick: function(data){
 
-        this.view.setNav(data.nav);
+        HOME_PAGE.LineGraphComponent.view.hideGraphs();
 
         var prData = HOME_PAGE.selectionState.getSelectedProjectData();
 
@@ -54,22 +58,36 @@ var NavComponent = new Class({
         var test = "";
         var page = "";
 
-        if(this.view.platformMenuSel === data.parent_sel){
+        if(data.parent_sel === undefined){
 
             this.platformData = true;
             this.testData = false;
 
-            os = data.data.os;
-            osVersion = data.data.version;
-            test = data.key_two;
+            os = prData.os;
+            osVersion = prData.os_version;
+            test = prData.test;
 
-        }else if(this.view.testMenuSel === data.parent_sel){
+            data.nav = os + ' ' + osVersion + '->' + test;
 
-            this.testData = true;
-            this.platformData = false;
+        }else{
 
-            test = data.key_one;
-            page = data.key_two;
+            if(this.view.platformMenuSel === data.parent_sel){
+
+                this.platformData = true;
+                this.testData = false;
+
+                os = data.data.os;
+                osVersion = data.data.version;
+                test = data.key_two;
+
+            }else if(this.view.testMenuSel === data.parent_sel){
+
+                this.testData = true;
+                this.platformData = false;
+
+                test = data.key_one;
+                page = data.key_two;
+            }
         }
 
         HOME_PAGE.selectionState.setOs(prData.project, os);
@@ -77,9 +95,8 @@ var NavComponent = new Class({
         HOME_PAGE.selectionState.setPage(prData.project, page);
         HOME_PAGE.selectionState.setTest(prData.project, test);
 
-        //HOME_PAGE.selectionState.setTest(project, prData.product);
+        this.view.setNav(data.nav);
 
-        //$(this.hpContainerSel).trigger(this.navClickEvent, data);
         options = {
             'project':prData.project,
             'product':prData.product,
@@ -104,7 +121,6 @@ var NavComponent = new Class({
 
         _.map(data.data, _.bind(this.aggregateData, this));
 
-console.log([this.navClickEvent, data]);
         $(this.view.hpContainerSel).trigger(
             this.navClickEvent,
             { 'data':this.testGraph, 'machine_graph':this.machineGraph,
@@ -155,6 +171,7 @@ var NavView = new Class({
         this.parent(options);
 
         this.hpContainerSel = '#hp_container';
+        this.mainSpinnerSel = '#hp_main_wait';
         this.testMenuSel = '#hp_test_menu';
         this.platformMenuSel = '#hp_platform_menu';
         this.navSel = '#hp_nav';
@@ -168,7 +185,6 @@ var NavView = new Class({
         var listOrder = this.getAlphabeticalSortKeys(data);
         var datasetOne = {};
         var datasetTwo = {};
-
         var ulRoot = $(document.createElement('ul'));
 
         for(var i=0; i<listOrder.length; i++){
@@ -176,6 +192,7 @@ var NavView = new Class({
             datasetOne = data[ listOrder[i] ];
             var li = $(document.createElement('li'));
             var a = $(document.createElement('a'));
+
             $(a).text(this._getDisplayText(listOrder[i]));
             $(a).attr('title', listOrder[i]);
             $(li).append(a);
@@ -214,6 +231,18 @@ var NavView = new Class({
         $(selector).append(ulRoot);
 
         $(ulRoot).menu();
+
+        this.showDataContainer();
+    },
+    hideDataContainer: function(){
+        $(this.hpContainerSel).css('display', 'none');
+        $(this.mainSpinnerSel).fadeIn();
+    },
+    showDataContainer: function(){
+        $(this.mainSpinnerSel).css('display', 'none');
+        $(this.hpContainerSel).fadeIn();
+
+        HOME_PAGE.SliderComponent.resizeSlider();
     },
     setNav: function(navText){
         $(this.navSel).text(navText);

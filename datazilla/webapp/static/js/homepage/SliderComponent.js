@@ -235,6 +235,9 @@ var SliderComponent = new Class({
                 repository )
             );
 
+        HOME_PAGE.selectionState.setStart(project, parseInt(values.min/1000));
+        HOME_PAGE.selectionState.setStop(project, parseInt(values.max/1000));
+
         $(this.view.hpContainerSel).trigger(
             this.sliderSliceEvent,
             { 'project':project,
@@ -271,6 +274,8 @@ var SliderComponent = new Class({
         }
     },
     setProductRepositoryOption: function(){
+
+        HOME_PAGE.NavComponent.view.hideDataContainer();
 
         var project = this.view.getProject();
         var prData = this.view.getProductRepository();
@@ -338,6 +343,8 @@ var SliderComponent = new Class({
     },
     setProjectOption: function(){
 
+        HOME_PAGE.NavComponent.view.hideDataContainer();
+
         var project = this.view.getProject();
 
         HOME_PAGE.selectionState.setProject(project);
@@ -359,7 +366,11 @@ var SliderComponent = new Class({
                 );
 
         }
-    }
+    },
+    resizeSlider: function(){
+        var project = this.view.getProject();
+        this.view.resizeSlider(project, this.sliders[project].id);
+    },
 });
 var SliderView = new Class({
 
@@ -474,6 +485,10 @@ var SliderView = new Class({
     },
     getInternalDataObject: function(obj){
         return jQuery.parseJSON( obj.replace(/'/g, '"') );
+    },
+    resizeSlider: function(project, sliderId){
+        var sliderSel = '#' + sliderId;
+        $(sliderSel).resize();
     }
 });
 var SliderModel = new Class({

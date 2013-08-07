@@ -9,8 +9,18 @@ var SelectionState = new Class({
 
     initialize: function(selector, options){
 
+        this.history = window.History;
+
+        this.paramData = {};
+
+        this.stateChangeEvent = 'STATE_CHANGE_EV';
+
+        this.hpContainerSel = '#hp_container';
+
         this.stateKeys = {
                 'selected':false,
+                'start':'',
+                'stop':'',
                 'product':'',
                 'repository':'',
                 'os':'',
@@ -27,6 +37,8 @@ var SelectionState = new Class({
                 'product':'B2G',
                 'repository':'master',
                 'arch':'Gonk',
+                'os':'Firefox OS',
+                'os_version':'1.2.0.0-prerelease',
                 'test':'phone',
                 'page':''
                 },
@@ -34,7 +46,9 @@ var SelectionState = new Class({
                 'product':'Firefox',
                 'repository':'Mozilla-Inbound',
                 'arch':'x86_64',
-                'test':'tp5o',
+                'os':'mac',
+                'os_version':'OS X 10.8',
+                'test':'a11yr',
                 'page':'',
                 },
             'default':{
@@ -47,6 +61,12 @@ var SelectionState = new Class({
             };
 
         this.selections = {};
+
+        this.historyEvent = false;
+
+        this.history.Adapter.bind(
+            window, 'statechange', _.bind(this.stateChange, this)
+            );
     },
     getSelectedProjectData: function(){
 
@@ -119,6 +139,22 @@ var SelectionState = new Class({
             }
         }
     },
+    setStart: function(project, start){
+
+        if(!_.isNumber(start)){
+            return;
+        }
+        this.setDefaults(project);
+        this.selections[project]['start'] = start;
+    },
+    setStop: function(project, stop){
+
+        if(!_.isNumber(stop)){
+            return;
+        }
+        this.setDefaults(project);
+        this.selections[project]['stop'] = stop;
+    },
     setProduct: function(project, product){
 
         if(!_.isString(project)){
@@ -171,5 +207,93 @@ var SelectionState = new Class({
         }
         this.setDefaults(project);
         this.selections[project]['page'] = page;
+    },
+    saveState: function(){
+
+        if( this.historyEvent === true ){
+            this.historyEvent = false;
+            return;
+        }
+
+        var params = this.getParams();
+
+        this.history.pushState(
+            {state:params},
+            "Perf-o-Matic",
+            '?' + params['params']
+            );
+    },
+    stateChange: function(){
+
+        var historyState = this.history.getState();
+
+console.log(['stateChange', historyState]);
+
+        var params = this.getParams();
+
+        if(this.isHistoryStateChange(historyState, params)){
+
+            var modifiedParams = this.getModifiedParams(
+                historyState.data.state.hash, params.hash
+                );
+
+            this.historyEvent = true;
+
+            //$(this.appContainerSel).trigger(
+            //    this.stateChangeEvent, modifiedParams
+            //    )
+        }
+    },
+    getParams: function(){
+
+        var selectedData = this.getSelectedProjectData();
+        var params = {
+            'params':'', 'hash':'', 'selected_data':selectedData
+            };
+
+        var pairs = _.pairs(selectedData);;
+        var pair = {};
+        var i = 0;
+        for(; i<pairs.length; i++){
+
+            pair = pairs[i];
+
+            if(pair[0] == 'selected'){
+                continue;
+            }
+
+            if(pair[1] != ''){
+                if(i == (pairs.length - 1)){
+                    params['params'] += pair[0] + '=' + pair[1];
+                }else {
+                    params['params'] += pair[0] + '=' + pair[1] + '&';
+                }
+            }
+        }
+
+        params['hash'] = params['params'].hashCode();
+
+        return params;
+
+    },
+    isHistoryStateChange: function(historyState, paramData){
+
+        var historyStateChange = false;
+
+        if( (historyState.data.state != undefined) &&
+            (historyState.data.state.hash != paramData.hash) ){
+            historyStateChange = true;
+        }
+
+        return historyStateChange;
+
+    },
+    getParamsStrAndHash: function(params){
+
+        var paramsStr = params.join('&');
+
+        return { 'params_str':paramsStr,
+                 'params':params,
+                 'hash':paramsStr.hashCode() };
     }
 });

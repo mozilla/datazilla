@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="/static/css/Aristo/jquery-ui-1.8.7.custom.css" type="text/css"/>
     <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" />
     <link rel="stylesheet" href="/static/js/plugins/jQRangeSlider-min/css/iThing.css" />
+
     <link rel="stylesheet" href="/static/css/homepage.css" type="text/css"/>
 {% else %}
     <link rel="stylesheet" href="/static/css/homepage-min.css" type="text/css"/>
@@ -42,16 +43,6 @@
                 Product/Repository:
                 <select id="hp_repository"></select>
             </div>
-            <div class="hp-control-element">
-                Time Range:
-                <select id="hp_time_range">
-                    <option value="1">1 day</option>
-                    <option value="7">7 days</option>
-                    <option value="14">14 days</option>
-                    <option value="30">30 days</option>
-                    <option value="60">60 days</option>
-                </select>
-            </div>
 
             <div class="hp-control-element" style="float:right;" title="Search a comma delimited list of revisions, machine names, or processor types (x86, x86_64)">
                 Search Graphs:
@@ -62,9 +53,10 @@
     </div>
 </div>
 
-<div id="hp_container" class="ui-widget ui-widget-header ui-corner-top hp-container-two hp-light-text">
-    <!--<div id="slider" style="position:relative; width:90%; margin-top:50px; margin-left:100px;"></div>-->
-    <div id="slider" style="position:relative;" class="ui-rangeSlider ui-dateRangeSlider"></div>
+<div id="hp_main_wait" class="hp-spinner"></div>
+<div id="hp_container" style="display:none;" class="ui-widget ui-widget-header ui-corner-top hp-container-two hp-light-text">
+
+    <div id="slider" class="ui-rangeSlider ui-dateRangeSlider hp-slider-container"></div>
     <div id="hp_tabs" style="margin-top:100px;">
         <ul>
             <li><a href="#hp-metrics">Metrics</a></li>
@@ -84,10 +76,11 @@
             </div>
             <div class="ui-widget ui-widget-header ui-corner-top hp-graph-controls">
                 <div id="hp_nav" class="hp-control-element"></div>
-                <div id="hp_linegraphs" class="hp-line-graph-container">
+                <span style="margin-top:5px; margin-right:15px; float:right;" class="hp-light-text">Hint: Click a data point to search by revision, Hover over data to see details</span>
+                <div id="hp_linegraph_wait" class="hp-spinner"></div>
+                <div id="hp_linegraphs" style="display:none;" class="hp-line-graph-container">
                 </div>
             </div>
-    
         </div>
     </div>
     <!--This div insures that the last graph is visible above the detail panel -->
@@ -97,14 +90,24 @@
         <div class="ui-widget ui-widget-header hp-tip-control-panel">
             <div id="hp_toolbar_details" style="display:inline; float:left;"></div>
             <div style="display:inline; float:left;" class="hp-hover-inline-datum">
-                <span class="hp-light-text">min:</span><span id="hp_replicate_min"></span><span style="margin-left:10px;" class="hp-light-text">max:</span><span id="hp_replicate_max"></span><span style="margin-left:35px;" class="hp-light-text">search by:</span><a id="hp_search_machine" title="Click the machine name to highlight it in all graphs" href="#"></a>
+                <span class="hp-light-text">min:&nbsp;</span><span id="hp_replicate_min"></span><span style="margin-left:10px;" class="hp-light-text">max:&nbsp;</span><span id="hp_replicate_max"></span><span style="margin-left:35px;" class="hp-light-text">search by:&nbsp;</span><a id="hp_search_machine" title="Click the machine name to highlight it in all graphs" href="#"></a>
             </div>
+            <span style="float-right; margin-left:20px; margin-bottom:2px;">
+                <label title="Locks replicate display on last data point clicked.">Lock: <input id="hp_replicate_lock" type="checkbox" /></label>
+            </span>
+
             <span id="hp_close_detail_panel" style="float:right; margin-right:10px;" class="ui-icon ui-icon-close" title="Close detail panel" ></span>
         </div>
         <div id="hp_hover_detail_one" class="hp-tip-panel"></div>
-        <div id="hp_replicates" style="margin-left: 270px; margin-top: 25px; width:550px; height:125px;"></div>
+        <div id="hp_replicate_wait" style="width:550px;" class="hp-replicate-graph-panel hp-replicate-spinner"></div>
+        <div id="hp_replicates" class="hp-replicate-graph-panel"></div>
         <div id="hp_hover_detail_two" class="hp-replicate-hover-panel">
-            <div><span class="hp-light-text">Replicate:</span><span id="hp_replicate_num"></span><span style="margin-left:10px;" class="hp-light-text">Run Time:</span><span id="hp_replicate_run_time"></span><span style="margin-left:3px;" class="hp-light-text">ms</span></div>
+            <div><span class="hp-light-text">Replicate:&nbsp;</span><span id="hp_replicate_num"></span></div>
+            <div><span class="hp-light-text">Run Time:&nbsp;</span><span id="hp_replicate_run_time"></span><span style="margin-left:3px;" class="hp-light-text">&nbsp;ms</span></div>
+
+            <div style="margin-top:5px;">
+                <a href="" id="hp_view_json_objects" target="_blank" class="hp-light-text" title="Click to see all json objects">View Json Objects</a>
+            </div>
         </div>
     </div>
 </div>
@@ -117,8 +120,6 @@
 <script type="text/javascript" src="/static/js/plugins/jquery.url.js"></script>
 <script type="text/javascript" src="/static/js/plugins/d3.v2.min.js"></script>
 
-<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.min.js"></script>
-<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.selection.min.js"></script>
 
 <!--[if lte IE 8]><script language="javascript" type="text/javascript" src="/static/js/plugins/flot-0.7/excanvas.min.js"></script><![endif]-->
 
@@ -130,6 +131,7 @@
 <script type="text/javascript" src="/static/js/plugins/moo4q/Source/Class.Mutators.jQuery.js"></script>
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.min.js"></script>
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.selection.min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.errorbars.js"></script>
 <script type="text/javascript" src="/static/js/plugins/json2.js"></script>
 <script type="text/javascript" src="/static/js/plugins/d3.v2.min.js"></script>
 

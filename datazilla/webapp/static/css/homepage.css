@@ -48,7 +48,8 @@ div.hp-container-two {
     -moz-box-sizing: border-box;
     -webkit-box-sizing: border-box;
     border: 0 solid #000;
-    width: 1120px;
+    min-width: 1120px;
+    width: 95%;
     padding-top: 120px;
     margin-left: auto;
     margin-right: auto;
@@ -59,16 +60,10 @@ div.hp-container-two {
     z-index: 100;
     background:white;
 }
-div.hp-linegraph-container {
-    float:left;
-    width: 910px;
-    height: 1000px;
-    background: white;
-    overflow-y: auto;
-}
 div.hp-graph-controls {
-    float:left;
-    width: 910px;
+    float:right;
+    min-width: 910px;
+    width: 82%;
     height: 25px;
     background: white;
     margin-left: 10px;
@@ -93,35 +88,47 @@ div.hp-control-container {
 }
 div.hp-graph-control-container {
     position:fixed;
-    width: 1118px;
+    min-width:1118px;
+    width: 95%;
     height: 160px;
     background: #F7F7F7;
     bottom: 0px;
     z-index:15000;
+    margin-left: auto;
+    margin-right: auto;
+
     display:none;
 }
 div.hp-tip-control-panel {
-    position:absolute;
-    width: 1118px;
+
+    width:100.01%;
+    position:relative;
+    min-width:1118px;
     height: 20px;
+    top: -1px;
+    left: -1px;
     background: #F7F7F7;
-    bottom:140px;
-    left:-1px;
 }
 div.hp-tip-panel {
     float: left;
-    width:250px;
+    width:275px;
     height: 140px;
     overflow-y:auto;
-    background: #F7F7F7;
+    margin-top:5px;
     margin-left:10px;
-    margin-top: 23px;
+}
+div.hp-replicate-graph-panel {
+    float:left;
+    margin-top: 5px;
+    min-width:545px;
+    width:53%;
+    height:125px;
 }
 div.hp-replicate-hover-panel {
-    position:absolute;
-    top:23px;
-    right:0px;
-    width:250px;
+    float:right;
+    margin-top:5px;
+    margin-left:10px;
+    width:220px;
     height: 140px;
     overflow-y:auto;
 }
@@ -161,6 +168,13 @@ div.hp-line-plot {
 }
 div.hp-line-graph-container {
     margin-top:50px;
+    width:90%;
+}
+div.hp-slider-container {
+    position:relative;
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
 }
 .hp-graph-name {
     position:absolute;
@@ -178,4 +192,12 @@ div.hp-line-graph-container {
     position:absolute;
     left:135px;
     margin-top:160px;
+}
+div.hp-spinner {
+    background: transparent url(/static/images/spinner.gif) no-repeat center center;
+    height:420px;
+}
+div.hp-replicate-spinner {
+    background: transparent url(/static/images/spinner.gif) no-repeat center center;
+    min-width: 550px;
 }

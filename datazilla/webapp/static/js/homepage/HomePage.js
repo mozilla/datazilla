@@ -23,8 +23,8 @@ var HomePage = new Class( {
             urlObj.attr.directory += '/';
         }
 
-        //this.urlBase = urlObj.attr.base + urlObj.attr.directory;
-this.urlBase = 'https://datazilla.mozilla.org/';
+        this.urlBase = urlObj.attr.base + urlObj.attr.directory;
+//this.urlBase = 'https://datazilla.mozilla.org/';
     }
 
 });
@@ -39,8 +39,8 @@ $(document).ready(function() {
     HOME_PAGE.selectionState = new SelectionState(urlObj);
     HOME_PAGE.selectionState.setUrlObj(urlObj);
 
-    HOME_PAGE.SliderComponent = new SliderComponent();
     HOME_PAGE.NavComponent = new NavComponent();
+    HOME_PAGE.SliderComponent = new SliderComponent();
     HOME_PAGE.LineGraphComponent = new LineGraphComponent();
 
 });
