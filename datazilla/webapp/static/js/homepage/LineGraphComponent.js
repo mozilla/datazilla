@@ -98,7 +98,7 @@ var LineGraphComponent = new Class({
         }
 
         if(!_.isEmpty(datum)){
-            //Make sure we set the lock
+            //Simulate plot click and supply datum
             this.clickPlot({ 'target':{ 'id':'' } }, {}, {}, datum);
         }
     },
@@ -107,6 +107,10 @@ var LineGraphComponent = new Class({
         $(this.view.detailPanelSel).slideDown();
 
         if(_.isEmpty(datum)){
+
+            if(item === null){
+                return;
+            }
 
             if(item.series.data[item.dataIndex]){
                 datum = item.series.data[item.dataIndex][3];
@@ -195,6 +199,10 @@ var LineGraphComponent = new Class({
     clickPlot: function(event, pos, item, datum){
 
         if(_.isEmpty(datum)){
+
+            if(item === null){
+                return;
+            }
 
             if(item.series.data[item.dataIndex]){
                 datum = item.series.data[item.dataIndex][3];
