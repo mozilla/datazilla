@@ -60,14 +60,25 @@ var NavComponent = new Class({
 
         if(data.parent_sel === undefined){
 
-            this.platformData = true;
-            this.testData = false;
-
             os = prData.os;
             osVersion = prData.os_version;
             test = prData.test;
+            page = prData.page;
 
-            data.nav = os + ' ' + osVersion + '->' + test;
+            if(os === "" && osVersion === ""){
+
+                this.platformData = false;
+                this.testData = true;
+
+                data.nav = test + '->' + page;
+
+            }else{
+
+                this.platformData = true;
+                this.testData = false;
+
+                data.nav = os + ' ' + osVersion + '->' + test;
+            }
 
         }else{
 

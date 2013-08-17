@@ -88,6 +88,28 @@ var SliderComponent = new Class({
         this.setProjectOption(projectData);
 
     },
+    changeProject: function(project){
+
+        $(this.view.projectSel).val(project);
+        $(this.view.projectSel).trigger('change');
+
+    },
+    changeProductRepository: function(product, repository){
+
+        var productRepository = this.getProductRepositoryString(
+            product, repository
+            );
+
+        $(this.view.productRepositorySel).val(productRepository);
+        $(this.view.productRepositorySel).trigger('change');
+    },
+    changeSlider: function(project, start, stop){
+
+        $(this.sliders[project].el).dateRangeSlider(
+            "values", parseInt(start*1000), parseInt(stop*1000)
+            );
+
+    },
     initializeSlider: function(data){
 
         if(_.isEmpty(this.columnKey)){
@@ -116,16 +138,19 @@ var SliderComponent = new Class({
 
         var sliderSel = '#' + this.sliders[project].id;
 
+        var defaultValues = this.getDefaultMinMaxValues(
+            project, projectData);
+
         //Initialize slider
         this.sliders[project].el = $(sliderSel).dateRangeSlider({
-            'arrows':true,
+            'arrows':false,
             'bounds': {
                 min: new Date(parseInt(data['min_date_data_received']*1000)),
                 max: new Date(this.sliders[project].max),
                 },
             'defaultValues': {
-                min: new Date(this.sliders[project].min),
-                max: new Date(this.sliders[project].max)
+                min: defaultValues.min,
+                max: defaultValues.max
                 }
             });
 
@@ -133,6 +158,14 @@ var SliderComponent = new Class({
         //slider initializes
         this.data[project][product][repository]['min'] = 0;
         this.data[project][product][repository]['max'] = 0;
+
+    },
+    getDefaultMinMaxValues: function(project, projectData){
+
+        var min = parseInt(projectData.start*1000) || this.sliders[project].min;
+        var max = parseInt(projectData.stop*1000) || this.sliders[project].max;
+
+        return { 'min': new Date(min), 'max': new Date(max) };
 
     },
     initializeProjectData: function(project, product, repository){
@@ -214,8 +247,7 @@ var SliderComponent = new Class({
         //Initialize the slider
         this.view.setSliderEl(project, this.sliders);
 
-        values = this.getSliderValues(project);
-
+        values = this.getSliderValues(project, projectData);
         if( (values.min < this.data[project][product][repository]['min']) ||
             (this.data[project][product][repository]['min'] === 0) ){
 
@@ -288,6 +320,8 @@ var SliderComponent = new Class({
     },
     getPlatformsAndTests: function(){
 
+        HOME_PAGE.LineGraphComponent.view.hideGraphs();
+
         var project = this.view.getProject();
 
         var projectData = HOME_PAGE.selectionState.getProjectData(project);
@@ -296,7 +330,7 @@ var SliderComponent = new Class({
         var repository = projectData.repository;
 
         //Get the start and stop time from the slider to
-        var values = this.getSliderValues(project);
+        var values = this.getSliderValues(project, projectData);
 
         if( (values.min === 0 && values.max === 0) ||
             (values.min < this.data[project][product][repository]['min']) ||
@@ -327,7 +361,7 @@ var SliderComponent = new Class({
 
         return dates;
     },
-    getSliderValues: function(project){
+    getSliderValues: function(project, projectData){
 
         var values = { 'min':0, 'max':0 };
 
@@ -355,6 +389,7 @@ var SliderComponent = new Class({
             this.loadPlatformsAndTests({});
 
         }else {
+
             //Retrieve the date range to initialize the slider with
             this.model.getDateRange(
                 this, project, _.bind(this.initializeSlider, this)

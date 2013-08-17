@@ -18,12 +18,21 @@ var LineGraphComponent = new Class({
         this.view = new LineGraphView();
         this.model = new LineGraphModel();
 
+        //The firstGraphLoada property is used to recover graph_search and
+        //tr_id state the first time graphs are rendered. graph_search
+        //refers to the search string in the "Search Graphs:" input box and
+        //tr_id refers to the test_run_id associated with the json replicate
+        //structure displayed in the replicate display graph panel in the
+        //bottom of the browser.
+        this.firstGraphLoad = true;
+
         this.testRunIdCache = {};
+
         //The json data obj that the user last hovered over
         this.hoveredDataObj = {};
 
         $(this.view.hpContainerSel).bind(
-            this.view.navClickEvent, _.bind(this.view.loadPerformanceGraphs, this.view)
+            this.view.navClickEvent, _.bind(this.loadPerformanceGraphs, this)
             );
 
         $(this.view.hpContainerSel).bind(
@@ -51,22 +60,71 @@ var LineGraphComponent = new Class({
                 this.lineGraphHover(event, pos, item);
             }
         }
-
     },
-    lineGraphHover: function(event, pos, item){
+    loadPerformanceGraphs: function(ev, data){
+
+        var projectData = {};
+
+        if(this.firstGraphLoad === true){
+            //First time loading graphs, set the search terms before graphs load
+            projectData = HOME_PAGE.selectionState.getSelectedProjectData();
+            this.view.setSearchTerms(projectData.graph_search);
+        }
+
+        //load the graphs
+        this.view.loadPerformanceGraphs(ev, data);
+
+        if(this.firstGraphLoad === true){
+            //First time loading graphs, recover tr_id ( replicate graph
+            //display state )
+            this.changeReplicateGraph(projectData);
+
+            this.firstGraphLoad = false;
+        }
+    },
+    changeReplicateGraph: function(projectData){
+
+        var key = projectData.graph;
+        var datum = {};
+
+        if(!_.isEmpty(this.view.data['data'][key])){
+            var i = 0;
+            for(; i < this.view.data['data'][key].length; i++){
+                datum = this.view.data['data'][key][i];
+                if(projectData.tr_id === datum.ti){
+                   break;
+                }
+            }
+        }
+
+        if(!_.isEmpty(datum)){
+            //Make sure we set the lock
+            this.clickPlot({ 'target':{ 'id':'' } }, {}, {}, datum);
+        }
+    },
+    lineGraphHover: function(event, pos, item, datum){
 
         $(this.view.detailPanelSel).slideDown();
 
-        var datum = item.series.data[item.dataIndex];
+        if(_.isEmpty(datum)){
 
-        if(_.isEmpty(datum[3])){
-            return;
+            if(item.series.data[item.dataIndex]){
+                datum = item.series.data[item.dataIndex][3];
+            }
+
+            //If datum is still empty here, user is hovering
+            //over graph but not a data point
+            if(_.isEmpty(datum)){
+                return;
+            }
         }
 
-        var testRunId = datum[3].ti;
-        var page = datum[3].pu;
 
-        if(datum[3].te === 0){
+        var testRunId = datum.ti;
+        var page = datum.pu;
+
+        //Set the color for the replicate graph
+        if(datum.te === 0){
             this.view.replicateGraphColor = this.view.failColor;
         }else{
             this.view.replicateGraphColor = this.view.passColor;
@@ -74,12 +132,15 @@ var LineGraphComponent = new Class({
 
         var projectData = HOME_PAGE.selectionState.getSelectedProjectData();
 
+        //Initialize the project
         if(this.testRunIdCache[projectData.project] === undefined){
             this.testRunIdCache[projectData.project] = {};
         }
 
         var uri = "";
 
+        //First time we're seeing this testRunId, retrieve the data from the
+        //database.
         if(this.testRunIdCache[projectData.project][testRunId] === undefined){
 
             this.view.hideReplicateGraph();
@@ -87,14 +148,15 @@ var LineGraphComponent = new Class({
             this.testRunIdCache[projectData.project][testRunId] = { 'uri':"", 'data':{} };
 
             uri = this.model.getJsonObj(
-                projectData, datum[3], this,
+                projectData, datum, this,
                 _.bind(this.loadReplicates, this, testRunId,
                 projectData.project, page));
 
             this.testRunIdCache[projectData.project][testRunId]['uri'] = uri;
 
         }else{
-
+            //We have data for this testRunId retrieve it from the cache
+            //structure
             this.hoveredDataObj = this.testRunIdCache[projectData.project][testRunId]['data'];
 
             this.view.renderReplicates(
@@ -102,19 +164,24 @@ var LineGraphComponent = new Class({
                 );
         }
 
+        //Retrieve th url
         uri = this.testRunIdCache[projectData.project][testRunId]['uri'];
 
+        //Set the JSON object retrieval link
         this.view.setJsonObjUrl(uri);
 
+        //Display reference data associated with the datum that doesn't
+        //require database data retireval
         this.view.loadHoverData(
-            datum[3], this.view.toolDetailOne,
+            datum, this.view.toolDetailOne,
             this.view.hoverToolbarDetailsSel, this.view.datumInlineCls);
 
         this.view.loadHoverData(
-            datum[3], this.view.hoverDetailOne,
+            datum, this.view.hoverDetailOne,
             this.view.hoverDetailOneSel, this.view.datumCls);
 
-        $(this.view.searchByMachineSel).text(datum[3].mn);
+        //Set the machine display name
+        $(this.view.searchByMachineSel).text(datum.mn);
     },
     replicateGraphHover: function(event, pos, item){
 
@@ -125,42 +192,52 @@ var LineGraphComponent = new Class({
         this.view.setReplicateDetails(item.datapoint);
 
     },
-    clickPlot: function(event, pos, item){
+    clickPlot: function(event, pos, item, datum){
 
-        //Display detail panel
-        if(_.isEmpty(item)){
-            return;
+        if(_.isEmpty(datum)){
+
+            if(item.series.data[item.dataIndex]){
+                datum = item.series.data[item.dataIndex][3];
+            }
+
+            //If datum is still empty here user is hovering
+            //over graph but not a data point
+            if(_.isEmpty(datum)){
+                return;
+            }
         }
 
-        var datum = item.series.data[item.dataIndex];
-
-
-        if(event.target.id === this.view.replicatePanelSel.replace('#', '')){
-            //User clicked replicate graph
-        }else{
+        //Make sure we're not the replicate graph
+        if(event.target.id != this.view.replicatePanelSel.replace('#', '')){
 
             var lock = this.view.getLock();
 
-            if(lock == true){
-
-                //Replicates are already cached, just display them
-                this.lineGraphHover(event, pos, item);
-
-            }else{
-
+            if(lock == false){
                 $(this.view.replicateLockSel).click();
-
             }
 
+            this.lineGraphHover(event, pos, item, datum);
+
             //User clicked line graphs
-            var revision = datum[3].r;
+            var revision = datum.r;
 
             this.view.addSearchTerm(revision);
 
-            this.view.search();
+            //Save the test_run_id and the selected graph in the selection state
+            var projectData = HOME_PAGE.selectionState.getSelectedProjectData();
+            HOME_PAGE.selectionState.setTestRunId(
+                projectData.project, datum.ti, datum.graph);
 
+            //Save the search terms including previous terms
+            var terms = this.view.getSearchTerms();
+            HOME_PAGE.selectionState.setGraphSearch(projectData.project, terms);
+
+            //Save the state to add to history
+            HOME_PAGE.selectionState.saveState();
+
+            //Perform search without saving state since it's already saved
+            this.view.search(false);
         }
-
     },
     loadReplicates: function(testRunId, project, page, data){
 
@@ -183,6 +260,7 @@ var LineGraphView = new Class({
 
         this.parent(options);
 
+        this.data = {};
         this.plots = {};
         this.xaxisLabels = {};
         this.replicatePlot = {};
@@ -290,6 +368,8 @@ var LineGraphView = new Class({
             }
         };
 
+        //This string is used as a replacement string for x86 so a search
+        //for x86 won't highlight x86_64
         this.x86ProcStr = '32bit';
 
         this.toolDetailOne = [
@@ -334,7 +414,7 @@ var LineGraphView = new Class({
             _.bind(function(e){
                 var keyCode = e.keyCode;
                 if(keyCode === 13){
-                    this.search();
+                    this.search(true);
                 }
                 }, this)
             );
@@ -342,7 +422,7 @@ var LineGraphView = new Class({
             _.bind(function(e){
                 var keyCode = e.keyCode;
                 if(keyCode === 8 || keyCode === 46){
-                    this.search();
+                    this.search(true);
                 }
                 }, this)
             );
@@ -353,7 +433,7 @@ var LineGraphView = new Class({
 
             var term = $(this.searchByMachineSel).text();
             this.addSearchTerm(term);
-            this.search();
+            this.search(true);
 
             }, this));
 
@@ -385,8 +465,16 @@ var LineGraphView = new Class({
             this.replicatePlot.draw();
         }
     },
-    search: function(){
+    search: function(saveState){
+
         var terms = this.getSearchTerms();
+
+        if(saveState === true){
+            var projectData = HOME_PAGE.selectionState.getSelectedProjectData();
+            HOME_PAGE.selectionState.setGraphSearch(projectData.project, terms);
+            HOME_PAGE.selectionState.saveState();
+        }
+
         if(terms.length === 0){
 
             var key = "";
@@ -406,12 +494,19 @@ var LineGraphView = new Class({
         }else{
             return _.map(currentValue.split(','), _.bind(function(item){
 
-                if(item === 'x86'){
-                    return this.x86ProcStr;
-                }else{
-                    return item.replace(/\s+/g, '');
-                }
+                    if(item === 'x86'){
+                        //Replace x86 string so we don't highlight x86_64
+                        return this.x86ProcStr;
+                    }else{
+                        return item.replace(/\s+/g, '');
+                    }
+
                 }, this));
+        }
+    },
+    setSearchTerms: function(terms){
+        if(terms != ""){
+            $(this.inputSel).val(terms);
         }
     },
     addSearchTerm: function(term){
@@ -427,6 +522,7 @@ var LineGraphView = new Class({
             }
 
             var terms = this.getSearchTerms();
+
             //Insure search terms are not duplicated
             if(_.indexOf(terms, term) === -1){
                 $(this.inputSel).val(newValue);
@@ -441,8 +537,14 @@ var LineGraphView = new Class({
     },
     loadPerformanceGraphs: function(ev, data){
 
+        //Store data as an attribute to support the recovery of
+        //replicate display state
+        this.data = data;
+
+        //Sort graphs to display alphabetically
         var sortedKeys = this.getAlphabeticalSortKeys(data.data);
 
+        //Clean out the HTML container
         $(this.lineGraphsSel).empty();
 
         this.plots = {};
@@ -452,6 +554,7 @@ var LineGraphView = new Class({
         var containerHeight = 45;
         var graphBlockHeight = 220;
 
+        //These are the data indexes flot will use
         var passSeriesIndex = 0;
         var failSeriesIndex = 1;
         var trendSeriesIndex = 2;
@@ -480,6 +583,11 @@ var LineGraphView = new Class({
 
                 datum = data.data[ sortedKeys[i] ][j];
 
+                //Storing the graph name in sortedKeys
+                //gives us a way to identify the graph associated with the
+                //tr_id in the state management.
+                datum['graph'] = sortedKeys[i];
+
                 //Make a unique string for x86 so it doesn't highligh x86_64
                 //when a search is done
                 if(datum.pr == 'x86'){
@@ -490,6 +598,10 @@ var LineGraphView = new Class({
 
                 searchKey = datum.r + datum.mn + proc;
 
+                //The datum.te attribute stands for test_evaluation, if it's
+                //1 the test passed and we display it as green, if it's 0
+                //it failed and it's displayed as orange to provide visual
+                //parity with other mozilla build/test data applications.
                 if(datum.te === 1){
                     highlightMap[searchKey] = [
                         passSeriesIndex, pass.push( [ j, datum.m, datum.s, datum ]) - 1
@@ -502,7 +614,8 @@ var LineGraphView = new Class({
                         ];
 
                 }else{
-
+                    //If datum.te is not set, default to pass and display as
+                    //green
                     highlightMap[searchKey] = [
                         passSeriesIndex, pass.push([ j, datum.m, datum.s, datum ]) - 1
                         ];
@@ -533,20 +646,27 @@ var LineGraphView = new Class({
 
             $(graphDiv).append(labelDiv);
 
+            //Expand the size of the container to match the number of
+            //graphs included in it.
             containerHeight += graphBlockHeight;
 
         }
 
+        //Set the container height according to total graphs displayed
+        //but don't go below a minimum height requirement to give the
+        //visual display some consistancy.
         if(containerHeight < this.minContainerHeight){
             containerHeight = this.minContainerHeight;
         }
 
         $(this.tabContainerSel).height(containerHeight);
 
-        this.search();
+        this.search(true);
 
         this.showGraphs();
 
+        //All state relevant parameters are set at theis point, save
+        //the overall state to the browser history.
         HOME_PAGE.selectionState.saveState();
     },
     sortData: function(a, b){
@@ -571,6 +691,13 @@ var LineGraphView = new Class({
               'data':fail,
               'points': {'show':true} },
 
+            //Hiding the trend data to keep clutter out of the graph display
+            //for now.
+
+            //TODO: If we continue to calculate the trend values we could
+            //conditionally display them based on a user selecting a
+            //checkbox.
+
             //{ 'color':this.trendColor,
             //  'data':trend,
             //  'points': {'show':true} }
@@ -594,6 +721,9 @@ var LineGraphView = new Class({
         return this.xaxisLabels[sel][label] || "";
     },
     loadHoverData: function(datum, dataStruct, sel, datumClass){
+        //Display reference data associated with a datum. This
+        //refernce data doesn't require additional database data
+        //retrieval.
 
         $(sel).empty();
 
@@ -650,6 +780,8 @@ var LineGraphView = new Class({
     },
     renderReplicates: function(page, data){
 
+        //Display the replicate graph and associated reference data
+
         if(_.isEmpty(data)){
             return;
         }
@@ -672,6 +804,8 @@ var LineGraphView = new Class({
         var chartIndex = 0;
         var detailStructId = 0;
         var datapoint = [];
+
+        //Calulate the min and max dynamically
         var min = 0;
         var max = 0;
 
@@ -714,8 +848,6 @@ var LineGraphView = new Class({
         this.setReplicateDetails(datapoint, min, max);
 
         this.showReplicateGraph();
-
-        var width = $(this.replicatePanelSel).width();
 
         this.replicatePlot = $.plot(
             $(this.replicatePanelSel),

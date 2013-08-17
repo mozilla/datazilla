@@ -739,7 +739,7 @@
                LEFT JOIN machine AS m ON tr.machine_id = m.id
                LEFT JOIN operating_system AS o ON m.operating_system_id = o.id
                WHERE tv.value_id = 1 AND tv.test_run_id IN (REP0)
-               GROUP BY tv.page_id",
+               GROUP BY tr.id, tv.page_id",
 
          "host":"read_host"
 

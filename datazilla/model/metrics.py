@@ -1371,7 +1371,8 @@ class MetricsTestModel(DatazillaModelBase):
                 date_end = int(time.time())
 
         if not date_begin:
-            date_begin = date_end - 86400
+            # default to 7 days if no time range is supplied
+            date_begin = date_end - 604800
 
         data = {
             'min_date_data_received':"",
