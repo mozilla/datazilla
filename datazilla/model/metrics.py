@@ -1366,7 +1366,7 @@ class MetricsTestModel(DatazillaModelBase):
                 debug_show=self.DEBUG)
 
             if date_data:
-                date_end = date_data[0]['max_date_received']
+                date_end = date_data[0]['max_date_received'] or int(time.time())
             else:
                 date_end = int(time.time())
 
@@ -1385,8 +1385,8 @@ class MetricsTestModel(DatazillaModelBase):
             proc='perftest.selects.get_date_range_all_dimensions',
             debug_show=self.DEBUG)
 
-        data['min_date_data_received'] = min_max_data[0]['min_date_data_received']
-        data['max_date_data_received'] = min_max_data[0]['max_date_data_received']
+        data['min_date_data_received'] = min_max_data[0]['min_date_data_received'] or date_begin
+        data['max_date_data_received'] = min_max_data[0]['max_date_data_received'] or date_end
 
         data['start'] = date_begin
         data['stop'] = date_end

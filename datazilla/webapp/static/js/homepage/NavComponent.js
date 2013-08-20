@@ -18,6 +18,8 @@ var NavComponent = new Class({
         this.testData = false;
         this.platformData = false;
 
+        this.listData = {};
+
         this.testGraph = {};
         this.machineGraph = {};
         this.machines = {};
@@ -34,6 +36,8 @@ var NavComponent = new Class({
 
     },
     loadLists: function(ev, data){
+
+        this.listData = data;
 
         this.view.setList(
             this.view.testMenuSel, this.nodeClick, this, data.data.tests,
@@ -57,6 +61,7 @@ var NavComponent = new Class({
         var osVersion = "";
         var test = "";
         var page = "";
+        var noData = false;
 
         if(data.parent_sel === undefined){
 
@@ -65,10 +70,28 @@ var NavComponent = new Class({
             test = prData.test;
             page = prData.page;
 
+            if( _.isEmpty(this.listData.data.tests) &&
+                _.isEmpty(this.listData.data.platforms) ){
+                //There's no test data for this test datum
+                noData = true;
+            }
+
             if(os === "" && osVersion === ""){
 
                 this.platformData = false;
                 this.testData = true;
+
+                if( test === "" && page === ""){
+                    var keys = _.keys(this.listData.data.tests);
+                    test = keys[0];
+
+                    if(this.listData.data.tests[test] === undefined){
+                        noData = true;
+                    }else{
+                        var values = _.keys(this.listData.data.tests[test]);
+                        page = values[0];
+                    }
+                }
 
                 data.nav = test + '->' + page;
 
@@ -100,6 +123,25 @@ var NavComponent = new Class({
                 page = data.key_two;
             }
         }
+        if(noData === true){
+
+            this.view.showNoDataMessage(
+                this.listData.product, this.listData.repository
+                );
+            return;
+        }
+
+        if( (prData.product === "") || (prData.repository === "")){
+            //No product/repository was specified in the url and the project
+            //has no defaults set. In this case product/repository will not
+            //be in the selection state. Save it now.
+            HOME_PAGE.selectionState.setProduct(
+                prData.project, this.listData.product
+                );
+            HOME_PAGE.selectionState.setRepository(
+                prData.project, this.listData.repository
+                );
+        }
 
         HOME_PAGE.selectionState.setOs(prData.project, os);
         HOME_PAGE.selectionState.setOsVersion(prData.project, osVersion);
@@ -125,6 +167,13 @@ var NavComponent = new Class({
 
     },
     processData: function(data){
+
+        if(_.isEmpty(data.data)){
+
+            var prData = HOME_PAGE.selectionState.getSelectedProjectData();
+            this.view.showNoDataMessage(prData.product, prData.repository);
+            return;
+        }
 
         this.testGraph = {};
         this.machineGraph = {};
@@ -183,6 +232,8 @@ var NavView = new Class({
 
         this.hpContainerSel = '#hp_container';
         this.mainSpinnerSel = '#hp_main_wait';
+        this.lineGraphSpinnerSel = '#hp_linegraph_wait';
+        this.noDataSel = '#hp_no_data';
         this.testMenuSel = '#hp_test_menu';
         this.platformMenuSel = '#hp_platform_menu';
         this.navSel = '#hp_nav';
@@ -256,7 +307,25 @@ var NavView = new Class({
         HOME_PAGE.SliderComponent.resizeSlider();
     },
     setNav: function(navText){
-        $(this.navSel).text(navText);
+
+        var truncatedText = navText;
+
+        if(navText.length > 65){
+            truncatedText = navText.slice(0, 55) + '...';
+        }
+        $(this.navSel).text(truncatedText);
+        $(this.navSel).attr('title', navText);
+    },
+    showNoDataMessage: function(product, repository){
+
+        var message = 'No data was found for the product, ' + product + ', and repository, ' + repository +
+                      ', for the time range specified.';
+
+        $(this.lineGraphSpinnerSel).css('display', 'none');
+        $(this.noDataSel).fadeIn();
+        $(this.noDataSel).text(message);
+
+        HOME_PAGE.selectionState.saveState();
     },
     _getDisplayText: function(text){
         var displayText = text;
@@ -286,7 +355,6 @@ var NavModel = new Class({
         var keys = _.keys(options);
 
         var i = 0;
-
         for(; i < keys.length; i++){
 
             if( (options[ keys[i] ] === "") ||
@@ -298,9 +366,9 @@ var NavModel = new Class({
             }
 
             if(i === keys.length - 1){
-                uri += keys[i] + '=' + options[ keys[i] ];
+                uri += keys[i] + '=' + encodeURIComponent( options[ keys[i] ] );
             }else{
-                uri += keys[i] + '=' + options[ keys[i] ] + '&';
+                uri += keys[i] + '=' + encodeURIComponent( options[ keys[i] ] ) + '&';
             }
         }
 

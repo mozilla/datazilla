@@ -197,6 +197,12 @@ div.hp-spinner {
     background: transparent url(/static/images/spinner.gif) no-repeat center center;
     height:420px;
 }
+div.hp-no-data {
+    display:none;
+    margin-top:125px;
+    margin-left:120px;
+    height:420px;
+}
 div.hp-replicate-spinner {
     background: transparent url(/static/images/spinner.gif) no-repeat center center;
     min-width: 550px;

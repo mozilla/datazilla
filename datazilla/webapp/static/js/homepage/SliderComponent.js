@@ -83,6 +83,7 @@ var SliderComponent = new Class({
             );
 
         var projectData = HOME_PAGE.selectionState.getSelectedProjectData();
+
         this.view.setProject(projectData.project);
 
         this.setProjectOption(projectData);
@@ -186,7 +187,6 @@ var SliderComponent = new Class({
     },
     loadProductRepositories: function(data){
 
-        var id = 0;
 
         var project = this.view.getProject();
         var projectData = HOME_PAGE.selectionState.getProjectData(project);
@@ -200,6 +200,7 @@ var SliderComponent = new Class({
 
             this.productRepositories[project] = {};
 
+            var id = 0;
             for(id in data){
 
                 if(data.hasOwnProperty(id)){
@@ -223,6 +224,7 @@ var SliderComponent = new Class({
                     }
 
                     this.initializeProjectData(project, product, repository);
+
                 }
             }
         }
@@ -241,6 +243,12 @@ var SliderComponent = new Class({
         var projectData = HOME_PAGE.selectionState.getProjectData(project);
         var product = projectData.product;
         var repository = projectData.repository;
+
+        if(product === "" || repository === ""){
+            var prData = this.view.getProductRepository();
+            product = prData.product;
+            repository = prData.repository;
+        }
 
         var values = {};
 
@@ -323,12 +331,16 @@ var SliderComponent = new Class({
         HOME_PAGE.LineGraphComponent.view.hideGraphs();
 
         var project = this.view.getProject();
-
         var projectData = HOME_PAGE.selectionState.getProjectData(project);
 
         var product = projectData.product;
         var repository = projectData.repository;
 
+        if(product === "" || repository === ""){
+            var prData = this.view.getProductRepository();
+            product = prData.product;
+            repository = prData.repository;
+        }
         //Get the start and stop time from the slider to
         var values = this.getSliderValues(project, projectData);
 

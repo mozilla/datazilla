@@ -42,10 +42,10 @@ var SelectionState = new Class({
                 'product':'B2G',
                 'repository':'master',
                 'arch':'Gonk',
-                'os':'Firefox OS',
-                'os_version':'1.2.0.0-prerelease',
+                'os':'',
+                'os_version':'',
                 'test':'phone',
-                'page':'',
+                'page':'cold_load_time',
                 'graph_search':''
                 },
             'talos':{
@@ -59,14 +59,15 @@ var SelectionState = new Class({
                 'graph_search':''
                 },
             'default':{
-                'product':'Firefox',
-                'repository':'Mozilla-Inbound',
-                'arch':'x86_64',
-                'os':'mac',
-                'os_version':'OS X 10.8',
-                'test':'a11yr',
+                'product':'',
+                'repository':'',
+                'arch':'',
+                'os':'',
+                'os_version':'',
+                'test':'',
                 'page':'',
-                'graph_search':''
+                'graph_search':'',
+                'tr_id':''
                 }
             };
 
@@ -159,12 +160,22 @@ var SelectionState = new Class({
     setStart: function(project, start){
 
         this.setDefaults(project);
-        this.selections[project]['start'] = parseInt(start);
+
+        var startInt = parseInt(start);
+
+        if(!isNaN(startInt)){
+            this.selections[project]['start'] = start;
+        }
     },
     setStop: function(project, stop){
 
         this.setDefaults(project);
-        this.selections[project]['stop'] = parseInt(stop);
+
+        var stopInt = parseInt(stop);
+
+        if(!isNaN(stopInt)){
+            this.selections[project]['stop'] = stopInt;
+        }
     },
     setProduct: function(project, product){
 
@@ -232,7 +243,13 @@ var SelectionState = new Class({
     setTestRunId: function(project, testRunId, graphName){
 
         this.setDefaults(project);
-        this.selections[project]['tr_id'] = parseInt(testRunId);
+
+        var trId = parseInt(testRunId);
+
+        if(!isNaN( trId )){
+            this.selections[project]['tr_id'] = trId;
+        }
+
         this.selections[project]['graph'] = graphName;
     },
     saveState: function(){
@@ -264,7 +281,9 @@ var SelectionState = new Class({
         this.setTest(newState.project, newState.test);
         this.setPage(newState.project, newState.page);
 
-        if(newState.graph_search != undefined){
+        if( (newState.graph_search === undefined) || (newState.graph_search === '')){
+            this.setGraphSearch(newState.project, []);
+        }else{
             this.setGraphSearch(newState.project, newState.graph_search.split(','));
         }
 
@@ -304,11 +323,7 @@ var SelectionState = new Class({
                 //Any state in this conditional is different than the
                 //current displayed state. Reset the selection state
                 //to the one recovered from history
-
-                if(i == 0){
-                    //Only reset one time
-                    this.resetState(targetState);
-                }
+                this.resetState(targetState);
 
                 //Execute parameter specific state recovery
                 if (state === 'project') {
@@ -355,12 +370,9 @@ var SelectionState = new Class({
                 }
             }
         }
-console.log('AFTER FOR LOOP');
+
         //graph_search and tr_id state recovery needs to execute after all
         //graphs are rendered
-
-console.log(['graph_search conditional', targetState['graph_search'], params['graph_search']]);
-
         if(targetState['graph_search'] != params['graph_search']){
 
             HOME_PAGE.LineGraphComponent.view.setSearchTerms(
@@ -403,7 +415,7 @@ console.log(['graph_search conditional', targetState['graph_search'], params['gr
 
         params['hash'] = params['params'].hashCode();
 
-        return params;
+        return jQuery.extend(true, {}, params);
 
     },
     isHistoryStateChange: function(historyState, paramData){

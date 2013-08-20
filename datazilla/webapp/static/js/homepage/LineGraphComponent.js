@@ -123,7 +123,6 @@ var LineGraphComponent = new Class({
             }
         }
 
-
         var testRunId = datum.ti;
         var page = datum.pu;
 
@@ -276,6 +275,7 @@ var LineGraphView = new Class({
         this.hpContainerSel = '#hp_container';
         this.lineGraphsSel = '#hp_linegraphs';
         this.lineGraphWaitSel = '#hp_linegraph_wait';
+        this.noDataSel = '#hp_no_data';
         this.tabContainerSel = '#hp_tabs';
         this.hoverToolbarDetailsSel = '#hp_toolbar_details';
         this.hoverDetailOneSel = '#hp_hover_detail_one';
@@ -447,6 +447,8 @@ var LineGraphView = new Class({
 
         $(window).resize(_.bind(this.resizePlots, this));
 
+        $(this.replicateLockSel).attr('checked', false);
+
     },
     resizePlots: function(){
 
@@ -513,9 +515,7 @@ var LineGraphView = new Class({
         }
     },
     setSearchTerms: function(terms){
-        if(terms != ""){
-            $(this.inputSel).val(terms);
-        }
+        $(this.inputSel).val(terms);
     },
     addSearchTerm: function(term){
 
@@ -669,7 +669,7 @@ var LineGraphView = new Class({
 
         $(this.tabContainerSel).height(containerHeight);
 
-        this.search(true);
+        this.search(false);
 
         this.showGraphs();
 
@@ -747,6 +747,7 @@ var LineGraphView = new Class({
 
             var fieldValue = "";
             var fieldsLen = fieldKeys.length;
+
             for(var j=0; j<fieldsLen; j++){
                 if(datum[ fieldKeys[j] ] != undefined){
 
@@ -771,7 +772,23 @@ var LineGraphView = new Class({
                 $(el).addClass(datumClass);
 
                 if(fieldName === undefined){
-                    $(el).text(fieldValue);
+
+                    if(fieldKeys[0] === 'r'){
+
+                        var truncatedField = fieldValue;
+                        if(fieldValue.length > 25){
+                            truncatedField = fieldValue.slice(0, 25) + '...';
+                            $(el).text(truncatedField);
+                        }else{
+                            $(el).text(truncatedField);
+                        }
+
+                    }else{
+                        $(el).text(fieldValue);
+                    }
+
+                    $(el).attr('title', fieldValue);
+
                 }else{
                     var fnSpanEl = $(document.createElement('span'));
                     $(fnSpanEl).addClass(this.lightTextCls);
@@ -903,6 +920,7 @@ var LineGraphView = new Class({
     },
     showGraphs: function(){
 
+        $(this.noDataSel).css('display', 'none');
         $(this.lineGraphWaitSel).css('display', 'none');
         $(this.lineGraphsSel).fadeIn();
 
@@ -910,8 +928,9 @@ var LineGraphView = new Class({
         this.resizePlots();
     },
     hideGraphs: function(){
+        $(this.noDataSel).css('display', 'none');
         $(this.lineGraphsSel).css('display', 'none');
-        $(this.lineGraphWaitSel).fadeIn();
+        $(this.lineGraphWaitSel).css('display', 'block');
     },
     showReplicateGraph: function(){
 
@@ -955,10 +974,10 @@ var LineGraphModel = new Class({
                 '/testdata/raw/' + projectData.repository +
                 '/' + datum.r + '?';
 
-        uri += 'product=' + datum.p + '&os_name=' + datum.osn +
-               '&os_version=' + datum.osv + '&branch_version=' + datum.bv +
-               '&processor=' + datum.pr + '&build_type=' + datum.bt +
-               '&test_name=' + datum.tn;
+        uri += 'product=' + encodeURIComponent(datum.p) + '&os_name=' + encodeURIComponent(datum.osn) +
+               '&os_version=' + encodeURIComponent(datum.osv) + '&branch_version=' + encodeURIComponent(datum.bv) +
+               '&processor=' + encodeURIComponent(datum.pr) + '&build_type=' + encodeURIComponent(datum.bt) +
+               '&test_name=' + encodeURIComponent(datum.tn);
 
         jQuery.ajax( uri, {
             accepts:'application/json',

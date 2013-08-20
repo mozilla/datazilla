@@ -6,8 +6,8 @@
 {% if DEBUG %}
     <link rel="stylesheet" href="/static/css/jquery-ui/jquery-ui-1.10.2.custom.min.css" type="text/css"/>
     <link rel="stylesheet" href="/static/css/Aristo/jquery-ui-1.8.7.custom.css" type="text/css"/>
-    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" />
-    <link rel="stylesheet" href="/static/js/plugins/jQRangeSlider-min/css/iThing.css" />
+    <link rel="stylesheet" href="/static/css/jquery-ui/jquery-ui-1.10.2.themes.smoothness.css" type="text/css"/>
+    <link rel="stylesheet" href="/static/css/iThing.css" />
 
     <link rel="stylesheet" href="/static/css/homepage.css" type="text/css"/>
 {% else %}
@@ -78,6 +78,7 @@
                 <div id="hp_nav" class="hp-control-element"></div>
                 <span style="margin-top:5px; margin-right:15px; float:right;" class="hp-light-text">Hint: Click a data point to search by revision, Hover over data to see details</span>
                 <div id="hp_linegraph_wait" class="hp-spinner"></div>
+                <div id="hp_no_data" class="hp-no-data"></div>
                 <div id="hp_linegraphs" style="display:none;" class="hp-line-graph-container">
                 </div>
             </div>
@@ -118,7 +119,6 @@
 <script type="text/javascript" src="/static/js/plugins/jQRangeSlider-min/jQDateRangeSlider-min.js"></script>
 <script type="text/javascript" src="/static/js/plugins/jquery.history.js"></script>
 <script type="text/javascript" src="/static/js/plugins/jquery.url.js"></script>
-<script type="text/javascript" src="/static/js/plugins/d3.v2.min.js"></script>
 
 
 <!--[if lte IE 8]><script language="javascript" type="text/javascript" src="/static/js/plugins/flot-0.7/excanvas.min.js"></script><![endif]-->
@@ -133,7 +133,6 @@
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.selection.min.js"></script>
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.errorbars.js"></script>
 <script type="text/javascript" src="/static/js/plugins/json2.js"></script>
-<script type="text/javascript" src="/static/js/plugins/d3.v2.min.js"></script>
 
 <!-- Homepage classes -->
 <script type="text/javascript" src="/static/js/data_views/Bases.js"></script>
@@ -144,11 +143,10 @@
 <script type="text/javascript" src="/static/js/homepage/LineGraphComponent.js"></script>
 
 {% else %}
-<script type="text/javascript" src="/static/js/homepage-min.js"></script>
+<script type="text/javascript" src="/static/js/homepage/homepage-min.js"></script>
 
 <!--[if lte IE 8]><script language="javascript" type="text/javascript" src="/static/js/plugins/flot-0.7/excanvas.min.js"></script><![endif]-->
 {% endif %}
-
 
 </body>
 </html>
