@@ -18,6 +18,8 @@ var NavComponent = new Class({
         this.testData = false;
         this.platformData = false;
 
+        this.listData = {};
+
         this.testGraph = {};
         this.machineGraph = {};
         this.machines = {};
@@ -35,17 +37,23 @@ var NavComponent = new Class({
     },
     loadLists: function(ev, data){
 
+        this.listData = data;
+
         this.view.setList(
             this.view.testMenuSel, this.nodeClick, this, data.data.tests,
-            data.data.min, data.data.max);
+            data.slider_min, data.slider_max);
 
         this.view.setList(
             this.view.platformMenuSel, this.nodeClick, this, data.data.platforms,
-            data.data.min, data.data.max);
+            data.slider_min, data.slider_max);
+
+        //Simulate node click so we load a graph
+        this.nodeClick({'min':data.slider_min, 'max':data.slider_max});
+
     },
     nodeClick: function(data){
 
-        this.view.setNav(data.nav);
+        HOME_PAGE.LineGraphComponent.view.hideGraphs();
 
         var prData = HOME_PAGE.selectionState.getSelectedProjectData();
 
@@ -53,23 +61,86 @@ var NavComponent = new Class({
         var osVersion = "";
         var test = "";
         var page = "";
+        var noData = false;
 
-        if(this.view.platformMenuSel === data.parent_sel){
+        if(data.parent_sel === undefined){
 
-            this.platformData = true;
-            this.testData = false;
+            os = prData.os;
+            osVersion = prData.os_version;
+            test = prData.test;
+            page = prData.page;
 
-            os = data.data.os;
-            osVersion = data.data.version;
-            test = data.key_two;
+            if( _.isEmpty(this.listData.data.tests) &&
+                _.isEmpty(this.listData.data.platforms) ){
+                //There's no test data for this test datum
+                noData = true;
+            }
 
-        }else if(this.view.testMenuSel === data.parent_sel){
+            if(os === "" && osVersion === ""){
 
-            this.testData = true;
-            this.platformData = false;
+                this.platformData = false;
+                this.testData = true;
 
-            test = data.key_one;
-            page = data.key_two;
+                if( test === "" && page === ""){
+                    var keys = _.keys(this.listData.data.tests);
+                    test = keys[0];
+
+                    if(this.listData.data.tests[test] === undefined){
+                        noData = true;
+                    }else{
+                        var values = _.keys(this.listData.data.tests[test]);
+                        page = values[0];
+                    }
+                }
+
+                data.nav = test + '->' + page;
+
+            }else{
+
+                this.platformData = true;
+                this.testData = false;
+
+                data.nav = os + ' ' + osVersion + '->' + test;
+            }
+
+        }else{
+
+            if(this.view.platformMenuSel === data.parent_sel){
+
+                this.platformData = true;
+                this.testData = false;
+
+                os = data.data.os;
+                osVersion = data.data.version;
+                test = data.key_two;
+
+            }else if(this.view.testMenuSel === data.parent_sel){
+
+                this.testData = true;
+                this.platformData = false;
+
+                test = data.key_one;
+                page = data.key_two;
+            }
+        }
+        if(noData === true){
+
+            this.view.showNoDataMessage(
+                this.listData.product, this.listData.repository
+                );
+            return;
+        }
+
+        if( (prData.product === "") || (prData.repository === "")){
+            //No product/repository was specified in the url and the project
+            //has no defaults set. In this case product/repository will not
+            //be in the selection state. Save it now.
+            HOME_PAGE.selectionState.setProduct(
+                prData.project, this.listData.product
+                );
+            HOME_PAGE.selectionState.setRepository(
+                prData.project, this.listData.repository
+                );
         }
 
         HOME_PAGE.selectionState.setOs(prData.project, os);
@@ -77,9 +148,8 @@ var NavComponent = new Class({
         HOME_PAGE.selectionState.setPage(prData.project, page);
         HOME_PAGE.selectionState.setTest(prData.project, test);
 
-        //HOME_PAGE.selectionState.setTest(project, prData.product);
+        this.view.setNav(data.nav);
 
-        //$(this.hpContainerSel).trigger(this.navClickEvent, data);
         options = {
             'project':prData.project,
             'product':prData.product,
@@ -98,13 +168,19 @@ var NavComponent = new Class({
     },
     processData: function(data){
 
+        if(_.isEmpty(data.data)){
+
+            var prData = HOME_PAGE.selectionState.getSelectedProjectData();
+            this.view.showNoDataMessage(prData.product, prData.repository);
+            return;
+        }
+
         this.testGraph = {};
         this.machineGraph = {};
         this.machines = {};
 
         _.map(data.data, _.bind(this.aggregateData, this));
 
-console.log([this.navClickEvent, data]);
         $(this.view.hpContainerSel).trigger(
             this.navClickEvent,
             { 'data':this.testGraph, 'machine_graph':this.machineGraph,
@@ -155,6 +231,9 @@ var NavView = new Class({
         this.parent(options);
 
         this.hpContainerSel = '#hp_container';
+        this.mainSpinnerSel = '#hp_main_wait';
+        this.lineGraphSpinnerSel = '#hp_linegraph_wait';
+        this.noDataSel = '#hp_no_data';
         this.testMenuSel = '#hp_test_menu';
         this.platformMenuSel = '#hp_platform_menu';
         this.navSel = '#hp_nav';
@@ -168,7 +247,6 @@ var NavView = new Class({
         var listOrder = this.getAlphabeticalSortKeys(data);
         var datasetOne = {};
         var datasetTwo = {};
-
         var ulRoot = $(document.createElement('ul'));
 
         for(var i=0; i<listOrder.length; i++){
@@ -176,6 +254,7 @@ var NavView = new Class({
             datasetOne = data[ listOrder[i] ];
             var li = $(document.createElement('li'));
             var a = $(document.createElement('a'));
+
             $(a).text(this._getDisplayText(listOrder[i]));
             $(a).attr('title', listOrder[i]);
             $(li).append(a);
@@ -214,9 +293,39 @@ var NavView = new Class({
         $(selector).append(ulRoot);
 
         $(ulRoot).menu();
+
+        this.showDataContainer();
+    },
+    hideDataContainer: function(){
+        $(this.hpContainerSel).css('display', 'none');
+        $(this.mainSpinnerSel).fadeIn();
+    },
+    showDataContainer: function(){
+        $(this.mainSpinnerSel).css('display', 'none');
+        $(this.hpContainerSel).fadeIn();
+
+        HOME_PAGE.SliderComponent.resizeSlider();
     },
     setNav: function(navText){
-        $(this.navSel).text(navText);
+
+        var truncatedText = navText;
+
+        if(navText.length > 65){
+            truncatedText = navText.slice(0, 55) + '...';
+        }
+        $(this.navSel).text(truncatedText);
+        $(this.navSel).attr('title', navText);
+    },
+    showNoDataMessage: function(product, repository){
+
+        var message = 'No data was found for the product, ' + product + ', and repository, ' + repository +
+                      ', for the time range specified.';
+
+        $(this.lineGraphSpinnerSel).css('display', 'none');
+        $(this.noDataSel).fadeIn();
+        $(this.noDataSel).text(message);
+
+        HOME_PAGE.selectionState.saveState();
     },
     _getDisplayText: function(text){
         var displayText = text;
@@ -246,7 +355,6 @@ var NavModel = new Class({
         var keys = _.keys(options);
 
         var i = 0;
-
         for(; i < keys.length; i++){
 
             if( (options[ keys[i] ] === "") ||
@@ -258,9 +366,9 @@ var NavModel = new Class({
             }
 
             if(i === keys.length - 1){
-                uri += keys[i] + '=' + options[ keys[i] ];
+                uri += keys[i] + '=' + encodeURIComponent( options[ keys[i] ] );
             }else{
-                uri += keys[i] + '=' + options[ keys[i] ] + '&';
+                uri += keys[i] + '=' + encodeURIComponent( options[ keys[i] ] ) + '&';
             }
         }
 
