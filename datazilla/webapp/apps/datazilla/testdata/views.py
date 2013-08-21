@@ -14,6 +14,12 @@ REQUIRE_PRODUCT_NAME = """Invalid Request: Require product parameter.
                      This specifies the name of the product to retrieve data
                      for (Firefox, Fennec etc...)"""
 
+REQUIRE_BRANCH_NAME = """Invalid Request: Require branch parameter.
+                     This specifies the name of the branch to retrieve data
+                     for (Mozilla-Inbound, Mozilla-Release etc...)"""
+
+REQUIRE_OS_OR_TEST_NAME = """Invalid Request: Require os and os_version or test_name parameter. All of these parameters may also be defined Examples: os=mac, os_version=OS X 10.8  or test_name=a11yr."""
+
 REQUIRE_TEST_NAME = """Invalid Request: Require test_name parameter.
                      This specifies the name of the test."""
 
@@ -272,6 +278,16 @@ def get_data_all_dimensions(request, project=""):
     start_time = request.GET.get('start')
 
     end_time = request.GET.get('stop')
+
+    if not product:
+        return HttpResponse(REQUIRE_PRODUCT_NAME, status=400)
+
+    if not branch:
+        return HttpResponse(REQUIRE_BRANCH_NAME, status=400)
+
+    if (not os) and (not os_version) and (not test):
+        #Require at least os
+        return HttpResponse(REQUIRE_OS_OR_TEST_NAME, status=400)
 
     data = testdata.get_test_data_all_dimensions(
         project, product, branch, os, os_version, test, page,

@@ -9,15 +9,30 @@ var SelectionState = new Class({
 
     initialize: function(selector, options){
 
+        this.history = window.History;
+
+        this.paramData = {};
+
+        this.historyChange = false;
+
+        this.stateChangeEvent = 'STATE_CHANGE_EV';
+
+        this.hpContainerSel = '#hp_container';
+
         this.stateKeys = {
                 'selected':false,
+                'start':'',
+                'stop':'',
                 'product':'',
                 'repository':'',
                 'os':'',
                 'os_version':'',
                 'arch':'',
                 'test':'',
-                'page':''
+                'page':'',
+                'graph_search':'',
+                'tr_id':'',
+                'graph':''
             };
 
         this.defaultProject = 'talos';
@@ -27,26 +42,40 @@ var SelectionState = new Class({
                 'product':'B2G',
                 'repository':'master',
                 'arch':'Gonk',
+                'os':'',
+                'os_version':'',
                 'test':'phone',
-                'page':''
+                'page':'cold_load_time',
+                'graph_search':''
                 },
             'talos':{
                 'product':'Firefox',
                 'repository':'Mozilla-Inbound',
                 'arch':'x86_64',
-                'test':'tp5o',
+                'os':'mac',
+                'os_version':'OS X 10.8',
+                'test':'a11yr',
                 'page':'',
+                'graph_search':''
                 },
             'default':{
-                'product':'Firefox',
-                'repository':'Mozilla-Inbound',
-                'arch':'x86_64',
-                'test':'tp5o',
-                'page':''
+                'product':'',
+                'repository':'',
+                'arch':'',
+                'os':'',
+                'os_version':'',
+                'test':'',
+                'page':'',
+                'graph_search':'',
+                'tr_id':''
                 }
             };
 
         this.selections = {};
+
+        this.history.Adapter.bind(
+            window, 'statechange', _.bind(this.stateChange, this)
+            );
     },
     getSelectedProjectData: function(){
 
@@ -68,17 +97,26 @@ var SelectionState = new Class({
     },
     setUrlObj: function(urlObj){
 
-        var project = urlObj.param.query.project || this.defaultProject;
+        var newState = {};
+        newState.project = urlObj.param.query.project || this.defaultProject;
 
-        this.setDefaults(project);
+        this.setDefaults(newState.project);
+        var selectedData = this.selections[newState.project];
 
-        this.setProject(project);
-        this.setArchitecture(urlObj.param.query.arch);
-        this.setProduct(urlObj.param.query.product);
-        this.setRepository(urlObj.param.query.repository);
-        this.setTest(urlObj.param.query.test_name);
-        this.setPage(urlObj.param.query.page);
+        newState.start = parseInt(urlObj.param.query.start) || selectedData.start;
+        newState.stop = parseInt(urlObj.param.query.stop) || selectedData.stop;
+        newState.product = urlObj.param.query.product || selectedData.product;
+        newState.repository = urlObj.param.query.repository || selectedData.repository;
+        newState.os = urlObj.param.query.os || selectedData.os;
+        newState.os_version = urlObj.param.query.os_version || selectedData.os_version;
+        newState.arch = urlObj.param.query.arch || selectedData.arch;
+        newState.test = urlObj.param.query.test || selectedData.test;
+        newState.page = urlObj.param.query.page || selectedData.page;
+        newState.graph_search = urlObj.param.query.graph_search || selectedData.graph_search;
+        newState.tr_id = urlObj.param.query.tr_id || selectedData.tr_id;
+        newState.graph = urlObj.param.query.graph || selectedData.graph;
 
+        this.resetState(newState);
     },
     setDefaults: function(project){
 
@@ -117,6 +155,26 @@ var SelectionState = new Class({
                     this.selections[p]['selected'] = false;
                 }
             }
+        }
+    },
+    setStart: function(project, start){
+
+        this.setDefaults(project);
+
+        var startInt = parseInt(start);
+
+        if(!isNaN(startInt)){
+            this.selections[project]['start'] = start;
+        }
+    },
+    setStop: function(project, stop){
+
+        this.setDefaults(project);
+
+        var stopInt = parseInt(stop);
+
+        if(!isNaN(stopInt)){
+            this.selections[project]['stop'] = stopInt;
         }
     },
     setProduct: function(project, product){
@@ -171,5 +229,216 @@ var SelectionState = new Class({
         }
         this.setDefaults(project);
         this.selections[project]['page'] = page;
+    },
+    setGraphSearch: function(project, terms){
+
+        this.setDefaults(project);
+
+        if(terms.length > 0){
+            this.selections[project]['graph_search'] = terms.join(',');
+        }else{
+            this.selections[project]['graph_search'] = '';
+        }
+    },
+    setTestRunId: function(project, testRunId, graphName){
+
+        this.setDefaults(project);
+
+        var trId = parseInt(testRunId);
+
+        if(!isNaN( trId )){
+            this.selections[project]['tr_id'] = trId;
+        }
+
+        this.selections[project]['graph'] = graphName;
+    },
+    saveState: function(){
+
+        //Don't save state for a history change
+        if(this.historyChange === true){
+            this.historyChange = false;
+            return;
+        }
+
+        var params = this.getParams();
+
+        this.history.pushState(
+            {state:params},
+            "Perf-o-Matic",
+            '?' + params['params']
+            );
+    },
+    resetState: function(newState){
+
+        this.setProject(newState.project);
+        this.setStart(newState.project, newState.start);
+        this.setStop(newState.project, newState.stop);
+        this.setProduct(newState.project, newState.product);
+        this.setRepository(newState.project, newState.repository);
+        this.setOs(newState.project, newState.os);
+        this.setOsVersion(newState.project, newState.os_version);
+        this.setArchitecture(newState.project, newState.arch);
+        this.setTest(newState.project, newState.test);
+        this.setPage(newState.project, newState.page);
+
+        if( (newState.graph_search === undefined) || (newState.graph_search === '')){
+            this.setGraphSearch(newState.project, []);
+        }else{
+            this.setGraphSearch(newState.project, newState.graph_search.split(','));
+        }
+
+        this.setTestRunId(newState.project, newState.tr_id, newState.graph);
+    },
+    stateChange: function(){
+
+        var historyState = this.history.getState();
+
+        var params = this.getParams();
+
+        if(this.isHistoryStateChange(historyState, params)){
+
+            this.historyChange = true;
+
+            this.setState(
+                historyState.data.state.selected_data, params['selected_data']
+                );
+
+        }else {
+            this.historyChange = false;
+        }
+    },
+    setState: function(targetState, params){
+
+        var stateKeys = _.keys(this.stateKeys);
+        stateKeys.push('project');
+
+        var state = '';
+
+        for(var i=0; i < stateKeys.length; i++){
+
+            state = stateKeys[i];
+
+            if(targetState[state] != params[state]){
+
+                //Any state in this conditional is different than the
+                //current displayed state. Reset the selection state
+                //to the one recovered from history
+                this.resetState(targetState);
+
+                //Execute parameter specific state recovery
+                if (state === 'project') {
+
+                    HOME_PAGE.SliderComponent.changeProject(
+                        targetState.project
+                        );
+
+                    break;
+
+                } else if ( (state === 'product') ||
+                            (state === 'repository') ){
+
+                    HOME_PAGE.SliderComponent.changeProductRepository(
+                        targetState.product,
+                        targetState.repository
+                        );
+
+                    break;
+
+                } else if ( (state === 'start') ||
+                            (state === 'stop') ){
+
+                    HOME_PAGE.SliderComponent.changeSlider(
+                        targetState.project,
+                        targetState.start,
+                        targetState.stop
+                        );
+
+                    break;
+
+                } else if ( (state === 'os') ||
+                            (state === 'os_version') ||
+                            (state === 'test') ||
+                            (state === 'page') ){
+
+                    HOME_PAGE.NavComponent.nodeClick(
+                        this.getMilliseconds(
+                            targetState.start,
+                            targetState.stop)
+                            );
+
+                    break;
+                }
+            }
+        }
+
+        //graph_search and tr_id state recovery needs to execute after all
+        //graphs are rendered
+        if(targetState['graph_search'] != params['graph_search']){
+
+            HOME_PAGE.LineGraphComponent.view.setSearchTerms(
+                targetState.graph_search
+                );
+
+            HOME_PAGE.LineGraphComponent.view.search(false);
+        }
+
+        if(targetState['tr_id'] != params['tr_id']){
+            HOME_PAGE.LineGraphComponent.changeReplicateGraph(targetState);
+        }
+    },
+    getParams: function(){
+
+        var selectedData = this.getSelectedProjectData();
+        var params = {
+            'params':'', 'hash':'', 'selected_data':selectedData
+            };
+
+        var pairs = _.pairs(selectedData);
+        var pair = {};
+        var i = 0;
+        for(; i<pairs.length; i++){
+
+            pair = pairs[i];
+
+            if(pair[0] == 'selected'){
+                continue;
+            }
+
+            if(pair[1] != ''){
+                if(i == (pairs.length - 1)){
+                    params['params'] += pair[0] + '=' + pair[1];
+                }else {
+                    params['params'] += pair[0] + '=' + pair[1] + '&';
+                }
+            }
+        }
+
+        params['hash'] = params['params'].hashCode();
+
+        return jQuery.extend(true, {}, params);
+
+    },
+    isHistoryStateChange: function(historyState, paramData){
+
+        var historyStateChange = false;
+
+        if( (historyState.data.state != undefined) &&
+            (historyState.data.state.hash != paramData.hash) ){
+            historyStateChange = true;
+        }
+
+        return historyStateChange;
+
+    },
+    getParamsStrAndHash: function(params){
+
+        var paramsStr = params.join('&');
+
+        return { 'params_str':paramsStr,
+                 'params':params,
+                 'hash':paramsStr.hashCode() };
+    },
+    getMilliseconds: function(min, max){
+        return {'min':parseInt(min*1000), 'max':parseInt(max*1000)};
     }
 });

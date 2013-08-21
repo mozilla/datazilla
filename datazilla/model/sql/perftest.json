@@ -700,7 +700,7 @@
                 LEFT JOIN machine AS m ON tr.machine_id = m.id
                 LEFT JOIN build AS b ON tr.build_id = b.id
                 LEFT JOIN product AS pr ON b.product_id = pr.id
-                WHERE tr.test_id IN (REP0) AND pr.branch = ? AND m.type = ? AND p.url = ? AND tr.date_run >= ? AND tr.date_run <= ?
+                WHERE tr.test_id IN (REP0) AND pr.branch = ? AND m.type = ? AND p.url = ? AND tr.date_run >= ? AND tr.date_run <= ? AND tr.status = 1
                 GROUP BY tr.revision, tr.gecko_revision, tr.test_id, p.url
                 ORDER BY tr.date_run, tr.id DESC",
 
@@ -739,7 +739,7 @@
                LEFT JOIN machine AS m ON tr.machine_id = m.id
                LEFT JOIN operating_system AS o ON m.operating_system_id = o.id
                WHERE tv.value_id = 1 AND tv.test_run_id IN (REP0)
-               GROUP BY tv.page_id",
+               GROUP BY tr.id, tv.page_id",
 
          "host":"read_host"
 
