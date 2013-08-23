@@ -686,15 +686,63 @@ def examine_metric_key_lookup(mtm, sample_data, model_data):
 
 def test_load_test_data_all_dimensions(mtm, ptm, plm, monkeypatch):
 
-    setup_data = setup_pushlog_walk_tests(
-        mtm, ptm, plm, monkeypatch, load_objects=True)
+    for index in range(15):
+        #Need to test different suite names here
+        suite_name = 'Talos tp5r'
+        if index <= 4:
+            suite_name = 'tp5o'
+        if index >= 10:
+            suite_name = 'default'
 
-    test_run_ids = []
+        sample_data = TestData( perftest_data(
+            testrun={ 'suite':suite_name }
+            ))
 
-    for revision in setup_data['test_run_ids']:
-       test_run_ids.append( str(setup_data['test_run_ids'][revision][0]) )
+        #Load sample data
+        ptm.store_test_data( json.dumps( sample_data ) )
 
-    mtm.load_test_data_all_dimensions(test_run_ids)
+    test_run_ids = ptm.process_objects(15)
+
+    replicate_filters = {
+        mtm.project: {
+
+            "tp5o": {
+                "get_computed_means":mtm.exclude_first_replicate_from_mean,
+                "ids":[]
+                },
+            "Talos tp5r": {
+                "get_computed_means":mtm.exclude_first_replicate_from_mean,
+                "ids":[]
+                },
+            },
+
+        "default":{
+            "test":{
+                "get_computed_means":mtm.get_mean_from_all_replicates,
+                "ids":[]
+            }
+        }
+    }
+
+    revisions_without_pushdata = mtm.load_test_data_all_dimensions(
+        test_run_ids, replicate_filters)
+
+    assert len(replicate_filters[mtm.project]['tp5o']['ids']) == 5
+    assert len(replicate_filters[mtm.project]['Talos tp5r']['ids']) == 5
+    assert len(replicate_filters['default']['test']['ids']) == 5
+
+    test_data_all_dimensions = mtm.get_data_all_dimensions(
+        "", "", "", "", "", "", "", "")
+
+    ####
+    # When data is stored in test_data_all_dimensions it's aggregated around
+    # the METRICS_KEYS. Because the dynamically generated test data does not
+    # represent 15 different metrics datums we get a lower number.
+    #
+    # TODO: replace dynamic test object generation with real sample data so
+    #   we can accurately estimate how many objects should be stored
+    ####
+    assert len(test_data_all_dimensions) == 6
 
 def setup_pushlog_walk_tests(
     mtm, ptm, plm, monkeypatch, load_objects=False
