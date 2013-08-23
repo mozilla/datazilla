@@ -91,8 +91,11 @@ class MetricsTestModel(DatazillaModelBase):
         "te":"test evaluation"
         }
 
+
     def __init__(self, project=None, metrics=()):
+
         super(MetricsTestModel, self).__init__(project)
+
         self.skip_revisions = set()
 
         self.metrics = metrics or self._get_metric_collection()
@@ -107,6 +110,7 @@ class MetricsTestModel(DatazillaModelBase):
         self.format_boolean_values = set(
             ['fdr', 'h0_rejected', 'test_evaluation']
             )
+
 
     @classmethod
     def get_metrics_key(cls, data):
@@ -1131,7 +1135,8 @@ class MetricsTestModel(DatazillaModelBase):
             placeholders=placeholders
             )
 
-    def load_test_data_all_dimensions(self, test_run_ids):
+    def load_test_data_all_dimensions(
+        self, test_run_ids, replicate_filters={}):
 
         if not test_run_ids:
             return {}
@@ -1171,34 +1176,50 @@ class MetricsTestModel(DatazillaModelBase):
         for c in ordered_columns:
             columns[c] = None
 
-        where_in_clause = ','.join( map( lambda v:'%s', test_run_ids ) )
+        ####
+        # Extract:  compute mean/std from replicates
+        ####
+        where_in_clause = ','.join(
+            map( lambda v:'%s', test_run_ids )
+            )
 
         ####
-        # Extract: Retrieve all available metrics data
-        ###
-        computed_metrics = self.sources["perftest"].dhub.execute(
-            proc='perftest.selects.get_test_evaluations_from_test_run_ids',
+        #Conditional replicate filtering is required for different
+        #project/test combinations. At this point we need to know the
+        #test name to test_run_id associations to determine what type
+        #of filtering is required.
+        ####
+        test_names = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_test_names_by_test_run_ids',
             debug_show=self.DEBUG,
-            placeholders=test_run_ids,
-            replace=[where_in_clause])
+            placeholders=list(test_run_ids),
+            replace=[where_in_clause],
+            key_column='id',
+            return_type='dict')
+
+        if not replicate_filters:
+            replicate_filters = self.get_replicate_filters()
+
+        for id in test_run_ids:
+            try:
+                replicate_filters[ self.project ][ test_names[id]['name'] ]['ids'].append(id)
+            except KeyError:
+                replicate_filters[ "default" ]["test"]['ids'].append(id)
+
+        computed_means = self.get_computed_means(replicate_filters)
 
         aggregate_data = {}
-        test_run_ids_with_metrics = set()
 
         # Transform data
-        for d in computed_metrics:
+        for d in computed_means:
 
             key = self.get_metrics_key(d)
 
-            value_name = d['metric_value_name']
-
             if key not in aggregate_data:
 
-                aggregate_data[ key ] = columns.copy()
+                aggregate_data[key] = columns.copy()
 
                 aggregate_data[key]['test_run_id'] = d['test_run_id']
-                test_run_ids_with_metrics.add(d['test_run_id'])
-
                 aggregate_data[key]['product_id'] = d['product_id']
                 aggregate_data[key]['operating_system_id'] = d['operating_system_id']
                 aggregate_data[key]['test_id'] = d['test_id']
@@ -1216,73 +1237,12 @@ class MetricsTestModel(DatazillaModelBase):
                 aggregate_data[key]['build_type'] = d['build_type']
                 aggregate_data[key]['machine_name'] = d['machine_name']
 
-            if value_name == 'trend_stddev':
-                #map column name
-                aggregate_data[key]['trend_std'] = d['value']
-            elif value_name == 'stddev':
-                #map column name
-                aggregate_data[key]['std'] = d['value']
-            else:
-                #The rest of the column names match, use value name
-                #as the column name
-                aggregate_data[key][value_name] = d['value']
+            aggregate_data[key]['mean'] = d['mean']
+            aggregate_data[key]['std'] = d['std']
 
-        test_run_ids_set = set(test_run_ids)
-
-        test_run_ids_no_metrics_data = test_run_ids_with_metrics.difference(
-            test_run_ids_set)
-
-        if not test_run_ids_with_metrics and not test_run_ids_no_metrics_data:
-            test_run_ids_no_metrics_data = set( test_run_ids )
-
-        ####
-        # Extract:  If no metrics data is available for a test_run_id compute mean/std from
-        # replicates
-        ####
-        if test_run_ids_no_metrics_data:
-
-            where_in_clause = ','.join(
-                map( lambda v:'%s', test_run_ids_no_metrics_data )
-                )
-
-            computed_mean = self.sources["perftest"].dhub.execute(
-                proc='perftest.selects.get_test_run_value_full_summary',
-                debug_show=self.DEBUG,
-                placeholders=list(test_run_ids_no_metrics_data),
-                replace=[where_in_clause])
-
-            # Transform data
-            for d in computed_mean:
-
-                key = self.get_metrics_key(d)
-
-                if key not in aggregate_data:
-
-                    aggregate_data[key] = columns.copy()
-
-                    aggregate_data[key]['test_run_id'] = d['test_run_id']
-                    aggregate_data[key]['product_id'] = d['product_id']
-                    aggregate_data[key]['operating_system_id'] = d['operating_system_id']
-                    aggregate_data[key]['test_id'] = d['test_id']
-                    aggregate_data[key]['page_id'] = d['page_id']
-                    aggregate_data[key]['test_name'] = d['test_name']
-                    aggregate_data[key]['page_url'] = d['page_name']
-                    aggregate_data[key]['date_received'] = d['date']
-                    aggregate_data[key]['revision'] = d['revision']
-                    aggregate_data[key]['product'] = d['product_name']
-                    aggregate_data[key]['branch'] = d['product_branch']
-                    aggregate_data[key]['branch_version'] = d['product_version']
-                    aggregate_data[key]['operating_system_name'] = d['operating_system_name']
-                    aggregate_data[key]['operating_system_version'] = d['operating_system_version']
-                    aggregate_data[key]['processor'] = d['processor']
-                    aggregate_data[key]['build_type'] = d['build_type']
-                    aggregate_data[key]['machine_name'] = d['machine_name']
-
-                aggregate_data[key]['mean'] = d['mean']
-                aggregate_data[key]['std'] = d['std']
-
+        #Build structure for the list of revisions to use to
+        #retrieve associated push data
         revisions_without_push_data = {}
-
         executemany_placeholders = []
 
         ####
@@ -1310,6 +1270,83 @@ class MetricsTestModel(DatazillaModelBase):
             placeholders=executemany_placeholders)
 
         return revisions_without_push_data
+
+    def get_replicate_filters(self):
+
+        ####
+        #Different project/test combinations have different requirements
+        #for what replicates can be used in the calculation of the mean.
+        #This data structure maps the project/test requirements to a function
+        #reference, get_computed_means, that can be used for calculating the
+        #the mean for a list of test_run_ids.
+        ####
+        return {
+
+            "talos": {
+
+                "tp5o": {
+                    "get_computed_means":self.exclude_first_replicate_from_mean,
+                    "ids":[]
+                    },
+
+                "Talos tp5r": {
+                    "get_computed_means":self.exclude_first_replicate_from_mean,
+                    "ids":[]
+                    },
+                },
+
+            "default": {
+                "test":{
+                    "get_computed_means":self.get_mean_from_all_replicates,
+                    "ids":[]
+                    }
+                }
+            }
+
+    def get_computed_means(self, replicate_filters):
+
+        #aggregate ids by test name
+
+        computed_means = []
+
+        for project in replicate_filters:
+
+            for test in replicate_filters[project]:
+
+                test_run_ids = replicate_filters[project][test]['ids']
+
+                if test_run_ids:
+
+                    where_in_clause = ','.join(
+                        map( lambda v:'%s', test_run_ids )
+                        )
+
+                    test_means = replicate_filters[project][test]['get_computed_means'](
+                        test_run_ids, where_in_clause)
+
+                    computed_means += test_means
+
+        return computed_means
+
+    def get_mean_from_all_replicates(self, test_run_ids, where_in_clause):
+
+        computed_means = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_test_run_value_full_summary',
+            debug_show=self.DEBUG,
+            placeholders=list(test_run_ids),
+            replace=[where_in_clause])
+
+        return computed_means
+
+    def exclude_first_replicate_from_mean(self, test_run_ids, where_in_clause):
+
+        computed_means = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_test_run_value_exclude_replicate_1',
+            debug_show=self.DEBUG,
+            placeholders=list(test_run_ids),
+            replace=[where_in_clause])
+
+        return computed_means
 
     def get_data_all_dimensions(
         self, product, branch, os, os_version, test, page, start_time,
