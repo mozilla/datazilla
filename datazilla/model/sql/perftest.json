@@ -744,6 +744,53 @@
          "host":"read_host"
 
     },
+    "get_test_run_value_exclude_replicate_1":{
+
+        "sql":"SELECT tv.test_run_id,
+                        tv.page_id,
+                        tr.revision,
+                        tr.test_id,
+                        tr.date_run,
+                        tr.test_id,
+                        b.product_id,
+                        m.operating_system_id,
+                        m.name AS 'machine_name',
+                        o.name AS 'operating_system_name',
+                        o.version AS 'operating_system_version',
+                        pr.product AS 'product_name',
+                        pr.branch AS 'product_branch',
+                        pr.version AS 'product_version',
+                        b.processor,
+                        b.build_type,
+                        tr.date_run AS 'date',
+                        t.name AS 'test_name',
+                        p.url AS 'page_name',
+                        ROUND( AVG(tv.value), 2 ) AS 'mean',
+                        ROUND( STDDEV(tv.value), 2 ) AS 'std'
+               FROM test_value AS tv
+               LEFT JOIN test_run AS tr ON tv.test_run_id = tr.id
+               LEFT JOIN build AS b ON tr.build_id = b.id
+               LEFT JOIN test AS t ON tr.test_id = t.id
+               LEFT JOIN pages AS p ON tv.page_id = p.id
+               LEFT JOIN product AS pr ON b.product_id = pr.id
+               LEFT JOIN machine AS m ON tr.machine_id = m.id
+               LEFT JOIN operating_system AS o ON m.operating_system_id = o.id
+               WHERE tv.value_id = 1 AND (tv.run_id > 1) AND tv.test_run_id IN (REP0)
+               GROUP BY tr.id, tv.page_id",
+
+         "host":"read_host"
+
+    },
+    "get_test_names_by_test_run_ids":{
+
+        "sql":"SELECT tr.id, t.name
+               FROM test_run AS tr
+               LEFT JOIN test AS t ON tr.test_id = t.id
+               WHERE tr.id IN (REP0)",
+
+        "host":"read_host"
+
+    },
     "get_value_summary_by_test_id":{
 
         "sql":"SELECT tv.test_run_id,
