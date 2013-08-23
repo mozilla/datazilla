@@ -775,7 +775,7 @@
                LEFT JOIN product AS pr ON b.product_id = pr.id
                LEFT JOIN machine AS m ON tr.machine_id = m.id
                LEFT JOIN operating_system AS o ON m.operating_system_id = o.id
-               WHERE tv.value_id = 1 AND (tv.run_id > 1) AND tv.test_run_id IN (REP0)
+               WHERE tv.value_id = 1 AND (tv.run_id != 1) AND tv.test_run_id IN (REP0)
                GROUP BY tr.id, tv.page_id",
 
          "host":"read_host"
