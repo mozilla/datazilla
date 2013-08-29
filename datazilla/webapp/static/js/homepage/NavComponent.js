@@ -1,7 +1,6 @@
 /*******
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/.
  * *****/
 var NavComponent = new Class({
 
@@ -18,6 +17,10 @@ var NavComponent = new Class({
         this.testData = false;
         this.platformData = false;
 
+        //Used to indicate incoming data is from
+        //a "Compare To" data series request
+        this.compareSeries = false;
+
         this.listData = {};
 
         this.testGraph = {};
@@ -29,6 +32,7 @@ var NavComponent = new Class({
 
         this.sliderSliceEvent = 'SLIDER_SLICE_EV';
         this.navClickEvent = 'NAV_CLICK_EV';
+        this.compareDataEvent = 'COMPARE_DATA_EV';
 
         $(this.view.hpContainerSel).bind(
             this.sliderSliceEvent, _.bind(this.loadLists, this)
@@ -166,6 +170,43 @@ var NavComponent = new Class({
         this.model.getAllData(options);
 
     },
+    getCompareSeriesData: function(product, repository){
+
+        var prData = HOME_PAGE.selectionState.getSelectedProjectData();
+
+        var options = {
+            'project':prData.project,
+            'product':product,
+            'branch':repository,
+            'os':prData.os,
+            'os_version':prData.os_version,
+            'test':prData.test,
+            'page':prData.page,
+            'start':prData.start,
+            'stop':prData.stop,
+            'context':this,
+            'fnSuccess':this.processCompareSeriesData };
+
+        this.model.getAllData(options);
+
+    },
+    processCompareSeriesData: function(data){
+
+        this.testGraph = {};
+        this.machineGraph = {};
+        this.machines = {};
+
+        this.compareSeries = true;
+
+        _.map(data.data, _.bind(this.aggregateData, this));
+
+        this.compareSeries = false;
+
+        $(this.view.hpContainerSel).trigger(
+            this.compareDataEvent,
+            { 'compare_data':this.testGraph, 'machine_graph':this.machineGraph,
+              'machines':this.machines } );
+    },
     processData: function(data){
 
         if(_.isEmpty(data.data)){
@@ -188,6 +229,10 @@ var NavComponent = new Class({
 
     },
     aggregateData: function(obj){
+
+        if(this.compareSeries === true){
+            obj.type = 'compare';
+        }
 
         if(this.machines[obj.mn] === undefined){
             this.machines[obj.mn] = { 'mn':obj.mn };

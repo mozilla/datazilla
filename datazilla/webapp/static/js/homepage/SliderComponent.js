@@ -65,6 +65,17 @@ var SliderComponent = new Class({
         this.arch = {};
         this.machines = {};
 
+        $('.cp-basic').colorpicker(
+            {
+                "altField": '.cp-basic-target',
+                "altProperties": 'background-color,color',
+
+                "buttonClass": 'hp-colorpicker-button',
+
+                "closeOnOutside": true,
+                "okOnEnter":true,
+
+            });
         //User selects a project
         $(this.view.projectSel).bind(
             "change", _.bind(this.setProjectOption, this)
@@ -234,6 +245,14 @@ var SliderComponent = new Class({
             this.getProductRepositoryString(
                 projectData.product, projectData.repository)
             );
+
+        this.view.setSelectMenu(
+            this.view.compareProductRepositorySel, this.productRepositories[project],
+            this.getProductRepositoryString(
+                projectData.product, projectData.repository)
+            );
+
+        this.view.addDefaultCompareOption();
 
         this.view.setSliderEl(project, this.sliders);
     },
@@ -438,11 +457,21 @@ var SliderView = new Class({
 
         this.projectSel = '#hp_project';
         this.productRepositorySel = '#hp_repository';
+        this.compareProductRepositorySel = '#hp_compare_options';
         this.archSel = '#hp_arch';
         this.machinesSel = '#hp_machines';
 
+        this.uiTabsClassSel = '.ui-tabs-nav';
+        this.graphContainerControlsClassSel = '.hp-graph-container-controls';
+
         $(this.tabSel).tabs();
 
+        //Insert the graph container control div into the tabs container
+        //by the tabs() function call
+        $(this.graphContainerControlsClassSel).appendTo(
+            $(this.uiTabsClassSel) );
+
+        $(this.graphContainerControlsClassSel).css('display', 'block');
     },
     setSelectMenu: function(selector, selectOptions, optionDefault){
 
@@ -536,6 +565,12 @@ var SliderView = new Class({
     resizeSlider: function(project, sliderId){
         var sliderSel = '#' + sliderId;
         $(sliderSel).resize();
+    },
+    addDefaultCompareOption: function(){
+        var option = $('<option></option>');
+        $(option).text('No Product/Repository selected');
+        $(this.compareProductRepositorySel).prepend(option);
+        $(this.compareProductRepositorySel).val(option);
     }
 });
 var SliderModel = new Class({

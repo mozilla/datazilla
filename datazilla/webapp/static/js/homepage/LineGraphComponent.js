@@ -32,6 +32,10 @@ var LineGraphComponent = new Class({
         this.hoveredDataObj = {};
 
         $(this.view.hpContainerSel).bind(
+            this.view.compareDataEvent, _.bind(this.addDataSeries, this)
+            );
+
+        $(this.view.hpContainerSel).bind(
             this.view.navClickEvent, _.bind(this.loadPerformanceGraphs, this)
             );
 
@@ -42,6 +46,11 @@ var LineGraphComponent = new Class({
         $(this.view.hpContainerSel).bind(
             'plotclick', _.bind(this.clickPlot, this)
             );
+    },
+    addDataSeries: function(ev, data){
+
+        this.view.compareDataSeries = data.compare_data;
+        this.view.loadPerformanceGraphs(ev, this.view.data);
     },
     hoverPlot: function(event, pos, item){
 
@@ -127,10 +136,14 @@ var LineGraphComponent = new Class({
         var page = datum.pu;
 
         //Set the color for the replicate graph
-        if(datum.te === 0){
-            this.view.replicateGraphColor = this.view.failColor;
+        if(datum.type === 'compare'){
+                this.view.replicateGraphColor = this.view.getCompareSeriesColor();
         }else{
-            this.view.replicateGraphColor = this.view.passColor;
+            if(datum.te === 0){
+                this.view.replicateGraphColor = this.view.failColor;
+            }else{
+                this.view.replicateGraphColor = this.view.passColor;
+            }
         }
 
         var projectData = HOME_PAGE.selectionState.getSelectedProjectData();
@@ -151,7 +164,7 @@ var LineGraphComponent = new Class({
             this.testRunIdCache[projectData.project][testRunId] = { 'uri':"", 'data':{} };
 
             uri = this.model.getJsonObj(
-                projectData, datum, this,
+                projectData.project, datum, this,
                 _.bind(this.loadReplicates, this, testRunId,
                 projectData.project, page));
 
@@ -271,6 +284,7 @@ var LineGraphView = new Class({
         this.plots = {};
         this.xaxisLabels = {};
         this.replicatePlot = {};
+        this.compareDataSeries = {};
 
         this.hpContainerSel = '#hp_container';
         this.lineGraphsSel = '#hp_linegraphs';
@@ -304,7 +318,15 @@ var LineGraphView = new Class({
         this.inputSel = '#hp_input';
         this.viewJsonObjSel = '#hp_view_json_objects';
 
+        //Graph container controls
+        this.x86Sel = '#hp_x86';
+        this.x8664Sel = '#hp_x86_64';
+        this.errorBarsSel = '#hp_error_bars';
+        this.compareOptionsSel = '#hp_compare_options';
+        this.compareSeriesColorSel = '#hp_compare_series_color';
+
         this.navClickEvent = 'NAV_CLICK_EV';
+        this.compareDataEvent = 'COMPARE_DATA_EV';
 
         this.minContainerHeight = 1000;
 
@@ -405,12 +427,40 @@ var LineGraphView = new Class({
            [ 'fdr', ['f'] ],
             ];
 
-        $(this.closeDetailPanelSel).bind('click', _.bind(function(e){
+        $(this.x86Sel).bind('click', _.bind(function(ev){
+
+            this.hideGraphs();
+            this.loadPerformanceGraphs(ev, this.data);
+
+            }, this)
+            );
+
+        $(this.x8664Sel).bind('click', _.bind(function(ev){
+
+            this.hideGraphs();
+            this.loadPerformanceGraphs(ev, this.data);
+
+            }, this)
+            );
+
+        $(this.errorBarsSel).bind('click', _.bind(function(ev){
+
+            this.hideGraphs();
+            this.loadPerformanceGraphs(ev, this.data);
+
+            }, this)
+            );
+
+        $(this.compareOptionsSel).bind(
+            'change', _.bind(this.loadCompareRepository, this)
+            );
+
+        $(this.closeDetailPanelSel).bind('click', _.bind(function(ev){
             $(this.detailPanelSel).slideUp();
-            e.stopPropagation();
+            ev.stopPropagation();
             }, this));
 
-        $(this.closeDetailPanelSel).mouseover(function(e){
+        $(this.closeDetailPanelSel).mouseover(function(ev){
             $(this).css('cursor', 'pointer');
             });
 
@@ -449,6 +499,29 @@ var LineGraphView = new Class({
 
         $(this.replicateLockSel).attr('checked', false);
 
+    },
+    loadCompareRepository: function(ev){
+
+        var selectedOption = $(this.compareOptionsSel).find(":selected");
+
+        var productRepository = $(selectedOption).attr('internal_data');
+
+        if(productRepository != undefined){
+            productRepository = jQuery.parseJSON( productRepository.replace(/'/g, '"') );
+            HOME_PAGE.NavComponent.getCompareSeriesData(
+                productRepository.p, productRepository.b
+                );
+
+        } else {
+
+            /**
+             Edge cases:
+                1.) Same repo selected
+                2.) No Product/Repository selected, clear out compare series
+                3.) Selected Product/Repository has no data associated with it, 
+                    message user
+            ***/
+        }
     },
     resizePlots: function(){
 
@@ -565,7 +638,21 @@ var LineGraphView = new Class({
         //These are the data indexes flot will use
         var passSeriesIndex = 0;
         var failSeriesIndex = 1;
-        var trendSeriesIndex = 2;
+        var compareSeriesIndex = 2;
+        var trendSeriesIndex = 3;
+
+        var filters = this.getFilters();
+
+        if(filters['error_bars'] === true){
+            this.performanceChartOptions.series.points.errorbars = 'y';
+        }else{
+            this.performanceChartOptions.series.points.errorbars = 'n';
+        }
+
+        var compareDataDefined = false;
+        if(!_.isEmpty(this.compareDataSeries)){
+            compareDataDefined = true;
+        }
 
         for(var i=0; i<sortedKeys.length; i++){
 
@@ -580,9 +667,22 @@ var LineGraphView = new Class({
             $(labelDiv).addClass(this.graphNameCls);
             $(labelDiv).text(sortedKeys[i]);
 
+            //Add the compare data to the primary data structure before
+            //implementing the sort. This will insure the ordering is
+            //correct and prevent points from overlaying on top of one
+            //another
+            if( (compareDataDefined === true) &&
+                (!_.isEmpty(this.compareDataSeries[ sortedKeys[i] ]))){
+
+                    data.data[ sortedKeys[i] ] = data.data[ sortedKeys[i] ].concat(
+                        this.compareDataSeries[ sortedKeys[i] ]
+                        );
+            }
+
             data.data[ sortedKeys[i] ].sort(this.sortData);
 
-            var pass = [], fail = [], trend = [], datum = "", searchKey = "";
+            var pass = [], fail = [], trend = [], compare = [],
+                datum = "", compareDatum = "", searchKey = "";
 
             var highlightMap = {};
             var proc;
@@ -604,38 +704,52 @@ var LineGraphView = new Class({
                     proc = datum.pr;
                 }
 
-                searchKey = datum.r + datum.mn + proc;
-
-                //The datum.te attribute stands for test_evaluation, if it's
-                //1 the test passed and we display it as green, if it's 0
-                //it failed and it's displayed as orange to provide visual
-                //parity with other mozilla build/test data applications.
-                if(datum.te === 1){
-                    highlightMap[searchKey] = [
-                        passSeriesIndex, pass.push( [ j, datum.m, datum.s, datum ]) - 1
-                        ];
-
-                }else if(datum.te === 0){
-
-                    highlightMap[searchKey] = [
-                        failSeriesIndex, fail.push([ j, datum.m, datum.s, datum ]) - 1
-                        ];
-
-                }else{
-                    //If datum.te is not set, default to pass and display as
-                    //green
-                    highlightMap[searchKey] = [
-                        passSeriesIndex, pass.push([ j, datum.m, datum.s, datum ]) - 1
-                        ];
+                //Implement filter
+                if(filters[datum.pr] === false){
+                    continue;
                 }
 
-                if(datum.tm != null){
-                    trend.push([ j, datum.tm, datum.s, datum ]);
+                searchKey = datum.r + datum.mn + proc;
+
+                if(datum.type === 'compare'){
+
+                    highlightMap[searchKey] = [
+                        compareSeriesIndex, compare.push( [ j, datum.m, datum.s, datum ] ) - 1
+                        ];
+
+                }else {
+                    //The datum.te attribute stands for test_evaluation, if it's
+                    //1 the test passed and we display it as green, if it's 0
+                    //it failed and it's displayed as orange to provide visual
+                    //parity with other mozilla build/test data applications.
+                    if(datum.te === 1){
+                        highlightMap[searchKey] = [
+                            passSeriesIndex, pass.push( [ j, datum.m, datum.s, datum ]) - 1
+                            ];
+
+                    }else if(datum.te === 0){
+
+                        highlightMap[searchKey] = [
+                            failSeriesIndex, fail.push([ j, datum.m, datum.s, datum ]) - 1
+                            ];
+
+                    }else{
+                        //If datum.te is not set, default to pass and display as
+                        //green
+                        highlightMap[searchKey] = [
+                            passSeriesIndex, pass.push([ j, datum.m, datum.s, datum ]) - 1
+                            ];
+                    }
+
+                    if(datum.tm != null){
+                        trend.push([ j, datum.tm, datum.s, datum ]);
+                    }
                 }
 
                 if(this.xaxisLabels[graphSel] === undefined){
                     this.xaxisLabels[graphSel] = [];
                 }
+
                 this.xaxisLabels[graphSel][j] = this.convertTimestampToDate(
                     datum.pd || datum.dr
                     );
@@ -644,7 +758,7 @@ var LineGraphView = new Class({
             this.plots[graphSel] = {
 
                 'plot':this.drawGraph(
-                    sortedKeys[i], pass, fail, trend, graphSel
+                    sortedKeys[i], pass, fail, trend, compare, graphSel
                     ),
                 'highlight_map':highlightMap,
 
@@ -688,7 +802,17 @@ var LineGraphView = new Class({
         }
         return a.dr - b.dr;
     },
-    drawGraph: function(label, pass, fail, trend, graphDivSel){
+    getFilters: function(){
+        return {
+            'x86':$(this.x86Sel).find('input').is(':checked'),
+            'x86_64':$(this.x8664Sel).find('input').is(':checked'),
+            'error_bars':$(this.errorBarsSel).find('input').is(':checked')
+            };
+    },
+    getCompareSeriesColor: function(){
+        return '#' + $(this.compareSeriesColorSel).val();
+    },
+    drawGraph: function(label, pass, fail, trend, compare, graphDivSel){
 
         var chart = [
             { 'color':this.passColor,
@@ -697,6 +821,10 @@ var LineGraphView = new Class({
 
             { 'color':this.failColor,
               'data':fail,
+              'points': {'show':true} },
+
+            { 'color':this.getCompareSeriesColor(),
+              'data':compare,
               'points': {'show':true} },
 
             //Hiding the trend data to keep clutter out of the graph display
@@ -712,6 +840,7 @@ var LineGraphView = new Class({
             ];
 
         var chartOptions = jQuery.extend(true, {}, this.performanceChartOptions);
+
         chartOptions['xaxis']['tickFormatter'] = _.bind(
             this.formatLabel, this, graphDivSel );
 
@@ -968,11 +1097,10 @@ var LineGraphModel = new Class({
         this.parent(options);
 
     },
-    getJsonObj: function(projectData, datum, context, fnSuccess){
+    getJsonObj: function(project, datum, context, fnSuccess){
 
-        var uri = HOME_PAGE.urlBase +  projectData.project +
-                '/testdata/raw/' + projectData.repository +
-                '/' + datum.r + '?';
+        var uri = HOME_PAGE.urlBase +  project +
+                '/testdata/raw/' + datum.b + '/' + datum.r + '?';
 
         uri += 'product=' + encodeURIComponent(datum.p) + '&os_name=' + encodeURIComponent(datum.osn) +
                '&os_version=' + encodeURIComponent(datum.osv) + '&branch_version=' + encodeURIComponent(datum.bv) +
