@@ -27,12 +27,17 @@ var SelectionState = new Class({
                 'repository':'',
                 'os':'',
                 'os_version':'',
-                'arch':'',
                 'test':'',
                 'page':'',
                 'graph_search':'',
                 'tr_id':'',
-                'graph':''
+                'graph':'',
+                'x86':'',
+                'x86_64':'',
+                'error_bars':'',
+                'compare_product':'',
+                'compare_repository':'',
+                'compare_color':'',
             };
 
         this.defaultProject = 'talos';
@@ -41,7 +46,6 @@ var SelectionState = new Class({
             'b2g':{
                 'product':'B2G',
                 'repository':'master',
-                'arch':'Gonk',
                 'os':'',
                 'os_version':'',
                 'test':'phone',
@@ -51,7 +55,6 @@ var SelectionState = new Class({
             'talos':{
                 'product':'Firefox',
                 'repository':'Mozilla-Inbound',
-                'arch':'x86_64',
                 'os':'mac',
                 'os_version':'OS X 10.8',
                 'test':'a11yr',
@@ -61,7 +64,6 @@ var SelectionState = new Class({
             'default':{
                 'product':'',
                 'repository':'',
-                'arch':'',
                 'os':'',
                 'os_version':'',
                 'test':'',
@@ -115,6 +117,13 @@ var SelectionState = new Class({
         newState.graph_search = urlObj.param.query.graph_search || selectedData.graph_search;
         newState.tr_id = urlObj.param.query.tr_id || selectedData.tr_id;
         newState.graph = urlObj.param.query.graph || selectedData.graph;
+
+        newState.x86 = urlObj.param.query.x86 || selectedData.x86;
+        newState.x86_64 = urlObj.param.query.x86_64 || selectedData.x86_64;
+        newState.error_bars = urlObj.param.query.error_bars || selectedData.error_bars;
+        newState.compare_product = urlObj.param.query.compare_product || selectedData.compare_product;
+        newState.compare_repository = urlObj.param.query.compare_repository || selectedData.compare_repository;
+        newState.compare_color = urlObj.param.query.compare_color || selectedData.compare_color;
 
         this.resetState(newState);
     },
@@ -209,13 +218,6 @@ var SelectionState = new Class({
         this.setDefaults(project);
         this.selections[project]['os_version'] = osVersion;
     },
-    setArchitecture: function(project, architecture){
-        if(!_.isString(architecture)){
-            return;
-        }
-        this.setDefaults(project);
-        this.selections[project]['arch'] = architecture;
-    },
     setTest: function(project, test){
         if(!_.isString(test)){
             return;
@@ -252,6 +254,57 @@ var SelectionState = new Class({
 
         this.selections[project]['graph'] = graphName;
     },
+    setX86: function(project, boolStr){
+
+        this.setDefaults(project);
+        if(!_.isString(boolStr)){
+            return;
+        }
+        this.selections[project]['x86'] = boolStr;
+
+    },
+    setX86_64: function(project, boolStr){
+
+        this.setDefaults(project);
+        if(!_.isString(boolStr)){
+            return;
+        }
+        this.selections[project]['x86_64'] = boolStr;
+
+    },
+    setErrorBars: function(project, boolStr){
+
+        this.setDefaults(project);
+        if(!_.isString(boolStr)){
+            return;
+        }
+        this.selections[project]['error_bars'] = boolStr;
+
+    },
+    setCompareProduct: function(project, product){
+
+        if(!_.isString(project)){
+            return;
+        }
+        this.setDefaults(project);
+        this.selections[project]['compare_product'] = product;
+    },
+    setCompareRepository: function(project, repository){
+
+        if(!_.isString(repository)){
+            return;
+        }
+        this.setDefaults(project);
+        this.selections[project]['compare_repository'] = repository;
+    },
+    setCompareColor: function(project, color){
+console.log(['setCompareColor', color]);
+        if(!_.isString(color)){
+            return;
+        }
+        this.setDefaults(project);
+        this.selections[project]['compare_color'] = color;
+    },
     saveState: function(){
 
         //Don't save state for a history change
@@ -277,7 +330,6 @@ var SelectionState = new Class({
         this.setRepository(newState.project, newState.repository);
         this.setOs(newState.project, newState.os);
         this.setOsVersion(newState.project, newState.os_version);
-        this.setArchitecture(newState.project, newState.arch);
         this.setTest(newState.project, newState.test);
         this.setPage(newState.project, newState.page);
 
@@ -288,6 +340,12 @@ var SelectionState = new Class({
         }
 
         this.setTestRunId(newState.project, newState.tr_id, newState.graph);
+        this.setX86(newState.project, newState.x86);
+        this.setX86_64(newState.project, newState.x86_64);
+        this.setErrorBars(newState.project, newState.error_bars);
+        this.setCompareProduct(newState.project, newState.compare_product);
+        this.setCompareRepository(newState.project, newState.compare_repository);
+        this.setCompareColor(newState.project, newState.compare_color);
     },
     stateChange: function(){
 
@@ -367,6 +425,22 @@ var SelectionState = new Class({
                             );
 
                     break;
+
+                } else if ( (state === 'compare_product') ||
+                            (state === 'compare_repository') ){
+
+                    HOME_PAGE.NavComponent.setCompareDataSeries();
+
+                } else if(state === 'x86'){
+                    HOME_PAGE.LineGraphComponent.view.toggleX86();
+
+                } else if(state === 'x86_64'){
+
+                    HOME_PAGE.LineGraphComponent.view.toggleX86_64();
+
+                } else if(state === 'error_bars'){
+
+                    HOME_PAGE.LineGraphComponent.view.toggleErrorBars();
                 }
             }
         }

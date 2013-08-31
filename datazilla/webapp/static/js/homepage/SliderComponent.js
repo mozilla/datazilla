@@ -65,16 +65,33 @@ var SliderComponent = new Class({
         this.arch = {};
         this.machines = {};
 
+        var projectData = HOME_PAGE.selectionState.getSelectedProjectData();
+console.log(['compare_color', projectData.compare_color]);
+        if(projectData.compare_color != ""){
+            HOME_PAGE.LineGraphComponent.view.setCompareSeriesColor(
+                projectData.compare_color
+                );
+        }
+
         $('.cp-basic').colorpicker(
             {
-                "altField": '.cp-basic-target',
-                "altProperties": 'background-color,color',
+                'altField': '.cp-basic-target',
+                'altProperties': 'background-color,color',
 
-                "buttonClass": 'hp-colorpicker-button',
+                'buttonClass': 'hp-colorpicker-button',
 
-                "closeOnOutside": true,
-                "okOnEnter":true,
+                'closeOnOutside': true,
+                'okOnEnter':true,
 
+                'close': function(){
+
+                    var color = HOME_PAGE.LineGraphComponent.view.getCompareSeriesColor();
+                    HOME_PAGE.selectionState.setCompareColor(color);
+
+                    HOME_PAGE.LineGraphComponent.view.hideGraphs();
+                    HOME_PAGE.LineGraphComponent.view.loadPerformanceGraphs(
+                        {}, {});
+                    }
             });
         //User selects a project
         $(this.view.projectSel).bind(
@@ -92,8 +109,6 @@ var SliderComponent = new Class({
         $(this.view.sliderSel).bind(
             "valuesChanged", _.bind(this.getPlatformsAndTests, this)
             );
-
-        var projectData = HOME_PAGE.selectionState.getSelectedProjectData();
 
         this.view.setProject(projectData.project);
 
@@ -253,6 +268,9 @@ var SliderComponent = new Class({
             );
 
         this.view.addDefaultCompareOption();
+
+        //Initialize the compare series to appropriate state
+        HOME_PAGE.NavComponent.view.initializeCompareSeries();
 
         this.view.setSliderEl(project, this.sliders);
     },
@@ -460,6 +478,7 @@ var SliderView = new Class({
         this.compareProductRepositorySel = '#hp_compare_options';
         this.archSel = '#hp_arch';
         this.machinesSel = '#hp_machines';
+        this.noProductRepositoryOptionValue = 'No Product/Repository selected';
 
         this.uiTabsClassSel = '.ui-tabs-nav';
         this.graphContainerControlsClassSel = '.hp-graph-container-controls';
@@ -568,7 +587,7 @@ var SliderView = new Class({
     },
     addDefaultCompareOption: function(){
         var option = $('<option></option>');
-        $(option).text('No Product/Repository selected');
+        $(option).text( this.noProductRepositoryOptionValue );
         $(this.compareProductRepositorySel).prepend(option);
         $(this.compareProductRepositorySel).val(option);
     }

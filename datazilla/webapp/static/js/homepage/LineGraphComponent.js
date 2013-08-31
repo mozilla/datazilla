@@ -32,10 +32,6 @@ var LineGraphComponent = new Class({
         this.hoveredDataObj = {};
 
         $(this.view.hpContainerSel).bind(
-            this.view.compareDataEvent, _.bind(this.addDataSeries, this)
-            );
-
-        $(this.view.hpContainerSel).bind(
             this.view.navClickEvent, _.bind(this.loadPerformanceGraphs, this)
             );
 
@@ -47,10 +43,25 @@ var LineGraphComponent = new Class({
             'plotclick', _.bind(this.clickPlot, this)
             );
     },
-    addDataSeries: function(ev, data){
+    setCompareDataSeries: function(data){
+        this.view.compareDataSeries = data;
+        this.view.compareDataLoaded = false;
+    },
+    deleteCompareDataSeries: function(){
 
-        this.view.compareDataSeries = data.compare_data;
-        this.view.loadPerformanceGraphs(ev, this.view.data);
+        this.view.compareDataSeries = {};
+        var key = "";
+
+        for(key in this.view.data.data){
+
+            var noCompareData = _.reject( this.view.data.data[key], function(obj){
+
+                return obj.type === 'compare';
+
+                });
+
+            this.view.data.data[key] = noCompareData;
+        }
     },
     hoverPlot: function(event, pos, item){
 
@@ -322,11 +333,10 @@ var LineGraphView = new Class({
         this.x86Sel = '#hp_x86';
         this.x8664Sel = '#hp_x86_64';
         this.errorBarsSel = '#hp_error_bars';
-        this.compareOptionsSel = '#hp_compare_options';
         this.compareSeriesColorSel = '#hp_compare_series_color';
+        this.compareDataLoaded = false;
 
         this.navClickEvent = 'NAV_CLICK_EV';
-        this.compareDataEvent = 'COMPARE_DATA_EV';
 
         this.minContainerHeight = 1000;
 
@@ -374,7 +384,7 @@ var LineGraphView = new Class({
             },
 
             'yaxis': {
-                'min':1,
+                'min':0,
                 'autoscaleMargin':0.3
             },
 
@@ -427,32 +437,61 @@ var LineGraphView = new Class({
            [ 'fdr', ['f'] ],
             ];
 
-        $(this.x86Sel).bind('click', _.bind(function(ev){
+        //This needs to be called before events are bound
+        this.initializeToggles();
+
+        $(this.x86Sel).bind('change', _.bind(function(ev){
+
+            var checked = $(this.x86Sel).find('input').is(':checked');
+
+            var boolStr = 'true';
+            if(checked === false){
+                boolStr = 'false';
+            }
+
+            var projectData = HOME_PAGE.selectionState.getSelectedProjectData();
+            HOME_PAGE.selectionState.setX86(projectData.project, boolStr);
 
             this.hideGraphs();
-            this.loadPerformanceGraphs(ev, this.data);
+            this.loadPerformanceGraphs(ev, {});
 
             }, this)
             );
 
-        $(this.x8664Sel).bind('click', _.bind(function(ev){
+        $(this.x8664Sel).bind('change', _.bind(function(ev){
+
+            var checked = $(this.x8664Sel).find('input').is(':checked');
+            var boolStr = 'true';
+            if(checked === false){
+                boolStr = 'false';
+            }
+
+            var projectData = HOME_PAGE.selectionState.getSelectedProjectData();
+
+            HOME_PAGE.selectionState.setX86_64(projectData.project, boolStr);
 
             this.hideGraphs();
-            this.loadPerformanceGraphs(ev, this.data);
+            this.loadPerformanceGraphs(ev, {});
 
             }, this)
             );
 
-        $(this.errorBarsSel).bind('click', _.bind(function(ev){
+        $(this.errorBarsSel).bind('change', _.bind(function(ev){
+
+            var checked = $(this.errorBarsSel).find('input').is(':checked');
+            var boolStr = 'true';
+            if(checked === false){
+                boolStr = 'false';
+            }
+
+            var projectData = HOME_PAGE.selectionState.getSelectedProjectData();
+
+            HOME_PAGE.selectionState.setErrorBars(projectData.project, boolStr);
 
             this.hideGraphs();
-            this.loadPerformanceGraphs(ev, this.data);
+            this.loadPerformanceGraphs(ev, {});
 
             }, this)
-            );
-
-        $(this.compareOptionsSel).bind(
-            'change', _.bind(this.loadCompareRepository, this)
             );
 
         $(this.closeDetailPanelSel).bind('click', _.bind(function(ev){
@@ -499,29 +538,62 @@ var LineGraphView = new Class({
 
         $(this.replicateLockSel).attr('checked', false);
 
+
     },
-    loadCompareRepository: function(ev){
+    initializeToggles: function(){
 
-        var selectedOption = $(this.compareOptionsSel).find(":selected");
+        var prData = HOME_PAGE.selectionState.getSelectedProjectData();
 
-        var productRepository = $(selectedOption).attr('internal_data');
-
-        if(productRepository != undefined){
-            productRepository = jQuery.parseJSON( productRepository.replace(/'/g, '"') );
-            HOME_PAGE.NavComponent.getCompareSeriesData(
-                productRepository.p, productRepository.b
-                );
-
-        } else {
-
-            /**
-             Edge cases:
-                1.) Same repo selected
-                2.) No Product/Repository selected, clear out compare series
-                3.) Selected Product/Repository has no data associated with it, 
-                    message user
-            ***/
+        if(prData.x86 === 'false'){
+            $(this.x86Sel).prop('checked', false);
+            $(this.x86Sel).click();
         }
+
+        if(prData.x86_64 === 'false'){
+            $(this.x8664Sel).prop('checked', false);
+            $(this.x8664Sel).click();
+        }
+
+        if(prData.error_bars === 'false'){
+            $(this.errorBarsSel).prop('checked', false);
+            $(this.errorBarsSel).click();
+        }
+    },
+    toggleX86: function(){
+
+        var prData = HOME_PAGE.selectionState.getSelectedProjectData();
+
+        if(prData.x86 === 'true'){
+            $(this.x86Sel).prop('checked', true);
+        }else {
+            $(this.x86Sel).prop('checked', false);
+        }
+
+        $(this.x86Sel).click();
+    },
+    toggleX86_64: function(){
+
+        var prData = HOME_PAGE.selectionState.getSelectedProjectData();
+
+        if(prData.x86_64 === 'true'){
+            $(this.x8664Sel).prop('checked', true);
+        }else {
+            $(this.x8664Sel).prop('checked', false);
+        }
+
+        $(this.x8664Sel).click();
+    },
+    toggleErrorBars: function(){
+
+        var prData = HOME_PAGE.selectionState.getSelectedProjectData();
+
+        if(prData.error_bars === 'true'){
+            $(this.errorBarsSel).prop('checked', true);
+        }else {
+            $(this.errorBarsSel).prop('checked', false);
+        }
+
+        $(this.errorBarsSel).click();
     },
     resizePlots: function(){
 
@@ -618,16 +690,23 @@ var LineGraphView = new Class({
     },
     loadPerformanceGraphs: function(ev, data){
 
-        //Store data as an attribute to support the recovery of
-        //replicate display state
-        this.data = data;
+        //Use class attribute data by default
+        var targetData = {};
+        if(!_.isEmpty(data.data)){
+            //Set class attribute if data is not empty
+            //this attribute is used for recovery of replicate
+            //display state
+            this.data = data;
+            targetData = data;
+        }else {
+            targetData = this.data;
+        }
 
         //Sort graphs to display alphabetically
-        var sortedKeys = this.getAlphabeticalSortKeys(data.data);
+        var sortedKeys = this.getAlphabeticalSortKeys(targetData.data);
 
         //Clean out the HTML container
         $(this.lineGraphsSel).empty();
-
         this.plots = {};
 
         var id = "", graphDiv = "", graphSel = "", labelDiv = "";
@@ -672,24 +751,25 @@ var LineGraphView = new Class({
             //correct and prevent points from overlaying on top of one
             //another
             if( (compareDataDefined === true) &&
-                (!_.isEmpty(this.compareDataSeries[ sortedKeys[i] ]))){
+                (!_.isEmpty(this.compareDataSeries[ sortedKeys[i] ])) &&
+                (this.compareDataLoaded === false) ){
 
-                    data.data[ sortedKeys[i] ] = data.data[ sortedKeys[i] ].concat(
+                    targetData.data[ sortedKeys[i] ] = targetData.data[ sortedKeys[i] ].concat(
                         this.compareDataSeries[ sortedKeys[i] ]
                         );
+
             }
 
-            data.data[ sortedKeys[i] ].sort(this.sortData);
+            targetData.data[ sortedKeys[i] ].sort(this.sortData);
 
             var pass = [], fail = [], trend = [], compare = [],
                 datum = "", compareDatum = "", searchKey = "";
 
             var highlightMap = {};
             var proc;
+            for(var j=0; j<targetData.data[ sortedKeys[i] ].length; j++){
 
-            for(var j=0; j<data.data[ sortedKeys[i] ].length; j++){
-
-                datum = data.data[ sortedKeys[i] ][j];
+                datum = targetData.data[ sortedKeys[i] ][j];
 
                 //Storing the graph name in sortedKeys
                 //gives us a way to identify the graph associated with the
@@ -774,6 +854,8 @@ var LineGraphView = new Class({
 
         }
 
+        this.compareDataLoaded = true;
+
         //Set the container height according to total graphs displayed
         //but don't go below a minimum height requirement to give the
         //visual display some consistancy.
@@ -810,7 +892,11 @@ var LineGraphView = new Class({
             };
     },
     getCompareSeriesColor: function(){
+        //The input contains a hex value without the #
         return '#' + $(this.compareSeriesColorSel).val();
+    },
+    setCompareSeriesColor: function(color){
+        $(this.compareSeriesColorSel).val(color);
     },
     drawGraph: function(label, pass, fail, trend, compare, graphDivSel){
 
