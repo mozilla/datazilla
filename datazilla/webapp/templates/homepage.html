@@ -7,8 +7,8 @@
     <link rel="stylesheet" href="/static/css/jquery-ui/jquery-ui-1.10.2.custom.min.css" type="text/css"/>
     <link rel="stylesheet" href="/static/css/Aristo/jquery-ui-1.8.7.custom.css" type="text/css"/>
     <link rel="stylesheet" href="/static/css/jquery-ui/jquery-ui-1.10.2.themes.smoothness.css" type="text/css"/>
-    <link rel="stylesheet" href="/static/css/iThing.css" />
-
+    <link rel="stylesheet" href="/static/css/iThing.css"/>
+    <link rel="stylesheet" href="/static/js/plugins/colorpicker/jquery.colorpicker.css"/>
     <link rel="stylesheet" href="/static/css/homepage.css" type="text/css"/>
 {% else %}
     <link rel="stylesheet" href="/static/css/homepage-min.css" type="text/css"/>
@@ -46,13 +46,27 @@
 
             <div class="hp-control-element" style="float:right;" title="Search a comma delimited list of revisions, machine names, or processor types (x86, x86_64)">
                 Search Graphs:
-                <input id="hp_input" type="text" size="40"></input>
+                <input id="hp_input" type="text" size="40" />
             </div>
         </div>
     </div>
     </div>
 </div>
-
+<!-- NOTE: The graph container controls div is inserted into the jquery-ui .ui-tabs-nav container dynamically in javascript.-->
+<div style="display:none;" class="hp-graph-container-controls">
+    <div style="margin:3px;" class="hp-light-text">
+        <span style="margin-right:5px;">Graph Controls:</span>
+        <label id="hp_x86" title="Show only test results from 32 bit platforms" style="margin-right:5px;">x86 <input type="checkbox" checked="checked"/></label>
+        <label id="hp_x86_64" title="Show only test results from 64 bit platforms" style="margin-right:5px;">x86_64 <input type="checkbox" checked="checked"/></label>
+        <label id="hp_error_bars" title="Toggle error bars" style="margin-right:5px;">Error bars <input type="checkbox" checked="checked"/></label>
+        <span title="Select a Product/Repository to compare to. This will add a new series to all displayed graphs for the selected Product/Repository combination." style="margin-right:5px;">
+            Compare To:
+            <select id="hp_compare_options" type="checkbox"></select>
+        </span>
+        <input id="hp_compare_series_color" style="width:45px;" type="text" class="cp-basic" value="7327c5" title="Click to set the compare Product/Repository series color"/>
+        <span class="cp-basic-target" style="width:20px; height:15px;">&nbsp;&nbsp;&nbsp;</span>
+    </div>
+</div>
 <div id="hp_main_wait" class="hp-spinner"></div>
 <div id="hp_container" style="display:none;" class="ui-widget ui-widget-header ui-corner-top hp-container-two hp-light-text">
 
@@ -133,6 +147,8 @@
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.selection.min.js"></script>
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.errorbars.js"></script>
 <script type="text/javascript" src="/static/js/plugins/json2.js"></script>
+
+<script type="text/javascript" src="/static/js/plugins/colorpicker/jquery.colorpicker.js"></script>
 
 <!-- Homepage classes -->
 <script type="text/javascript" src="/static/js/data_views/Bases.js"></script>

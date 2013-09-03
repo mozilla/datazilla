@@ -1293,6 +1293,16 @@ class MetricsTestModel(DatazillaModelBase):
                     "get_computed_means":self.exclude_first_replicate_from_mean,
                     "ids":[]
                     },
+
+                "Talos tp5n": {
+                    "get_computed_means":self.exclude_first_replicate_from_mean,
+                    "ids":[]
+                    },
+
+                "tp5n": {
+                    "get_computed_means":self.exclude_first_replicate_from_mean,
+                    "ids":[]
+                    },
                 },
 
             "default": {
