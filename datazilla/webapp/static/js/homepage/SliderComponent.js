@@ -66,11 +66,8 @@ var SliderComponent = new Class({
         this.machines = {};
 
         var projectData = HOME_PAGE.selectionState.getSelectedProjectData();
-console.log(['compare_color', projectData.compare_color]);
         if(projectData.compare_color != ""){
-            HOME_PAGE.LineGraphComponent.view.setCompareSeriesColor(
-                projectData.compare_color
-                );
+            this.view.setCompareSeriesColor(projectData.compare_color);
         }
 
         $('.cp-basic').colorpicker(
@@ -83,15 +80,21 @@ console.log(['compare_color', projectData.compare_color]);
                 'closeOnOutside': true,
                 'okOnEnter':true,
 
-                'close': function(){
+                'close': _.bind( function(){
 
-                    var color = HOME_PAGE.LineGraphComponent.view.getCompareSeriesColor();
-                    HOME_PAGE.selectionState.setCompareColor(color);
+                    var projectData = HOME_PAGE.selectionState.getSelectedProjectData();
+
+                    var color = this.view.getCompareSeriesColor();
+
+                    HOME_PAGE.selectionState.setCompareColor(
+                        projectData.project, color.replace('#', '')
+                        );
 
                     HOME_PAGE.LineGraphComponent.view.hideGraphs();
                     HOME_PAGE.LineGraphComponent.view.loadPerformanceGraphs(
                         {}, {});
-                    }
+
+                    }, this )
             });
         //User selects a project
         $(this.view.projectSel).bind(
@@ -478,6 +481,8 @@ var SliderView = new Class({
         this.compareProductRepositorySel = '#hp_compare_options';
         this.archSel = '#hp_arch';
         this.machinesSel = '#hp_machines';
+        this.compareSeriesColorSel = '#hp_compare_series_color';
+
         this.noProductRepositoryOptionValue = 'No Product/Repository selected';
 
         this.uiTabsClassSel = '.ui-tabs-nav';
@@ -491,6 +496,12 @@ var SliderView = new Class({
             $(this.uiTabsClassSel) );
 
         $(this.graphContainerControlsClassSel).css('display', 'block');
+    },
+    getCompareSeriesColor: function(){
+        return $(this.compareSeriesColorSel).val();
+    },
+    setCompareSeriesColor: function(color){
+        return $(this.compareSeriesColorSel).val(color);
     },
     setSelectMenu: function(selector, selectOptions, optionDefault){
 

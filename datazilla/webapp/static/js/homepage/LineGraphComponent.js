@@ -440,6 +440,42 @@ var LineGraphView = new Class({
         //This needs to be called before events are bound
         this.initializeToggles();
 
+        this.initializeGraphControls();
+
+        this.initializeGraphSearch();
+
+        this.initializeDetailPanel();
+
+        //Reset the plots to the browser size
+        $(window).resize(_.bind(this.resizePlots, this));
+
+        //Make sure the replicate lock is not selected
+        $(this.replicateLockSel).attr('checked', false);
+
+    },
+    initializeToggles: function(){
+
+        //Set the state of the toggle checkboxes according
+        //to the selection state
+        var prData = HOME_PAGE.selectionState.getSelectedProjectData();
+
+        if(prData.x86 === 'false'){
+            $(this.x86Sel).prop('checked', false);
+            $(this.x86Sel).click();
+        }
+
+        if(prData.x86_64 === 'false'){
+            $(this.x8664Sel).prop('checked', false);
+            $(this.x8664Sel).click();
+        }
+
+        if(prData.error_bars === 'false'){
+            $(this.errorBarsSel).prop('checked', false);
+            $(this.errorBarsSel).click();
+        }
+    },
+    initializeGraphControls: function(){
+
         $(this.x86Sel).bind('change', _.bind(function(ev){
 
             var checked = $(this.x86Sel).find('input').is(':checked');
@@ -494,14 +530,8 @@ var LineGraphView = new Class({
             }, this)
             );
 
-        $(this.closeDetailPanelSel).bind('click', _.bind(function(ev){
-            $(this.detailPanelSel).slideUp();
-            ev.stopPropagation();
-            }, this));
-
-        $(this.closeDetailPanelSel).mouseover(function(ev){
-            $(this).css('cursor', 'pointer');
-            });
+    },
+    initializeGraphSearch: function(){
 
         $(this.inputSel).focus(function(){
             this.select();
@@ -524,6 +554,18 @@ var LineGraphView = new Class({
                 }, this)
             );
 
+    },
+    initializeDetailPanel: function(){
+
+        $(this.closeDetailPanelSel).bind('click', _.bind(function(ev){
+            $(this.detailPanelSel).slideUp();
+            ev.stopPropagation();
+            }, this));
+
+        $(this.closeDetailPanelSel).mouseover(function(ev){
+            $(this).css('cursor', 'pointer');
+            });
+
         $(this.searchByMachineSel).bind('click', _.bind(function(e){
 
             e.stopPropagation();
@@ -534,30 +576,6 @@ var LineGraphView = new Class({
 
             }, this));
 
-        $(window).resize(_.bind(this.resizePlots, this));
-
-        $(this.replicateLockSel).attr('checked', false);
-
-
-    },
-    initializeToggles: function(){
-
-        var prData = HOME_PAGE.selectionState.getSelectedProjectData();
-
-        if(prData.x86 === 'false'){
-            $(this.x86Sel).prop('checked', false);
-            $(this.x86Sel).click();
-        }
-
-        if(prData.x86_64 === 'false'){
-            $(this.x8664Sel).prop('checked', false);
-            $(this.x8664Sel).click();
-        }
-
-        if(prData.error_bars === 'false'){
-            $(this.errorBarsSel).prop('checked', false);
-            $(this.errorBarsSel).click();
-        }
     },
     toggleX86: function(){
 
@@ -709,7 +727,6 @@ var LineGraphView = new Class({
         $(this.lineGraphsSel).empty();
         this.plots = {};
 
-        var id = "", graphDiv = "", graphSel = "", labelDiv = "";
 
         var containerHeight = 45;
         var graphBlockHeight = 220;
@@ -732,6 +749,8 @@ var LineGraphView = new Class({
         if(!_.isEmpty(this.compareDataSeries)){
             compareDataDefined = true;
         }
+
+        var id = "", graphDiv = "", graphSel = "", labelDiv = "";
 
         for(var i=0; i<sortedKeys.length; i++){
 
@@ -760,7 +779,7 @@ var LineGraphView = new Class({
 
             }
 
-            targetData.data[ sortedKeys[i] ].sort(this.sortData);
+            targetData.data[ sortedKeys[i] ].sort(_.bind(this.sortData, this));
 
             var pass = [], fail = [], trend = [], compare = [],
                 datum = "", compareDatum = "", searchKey = "";
@@ -877,11 +896,20 @@ var LineGraphView = new Class({
         //pd = push date
         //dr = date received
 
-        //If we have a push date use it to sort in descending
-        //order, otherwise use the date received
         if((a.pd != null) && (b.pd != null)){
-            return a.pd - b.pd;
+            //If the revision and the push date are the same between
+            //a and b, it's a retrigger and we should order by the
+            //date received instead of the push date.
+            if( (a.r === b.r) && (a.pd === b.pd) ){
+                return a.dr - b.dr;
+            }else{
+                //If we have a push date use it to sort in descending
+                //order, otherwise use the date received
+                return a.pd - b.pd;
+            }
         }
+
+        //sort by date received by default
         return a.dr - b.dr;
     },
     getFilters: function(){
