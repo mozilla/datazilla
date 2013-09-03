@@ -298,7 +298,7 @@ var SelectionState = new Class({
         this.selections[project]['compare_repository'] = repository;
     },
     setCompareColor: function(project, color){
-console.log(['setCompareColor', color]);
+
         if(!_.isString(color)){
             return;
         }
