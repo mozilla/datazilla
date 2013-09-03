@@ -65,6 +65,37 @@ var SliderComponent = new Class({
         this.arch = {};
         this.machines = {};
 
+        var projectData = HOME_PAGE.selectionState.getSelectedProjectData();
+        if(projectData.compare_color != ""){
+            this.view.setCompareSeriesColor(projectData.compare_color);
+        }
+
+        $('.cp-basic').colorpicker(
+            {
+                'altField': '.cp-basic-target',
+                'altProperties': 'background-color,color',
+
+                'buttonClass': 'hp-colorpicker-button',
+
+                'closeOnOutside': true,
+                'okOnEnter':true,
+
+                'close': _.bind( function(){
+
+                    var projectData = HOME_PAGE.selectionState.getSelectedProjectData();
+
+                    var color = this.view.getCompareSeriesColor();
+
+                    HOME_PAGE.selectionState.setCompareColor(
+                        projectData.project, color.replace('#', '')
+                        );
+
+                    HOME_PAGE.LineGraphComponent.view.hideGraphs();
+                    HOME_PAGE.LineGraphComponent.view.loadPerformanceGraphs(
+                        {}, {});
+
+                    }, this )
+            });
         //User selects a project
         $(this.view.projectSel).bind(
             "change", _.bind(this.setProjectOption, this)
@@ -81,8 +112,6 @@ var SliderComponent = new Class({
         $(this.view.sliderSel).bind(
             "valuesChanged", _.bind(this.getPlatformsAndTests, this)
             );
-
-        var projectData = HOME_PAGE.selectionState.getSelectedProjectData();
 
         this.view.setProject(projectData.project);
 
@@ -234,6 +263,17 @@ var SliderComponent = new Class({
             this.getProductRepositoryString(
                 projectData.product, projectData.repository)
             );
+
+        this.view.setSelectMenu(
+            this.view.compareProductRepositorySel, this.productRepositories[project],
+            this.getProductRepositoryString(
+                projectData.product, projectData.repository)
+            );
+
+        this.view.addDefaultCompareOption();
+
+        //Initialize the compare series to appropriate state
+        HOME_PAGE.NavComponent.view.initializeCompareSeries();
 
         this.view.setSliderEl(project, this.sliders);
     },
@@ -438,11 +478,30 @@ var SliderView = new Class({
 
         this.projectSel = '#hp_project';
         this.productRepositorySel = '#hp_repository';
+        this.compareProductRepositorySel = '#hp_compare_options';
         this.archSel = '#hp_arch';
         this.machinesSel = '#hp_machines';
+        this.compareSeriesColorSel = '#hp_compare_series_color';
+
+        this.noProductRepositoryOptionValue = 'No Product/Repository selected';
+
+        this.uiTabsClassSel = '.ui-tabs-nav';
+        this.graphContainerControlsClassSel = '.hp-graph-container-controls';
 
         $(this.tabSel).tabs();
 
+        //Insert the graph container control div into the tabs container
+        //by the tabs() function call
+        $(this.graphContainerControlsClassSel).appendTo(
+            $(this.uiTabsClassSel) );
+
+        $(this.graphContainerControlsClassSel).css('display', 'block');
+    },
+    getCompareSeriesColor: function(){
+        return $(this.compareSeriesColorSel).val();
+    },
+    setCompareSeriesColor: function(color){
+        return $(this.compareSeriesColorSel).val(color);
     },
     setSelectMenu: function(selector, selectOptions, optionDefault){
 
@@ -536,6 +595,12 @@ var SliderView = new Class({
     resizeSlider: function(project, sliderId){
         var sliderSel = '#' + sliderId;
         $(sliderSel).resize();
+    },
+    addDefaultCompareOption: function(){
+        var option = $('<option></option>');
+        $(option).text( this.noProductRepositoryOptionValue );
+        $(this.compareProductRepositorySel).prepend(option);
+        $(this.compareProductRepositorySel).val(option);
     }
 });
 var SliderModel = new Class({

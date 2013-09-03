@@ -1,7 +1,6 @@
 /*******
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/.
  * *****/
 var NavComponent = new Class({
 
@@ -20,10 +19,6 @@ var NavComponent = new Class({
 
         this.listData = {};
 
-        this.testGraph = {};
-        this.machineGraph = {};
-        this.machines = {};
-
         this.view = new NavView();
         this.model = new NavModel();
 
@@ -34,6 +29,14 @@ var NavComponent = new Class({
             this.sliderSliceEvent, _.bind(this.loadLists, this)
             );
 
+        $(this.view.compareOptionsSel).bind(
+            'change', _.bind(this.loadCompareRepository, this)
+            );
+
+    },
+    setCompareDataSeries: function(){
+        this.view.initializeCompareSeries();
+        $(this.view.compareOptionsSel).trigger('change');
     },
     loadLists: function(ev, data){
 
@@ -163,7 +166,76 @@ var NavComponent = new Class({
             'context':this,
             'fnSuccess':this.processData };
 
+        //Determine if there's a compare data series selected
+        var selectedOption = $(this.view.compareOptionsSel).find(":selected");
+        var productRepository = $(selectedOption).attr('internal_data');
+
+        if(productRepository != undefined){
+
+            productRepository = jQuery.parseJSON( productRepository.replace(/'/g, '"') );
+
+            options.product = productRepository.p;
+            options.branch = productRepository.b;
+            options.fnSuccess = this.processCompareDataSeriesAndProcessData;
+        }
+
         this.model.getAllData(options);
+
+    },
+    processCompareDataSeriesAndRenderGraphs: function(data){
+
+        var options = {};
+        options.test_graph = {};
+        options.machine_graph = {};
+        options.machines = {};
+        options.compare_series = true;
+
+        options = this.aggregateData(data, options);
+
+        //Delete any previously set compare series
+        HOME_PAGE.LineGraphComponent.deleteCompareDataSeries();
+
+        //Load the compare data
+        HOME_PAGE.LineGraphComponent.setCompareDataSeries(
+            options.test_graph);
+
+        //Render the graphs, no need to load data
+        HOME_PAGE.LineGraphComponent.loadPerformanceGraphs({}, {});
+
+    },
+    processCompareDataSeriesAndProcessData: function(data){
+
+        var options = {};
+        options.test_graph = {};
+        options.machine_graph = {};
+        options.machines = {};
+        options.compare_series = true;
+
+        options = this.aggregateData(data, options);
+
+        //Delete any previously set compare series
+        HOME_PAGE.LineGraphComponent.deleteCompareDataSeries();
+
+        //Load the compare data
+        HOME_PAGE.LineGraphComponent.setCompareDataSeries(
+            options.test_graph);
+
+        var prData = HOME_PAGE.selectionState.getSelectedProjectData();
+
+        var processDataOptions = {
+            'project':prData.project,
+            'product':prData.product,
+            'branch':prData.repository,
+            'os':prData.os,
+            'os_version':prData.os_version,
+            'test':prData.test,
+            'page':prData.page,
+            'start':prData.start,
+            'stop':prData.stop,
+            'context':this,
+            'fnSuccess':this.processData };
+
+        this.model.getAllData(processDataOptions);
 
     },
     processData: function(data){
@@ -175,47 +247,117 @@ var NavComponent = new Class({
             return;
         }
 
-        this.testGraph = {};
-        this.machineGraph = {};
-        this.machines = {};
+        var options = {};
 
-        _.map(data.data, _.bind(this.aggregateData, this));
+        options.test_graph = {};
+        options.machine_graph = {};
+        options.machines = {};
+        options.compare_series = false;
+
+        options = this.aggregateData(data, options);
 
         $(this.view.hpContainerSel).trigger(
             this.navClickEvent,
-            { 'data':this.testGraph, 'machine_graph':this.machineGraph,
-              'machines':this.machines } );
+            { 'data':options.test_graph, 'machine_graph':options.machine_graph,
+              'machines':options.machines } );
 
     },
-    aggregateData: function(obj){
+    aggregateData: function(data, options){
 
-        if(this.machines[obj.mn] === undefined){
-            this.machines[obj.mn] = { 'mn':obj.mn };
+        var obj = {};
+        var i = 0;
+        for(; i<data.data.length; i++){
+
+            obj = data.data[i];
+
+            if(options.compare_series === true){
+                obj.type = 'compare';
+            }
+
+            if(options.machines[obj.mn] === undefined){
+                options.machines[obj.mn] = { 'mn':obj.mn };
+            }
+
+            var platform = obj.osn + ' ' + obj.osv;
+            var keyOne = "";
+            if(this.testData){
+                keyOne = platform;
+            }else if(this.platformData){
+                keyOne = obj.pu;
+            }
+            if( options.test_graph[keyOne] === undefined ){
+                options.test_graph[keyOne] = [];
+            }
+
+            options.test_graph[keyOne].push(obj);
+
+            if( options.machine_graph[obj.mn] === undefined ){
+                options.machine_graph[obj.mn] = {
+                    'count':0, 'test_eval':0, 'data':[]
+                    };
+            }
+
+            //Load machine data
+            options.machine_graph[obj.mn]['count']++;
+            options.machine_graph[obj.mn]['test_eval'] += obj.te;
+            options.machine_graph[obj.mn]['data'].push(obj);
         }
 
-        //Initialize graph level 1
-        var platform = obj.osn + ' ' + obj.osv;
-        var keyOne = "";
-        if(this.testData){
-            keyOne = platform;
-        }else if(this.platformData){
-            keyOne = obj.pu;
-        }
-        if( this.testGraph[keyOne] === undefined ){
-            this.testGraph[keyOne] = [];
-        }
+        return options;
+    },
+    loadCompareRepository: function(ev){
 
-        if( this.machineGraph[obj.mn] === undefined ){
-            this.machineGraph[obj.mn] = {
-                'count':0, 'test_eval':0, 'data':[]
+        HOME_PAGE.LineGraphComponent.view.hideGraphs();
+
+        var selectedOption = $(this.view.compareOptionsSel).find(":selected");
+
+        var productRepository = $(selectedOption).attr('internal_data');
+
+        var prData = HOME_PAGE.selectionState.getSelectedProjectData();
+
+        if(productRepository === undefined){
+            /**
+             Edge cases:
+                1.) Same repo selected
+                2.) No Product/Repository selected, clear out compare series
+                3.) Selected Product/Repository has no data associated with it, 
+                    message user
+            ***/
+
+            HOME_PAGE.selectionState.setCompareProduct(prData.project, "");
+            HOME_PAGE.selectionState.setCompareRepository(prData.project, "");
+
+            HOME_PAGE.selectionState.saveState();
+
+            HOME_PAGE.LineGraphComponent.deleteCompareDataSeries();
+            HOME_PAGE.LineGraphComponent.loadPerformanceGraphs({}, {});
+
+        } else {
+
+            productRepository = jQuery.parseJSON( productRepository.replace(/'/g, '"') );
+
+            var options = {
+                'project':prData.project,
+                'product':productRepository.p,
+                'branch':productRepository.b,
+                'os':prData.os,
+                'os_version':prData.os_version,
+                'test':prData.test,
+                'page':prData.page,
+                'start':prData.start,
+                'stop':prData.stop,
+                'context':this,
+                'fnSuccess':this.processCompareDataSeriesAndRenderGraphs
                 };
-        }
-        this.testGraph[keyOne].push(obj);
 
-        //Load machine data
-        this.machineGraph[obj.mn]['count']++;
-        this.machineGraph[obj.mn]['test_eval'] += obj.te;
-        this.machineGraph[obj.mn]['data'].push(obj);
+            HOME_PAGE.selectionState.setCompareProduct(
+                prData.project, productRepository.p);
+            HOME_PAGE.selectionState.setCompareRepository(
+                prData.project, productRepository.b);
+
+            this.model.getAllData(options);
+
+        }
     }
 });
 var NavView = new Class({
@@ -237,9 +379,33 @@ var NavView = new Class({
         this.testMenuSel = '#hp_test_menu';
         this.platformMenuSel = '#hp_platform_menu';
         this.navSel = '#hp_nav';
-
+        this.compareOptionsSel = '#hp_compare_options';
 
         this.menuTextLimit = 18;
+
+    },
+    initializeCompareSeries: function(){
+
+        var prData = HOME_PAGE.selectionState.getSelectedProjectData();
+        var optionValue = "";
+
+        if( (prData.compare_product != "") &&
+            (prData.compare_repository != "") ){
+
+            optionValue = prData.compare_product + ' ' + prData.compare_repository;
+            $(this.compareOptionsSel).val(optionValue);
+
+        }else {
+            optionValue = HOME_PAGE.SliderComponent.view.noProductRepositoryOptionValue;
+        }
+
+        $(this.compareOptionsSel).val(optionValue);
+
+        if(prData.compare_color != ""){
+            HOME_PAGE.LineGraphComponent.view.setCompareSeriesColor(
+                prData.compare_color
+                );
+        }
     },
     setList: function(selector, callback, context, data, min, max){
 

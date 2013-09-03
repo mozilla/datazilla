@@ -43,6 +43,26 @@ var LineGraphComponent = new Class({
             'plotclick', _.bind(this.clickPlot, this)
             );
     },
+    setCompareDataSeries: function(data){
+        this.view.compareDataSeries = data;
+        this.view.compareDataLoaded = false;
+    },
+    deleteCompareDataSeries: function(){
+
+        this.view.compareDataSeries = {};
+        var key = "";
+
+        for(key in this.view.data.data){
+
+            var noCompareData = _.reject( this.view.data.data[key], function(obj){
+
+                return obj.type === 'compare';
+
+                });
+
+            this.view.data.data[key] = noCompareData;
+        }
+    },
     hoverPlot: function(event, pos, item){
 
         //Display detail panel
@@ -127,10 +147,14 @@ var LineGraphComponent = new Class({
         var page = datum.pu;
 
         //Set the color for the replicate graph
-        if(datum.te === 0){
-            this.view.replicateGraphColor = this.view.failColor;
+        if(datum.type === 'compare'){
+                this.view.replicateGraphColor = this.view.getCompareSeriesColor();
         }else{
-            this.view.replicateGraphColor = this.view.passColor;
+            if(datum.te === 0){
+                this.view.replicateGraphColor = this.view.failColor;
+            }else{
+                this.view.replicateGraphColor = this.view.passColor;
+            }
         }
 
         var projectData = HOME_PAGE.selectionState.getSelectedProjectData();
@@ -151,7 +175,7 @@ var LineGraphComponent = new Class({
             this.testRunIdCache[projectData.project][testRunId] = { 'uri':"", 'data':{} };
 
             uri = this.model.getJsonObj(
-                projectData, datum, this,
+                projectData.project, datum, this,
                 _.bind(this.loadReplicates, this, testRunId,
                 projectData.project, page));
 
@@ -271,6 +295,7 @@ var LineGraphView = new Class({
         this.plots = {};
         this.xaxisLabels = {};
         this.replicatePlot = {};
+        this.compareDataSeries = {};
 
         this.hpContainerSel = '#hp_container';
         this.lineGraphsSel = '#hp_linegraphs';
@@ -303,6 +328,13 @@ var LineGraphView = new Class({
 
         this.inputSel = '#hp_input';
         this.viewJsonObjSel = '#hp_view_json_objects';
+
+        //Graph container controls
+        this.x86Sel = '#hp_x86';
+        this.x8664Sel = '#hp_x86_64';
+        this.errorBarsSel = '#hp_error_bars';
+        this.compareSeriesColorSel = '#hp_compare_series_color';
+        this.compareDataLoaded = false;
 
         this.navClickEvent = 'NAV_CLICK_EV';
 
@@ -352,7 +384,7 @@ var LineGraphView = new Class({
             },
 
             'yaxis': {
-                'min':1,
+                'min':0,
                 'autoscaleMargin':0.3
             },
 
@@ -405,14 +437,101 @@ var LineGraphView = new Class({
            [ 'fdr', ['f'] ],
             ];
 
-        $(this.closeDetailPanelSel).bind('click', _.bind(function(e){
-            $(this.detailPanelSel).slideUp();
-            e.stopPropagation();
-            }, this));
+        //This needs to be called before events are bound
+        this.initializeToggles();
 
-        $(this.closeDetailPanelSel).mouseover(function(e){
-            $(this).css('cursor', 'pointer');
-            });
+        this.initializeGraphControls();
+
+        this.initializeGraphSearch();
+
+        this.initializeDetailPanel();
+
+        //Reset the plots to the browser size
+        $(window).resize(_.bind(this.resizePlots, this));
+
+        //Make sure the replicate lock is not selected
+        $(this.replicateLockSel).attr('checked', false);
+
+    },
+    initializeToggles: function(){
+
+        //Set the state of the toggle checkboxes according
+        //to the selection state
+        var prData = HOME_PAGE.selectionState.getSelectedProjectData();
+
+        if(prData.x86 === 'false'){
+            $(this.x86Sel).prop('checked', false);
+            $(this.x86Sel).click();
+        }
+
+        if(prData.x86_64 === 'false'){
+            $(this.x8664Sel).prop('checked', false);
+            $(this.x8664Sel).click();
+        }
+
+        if(prData.error_bars === 'false'){
+            $(this.errorBarsSel).prop('checked', false);
+            $(this.errorBarsSel).click();
+        }
+    },
+    initializeGraphControls: function(){
+
+        $(this.x86Sel).bind('change', _.bind(function(ev){
+
+            var checked = $(this.x86Sel).find('input').is(':checked');
+
+            var boolStr = 'true';
+            if(checked === false){
+                boolStr = 'false';
+            }
+
+            var projectData = HOME_PAGE.selectionState.getSelectedProjectData();
+            HOME_PAGE.selectionState.setX86(projectData.project, boolStr);
+
+            this.hideGraphs();
+            this.loadPerformanceGraphs(ev, {});
+
+            }, this)
+            );
+
+        $(this.x8664Sel).bind('change', _.bind(function(ev){
+
+            var checked = $(this.x8664Sel).find('input').is(':checked');
+            var boolStr = 'true';
+            if(checked === false){
+                boolStr = 'false';
+            }
+
+            var projectData = HOME_PAGE.selectionState.getSelectedProjectData();
+
+            HOME_PAGE.selectionState.setX86_64(projectData.project, boolStr);
+
+            this.hideGraphs();
+            this.loadPerformanceGraphs(ev, {});
+
+            }, this)
+            );
+
+        $(this.errorBarsSel).bind('change', _.bind(function(ev){
+
+            var checked = $(this.errorBarsSel).find('input').is(':checked');
+            var boolStr = 'true';
+            if(checked === false){
+                boolStr = 'false';
+            }
+
+            var projectData = HOME_PAGE.selectionState.getSelectedProjectData();
+
+            HOME_PAGE.selectionState.setErrorBars(projectData.project, boolStr);
+
+            this.hideGraphs();
+            this.loadPerformanceGraphs(ev, {});
+
+            }, this)
+            );
+
+    },
+    initializeGraphSearch: function(){
 
         $(this.inputSel).focus(function(){
             this.select();
@@ -435,6 +554,18 @@ var LineGraphView = new Class({
                 }, this)
             );
 
+    },
+    initializeDetailPanel: function(){
+
+        $(this.closeDetailPanelSel).bind('click', _.bind(function(ev){
+            $(this.detailPanelSel).slideUp();
+            ev.stopPropagation();
+            }, this));
+
+        $(this.closeDetailPanelSel).mouseover(function(ev){
+            $(this).css('cursor', 'pointer');
+            });
+
         $(this.searchByMachineSel).bind('click', _.bind(function(e){
 
             e.stopPropagation();
@@ -445,10 +576,42 @@ var LineGraphView = new Class({
 
             }, this));
 
-        $(window).resize(_.bind(this.resizePlots, this));
+    },
+    toggleX86: function(){
 
-        $(this.replicateLockSel).attr('checked', false);
+        var prData = HOME_PAGE.selectionState.getSelectedProjectData();
 
+        if(prData.x86 === 'true'){
+            $(this.x86Sel).prop('checked', true);
+        }else {
+            $(this.x86Sel).prop('checked', false);
+        }
+
+        $(this.x86Sel).click();
+    },
+    toggleX86_64: function(){
+
+        var prData = HOME_PAGE.selectionState.getSelectedProjectData();
+
+        if(prData.x86_64 === 'true'){
+            $(this.x8664Sel).prop('checked', true);
+        }else {
+            $(this.x8664Sel).prop('checked', false);
+        }
+
+        $(this.x8664Sel).click();
+    },
+    toggleErrorBars: function(){
+
+        var prData = HOME_PAGE.selectionState.getSelectedProjectData();
+
+        if(prData.error_bars === 'true'){
+            $(this.errorBarsSel).prop('checked', true);
+        }else {
+            $(this.errorBarsSel).prop('checked', false);
+        }
+
+        $(this.errorBarsSel).click();
     },
     resizePlots: function(){
 
@@ -545,19 +708,25 @@ var LineGraphView = new Class({
     },
     loadPerformanceGraphs: function(ev, data){
 
-        //Store data as an attribute to support the recovery of
-        //replicate display state
-        this.data = data;
+        //Use class attribute data by default
+        var targetData = {};
+        if(!_.isEmpty(data.data)){
+            //Set class attribute if data is not empty
+            //this attribute is used for recovery of replicate
+            //display state
+            this.data = data;
+            targetData = data;
+        }else {
+            targetData = this.data;
+        }
 
         //Sort graphs to display alphabetically
-        var sortedKeys = this.getAlphabeticalSortKeys(data.data);
+        var sortedKeys = this.getAlphabeticalSortKeys(targetData.data);
 
         //Clean out the HTML container
         $(this.lineGraphsSel).empty();
-
         this.plots = {};
 
-        var id = "", graphDiv = "", graphSel = "", labelDiv = "";
 
         var containerHeight = 45;
         var graphBlockHeight = 220;
@@ -565,7 +734,23 @@ var LineGraphView = new Class({
         //These are the data indexes flot will use
         var passSeriesIndex = 0;
         var failSeriesIndex = 1;
-        var trendSeriesIndex = 2;
+        var compareSeriesIndex = 2;
+        var trendSeriesIndex = 3;
+
+        var filters = this.getFilters();
+
+        if(filters['error_bars'] === true){
+            this.performanceChartOptions.series.points.errorbars = 'y';
+        }else{
+            this.performanceChartOptions.series.points.errorbars = 'n';
+        }
+
+        var compareDataDefined = false;
+        if(!_.isEmpty(this.compareDataSeries)){
+            compareDataDefined = true;
+        }
+
+        var id = "", graphDiv = "", graphSel = "", labelDiv = "";
 
         for(var i=0; i<sortedKeys.length; i++){
 
@@ -580,16 +765,30 @@ var LineGraphView = new Class({
             $(labelDiv).addClass(this.graphNameCls);
             $(labelDiv).text(sortedKeys[i]);
 
-            data.data[ sortedKeys[i] ].sort(this.sortData);
+            //Add the compare data to the primary data structure before
+            //implementing the sort. This will insure the ordering is
+            //correct and prevent points from overlaying on top of one
+            //another
+            if( (compareDataDefined === true) &&
+                (!_.isEmpty(this.compareDataSeries[ sortedKeys[i] ])) &&
+                (this.compareDataLoaded === false) ){
 
-            var pass = [], fail = [], trend = [], datum = "", searchKey = "";
+                    targetData.data[ sortedKeys[i] ] = targetData.data[ sortedKeys[i] ].concat(
+                        this.compareDataSeries[ sortedKeys[i] ]
+                        );
+
+            }
+
+            targetData.data[ sortedKeys[i] ].sort(_.bind(this.sortData, this));
+
+            var pass = [], fail = [], trend = [], compare = [],
+                datum = "", compareDatum = "", searchKey = "";
 
             var highlightMap = {};
             var proc;
+            for(var j=0; j<targetData.data[ sortedKeys[i] ].length; j++){
 
-            for(var j=0; j<data.data[ sortedKeys[i] ].length; j++){
-
-                datum = data.data[ sortedKeys[i] ][j];
+                datum = targetData.data[ sortedKeys[i] ][j];
 
                 //Storing the graph name in sortedKeys
                 //gives us a way to identify the graph associated with the
@@ -604,38 +803,52 @@ var LineGraphView = new Class({
                     proc = datum.pr;
                 }
 
-                searchKey = datum.r + datum.mn + proc;
-
-                //The datum.te attribute stands for test_evaluation, if it's
-                //1 the test passed and we display it as green, if it's 0
-                //it failed and it's displayed as orange to provide visual
-                //parity with other mozilla build/test data applications.
-                if(datum.te === 1){
-                    highlightMap[searchKey] = [
-                        passSeriesIndex, pass.push( [ j, datum.m, datum.s, datum ]) - 1
-                        ];
-
-                }else if(datum.te === 0){
-
-                    highlightMap[searchKey] = [
-                        failSeriesIndex, fail.push([ j, datum.m, datum.s, datum ]) - 1
-                        ];
-
-                }else{
-                    //If datum.te is not set, default to pass and display as
-                    //green
-                    highlightMap[searchKey] = [
-                        passSeriesIndex, pass.push([ j, datum.m, datum.s, datum ]) - 1
-                        ];
+                //Implement filter
+                if(filters[datum.pr] === false){
+                    continue;
                 }
 
-                if(datum.tm != null){
-                    trend.push([ j, datum.tm, datum.s, datum ]);
+                searchKey = datum.r + datum.mn + proc;
+
+                if(datum.type === 'compare'){
+
+                    highlightMap[searchKey] = [
+                        compareSeriesIndex, compare.push( [ j, datum.m, datum.s, datum ] ) - 1
+                        ];
+
+                }else {
+                    //The datum.te attribute stands for test_evaluation, if it's
+                    //1 the test passed and we display it as green, if it's 0
+                    //it failed and it's displayed as orange to provide visual
+                    //parity with other mozilla build/test data applications.
+                    if(datum.te === 1){
+                        highlightMap[searchKey] = [
+                            passSeriesIndex, pass.push( [ j, datum.m, datum.s, datum ]) - 1
+                            ];
+
+                    }else if(datum.te === 0){
+
+                        highlightMap[searchKey] = [
+                            failSeriesIndex, fail.push([ j, datum.m, datum.s, datum ]) - 1
+                            ];
+
+                    }else{
+                        //If datum.te is not set, default to pass and display as
+                        //green
+                        highlightMap[searchKey] = [
+                            passSeriesIndex, pass.push([ j, datum.m, datum.s, datum ]) - 1
+                            ];
+                    }
+
+                    if(datum.tm != null){
+                        trend.push([ j, datum.tm, datum.s, datum ]);
+                    }
                 }
 
                 if(this.xaxisLabels[graphSel] === undefined){
                     this.xaxisLabels[graphSel] = [];
                 }
+
                 this.xaxisLabels[graphSel][j] = this.convertTimestampToDate(
                     datum.pd || datum.dr
                     );
@@ -644,7 +857,7 @@ var LineGraphView = new Class({
             this.plots[graphSel] = {
 
                 'plot':this.drawGraph(
-                    sortedKeys[i], pass, fail, trend, graphSel
+                    sortedKeys[i], pass, fail, trend, compare, graphSel
                     ),
                 'highlight_map':highlightMap,
 
@@ -659,6 +872,8 @@ var LineGraphView = new Class({
             containerHeight += graphBlockHeight;
 
         }
+
+        this.compareDataLoaded = true;
 
         //Set the container height according to total graphs displayed
         //but don't go below a minimum height requirement to give the
@@ -681,14 +896,37 @@ var LineGraphView = new Class({
         //pd = push date
         //dr = date received
 
-        //If we have a push date use it to sort in descending
-        //order, otherwise use the date received
         if((a.pd != null) && (b.pd != null)){
-            return a.pd - b.pd;
+            //If the revision and the push date are the same between
+            //a and b, it's a retrigger and we should order by the
+            //date received instead of the push date.
+            if( (a.r === b.r) && (a.pd === b.pd) ){
+                return a.dr - b.dr;
+            }else{
+                //If we have a push date use it to sort in descending
+                //order, otherwise use the date received
+                return a.pd - b.pd;
+            }
         }
+
+        //sort by date received by default
         return a.dr - b.dr;
     },
-    drawGraph: function(label, pass, fail, trend, graphDivSel){
+    getFilters: function(){
+        return {
+            'x86':$(this.x86Sel).find('input').is(':checked'),
+            'x86_64':$(this.x8664Sel).find('input').is(':checked'),
+            'error_bars':$(this.errorBarsSel).find('input').is(':checked')
+            };
+    },
+    getCompareSeriesColor: function(){
+        //The input contains a hex value without the #
+        return '#' + $(this.compareSeriesColorSel).val();
+    },
+    setCompareSeriesColor: function(color){
+        $(this.compareSeriesColorSel).val(color);
+    },
+    drawGraph: function(label, pass, fail, trend, compare, graphDivSel){
 
         var chart = [
             { 'color':this.passColor,
@@ -697,6 +935,10 @@ var LineGraphView = new Class({
 
             { 'color':this.failColor,
               'data':fail,
+              'points': {'show':true} },
+
+            { 'color':this.getCompareSeriesColor(),
+              'data':compare,
               'points': {'show':true} },
 
             //Hiding the trend data to keep clutter out of the graph display
@@ -712,6 +954,7 @@ var LineGraphView = new Class({
             ];
 
         var chartOptions = jQuery.extend(true, {}, this.performanceChartOptions);
+
         chartOptions['xaxis']['tickFormatter'] = _.bind(
             this.formatLabel, this, graphDivSel );
 
@@ -968,11 +1211,10 @@ var LineGraphModel = new Class({
         this.parent(options);
 
     },
-    getJsonObj: function(projectData, datum, context, fnSuccess){
+    getJsonObj: function(project, datum, context, fnSuccess){
 
-        var uri = HOME_PAGE.urlBase +  projectData.project +
-                '/testdata/raw/' + projectData.repository +
-                '/' + datum.r + '?';
+        var uri = HOME_PAGE.urlBase +  project +
+                '/testdata/raw/' + datum.b + '/' + datum.r + '?';
 
         uri += 'product=' + encodeURIComponent(datum.p) + '&os_name=' + encodeURIComponent(datum.osn) +
                '&os_version=' + encodeURIComponent(datum.osv) + '&branch_version=' + encodeURIComponent(datum.bv) +
