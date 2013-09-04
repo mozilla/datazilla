@@ -42,6 +42,7 @@ var LineGraphComponent = new Class({
         $(this.view.hpContainerSel).bind(
             'plotclick', _.bind(this.clickPlot, this)
             );
+
     },
     setCompareDataSeries: function(data){
         this.view.compareDataSeries = data;
@@ -388,6 +389,13 @@ var LineGraphView = new Class({
                 'autoscaleMargin':0.3
             },
 
+            'zoom': {
+                'interactive': true,
+            },
+            'pan': {
+                'interactive': true,
+            },
+
             'series': {
 
                 'points': {
@@ -401,7 +409,6 @@ var LineGraphView = new Class({
                         }
                 }
             },
-
             'selection':{
                 'mode':'x',
                 'color':'#BDBDBD'
@@ -436,6 +443,7 @@ var LineGraphView = new Class({
            [ 'p value/h0', ['pv', 'hr'], _.bind(this.formatNumber, this) ],
            [ 'fdr', ['f'] ],
             ];
+
 
         //This needs to be called before events are bound
         this.initializeToggles();
@@ -757,13 +765,13 @@ var LineGraphView = new Class({
             graphDiv = $(document.createElement('div'));
             id = 'line_graph_' + (i + 1);
             graphSel = '#' + id;
+
             $(graphDiv).attr('id', id);
             $(graphDiv).addClass('hp-line-plot');
             $(this.lineGraphsSel).append(graphDiv);
 
-            labelDiv = $(document.createElement('div'));
-            $(labelDiv).addClass(this.graphNameCls);
-            $(labelDiv).text(sortedKeys[i]);
+            labelDiv = this.setGraphLabelAndControls(
+                graphDiv, sortedKeys[i], graphSel);
 
             //Add the compare data to the primary data structure before
             //implementing the sort. This will insure the ordering is
@@ -865,6 +873,10 @@ var LineGraphView = new Class({
 
                 };
 
+            $(graphSel).bind('plotzoom plotpan', _.bind(function(graphSel){
+                this.redrawOverlay(graphSel);
+                }, this, graphSel));
+
             $(graphDiv).append(labelDiv);
 
             //Expand the size of the container to match the number of
@@ -886,11 +898,63 @@ var LineGraphView = new Class({
 
         this.search(false);
 
+        //Need to add the hover event listener to the zoom icons
+        //after they're created
+        $('.ui-icon').hover(
+            function(ev){
+                $(ev.currentTarget).css('cursor', 'pointer');
+                },
+            function(ev){
+                $(ev.currentTarget).css('cursor', 'default');
+                }
+            );
+
         this.showGraphs();
 
         //All state relevant parameters are set at theis point, save
         //the overall state to the browser history.
         HOME_PAGE.selectionState.saveState();
+    },
+    setGraphLabelAndControls: function(graphDiv, label, graphSel){
+
+        var labelDiv = $(document.createElement('div'));
+        $(labelDiv).css('width', '100%');
+
+        $(labelDiv).addClass(this.graphNameCls);
+        $(labelDiv).text(label);
+
+        var plusDiv = $(document.createElement('div'));
+        $(plusDiv).addClass('ui-icon ui-icon-plus');
+        $(plusDiv).attr('title', 'Click to zoom in');
+        $(plusDiv).css('float', 'right');
+
+        var minusDiv = $(document.createElement('div'));
+        $(minusDiv).attr('title', 'Click to zoom out');
+        $(minusDiv).addClass('ui-icon ui-icon-minus');
+        $(minusDiv).css('float', 'right');
+
+        $(plusDiv).bind('click', _.bind(this.zoomIn, this, graphSel));
+        $(minusDiv).bind('click', _.bind(this.zoomOut, this, graphSel));
+
+        $(labelDiv).append(plusDiv);
+        $(labelDiv).append(minusDiv);
+
+        return labelDiv;
+    },
+    zoomIn: function(graphSel){
+
+        this.plots[graphSel].plot.zoom();
+        this.redrawOverlay(graphSel);
+
+    },
+    zoomOut: function(graphSel){
+
+        this.plots[graphSel].plot.zoomOut();
+        this.redrawOverlay(graphSel);
+
+    },
+    redrawOverlay: function(graphSel){
+        this.plots[graphSel].plot.triggerRedrawOverlay();
     },
     sortData: function(a, b){
         //pd = push date
