@@ -71,6 +71,7 @@
 <div id="hp_container" style="display:none;" class="ui-widget ui-widget-header ui-corner-top hp-container-two hp-light-text">
 
     <div id="slider" class="ui-rangeSlider ui-dateRangeSlider hp-slider-container"></div>
+    <div style="margin-top:75px; float:left; width:100%; text-align:center;" class="hp-light-text">Hints: Click a data point to search by revision, hover over data to see details. Double click graph to zoom, click & drag to pan.</div>
     <div id="hp_tabs" style="margin-top:100px;">
         <ul>
             <li><a href="#hp-metrics">Metrics</a></li>
@@ -90,7 +91,6 @@
             </div>
             <div class="ui-widget ui-widget-header ui-corner-top hp-graph-controls">
                 <div id="hp_nav" class="hp-control-element"></div>
-                <span style="margin-top:5px; margin-right:15px; float:right;" class="hp-light-text">Hint: Click a data point to search by revision, Hover over data to see details</span>
                 <div id="hp_linegraph_wait" class="hp-spinner"></div>
                 <div id="hp_no_data" class="hp-no-data"></div>
                 <div id="hp_linegraphs" style="display:none;" class="hp-line-graph-container">
@@ -144,9 +144,17 @@
 <script type="text/javascript" src="/static/js/plugins/mootools-core-1.4.0.js"></script>
 <script type="text/javascript" src="/static/js/plugins/moo4q/Source/Class.Mutators.jQuery.js"></script>
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.min.js"></script>
-<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.selection.min.js"></script>
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.errorbars.js"></script>
+<!--
+The version of jquery.event.drag-2.2.js that's embedded in jquery.flot.navigate.js does not work
+with the current version of jquery. To compensate, loading jquery.event.drag-2.2.js here
+-->
+<script type="text/javascript" src="/static/js/plugins/jquery.event.drag-2.2.js"></script>
+<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.navigate.js"></script>
+
+
 <script type="text/javascript" src="/static/js/plugins/json2.js"></script>
+
 
 <script type="text/javascript" src="/static/js/plugins/colorpicker/jquery.colorpicker.js"></script>
 
