@@ -27,12 +27,6 @@ urlpatterns = patterns('',
 
     (r'^b2g/?', include('datazilla.webapp.apps.summary.b2g_app_urls')),
 
-    (r'^(?P<project>{0})/?$'.format(project_list), include('datazilla.webapp.apps.dataviews.urls')),
-
-    #dataview application
-    (r'^(?P<project>{0})/dataviews/?'.format(project_list), include('datazilla.webapp.apps.dataviews.urls')),
-
-
     (r'^(?P<project>{0})/summary/?'.format(project_list), include('datazilla.webapp.apps.summary.urls')),
 
     #datazilla web service
