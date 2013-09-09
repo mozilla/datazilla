@@ -116,7 +116,6 @@ INSTALLED_APPS = [
     "datazilla.controller.admin",
     "datazilla.model.sql",
     "datazilla.webapp.apps.datazilla",
-    "datazilla.webapp.apps.dataviews",
     "datazilla.webapp.apps.summary",
 
     "corsheaders",
