@@ -79,10 +79,18 @@ var NavComponent = new Class({
                 noData = true;
             }
 
-            if(os === "" && osVersion === ""){
+            if( (os === "" && osVersion === "") ||
+                (page != "") ){
 
                 this.platformData = false;
                 this.testData = true;
+
+                //If the page is defined insure that os and
+                //osVersion are "". This is required to over ride
+                //the default os and osVersion when a url first
+                //loads.
+                os = "";
+                osVersion = "";
 
                 if( test === "" && page === ""){
                     var keys = _.keys(this.listData.data.tests);
