@@ -44,7 +44,7 @@
                 <select id="hp_repository"></select>
             </div>
 
-            <div class="hp-control-element" style="float:right;" title="Search a comma delimited list of revisions, machine names, or processor types (x86, x86_64)">
+            <div class="hp-control-element" title="Search a comma delimited list of revisions, machine names, or processor types (x86, x86_64)">
                 Search Graphs:
                 <input id="hp_input" type="text" size="40" />
             </div>
@@ -105,13 +105,15 @@
         <div class="ui-widget ui-widget-header hp-tip-control-panel">
             <div id="hp_toolbar_details" style="display:inline; float:left;"></div>
             <div style="display:inline; float:left;" class="hp-hover-inline-datum">
-                <span class="hp-light-text">min:&nbsp;</span><span id="hp_replicate_min"></span><span style="margin-left:10px;" class="hp-light-text">max:&nbsp;</span><span id="hp_replicate_max"></span><span style="margin-left:35px;" class="hp-light-text">search by:&nbsp;</span><a id="hp_search_machine" title="Click the machine name to highlight it in all graphs" href="#"></a>
+                <span class="hp-light-text">min:&nbsp;</span><span id="hp_replicate_min"></span><span style="margin-left:10px;" class="hp-light-text">max:&nbsp;</span><span id="hp_replicate_max"></span><span style="margin-left:35px;" class="hp-light-text">search:&nbsp;</span><a id="hp_search_machine" title="Click the machine name to highlight it in all graphs" href="#"></a>
             </div>
-            <span style="float-right; margin-left:20px; margin-bottom:2px;">
+
+            <span style="float-left; margin-left:25px; margin-bottom:2px;">
                 <label title="Locks replicate display on last data point clicked.">Lock: <input id="hp_replicate_lock" type="checkbox" /></label>
             </span>
 
-            <span id="hp_close_detail_panel" style="float:right; margin-right:10px;" class="ui-icon ui-icon-close" title="Close detail panel" ></span>
+            <span id="hp_close_detail_panel" style="float:right; margin-right:8px;" class="ui-icon ui-icon-close" title="Close detail panel" ></span>
+
         </div>
         <div id="hp_hover_detail_one" class="hp-tip-panel"></div>
         <div id="hp_replicate_wait" style="width:550px;" class="hp-replicate-graph-panel hp-replicate-spinner"></div>

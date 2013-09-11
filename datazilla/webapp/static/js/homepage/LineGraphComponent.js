@@ -1033,7 +1033,13 @@ var LineGraphView = new Class({
             );
     },
     formatLabel: function(sel, label, axis){
-        return this.xaxisLabels[sel][label] || "";
+        var label = "";
+        if(this.xaxisLabels[sel] != undefined){
+            if(this.xaxisLabels[sel][label] != undefined){
+                label = this.xaxisLabels[sel][label];
+            }
+        }
+        return label;
     },
     loadHoverData: function(datum, dataStruct, sel, datumClass){
         //Display reference data associated with a datum. This
@@ -1083,8 +1089,8 @@ var LineGraphView = new Class({
                     if(fieldKeys[0] === 'r'){
 
                         var truncatedField = fieldValue;
-                        if(fieldValue.length > 25){
-                            truncatedField = fieldValue.slice(0, 25) + '...';
+                        if(fieldValue.length > 12){
+                            truncatedField = fieldValue.slice(0, 12) + '...';
                             $(el).text(truncatedField);
                         }else{
                             $(el).text(truncatedField);
