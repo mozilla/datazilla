@@ -109,11 +109,15 @@ var SelectionState = new Class({
         newState.stop = parseInt(urlObj.param.query.stop) || selectedData.stop;
         newState.product = urlObj.param.query.product || selectedData.product;
         newState.repository = urlObj.param.query.repository || selectedData.repository;
-        newState.os = urlObj.param.query.os || selectedData.os;
-        newState.os_version = urlObj.param.query.os_version || selectedData.os_version;
-        newState.arch = urlObj.param.query.arch || selectedData.arch;
+
         newState.test = urlObj.param.query.test || selectedData.test;
         newState.page = urlObj.param.query.page || selectedData.page;
+
+        newState.os = urlObj.param.query.os || selectedData.os;
+        newState.os_version = urlObj.param.query.os_version || selectedData.os_version;
+
+        newState.arch = urlObj.param.query.arch || selectedData.arch;
+
         newState.graph_search = urlObj.param.query.graph_search || selectedData.graph_search;
         newState.tr_id = urlObj.param.query.tr_id || selectedData.tr_id;
         newState.graph = urlObj.param.query.graph || selectedData.graph;

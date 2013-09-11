@@ -4,7 +4,7 @@ body {
     font-size: 10px;
     padding: 0;
     border-top: 2px solid #676767;
-    min-width: 1120px;
+    min-width: 1000px;
 }
 div.hp-toppanel {
     position:fixed;
@@ -15,7 +15,7 @@ div.hp-toppanel {
     background: -webkit-gradient(linear, left top, left bottom, from(#225920), to(#44AA00));
     height: 30px;
     width: 100%;
-    min-width: 1120px;
+    min-width: 1000px;
 }
 div.hp-title {
   background: url("/static/images/title.png") no-repeat scroll 0 center;
@@ -39,7 +39,7 @@ div.hp-container {
     -moz-box-sizing: border-box;
     -webkit-box-sizing: border-box;
     border: 0 solid #000;
-    width: 1120px;
+    width: 1000px;
     background:white;
     opacity:1;
 }
@@ -48,7 +48,7 @@ div.hp-container-two {
     -moz-box-sizing: border-box;
     -webkit-box-sizing: border-box;
     border: 0 solid #000;
-    min-width: 1120px;
+    min-width: 1000px;
     width: 95%;
     padding-top: 120px;
     margin-left: auto;
@@ -62,7 +62,7 @@ div.hp-container-two {
 }
 div.hp-graph-controls {
     float:right;
-    min-width: 910px;
+    min-width: 790px;
     width: 82%;
     height: 25px;
     background: white;
@@ -81,14 +81,14 @@ div.hp-list {
 }
 div.hp-control-container {
     position:fixed;
-    min-width: 1200px;
+    min-width: 1100px;
     height: 30px;
     background: white;
     top:35px;
 }
 div.hp-graph-control-container {
     position:fixed;
-    min-width:1118px;
+    min-width:998px;
     width: 95%;
     height: 160px;
     background: #F7F7F7;
@@ -103,7 +103,7 @@ div.hp-tip-control-panel {
 
     width:100.01%;
     position:relative;
-    min-width:1118px;
+    min-width:998px;
     height: 20px;
     top: -1px;
     left: -1px;
@@ -120,7 +120,7 @@ div.hp-tip-panel {
 div.hp-replicate-graph-panel {
     float:left;
     margin-top: 5px;
-    min-width:545px;
+    min-width:450px;
     width:53%;
     height:125px;
 }
@@ -128,7 +128,7 @@ div.hp-replicate-hover-panel {
     float:right;
     margin-top:5px;
     margin-left:10px;
-    width:220px;
+    width:150px;
     height: 140px;
     overflow-y:auto;
 }
@@ -139,8 +139,8 @@ div.hp-replicate-hover-panel {
 }
 .hp-hover-inline-datum {
     padding-top: 2px;
-    margin-left: 10px;
-    margin-right: 10px;
+    margin-left: 8px;
+    margin-right: 8px;
     float:left;
 }
 .wordwrap {
