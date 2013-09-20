@@ -61,6 +61,15 @@ var SelectionState = new Class({
                 'page':'',
                 'graph_search':''
                 },
+            'webpagetest':{
+                'product':'Firefox',
+                'repository':'mozilla-central',
+                'os':'WINNT',
+                'os_version':'6.1',
+                'test':'bc-win61i32-bldw:Firefox.Broadband',
+                'page':'',
+                'graph_search':''
+                },
             'default':{
                 'product':'',
                 'repository':'',

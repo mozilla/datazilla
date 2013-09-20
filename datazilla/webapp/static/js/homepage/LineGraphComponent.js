@@ -1032,13 +1032,18 @@ var LineGraphView = new Class({
             chartOptions
             );
     },
-    formatLabel: function(sel, label, axis){
+    formatLabel: function(sel, labelIndex, axis){
+
+        var labelIndex = Math.round(labelIndex);
+
         var label = "";
+
         if(this.xaxisLabels[sel] != undefined){
-            if(this.xaxisLabels[sel][label] != undefined){
-                label = this.xaxisLabels[sel][label];
+            if(this.xaxisLabels[sel][labelIndex] != undefined){
+                label = this.xaxisLabels[sel][labelIndex];
             }
         }
+
         return label;
     },
     loadHoverData: function(datum, dataStruct, sel, datumClass){
