@@ -26,6 +26,7 @@ var ReplicateGraphComponent = new Class({
         this.chartData = {};
         this.hoverData = {};
 
+
         this.chartOptions = {
             'grid': {
                 'clickable': true,
@@ -107,6 +108,11 @@ var ReplicateGraphComponent = new Class({
             //There are some data structures without an explicit test machine type
             //attribute. These are all the defaultDeviceOption
             deviceType = data[j]['json_blob']['test_machine']['type'] || APPS_PAGE.graphControlsComponent.view.defaultDeviceOption;
+
+            if(this.view.deviceTypeMap[deviceType] != undefined){
+                deviceType = this.view.deviceTypeMap[deviceType];
+            }
+
             if( (results === undefined) || (device != deviceType ) ){
                 continue;
             }
@@ -193,10 +199,16 @@ var ReplicateGraphView = new Class({
         this.graphDetailClassSel = '.app-replicate-graph-detail';
 
         this.idPrefix = 'app_replicate_';
+
         this.idFields = [
             'application', 'replicate range', 'test', 'revision',
             'gecko_revision', 'avg', 'min', 'max', 'std'
             ];
+
+        this.deviceTypeMap = {
+            'd300': 'leo',
+            'msm7627a': 'hamachi'
+            };
 
     },
     getSelectedDevice: function(){
@@ -376,6 +388,10 @@ var ReplicateGraphView = new Class({
         }
 
         var deviceType = jsonData['json_blob']['test_machine']['type'] || APPS_PAGE.graphControlsComponent.view.defaultDeviceOption;
+        if(this.deviceTypeMap[deviceType] != undefined){
+            deviceType = this.deviceTypeMap[deviceType];
+        }
+
         this.loadField(
             'device type',
             deviceType,

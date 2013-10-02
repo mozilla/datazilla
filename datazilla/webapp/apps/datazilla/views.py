@@ -11,6 +11,7 @@ from django.shortcuts import render_to_response
 from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponse
+from django.shortcuts import redirect
 
 from datazilla.model import PerformanceTestModel
 from datazilla.model import utils
@@ -149,7 +150,15 @@ def set_test_data(request, project=""):
 
     return HttpResponse(json.dumps(result), mimetype=APP_JS, status=status)
 
-def homepage(request):
+def homepage(request, project=""):
+
+    #####
+    #This provides backwords compatibility with the old url structure
+    #that worked with the first UI. If project is not found the UI defaults
+    #to the first project.
+    #####
+    if project:
+        return redirect('/?project={0}'.format(project))
 
     template_context = {
         'DEBUG':settings.DEBUG,
