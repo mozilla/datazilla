@@ -234,9 +234,12 @@ var SliderComponent = new Class({
 
                 if(data.hasOwnProperty(id)){
                     //Some data is corrupted in production with the
-                    //string 'undefined'. Exclude this data.
+                    //string 'undefined' or an empty string.
+                    //Exclude this data.
                     if( (data[id]['product'] === 'undefined') ||
-                        (data[id]['branch'] === 'undefined') ){
+                        (data[id]['branch'] === 'undefined') ||
+                        (data[id]['product'] === '') ||
+                        (data[id]['branch'] === '') ){
 
                         continue;
                     }
