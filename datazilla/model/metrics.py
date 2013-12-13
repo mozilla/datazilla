@@ -1428,12 +1428,15 @@ class MetricsTestModel(DatazillaModelBase):
             'column_key':MetricsTestModel.ALL_DIMENSION_COLUMN_KEY
             }
 
-        min_max_data = self.sources["perftest"].dhub.execute(
-            proc='perftest.selects.get_date_range_all_dimensions',
+        max_data = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_max_date_all_dimensions',
             debug_show=self.DEBUG)
 
-        data['min_date_data_received'] = min_max_data[0]['min_date_data_received'] or date_begin
-        data['max_date_data_received'] = min_max_data[0]['max_date_data_received'] or date_end
+        # set min date to 6 months before the last date received
+        min_date = int(max_data[0]['max_date_data_received'] or 0) - 15552000
+
+        data['min_date_data_received'] = min_date or date_begin
+        data['max_date_data_received'] = max_data[0]['max_date_data_received'] or date_end
 
         data['start'] = date_begin
         data['stop'] = date_end

@@ -70,6 +70,15 @@ var SelectionState = new Class({
                 'page':'',
                 'graph_search':''
                 },
+            'marketapps':{
+                'product':'B2G',
+                'repository':'v1.2',
+                'os':'',
+                'os_version':'',
+                'test':'stopwatch',
+                'page':'cold_load_time',
+                'graph_search':''
+                },
             'default':{
                 'product':'',
                 'repository':'',
