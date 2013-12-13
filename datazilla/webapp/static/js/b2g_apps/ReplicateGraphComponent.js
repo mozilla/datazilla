@@ -413,20 +413,43 @@ var ReplicateGraphView = new Class({
             jsonData['json_blob']['test_build']['restart'],
             this.buildDataContainerSel
             );
+
+        this.loadField(
+            'Firmware version (incremental)',
+            jsonData['json_blob']['test_build']['ro.build.version.incremental'],
+            this.buildDataContainerSel
+            );
+
+        this.loadField(
+            'Firmware version (release)',
+            jsonData['json_blob']['test_build']['ro.build.version.release'],
+            this.buildDataContainerSel
+            );
+
+        this.loadField(
+            'Firmware date',
+            this.convertUTCTimestampToDate(
+                jsonData['json_blob']['test_build']['ro.build.date.utc'], true
+                ),
+            this.buildDataContainerSel
+            );
     },
     loadField: function(fieldName, value, container){
 
-        var divEl = $('<div></div>');
-        $(divEl).addClass('app-control-element app-control-small-element app-build-data');
-        $(divEl).append(fieldName + ':');
+        if (fieldName != undefined && value != undefined){
 
-        var spanEl = $('<span></span>');
-        $(spanEl).addClass('app-data');
-        $(spanEl).text(value);
+            var divEl = $('<div></div>');
+            $(divEl).addClass('app-control-element app-control-small-element app-build-data');
+            $(divEl).append(fieldName + ':');
 
-        $(divEl).append(spanEl);
+            var spanEl = $('<span></span>');
+            $(spanEl).addClass('app-data');
+            $(spanEl).text(value);
 
-        $(container).append(divEl);
+            $(divEl).append(spanEl);
+
+            $(container).append(divEl);
+        }
     }
 });
 var ReplicateGraphModel = new Class({
