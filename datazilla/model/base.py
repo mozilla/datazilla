@@ -1285,6 +1285,81 @@ class PerformanceTestModel(DatazillaModelBase):
             debug_show=self.DEBUG
             )
 
+    def get_b2g_value_summary_by_test_ids(
+        self, branch, device, test_ids, url, begin_date, end_date
+        ):
+        #####
+        #TODO: This needs to be moved to a derived class
+        #####
+
+        data = []
+
+        if branch and test_ids and url and begin_date and end_date:
+
+            proc = 'perftest.selects.get_b2g_value_summary_by_test_id'
+
+            r_string = ','.join( map( lambda t_id: '%s', test_ids ) )
+
+            test_ids.append( branch )
+            test_ids.append( device )
+            test_ids.append( url )
+            test_ids.append( begin_date )
+            test_ids.append( end_date )
+
+            data = self.sources["perftest"].dhub.execute(
+                proc=proc,
+                debug_show=self.DEBUG,
+                placeholders=test_ids,
+                replace=[ r_string ]
+                )
+
+        return data
+
+    def get_test_run_ids_by_revisions(
+        self, branch, revision, gecko_revision, test_id, test_type):
+        #TODO: This method is specific to the b2g project and should
+        #       be placed in a derived class
+        #
+        #NOTE: test_type corresponds to pages.url, b2g overloads the schema
+        #       in the following way.  The test table holds applications and
+        #       the pages table holds tests
+
+        proc = 'perftest.selects.get_test_run_ids_from_revisions'
+
+        data = self.sources["perftest"].dhub.execute(
+            proc=proc,
+            debug_show=self.DEBUG,
+            placeholders=[
+                revision, gecko_revision, branch, test_id, test_type
+                ]
+            )
+
+        test_run_ids = []
+        for d in data:
+            test_run_ids.append(d['id'])
+
+        return test_run_ids
+
+    def cycle_data(self):
+
+        sql_to_execute = [
+            'perftest.deletes.cycle_test_value',
+            'perftest.deletes.cycle_test_aux_data',
+            'perftest.deletes.cycle_test_option_values',
+            'perftest.deletes.cycle_test_data_all_dimentions',
+            'perftest.deletes.cycle_test_run'
+            ]
+
+        # Determine 6 month old timestamp
+        min_date = int(time.time() - 15552000)
+
+        for sql in sql_to_execute:
+
+            self.sources["perftest"].dhub.execute(
+                proc=sql,
+                placeholders=[min_date],
+                debug_show=self.DEBUG,
+                )
 
     def _adapt_production_data(self, data):
 
@@ -1732,60 +1807,6 @@ class PerformanceTestModel(DatazillaModelBase):
         return data_dict
 
     ##b2g project specific methods##
-    def get_b2g_value_summary_by_test_ids(
-        self, branch, device, test_ids, url, begin_date, end_date
-        ):
-        #####
-        #TODO: This needs to be moved to a derived class
-        #####
-
-        data = []
-
-        if branch and test_ids and url and begin_date and end_date:
-
-            proc = 'perftest.selects.get_b2g_value_summary_by_test_id'
-
-            r_string = ','.join( map( lambda t_id: '%s', test_ids ) )
-
-            test_ids.append( branch )
-            test_ids.append( device )
-            test_ids.append( url )
-            test_ids.append( begin_date )
-            test_ids.append( end_date )
-
-            data = self.sources["perftest"].dhub.execute(
-                proc=proc,
-                debug_show=self.DEBUG,
-                placeholders=test_ids,
-                replace=[ r_string ]
-                )
-
-        return data
-
-    def get_test_run_ids_by_revisions(
-        self, branch, revision, gecko_revision, test_id, test_type):
-        #TODO: This method is specific to the b2g project and should
-        #       be placed in a derived class
-        #
-        #NOTE: test_type corresponds to pages.url, b2g overloads the schema
-        #       in the following way.  The test table holds applications and
-        #       the pages table holds tests
-
-        proc = 'perftest.selects.get_test_run_ids_from_revisions'
-
-        data = self.sources["perftest"].dhub.execute(
-            proc=proc,
-            debug_show=self.DEBUG,
-            placeholders=[
-                revision, gecko_revision, branch, test_id, test_type
-                ]
-            )
-
-        test_run_ids = []
-        for d in data:
-            test_run_ids.append(d['id'])
-
-        return test_run_ids
 
     def _update_b2g_test_run(self, data, test_run_id):
 

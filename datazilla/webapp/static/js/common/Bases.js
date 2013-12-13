@@ -145,6 +145,28 @@ var View = new Class({
 
         return dateString;
     },
+    convertUTCTimestampToDate: function(utcTimestamp, getHMS){
+
+        var dateObj = new Date(utcTimestamp * 1000);
+
+        var year = dateObj.getUTCFullYear();
+        var month = this.padNumber(dateObj.getUTCMonth() + 1, 10, '0');
+        var day = this.padNumber(dateObj.getUTCDate(), 10, '0');
+
+        var dateString = year + '-' + month + '-' + day;
+
+        if(getHMS){
+
+            var hours = this.padNumber(dateObj.getUTCHours(), 10, '0');
+            var minutes = this.padNumber(dateObj.getUTCMinutes(), 10, '0');
+            var seconds = this.padNumber(dateObj.getUTCSeconds(), 10, '0');
+
+            dateString += ' ' + hours + ':' + minutes + ':' + seconds;
+        }
+
+        return dateString;
+
+    },
     padNumber: function(n, max, pad){
 
         n = parseInt(n);
