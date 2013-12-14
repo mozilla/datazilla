@@ -426,13 +426,15 @@ var ReplicateGraphView = new Class({
             this.buildDataContainerSel
             );
 
-        this.loadField(
-            'Firmware date',
-            this.convertUTCTimestampToDate(
-                jsonData['json_blob']['test_build']['ro.build.date.utc'], true
-                ),
-            this.buildDataContainerSel
-            );
+        if(jsonData['json_blob']['test_build']['ro.build.date.utc'] != undefined){
+            this.loadField(
+                'Firmware date',
+                this.convertUTCTimestampToDate(
+                    jsonData['json_blob']['test_build']['ro.build.date.utc'], true
+                    ),
+                this.buildDataContainerSel
+                );
+        }
     },
     loadField: function(fieldName, value, container){
 
