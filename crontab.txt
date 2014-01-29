@@ -23,3 +23,5 @@ DATAZILLA_HOME=/usr/local/datazilla
 
 * * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project webpagetest --loadlimit 25 && $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project webpagetest --loadlimit 25
 
+* * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project b2gtw --loadlimit 25 && $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project b2gtw --loadlimit 25
+
