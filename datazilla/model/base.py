@@ -1397,7 +1397,7 @@ class PerformanceTestModel(DatazillaModelBase):
         ###
         #TODO: This should be moved into a derived class
         ###
-        if self.project == 'b2g':
+        if self.project == 'b2g' or self.project == 'b2gtw':
             ###
             #b2g has two unique test run fields, gecko_revision and
             #build_revision, they need to be loaded here
