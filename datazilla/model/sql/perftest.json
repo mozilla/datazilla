@@ -632,7 +632,8 @@
                       ROUND( AVG(tv.value), 2 ) AS avg,
                       ROUND( MIN(tv.value), 2 ) AS min,
                       ROUND( MAX(tv.value), 2 ) AS max,
-                      ROUND( STDDEV(tv.value), 2 ) AS 'std'
+                      ROUND( STDDEV(tv.value), 2 ) AS 'std',
+                      GROUP_CONCAT(tv.value ORDER BY tv.value ASC SEPARATOR ',') AS 'replicates'
                 FROM test_value AS tv
                 LEFT JOIN pages AS p ON tv.page_id = p.id
                 LEFT JOIN value AS v ON tv.value_id = v.id

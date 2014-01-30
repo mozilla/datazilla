@@ -52,9 +52,9 @@
    </label>
    <div class="ui-widget ui-widget-header ui-corner-all app-control-container">
         <div style="display:inline;">
-            <div style="width:280px;" class="app-control-element su-large-text">Firefox OS Application Performance</div>
-            <div style="margin-right:10px;" class="app-control-element app-control-small-element">Test:<span id="app_test_name" class="app-data"></span></div>
-            <div style="margin-left:10px; margin-right:20px;" class="app-control-element">Time Range:
+            <div class="app-control-element su-large-text">FFOS Apps</div>
+            <div style="margin-right:2px;" class="app-control-element app-control-small-element">Test:<span id="app_test_name" class="app-data"></span></div>
+            <div style="margin-left:2px; margin-right:20px;" class="app-control-element">Time Range:
                 <select id="app_time_range">
                     <option value="7">7 Days</option>
                     <option value="30">30 Days</option>
@@ -62,7 +62,7 @@
                     <option value="90">90 Days</option>
                 </select>
             </div>
-            <div style="margin-left:10px; margin-right:10px;" class="app-control-element">Gaia Branch:
+            <div style="margin-left:2px; margin-right:10px;" class="app-control-element">Gaia Branch:
                 <select id="app_branch">
                 </select>
             </div>
@@ -70,6 +70,15 @@
                 <select id="app_device">
                 </select>
             </div>
+            <label style="margin-left:3px; margin-right:3px;" title="Ploat the average/mean of the replicates" class="app-control-element">
+                <input id="app_plot_avg" type="radio" name="plot-this" value="avg" checked/>Avg
+            </label>
+            <label style="margin-left:3px; margin-right:3px;" title="Plot the median of the replicates" class="app-control-element">
+                <input id="app_plot_median" type="radio" name="plot-this" value="median" />Median
+            </label>
+            <label style="margin-left:3px; margin-right:3px;" title="Show error bars" class="app-control-element">
+                <input id="app_plot_error_bars" type="checkbox" value="median" />Bars
+            </label>
         </div>
     </div>
    <div class="ui-widget ui-widget-header ui-corner-all app-graph-container">
@@ -129,6 +138,7 @@
 <script type="text/javascript" src="/static/js/plugins/jquery.url.js"></script>
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.min.js"></script>
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.selection.min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.errorbars.js"></script>
 
 <!--[if lte IE 8]><script language="javascript" type="text/javascript" src="/static/js/plugins/flot-0.7/excanvas.min.js"></script><![endif]-->
 

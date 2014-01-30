@@ -1313,6 +1313,19 @@ class PerformanceTestModel(DatazillaModelBase):
                 replace=[ r_string ]
                 )
 
+            for index, row in enumerate(data):
+
+                median = self._get_median_from_sorted_list(
+                    # convert string containing comma delimited list of
+                    # values to a list of integers
+                    map( lambda x:int(x), row['replicates'].split(',') )
+                    )
+
+                data[index]['median'] = median
+
+                # remove list of replicates before returning
+                del data[index]['replicates']
+
         return data
 
     def get_test_run_ids_by_revisions(
@@ -1844,6 +1857,13 @@ class PerformanceTestModel(DatazillaModelBase):
                 debug_show=self.DEBUG,
                 placeholders=[ data['test_machine']['type'], machine_id ]
                 )
+
+    def _get_median_from_sorted_list(self, sorted_list):
+
+        length = len(sorted_list)
+        if not length % 2:
+            return (sorted_list[length / 2] + sorted_list[length / 2 - 1]) / 2.0
+        return sorted_list[length / 2]
 
 class TestDataError(ValueError):
     pass
