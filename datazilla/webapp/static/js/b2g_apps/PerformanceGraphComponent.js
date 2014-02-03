@@ -419,7 +419,7 @@ var PerformanceGraphView = new Class({
 
         this.detailIdPrefix = 'app_series_';
         this.idFields = [
-            'revision', 'formatted_date_run', 'avg', 'std', 'min', 'max'
+            'revision', 'formatted_date_run', 'avg', 'median', 'std', 'min', 'max'
             ];
         this.appDetailIdSel = '#' + this.detailIdPrefix + 'application';
 
