@@ -629,10 +629,10 @@
                       m.operating_system_id,
                       m.type,
                       p.url,
-                      ROUND( AVG(tv.value), 2 ) AS avg,
-                      ROUND( MIN(tv.value), 2 ) AS min,
-                      ROUND( MAX(tv.value), 2 ) AS max,
-                      ROUND( STDDEV(tv.value), 2 ) AS 'std',
+                      ROUND( AVG(tv.value), 0 ) AS avg,
+                      ROUND( MIN(tv.value), 0 ) AS min,
+                      ROUND( MAX(tv.value), 0 ) AS max,
+                      ROUND( STDDEV(tv.value), 0 ) AS 'std',
                       GROUP_CONCAT(tv.value ORDER BY tv.value ASC SEPARATOR ',') AS 'replicates'
                 FROM test_value AS tv
                 LEFT JOIN pages AS p ON tv.page_id = p.id

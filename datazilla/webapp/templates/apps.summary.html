@@ -47,7 +47,7 @@
    <label>
         <div class="ui-widget ui-widget-header ui-corner-all app-list-controls">
             <input id="app_select_apps" type="checkbox" style="margin-top:5px; margin-left:5px; margin-right:5px; float:left;" title="Select/Unselect all applications" checked>
-            <div style="padding:5px;" class="su-large-text">Applications</div>
+            <div style="padding:5px;" class="su-large-text">Apps</div>
         </div>
    </label>
    <div class="ui-widget ui-widget-header ui-corner-all app-control-container">
@@ -88,10 +88,11 @@
             <div id="app_perf_no_chartdata" class="app-no-data-message" style="display:none;">No Data Found</div>
             <div id="app_perf_chart" style="width:905px; height:370px; margin-top:5px; margin-left:35px;"></div>
             <div id="app_perf_detail_container" class="ui-widget ui-widget-header ui-corner-all app-detail-graph-container">
-                <div style="width:180px;" class="app-control-element app-control-small-element">Application:<span id="app_series_application" class="app-data"></span></div>
-                <div style="width:185px;" class="app-control-element app-control-small-element">Gaia Revision:&nbsp;<a id="app_series_revision" target="_blank" class="app-data"></a></div>
+                <div style="width:120px;" class="app-control-element app-control-small-element">App:<span id="app_series_application" class="app-data"></span></div>
+                <div style="width:160px;" class="app-control-element app-control-small-element">Gaia Rev:&nbsp;<a id="app_series_revision" target="_blank" class="app-data"></a></div>
                 <div style="width:140px;" class="app-control-element app-control-small-element">Date:<span id="app_series_formatted_date_run" class="app-data"></span></div>
                 <div style="width:85px;" class="app-control-element app-control-small-element">Avg:<span id="app_series_avg" class="app-data"></span></div>
+                <div style="width:85px;" class="app-control-element app-control-small-element">Med:<span id="app_series_median" class="app-data"></span></div>
                 <div style="width:80px;" class="app-control-element app-control-small-element">Min:<span id="app_series_min" class="app-data"></span></div>
                 <div style="width:80px;" class="app-control-element app-control-small-element">Max:<span id="app_series_max" class="app-data"></span></div>
                 <div style="width:80px;" class="app-control-element app-control-small-element">Std:<span id="app_series_std" class="app-data"></span></div>
@@ -103,7 +104,7 @@
    <div class="ui-widget ui-widget-header ui-corner-all app-control-container-two">
         <div style="display:inline;">
             <div style="width:150px;" class="app-control-element su-large-text">Test Replicates</div>
-            <div style="margin-left:10px; margin-right:10px;" class="app-control-element app-control-small-element">Application:<span id="app_replicate_application" class="app-data"></span></div>
+            <div style="margin-left:10px; margin-right:10px;" class="app-control-element app-control-small-element">App:<span id="app_replicate_application" class="app-data"></span></div>
             <div style="margin-left:10px; margin-right:10px;" class="app-control-element app-control-small-element">Test:<span id="app_replicate_test" class="app-data"></span></div>
             <div style="margin-left:10px; margin-right:10px;" class="app-control-element app-control-small-element">Gaia Revision:&nbsp;<a id="app_replicate_revision" target="_blank" class="app-data"></a></div>
             <div style="margin-left:10px; margin-right:10px;" class="app-control-element app-control-small-element">Gecko Revision:&nbsp;<a id="app_replicate_gecko_revision" target="_blank" class="app-data"></a></div>
@@ -117,6 +118,7 @@
             <div id="app_replicate_chart" style="width:605px; height:400px; margin-top:30px; margin-left:35px;"></div>
             <div class="ui-widget ui-widget-header ui-corner-all app-detail-graph-container app-replicate-graph-detail" style="width:300px; top:35px; left:648px;">
                 <div class="app-control-element app-control-small-element">Avg:<span id="app_replicate_avg" class="app-data"></span></div>
+                <div class="app-control-element app-control-small-element">Med:<span id="app_replicate_median" class="app-data"></span></div>
                 <div class="app-control-element app-control-small-element">Min:<span id="app_replicate_min" class="app-data"></span></div>
                 <div class="app-control-element app-control-small-element">Max:<span id="app_replicate_max" class="app-data"></span></div>
                 <div class="app-control-element app-control-small-element">Std:<span id="app_replicate_std" class="app-data"></span></div>

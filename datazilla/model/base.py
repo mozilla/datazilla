@@ -1862,8 +1862,10 @@ class PerformanceTestModel(DatazillaModelBase):
 
         length = len(sorted_list)
         if not length % 2:
-            return (sorted_list[length / 2] + sorted_list[length / 2 - 1]) / 2.0
-        return sorted_list[length / 2]
+            return round(
+            (sorted_list[length / 2] + sorted_list[length / 2 - 1]) / 2.0, 0
+                )
+        return round( sorted_list[length / 2], 0 )
 
 class TestDataError(ValueError):
     pass

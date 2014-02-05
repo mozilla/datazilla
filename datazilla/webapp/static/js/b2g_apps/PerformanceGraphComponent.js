@@ -37,6 +37,14 @@ var PerformanceGraphComponent = new Class({
         this.replicatesInitialized = false;
         this.testToggled = false;
 
+        //Set average/median and error-bar from url params
+        if(APPS_PAGE.defaults['plot'] != undefined) {
+            $(this.view.plotMedianSel).prop('checked', APPS_PAGE.defaults['plot'] == 'median');
+        }
+        if(APPS_PAGE.defaults['err_bars'] != undefined) {
+            $(this.view.plotErrorBarsSel).prop('checked', true);
+        }
+
         this.chartOptions = {
             'grid': {
                 'clickable': true,
@@ -419,7 +427,7 @@ var PerformanceGraphView = new Class({
 
         this.detailIdPrefix = 'app_series_';
         this.idFields = [
-            'revision', 'formatted_date_run', 'avg', 'std', 'min', 'max'
+            'revision', 'formatted_date_run', 'avg', 'median', 'std', 'min', 'max'
             ];
         this.appDetailIdSel = '#' + this.detailIdPrefix + 'application';
 

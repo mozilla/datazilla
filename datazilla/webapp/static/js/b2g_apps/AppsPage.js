@@ -153,6 +153,16 @@ var AppsPage = new Class( {
             lookup['gecko_rev'] = geckoRev;
         }
 
+        var plot = $(view.plotMedianSel).is(':checked') ? 'median' : 'avg';
+        params.push('plot=' + plot);
+        lookup['plot'] = plot
+
+        var plotErrorBars = $(view.plotErrorBarsSel).is(':checked');
+        if(plotErrorBars){
+            params.push('err_bars=1');
+            lookup['err_bars'] = 1;
+        }
+
         return { 'params':params , 'lookup':lookup };
 
     },
@@ -206,7 +216,8 @@ var AppsPage = new Class( {
 
         this.defaults['gaia_rev'] = urlObj.param.query.gaia_rev;
         this.defaults['gecko_rev'] = urlObj.param.query.gecko_rev;
-
+        this.defaults['plot'] = urlObj.param.query.plot;
+        this.defaults['err_bars'] = urlObj.param.query.err_bars;
     },
     getRevisionSlice: function(revision){
         return revision.slice(0, this.revisionLength);
