@@ -37,6 +37,14 @@ var PerformanceGraphComponent = new Class({
         this.replicatesInitialized = false;
         this.testToggled = false;
 
+        //Set average/median and error-bar from url params
+        if(APPS_PAGE.defaults['plot'] != undefined) {
+            $(this.view.plotMedianSel).prop('checked', APPS_PAGE.defaults['plot'] == 'median');
+        }
+        if(APPS_PAGE.defaults['err_bars'] != undefined) {
+            $(this.view.plotErrorBarsSel).prop('checked', true);
+        }
+
         this.chartOptions = {
             'grid': {
                 'clickable': true,
@@ -57,7 +65,14 @@ var PerformanceGraphComponent = new Class({
             'series': {
 
                 'points': {
-                    'radius': 2.5
+                    'radius': 2.5,
+                    'errorbars': 'y',
+                    'yerr': {
+                         'show': true,
+                         'upperCap':'-',
+                         'lowerCap':'-',
+                         'color': '#CCCCCC'
+                        }
                 }
             },
 
@@ -95,6 +110,18 @@ var PerformanceGraphComponent = new Class({
             'change', _.bind(this.changeTimeRange, this)
             );
 
+        $(this.view.plotAvgSel).bind(
+            'change', _.bind(this.refreshPlot, this)
+            );
+
+        $(this.view.plotMedianSel).bind(
+            'change', _.bind(this.refreshPlot, this)
+            );
+
+        $(this.view.plotErrorBarsSel).bind(
+            'change', _.bind(this.refreshPlot, this)
+            );
+
         $(APPS_PAGE.appContainerSel).bind(
             APPS_PAGE.stateChangeEvent,
             _.bind(this.stateChange, this)
@@ -104,8 +131,6 @@ var PerformanceGraphComponent = new Class({
         return this.tickDisplayDates[label] || "";
     },
     changeTimeRange: function(event){
-
-        //var optionVal = $(event.target).find(":selected").val();
         this.testToggle(event, this.testData);
     },
     appToggle: function(event, data){
@@ -120,7 +145,6 @@ var PerformanceGraphComponent = new Class({
 
         }
 
-        //if(!_.isEmpty(this.data) && (this.testToggled === true)){
         if(!_.isEmpty(this.data)){
             this.renderPlot(this.data);
         }
@@ -147,6 +171,9 @@ var PerformanceGraphComponent = new Class({
             branch, device
             );
     },
+    refreshPlot: function(event){
+        this.renderPlot(this.data);
+    },
     renderPlot: function(data){
 
         this.data = data;
@@ -164,6 +191,7 @@ var PerformanceGraphComponent = new Class({
         var dataLength = data.length;
         var appNames = {};
 
+        var controlValues = this.view.getPlotControlVals();
 
         for(i = 0; i<dataLength; i++){
 
@@ -209,9 +237,16 @@ var PerformanceGraphComponent = new Class({
             }
 
             //Data for flot
-            this.chartData[ testId ][ 'data' ].push(
-                [ i, data[i]['avg'] ]
-                );
+            if(controlValues.median === true){
+                this.chartData[ testId ][ 'data' ].push(
+                    [ i, data[i]['median'], data[i]['std'] ]
+                    );
+            }else {
+                this.chartData[ testId ][ 'data' ].push(
+                    [ i, data[i]['avg'], data[i]['std'] ]
+                    );
+
+            }
 
             //Data for presentation
             this.chartData[ testId ][ 'full_data' ].push(
@@ -248,6 +283,12 @@ var PerformanceGraphComponent = new Class({
         APPS_PAGE.graphControlsComponent.displayApps(appNames, this.testToggled);
 
         this.view.showData(_.isEmpty(this.data));
+
+        if(controlValues.error_bars === false){
+            this.chartOptions.series.points.errorbars = 'n';
+        }else{
+            this.chartOptions.series.points.errorbars = 'y';
+        }
 
         this.plot = $.plot(
             $(this.view.chartContainerSel),
@@ -380,10 +421,13 @@ var PerformanceGraphView = new Class({
         this.appSeriesSel = '#app_series';
         this.testSeriesSel = '#test_series';
 
+        this.plotAvgSel = '#app_plot_avg';
+        this.plotMedianSel = '#app_plot_median';
+        this.plotErrorBarsSel = '#app_plot_error_bars';
 
         this.detailIdPrefix = 'app_series_';
         this.idFields = [
-            'revision', 'formatted_date_run', 'avg', 'std', 'min', 'max'
+            'revision', 'formatted_date_run', 'avg', 'median', 'std', 'min', 'max'
             ];
         this.appDetailIdSel = '#' + this.detailIdPrefix + 'application';
 
@@ -480,6 +524,13 @@ var PerformanceGraphView = new Class({
 
         //fire the change event
         $(target).change();
+    },
+    getPlotControlVals: function(){
+        return {
+            'avg': $(this.plotAvgSel).is(':checked'),
+            'median': $(this.plotMedianSel).is(':checked'),
+            'error_bars': $(this.plotErrorBarsSel).is(':checked')
+            }
     }
 });
 var PerformanceGraphModel = new Class({

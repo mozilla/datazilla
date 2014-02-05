@@ -202,7 +202,7 @@ var ReplicateGraphView = new Class({
 
         this.idFields = [
             'application', 'replicate range', 'test', 'revision',
-            'gecko_revision', 'avg', 'min', 'max', 'std'
+            'gecko_revision', 'avg', 'median', 'min', 'max', 'std'
             ];
 
         this.deviceTypeMap = {
