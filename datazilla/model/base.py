@@ -1318,7 +1318,7 @@ class PerformanceTestModel(DatazillaModelBase):
                 median = self._get_median_from_sorted_list(
                     # convert string containing comma delimited list of
                     # values to a list of integers
-                    map( lambda x:int(x or 0), row['replicates'].split(',') )
+                    map( lambda x:float(x or 0), row['replicates'].split(',') )
                     )
 
                 data[index]['median'] = median
