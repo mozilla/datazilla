@@ -25,21 +25,9 @@ class Command(BaseCommand):
             'settings',
             'ingestion_alerts.json',
             )
-        profiles = json.load(open(settings_file))
 
+        profiles = Profiles(settings_file)
         for profile in profiles:
-            # rudimentary sanity check of the json structure
-            self.check_mandatory(profile, 'name')
-            self.check_mandatory(profile, 'machine')
-            self.check_mandatory(profile, 'product')
-            self.check_mandatory(profile['product'], 'product')
-            self.check_mandatory(profile['product'], 'branch')
-            self.check_mandatory(profile['product'], 'version')
-            self.check_mandatory(profile, 'tests')
-            self.check_mandatory(profile, 'pages')
-            self.check_mandatory(profile, 'alert_minutes')
-            self.check_mandatory(profile, 'alert_recipients')
-
             ptm = self.get_ptm(profile['product']['product'])
 
             # verify values against database and canonicalise
@@ -66,7 +54,9 @@ class Command(BaseCommand):
 
             # check if we need to alert
             if last_run_date:
-                age = (datetime.datetime.now() - last_run_date).total_seconds()
+                diff = datetime.datetime.now() - last_run_date
+                age = (diff.microseconds +
+                    (diff.seconds + diff.days * 24 * 3600) * 1e6) / 1e6
                 if age / 60 < profile['alert_minutes']:
                     return
 
@@ -138,3 +128,47 @@ class Command(BaseCommand):
                     attr = attr[:-1]
                 result.append('%d %s' % (value, attr))
         return ', '.join(result)
+
+class ProfileError(ValueError):
+    pass
+
+class Profiles:
+    def __init__(self, filename):
+        try:
+            with open(filename) as f:
+                data = json.load(f)
+        except ValueError as e:
+            raise ProfilesError("Malformed JSON: {0}".format(e))
+
+        self.list = []
+        for item in data:
+            self.list.append(Profile(item, str(len(self.list))))
+
+    def __iter__(self):
+        return iter(self.list)
+
+class Profile(dict):
+    def __init__(self, data, context=None):
+        self.context = context or []
+        super(Profile, self).__init__(data)
+
+    def __getitem__(self, name):
+        full_context = list(self.context) + [name]
+
+        # throw an exception which provides better context
+        try:
+            value = super(Profile, self).__getitem__(name)
+        except KeyError:
+            raise ProfileError("Missing value for: {0}".format(
+                "".join(["['{0}']".format(c) for c in full_context])))
+
+        # recurse into dicts
+        if isinstance(value, dict):
+            value = self.__class__(value, full_context)
+
+        # lists must not be empty
+        if isinstance(value, list) and not len(value):
+            raise ProfileError("Value is an empty list: {0}".format(
+                "".join(["['{0}']".format(c) for c in full_context])))
+
+        return value
