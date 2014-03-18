@@ -1030,6 +1030,36 @@ class PerformanceTestModel(DatazillaModelBase):
 
         return data
 
+    def get_last_test_run_date(self, machine, product, branch, version, tests,
+        pages):
+
+        proc = 'perftest.selects.get_last_test_run_date'
+
+        tests_string = '(' + ','.join('"{0}"'.format(s) for s in tests) + ')'
+        pages_string = '(' + ','.join('"{0}"'.format(s) for s in pages) + ')'
+
+        data = self.sources["perftest"].dhub.execute(
+            proc = proc,
+            debug_show = self.DEBUG,
+            placeholders = [ machine, product, branch, version ],
+            replace = [ tests_string, pages_string ]
+        )
+        date_run = data[0]['date_run']
+
+        return datetime.datetime.fromtimestamp(date_run) if date_run else None
+
+    def get_canonical_value(self, table, column, value):
+
+        proc = "perftest.selects.get_canonical_value"
+
+        data = self.sources["perftest"].dhub.execute(
+            proc = proc,
+            debug_show = self.DEBUG,
+            placeholders = [ value ],
+            replace = [ table, column ]
+        )
+
+        return data[0][column] if data else None
 
     def set_default_product(self, id, value):
 

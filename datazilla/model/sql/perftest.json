@@ -1279,7 +1279,30 @@
                    WHERE tr.id = ? AND tv.page_id = ?",
 
              "host":"read_host"
-      }
-   }
+      },
+      "get_last_test_run_date":{
+            "sql":"SELECT MAX(date_run) as date_run
+                   FROM test_run
+                   INNER JOIN machine ON machine.id = test_run.machine_id
+                   INNER JOIN build ON build.id = test_run.build_id
+                   INNER JOIN product ON product.id = build.product_id
+                   INNER JOIN test ON test.id = test_run.test_id
+                   INNER JOIN pages ON pages.test_id = test.id
+                   WHERE machine.type = ? AND
+                         product.product = ? AND
+                         product.branch = ? AND
+                         product.version = ? AND
+                         test.name IN REP0 AND
+                         pages.url IN REP1",
+             "host":"read_host"
+      },
+        "get_canonical_value":{
+            "sql":"SELECT `REP1`
+                   FROM `REP0`
+                   WHERE UPPER(`REP1`) = UPPER(?)
+                   LIMIT 1",
+            "host":"read_host"
+        }
+    }
 }
 

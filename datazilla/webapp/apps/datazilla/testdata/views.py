@@ -243,16 +243,12 @@ def get_test_value_summary(request, project):
     except ValueError:
         range = 7
 
+    # don't allow ranges > 90
+    if range > 90:
+        range = 90
+
     now = int(time.time())
-
-    begin = now - 604800
-
-    if range == 30:
-        begin = now - 2592000
-    if range == 60:
-        begin = now - 5184000
-    elif range == 90:
-        begin = now - 7776000
+    begin = now - 86400 * range
 
     return HttpResponse(
         json.dumps(testdata.get_test_value_summary(

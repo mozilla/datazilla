@@ -1,0 +1,19 @@
+[
+  {
+    "name": "hamachi cold_load_time",
+    "machine": "hamachi",
+    "product": {
+      "product": "B2G",
+      "branch": "master",
+      "version": "prerelease"
+    },
+    "tests": [
+      "settings"
+    ],
+    "pages": [
+      "cold_load_time"
+    ],
+    "alert_minutes": 720,
+    "alert_recipients": [ "glob@mozilla.com" ]
+  }
+]
