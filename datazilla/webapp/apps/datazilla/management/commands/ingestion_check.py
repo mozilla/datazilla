@@ -102,7 +102,7 @@ class Command(BaseCommand):
                         message = "From: %s\nTo: %s\nSubject: %s\n\n%s" \
                             % (sender, recipient, subject, alert)
                         print message
-
+                        print "SMTP_HOST: {0}".format(settings.SMTP_HOST)
                     else:
 
                         efrom = 'auto-tools@mozilla.com'
@@ -113,7 +113,7 @@ class Command(BaseCommand):
                         msg['To'] = recipient
                         msg.preamble = 'Datazilla ingestion alert'
 
-                        s = smtplib.SMTP('localhost')
+                        s = smtplib.SMTP(settings.SMTP_HOST)
                         s.sendmail(efrom, recipient, msg.as_string())
 
         for key in self.models:

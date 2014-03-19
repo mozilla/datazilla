@@ -28,6 +28,8 @@ ALLOWED_PROJECTS            = os.environ.get("ALLOWED_PROJECTS", "")
 # This should always be False in production
 DEBUG = os.environ.get("DATAZILLA_DEBUG") is not None
 
+SMTP_HOST = os.environ.get("SMTP_HOST", "localhost")
+
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = os.environ.get("DATAZILLA_DJANGO_SECRET_KEY", "")
 
