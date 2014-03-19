@@ -1044,9 +1044,8 @@ class PerformanceTestModel(DatazillaModelBase):
             placeholders = [ machine, product, branch, version ],
             replace = [ tests_string, pages_string ]
         )
-        date_run = data[0]['date_run']
 
-        return datetime.datetime.fromtimestamp(date_run) if date_run else None
+        return data
 
     def get_canonical_value(self, table, column, value):
 

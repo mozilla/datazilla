@@ -1281,7 +1281,9 @@
              "host":"read_host"
       },
       "get_last_test_run_date":{
-            "sql":"SELECT MAX(date_run) as date_run
+            "sql":"SELECT MAX(date_run) as date_run,
+                          test.name AS 'app',
+                          pages.url AS 'test'
                    FROM test_run
                    INNER JOIN machine ON machine.id = test_run.machine_id
                    INNER JOIN build ON build.id = test_run.build_id
@@ -1293,7 +1295,9 @@
                          product.branch = ? AND
                          product.version = ? AND
                          test.name IN REP0 AND
-                         pages.url IN REP1",
+                         pages.url IN REP1
+                   GROUP BY test.name, pages.url
+                   ORDER BY date_run ASC",
              "host":"read_host"
       },
         "get_canonical_value":{

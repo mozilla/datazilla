@@ -1,6 +1,6 @@
 [
   {
-    "name": "hamachi cold_load_time",
+    "name": "hamachi",
     "machine": "hamachi",
     "product": {
       "product": "B2G",
@@ -8,12 +8,92 @@
       "version": "prerelease"
     },
     "tests": [
-      "settings"
+        "phone",
+        "contacts",
+        "messages",
+        "settings",
+        "gallery",
+        "video",
+        "music",
+        "camera",
+        "email",
+        "calendar",
+        "clock",
+        "fm_radio",
+        "usage",
+        "template",
+        "browser",
+        "homescreen",
+        "browser"
+    ],
+    "pages": [
+      "cold_load_time", "fps", "scrolling"
+    ],
+    "alert_minutes": 720,
+    "alert_recipients": [ "jeads@mozilla.com" ]
+  },
+  {
+    "name": "inari",
+    "machine": "inari",
+    "product": {
+      "product": "B2G",
+      "branch": "master",
+      "version": "prerelease"
+    },
+    "tests": [
+        "phone",
+        "contacts",
+        "messages",
+        "settings",
+        "gallery",
+        "video",
+        "music",
+        "camera",
+        "email",
+        "calendar",
+        "clock",
+        "fm_radio",
+        "usage",
+        "template",
+        "browser",
+        "homescreen",
+        "browser"
+    ],
+    "pages": [
+      "cold_load_time", "fps", "scrolling"
+    ],
+    "alert_minutes": 720,
+    "alert_recipients": [ "jeads@mozilla.com" ]
+  },
+  {
+    "name": "tarako",
+    "machine": "tarako",
+    "product": {
+      "product": "B2G",
+      "branch": "v1.3",
+      "version": "prerelease"
+    },
+    "tests": [
+        "phone",
+        "contacts",
+        "messages",
+        "settings",
+        "gallery",
+        "video",
+        "music",
+        "camera",
+        "email",
+        "calendar",
+        "clock",
+        "fm_radio",
+        "usage",
+        "template",
+        "browser"
     ],
     "pages": [
       "cold_load_time"
     ],
     "alert_minutes": 720,
-    "alert_recipients": [ "glob@mozilla.com" ]
+    "alert_recipients": [ "jeads@mozilla.com" ]
   }
 ]

@@ -2,6 +2,9 @@ import os
 import sys
 import json
 import datetime
+import smtplib
+from email.MIMEText import MIMEText
+
 from dateutil.relativedelta import relativedelta
 from optparse import make_option
 from django.core.management.base import BaseCommand
@@ -20,8 +23,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         settings_file = os.path.join(
-            os.path.dirname(sys.argv[0]),
-            'datazilla',
+            os.path.dirname(__file__),
+            '../../../../../',
             'settings',
             'ingestion_alerts.json',
             )
@@ -42,8 +45,9 @@ class Command(BaseCommand):
             self.canonicalise(ptm, profile, 'tests', 'test', 'name')
             self.canonicalise(ptm, profile, 'pages', 'pages', 'url')
 
+            alert_messages = {}
             # get the last test_run date
-            last_run_date = ptm.get_last_test_run_date(
+            test_run_data = ptm.get_last_test_run_date(
                 profile['machine'],
                 profile['product']['product'],
                 profile['product']['branch'],
@@ -52,35 +56,65 @@ class Command(BaseCommand):
                 profile['pages'],
             )
 
-            # check if we need to alert
-            if last_run_date:
-                diff = datetime.datetime.now() - last_run_date
-                age = (diff.microseconds +
-                    (diff.seconds + diff.days * 24 * 3600) * 1e6) / 1e6
-                if age / 60 < profile['alert_minutes']:
-                    return
-
-            sender = 'nobody@mozilla.org'
-            subject = 'Ingestion alert for "%s"' % profile['name']
-            if last_run_date:
-                alert = subject + ":\nNo test data for %s.\n" \
-                    % self.human_duration(age)
-            else:
-                alert = subject + ":\nNo matching test data found.\n"
-
-            for recipient in profile['alert_recipients']:
-                # XXX if recipient is an email address
-                if True:
-                    message = "From: %s\nTo: %s\nSubject: %s\n\n%s" \
-                        % (sender, recipient, subject, alert)
-                    if settings.DEBUG:
-                        print "---\n%s---\n" % message
+            for datum in test_run_data:
+                # check if we need to alert
+                if datum['date_run']:
+                    last_run_date = datetime.datetime.fromtimestamp(datum['date_run']) or None
+                    diff = datetime.datetime.now() - last_run_date
+                    age = (diff.microseconds +
+                        (diff.seconds + diff.days * 24 * 3600) * 1e6) / 1e6
+                    if age / 60 < profile['alert_minutes']:
+                        continue
                     else:
-                        p = os.popen('/usr/lib/sendmail -t -i -f %s' \
-                            % sender, 'w')
-                        p.write(message)
-                        p.close()
-                # XXX else if recipient is sentry
+                        datum['age'] = self.human_duration(age)
+
+                        if datum['test'] not in alert_messages:
+                            alert_messages[datum['test']] = []
+
+                        alert_messages[datum['test']].append(datum)
+
+            if alert_messages:
+
+                border = "------------------------------------------------------------\n"
+                sender = 'auto-tools@mozilla.org'
+                subject = "Ingestion alert for {0} on {1} {2} {3}".format(
+                    profile['machine'], profile['product']['product'],
+                    profile['product']['branch'], profile['product']['version'])
+
+                alert = "Device Type: {0}, Product: {1}, {2}, {3}\n".format(
+                    profile['machine'], profile['product']['product'],
+                    profile['product']['branch'], profile['product']['version'])
+
+                alert += border
+
+                for test in alert_messages:
+                    alert += "Test: {0}\n".format(test)
+                    for m in alert_messages[test]:
+                        alert += "   App: {0}, no data in {1}\n".format(
+                            m['app'], m['age']
+                            )
+                    alert += "\n"
+
+                alert += border
+
+                for recipient in profile['alert_recipients']:
+                    if settings.DEBUG:
+                        message = "From: %s\nTo: %s\nSubject: %s\n\n%s" \
+                            % (sender, recipient, subject, alert)
+                        print message
+
+                    else:
+
+                        efrom = 'auto-tools@mozilla.com'
+
+                        msg = MIMEText(alert)
+                        msg['Subject'] = subject
+                        msg['From'] = efrom
+                        msg['To'] = recipient
+                        msg.preamble = 'Datazilla ingestion alert'
+
+                        s = smtplib.SMTP('localhost')
+                        s.sendmail(efrom, recipient, msg.as_string())
 
         for key in self.models:
             self.models[key].disconnect()
@@ -91,32 +125,32 @@ class Command(BaseCommand):
             self.models[product] = PerformanceTestModel(product)
         return self.models[product]
 
-    def check_mandatory(self, dict, key):
-        if not key in dict:
+    def check_mandatory(self, alerts_dict, key):
+        if not key in alerts_dict:
             print "ingestion_alerts.json is missing '" + key + "'"
-            pprint(dict)
+            pprint(alerts_dict)
             sys.exit(1)
-        if isinstance(dict[key], list) and not len(dict[key]):
+        if isinstance(alerts_dict[key], list) and not len(alerts_dict[key]):
             print "ingestion_alerts.json '" + key + "' is empty"
-            pprint(dict)
+            pprint(alerts_dict)
             sys.exit(1)
 
-    def canonicalise(self, ptm, dict, key, table, column):
-        if isinstance(dict[key], list):
-            for value in dict[key]:
+    def canonicalise(self, ptm, alerts_dict, key, table, column):
+        if isinstance(alerts_dict[key], list):
+            for value in alerts_dict[key]:
                 canon = ptm.get_canonical_value(table, column, value)
                 if not canon:
                     print "ingestion_alerts.json '" + key + "'.'" + value + "' is invalid"
-                    pprint(dict)
+                    pprint(alerts_dict)
                     sys.exit(1)
                 value = canon
         else:
-            canon = ptm.get_canonical_value(table, column, dict[key])
+            canon = ptm.get_canonical_value(table, column, alerts_dict[key])
             if not canon:
-                print "ingestion_alerts.json '" + key + "'.'" + dict[key] + "' is invalid"
-                pprint(dict)
+                print "ingestion_alerts.json '" + key + "'.'" + alerts_dict[key] + "' is invalid"
+                pprint(alerts_dict)
                 sys.exit(1)
-            dict[key] = canon
+            alerts_dict[key] = canon
 
     def human_duration(self, seconds):
         delta = relativedelta(seconds = seconds)
@@ -132,13 +166,13 @@ class Command(BaseCommand):
 class ProfileError(ValueError):
     pass
 
-class Profiles:
+class Profiles(object):
     def __init__(self, filename):
         try:
             with open(filename) as f:
                 data = json.load(f)
         except ValueError as e:
-            raise ProfilesError("Malformed JSON: {0}".format(e))
+            raise ProfileError("Malformed JSON: {0}".format(e))
 
         self.list = []
         for item in data:
