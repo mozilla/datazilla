@@ -27,9 +27,9 @@ Description: The lockfile package exports a LockFile class which provides a simp
         The previous module-level definitions of LinkFileLock, MkdirFileLock and
         SQLiteFileLock will be retained until the 1.0 release.
         
-        Download from:
+        Available on GitHub from:
         
-            http://code.google.com/p/pylockfile/
+            git://github.com/smontanaro/pylockfile.git
         
         To install:
         

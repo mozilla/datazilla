@@ -3,6 +3,11 @@ from __future__ import absolute_import, division
 import time
 import os
 
+try:
+    unicode
+except NameError:
+    unicode = str
+
 from . import LockBase, NotLocked, NotMyLock, LockTimeout, AlreadyLocked
 
 class SQLiteLockFile(LockBase):
@@ -10,12 +15,12 @@ class SQLiteLockFile(LockBase):
 
     testdb = None
 
-    def __init__(self, path, threaded=True):
+    def __init__(self, path, threaded=True, timeout=None):
         """
         >>> lock = SQLiteLockFile('somefile')
         >>> lock = SQLiteLockFile('somefile', threaded=False)
         """
-        LockBase.__init__(self, path, threaded)
+        LockBase.__init__(self, path, threaded, timeout)
         self.lock_file = unicode(self.lock_file)
         self.unique_name = unicode(self.unique_name)
 
@@ -45,6 +50,7 @@ class SQLiteLockFile(LockBase):
             atexit.register(os.unlink, SQLiteLockFile.testdb)
 
     def acquire(self, timeout=None):
+        timeout = timeout or self.timeout
         end_time = time.time()
         if timeout is not None and timeout > 0:
             end_time += timeout
@@ -96,19 +102,22 @@ class SQLiteLockFile(LockBase):
             if timeout is not None and time.time() > end_time:
                 if timeout > 0:
                     # No more waiting.
-                    raise LockTimeout
+                    raise LockTimeout("Timeout waiting to acquire"
+                                      " lock for %s" %
+                                      self.path)
                 else:
                     # Someone else has the lock and we are impatient..
-                    raise AlreadyLocked
+                    raise AlreadyLocked("%s is already locked" % self.path)
 
             # Well, okay.  We'll give it a bit longer.
             time.sleep(wait)
 
     def release(self):
         if not self.is_locked():
-            raise NotLocked
+            raise NotLocked("%s is not locked" % self.path)
         if not self.i_am_locking():
-            raise NotMyLock((self._who_is_locking(), self.unique_name))
+            raise NotMyLock("%s is locked, but not by me (by %s)" %
+                            (self.unique_name, self._who_is_locking()))
         cursor = self.connection.cursor()
         cursor.execute("delete from locks"
                        "  where unique_name = ?",

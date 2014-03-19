@@ -1,11 +1,13 @@
 ../lockfile/mkdirlockfile.py
 ../lockfile/pidlockfile.py
 ../lockfile/__init__.py
+../lockfile/symlinklockfile.py
 ../lockfile/sqlitelockfile.py
 ../lockfile/linklockfile.py
 ../lockfile/mkdirlockfile.pyc
 ../lockfile/pidlockfile.pyc
 ../lockfile/__init__.pyc
+../lockfile/symlinklockfile.pyc
 ../lockfile/sqlitelockfile.pyc
 ../lockfile/linklockfile.pyc
 ./
