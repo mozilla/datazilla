@@ -30,7 +30,7 @@
       "cold_load_time", "fps"
     ],
     "alert_minutes": 720,
-    "alert_recipients": [ "jeads@mozilla.com" ]
+    "alert_recipients": [ "jeads@mozilla.com", "jmaher@mozilla.com", "bkelly@mozilla.com", "dhunt@mozilla.com" ]
   },
   {
     "name": "inari",
@@ -63,7 +63,7 @@
       "cold_load_time", "fps"
     ],
     "alert_minutes": 720,
-    "alert_recipients": [ "jeads@mozilla.com" ]
+    "alert_recipients": [ "jeads@mozilla.com", "jmaher@mozilla.com", "bkelly@mozilla.com", "dhunt@mozilla.com" ]
   },
   {
     "name": "tarako",
@@ -94,6 +94,6 @@
       "cold_load_time"
     ],
     "alert_minutes": 720,
-    "alert_recipients": [ "jeads@mozilla.com" ]
+    "alert_recipients": [ "jeads@mozilla.com", "jmaher@mozilla.com", "bkelly@mozilla.com", "dhunt@mozilla.com" ]
   }
 ]
