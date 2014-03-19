@@ -27,7 +27,7 @@
         "browser"
     ],
     "pages": [
-      "cold_load_time", "fps", "scrolling"
+      "cold_load_time", "fps"
     ],
     "alert_minutes": 720,
     "alert_recipients": [ "jeads@mozilla.com" ]
@@ -60,7 +60,7 @@
         "browser"
     ],
     "pages": [
-      "cold_load_time", "fps", "scrolling"
+      "cold_load_time", "fps"
     ],
     "alert_minutes": 720,
     "alert_recipients": [ "jeads@mozilla.com" ]
