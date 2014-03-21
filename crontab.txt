@@ -5,7 +5,7 @@ DATAZILLA_HOME=/usr/local/datazilla
 */5 * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py update_pushlog --repo_host=hg.mozilla.org --hours=24 > /dev/null 2>&1
 
 # check ingestion rates every 3 hours
-0 */3 * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py ingestion_check > /dev/null 2>&1
+0 0 * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py ingestion_check > /dev/null 2>&1
 
 # run twice every minute
 * * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project b2g --loadlimit 25 && $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project b2g --loadlimit 25 > /dev/null 2>&1

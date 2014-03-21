@@ -75,8 +75,9 @@ class Command(BaseCommand):
 
             if alert_messages:
 
+                efrom = 'datazilla-alerts@mozilla.com'
+
                 border = "------------------------------------------------------------\n"
-                sender = 'auto-tools@mozilla.org'
                 subject = "Ingestion alert for {0} on {1} {2} {3}".format(
                     profile['machine'], profile['product']['product'],
                     profile['product']['branch'], profile['product']['version'])
@@ -100,12 +101,11 @@ class Command(BaseCommand):
                 for recipient in profile['alert_recipients']:
                     if settings.DEBUG:
                         message = "From: %s\nTo: %s\nSubject: %s\n\n%s" \
-                            % (sender, recipient, subject, alert)
+                            % (efrom, recipient, subject, alert)
                         print message
                         print "SMTP_HOST: {0}".format(settings.SMTP_HOST)
                     else:
 
-                        efrom = 'auto-tools@mozilla.com'
 
                         msg = MIMEText(alert)
                         msg['Subject'] = subject
