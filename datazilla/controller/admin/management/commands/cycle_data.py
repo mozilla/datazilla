@@ -9,7 +9,7 @@ class Command(ProjectBatchCommand):
     LOCK_FILE = "cycle_data"
 
     help = (
-            "Delete data older than 6 months in all perftest schemas."
+            "Delete data older than 6 months in appropriate objectstore and perftest schemas."
             )
 
     option_list = ProjectBatchCommand.option_list + (
@@ -21,15 +21,21 @@ class Command(ProjectBatchCommand):
             default=None,
             help='Write json-encapsulated SQL query out for debugging'),
 
+        make_option(
+            '--iterations',
+            action='store',
+            dest='iterations',
+            default=50,
+            help='Number of delete iterations to do in one run '),
         )
 
     def handle_project(self, project, **options):
 
         debug = options.get("debug", None)
+        max_iterations = int(options.get("iterations", 50))
 
         ptm = PerformanceTestModel(project)
 
-        max_iterations = 50
 
         sql_targets = {}
 
