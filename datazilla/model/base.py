@@ -1382,26 +1382,70 @@ class PerformanceTestModel(DatazillaModelBase):
 
         return test_run_ids
 
-    def cycle_data(self):
+    def cycle_data(self, sql_targets={}):
 
-        sql_to_execute = [
-            'perftest.deletes.cycle_test_value',
+        objectstore_sql_to_execute = [
+            'objectstore.deletes.cycle_objectstore'
+            ]
+
+        perftest_sql_to_execute = [
             'perftest.deletes.cycle_test_aux_data',
             'perftest.deletes.cycle_test_option_values',
+            'perftest.deletes.cycle_test_value',
             'perftest.deletes.cycle_test_data_all_dimentions',
             'perftest.deletes.cycle_test_run'
             ]
 
-        # Determine 6 month old timestamp
+        # Compute 6 month old timestamp
         min_date = int(time.time() - 15552000)
+
+        # remove data from specified objectstore and perftest tables that is
+        # older than 6 months
+        self._execute_table_deletes(
+            min_date, 'objectstore', objectstore_sql_to_execute, sql_targets
+            )
+
+        self._execute_table_deletes(
+            min_date, 'perftest', perftest_sql_to_execute, sql_targets
+            )
+
+        return sql_targets
+
+    def _execute_table_deletes(self, min_date, source, sql_to_execute, sql_targets):
 
         for sql in sql_to_execute:
 
-            self.sources["perftest"].dhub.execute(
-                proc=sql,
-                placeholders=[min_date],
-                debug_show=self.DEBUG,
-                )
+            if sql not in sql_targets:
+                sql_targets[sql] = None
+
+            if (sql_targets[sql] == None) or (sql_targets[sql] > 0):
+
+                # Disable foreign key checks to improve performance
+                self.sources[source].dhub.execute(
+                    proc='generic.db_control.disable_foreign_key_checks',
+                    debug_show=self.DEBUG
+                    )
+
+                self.sources[source].dhub.execute(
+                    proc=sql,
+                    placeholders=[min_date],
+                    debug_show=self.DEBUG,
+                    )
+
+                row_count = self.sources[source].dhub.connection['master_host']['cursor'].rowcount
+
+                self.sources[source].dhub.commit('master_host')
+
+                # Re-enable foreign key checks to improve performance
+                self.sources[source].dhub.execute(
+                    proc='generic.db_control.enable_foreign_key_checks',
+                    debug_show=self.DEBUG
+                    )
+
+                sql_targets[sql] = row_count
+
+                # Allow some time for other queries to get through
+                time.sleep(5)
 
     def _adapt_production_data(self, data):
 

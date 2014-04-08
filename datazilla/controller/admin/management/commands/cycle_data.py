@@ -23,12 +23,30 @@ class Command(ProjectBatchCommand):
 
         )
 
-
     def handle_project(self, project, **options):
 
         debug = options.get("debug", None)
 
         ptm = PerformanceTestModel(project)
-        ptm.cycle_data()
+
+        max_iterations = 50
+
+        sql_targets = {}
+
+        while max_iterations > 0:
+
+            sql_targets = ptm.cycle_data(sql_targets)
+
+            # No more items to delete
+            if not sql_targets:
+                break
+
+            max_iterations -= 1
+
+            if debug:
+                print "Iterations: {0}".format(str(max_iterations))
+                print "sql_targets"
+                print sql_targets
+
         ptm.disconnect()
 
