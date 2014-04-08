@@ -64,36 +64,5 @@
     ],
     "alert_minutes": 720,
     "alert_recipients": [ "jeads@mozilla.com", "jmaher@mozilla.com", "bkelly@mozilla.com", "dhunt@mozilla.com", "rwood@mozilla.com" ]
-  },
-  {
-    "name": "tarako",
-    "machine": "tarako",
-    "product": {
-      "product": "B2G",
-      "branch": "v1.3",
-      "version": "prerelease"
-    },
-    "tests": [
-        "phone",
-        "contacts",
-        "messages",
-        "settings",
-        "gallery",
-        "video",
-        "music",
-        "camera",
-        "email",
-        "calendar",
-        "clock",
-        "fm_radio",
-        "usage",
-        "template",
-        "browser"
-    ],
-    "pages": [
-      "cold_load_time"
-    ],
-    "alert_minutes": 720,
-    "alert_recipients": [ "jeads@mozilla.com", "jmaher@mozilla.com", "bkelly@mozilla.com", "dhunt@mozilla.com", "rwood@mozilla.com" ]
   }
 ]

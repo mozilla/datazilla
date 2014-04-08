@@ -140,6 +140,14 @@
             "host":"master_host"
 
         }
+    },
+    "deletes":{
+
+        "cycle_objectstore":{
+
+            "sql":"DELETE FROM objectstore WHERE date_loaded < ? LIMIT 10000",
+            "host":"master_host"
+        }
     }
 }
 

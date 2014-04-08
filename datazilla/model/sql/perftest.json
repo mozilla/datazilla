@@ -2,40 +2,47 @@
  "deletes":{
     "cycle_test_value":{
 
-        "sql":"DELETE test_value FROM test_value
-               INNER JOIN test_run ON test_run.id = test_value.test_run_id
-               WHERE test_run.date_run < ?",
+        "sql":"DELETE FROM test_value
+               WHERE test_run_id IN (
+                    SELECT id FROM test_run
+                    WHERE test_run.date_run < ?
+                ) LIMIT 10000",
 
         "host":"master_host"
         },
     "cycle_test_aux_data":{
 
-        "sql":"DELETE test_aux_data FROM test_aux_data
-               INNER JOIN test_run ON test_run.id = test_aux_data.test_run_id
-               WHERE test_run.date_run < ?",
+        "sql":"DELETE FROM test_aux_data
+               WHERE test_run_id IN (
+                    SELECT id FROM test_run
+                    WHERE test_run.date_run < ?
+                ) LIMIT 10000",
 
         "host":"master_host"
         },
     "cycle_test_option_values":{
 
-        "sql":"DELETE test_option_values FROM test_option_values
-               INNER JOIN test_run ON test_run.id = test_option_values.test_run_id
-               WHERE test_run.date_run < ?",
+        "sql":"DELETE FROM test_option_values
+               WHERE test_run_id IN (
+                    SELECT id FROM test_run
+                    WHERE test_run.date_run < ?
+                ) LIMIT 10000",
 
         "host":"master_host"
         },
     "cycle_test_data_all_dimentions":{
 
-        "sql":"DELETE test_data_all_dimensions FROM test_data_all_dimensions
-               INNER JOIN test_run ON test_run.id = test_data_all_dimensions.test_run_id
-               WHERE test_run.date_run < ?",
+        "sql":"DELETE FROM test_data_all_dimensions
+               WHERE test_run_id IN (
+                    SELECT id FROM test_run
+                    WHERE test_run.date_run < ?
+                ) LIMIT 10000",
 
         "host":"master_host"
         },
     "cycle_test_run":{
 
-        "sql":"DELETE FROM test_run
-               WHERE test_run.date_run < ?",
+        "sql":"DELETE FROM test_run WHERE date_run < ? LIMIT 10000",
 
         "host":"master_host"
         }
