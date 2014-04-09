@@ -4,9 +4,12 @@
 
         "sql":"DELETE FROM test_value
                WHERE test_run_id IN (
-                    SELECT id FROM test_run
-                    WHERE test_run.date_run < ?
-                ) LIMIT 10000",
+                    SELECT * FROM (
+                        SELECT id FROM test_run
+                        WHERE test_run.date_run < ?
+                        LIMIT 10000
+                    ) AS tr
+                )",
 
         "host":"master_host"
         },
@@ -14,9 +17,12 @@
 
         "sql":"DELETE FROM test_aux_data
                WHERE test_run_id IN (
-                    SELECT id FROM test_run
-                    WHERE test_run.date_run < ?
-                ) LIMIT 10000",
+                    SELECT * FROM (
+                        SELECT id FROM test_run
+                        WHERE test_run.date_run < ?
+                        LIMIT 10000
+                    ) AS tr
+                )",
 
         "host":"master_host"
         },
@@ -24,9 +30,12 @@
 
         "sql":"DELETE FROM test_option_values
                WHERE test_run_id IN (
-                    SELECT id FROM test_run
-                    WHERE test_run.date_run < ?
-                ) LIMIT 10000",
+                    SELECT * FROM (
+                        SELECT id FROM test_run
+                        WHERE test_run.date_run < ?
+                        LIMIT 10000
+                    ) AS tr
+                )",
 
         "host":"master_host"
         },
@@ -34,9 +43,12 @@
 
         "sql":"DELETE FROM test_data_all_dimensions
                WHERE test_run_id IN (
-                    SELECT id FROM test_run
-                    WHERE test_run.date_run < ?
-                ) LIMIT 10000",
+                    SELECT * FROM (
+                        SELECT id FROM test_run
+                        WHERE test_run.date_run < ?
+                        LIMIT 10000
+                    ) AS tr
+                )",
 
         "host":"master_host"
         },
