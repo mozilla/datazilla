@@ -1385,7 +1385,9 @@ class PerformanceTestModel(DatazillaModelBase):
     def cycle_data(self, sql_targets={}):
 
         objectstore_sql_to_execute = [
-            'objectstore.deletes.cycle_objectstore'
+            # This should be switched by to cycle_objectstore
+            # once an index is added to objectstore.date_loaded
+            'objectstore.deletes.cycle_objectstore_by_id'
             ]
 
         perftest_sql_to_execute = [
@@ -1396,8 +1398,14 @@ class PerformanceTestModel(DatazillaModelBase):
             'perftest.deletes.cycle_test_run'
             ]
 
+        sql_targets['total_count'] = 0
+
         # Compute 6 month old timestamp
         min_date = int(time.time() - 15552000)
+
+        # TODO: Remove this switch once we add an index to
+        #   objectstore.date_loaded. Until then hard code the
+        #   id that corresponds to the target delete range.
 
         # remove data from specified objectstore and perftest tables that is
         # older than 6 months
@@ -1426,11 +1434,17 @@ class PerformanceTestModel(DatazillaModelBase):
                     debug_show=self.DEBUG
                     )
 
-                self.sources[source].dhub.execute(
-                    proc=sql,
-                    placeholders=[min_date],
-                    debug_show=self.DEBUG,
-                    )
+                if sql == 'objectstore.deletes.cycle_objectstore_by_id':
+                    self.sources[source].dhub.execute(
+                        proc=sql,
+                        debug_show=self.DEBUG,
+                        )
+                else:
+                    self.sources[source].dhub.execute(
+                        proc=sql,
+                        placeholders=[min_date],
+                        debug_show=self.DEBUG,
+                        )
 
                 row_count = self.sources[source].dhub.connection['master_host']['cursor'].rowcount
 
@@ -1443,6 +1457,7 @@ class PerformanceTestModel(DatazillaModelBase):
                     )
 
                 sql_targets[sql] = row_count
+                sql_targets['total_count'] += row_count
 
                 # Allow some time for other queries to get through
                 time.sleep(5)

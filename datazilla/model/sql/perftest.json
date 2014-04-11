@@ -7,6 +7,7 @@
                     SELECT * FROM (
                         SELECT id FROM test_run
                         WHERE test_run.date_run < ?
+                        ORDER BY id ASC
                         LIMIT 10000
                     ) AS tr
                 )",
@@ -20,6 +21,7 @@
                     SELECT * FROM (
                         SELECT id FROM test_run
                         WHERE test_run.date_run < ?
+                        ORDER BY id ASC
                         LIMIT 10000
                     ) AS tr
                 )",
@@ -33,6 +35,7 @@
                     SELECT * FROM (
                         SELECT id FROM test_run
                         WHERE test_run.date_run < ?
+                        ORDER BY id ASC
                         LIMIT 10000
                     ) AS tr
                 )",
@@ -46,6 +49,7 @@
                     SELECT * FROM (
                         SELECT id FROM test_run
                         WHERE test_run.date_run < ?
+                        ORDER BY id ASC
                         LIMIT 10000
                     ) AS tr
                 )",
@@ -54,7 +58,7 @@
         },
     "cycle_test_run":{
 
-        "sql":"DELETE FROM test_run WHERE date_run < ? LIMIT 10000",
+        "sql":"DELETE FROM test_run WHERE date_run < ? ORDER BY id ASC LIMIT 10000",
 
         "host":"master_host"
         }

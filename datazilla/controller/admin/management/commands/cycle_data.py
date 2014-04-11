@@ -36,23 +36,23 @@ class Command(ProjectBatchCommand):
 
         ptm = PerformanceTestModel(project)
 
-
         sql_targets = {}
 
-        while max_iterations > 0:
+        cycle_iterations = max_iterations
+
+        while cycle_iterations > 0:
 
             sql_targets = ptm.cycle_data(sql_targets)
 
-            # No more items to delete
-            if not sql_targets:
-                break
-
-            max_iterations -= 1
-
             if debug:
-                print "Iterations: {0}".format(str(max_iterations))
+                print "Iterations: {0}".format(str(cycle_iterations))
                 print "sql_targets"
                 print sql_targets
+
+            cycle_iterations -= 1
+
+            if sql_targets['total_count'] == 0:
+                cycle_iterations = 0
 
         ptm.disconnect()
 
