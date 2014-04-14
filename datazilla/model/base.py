@@ -1392,10 +1392,10 @@ class PerformanceTestModel(DatazillaModelBase):
 
         perftest_sql_to_execute = [
             'perftest.deletes.cycle_test_aux_data',
-            'perftest.deletes.cycle_test_option_values',
-            'perftest.deletes.cycle_test_value',
-            'perftest.deletes.cycle_test_data_all_dimentions',
-            'perftest.deletes.cycle_test_run'
+            #'perftest.deletes.cycle_test_option_values',
+            #'perftest.deletes.cycle_test_value',
+            #'perftest.deletes.cycle_test_data_all_dimentions',
+            #'perftest.deletes.cycle_test_run'
             ]
 
         sql_targets['total_count'] = 0
