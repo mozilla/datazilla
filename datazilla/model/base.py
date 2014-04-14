@@ -1413,9 +1413,9 @@ class PerformanceTestModel(DatazillaModelBase):
             min_date, 'objectstore', objectstore_sql_to_execute, sql_targets
             )
 
-        #self._execute_table_deletes(
-        #    min_date, 'perftest', perftest_sql_to_execute, sql_targets
-        #    )
+        self._execute_table_deletes(
+            min_date, 'perftest', perftest_sql_to_execute, sql_targets
+            )
 
         return sql_targets
 
@@ -1427,6 +1427,11 @@ class PerformanceTestModel(DatazillaModelBase):
                 sql_targets[sql] = None
 
             if (sql_targets[sql] == None) or (sql_targets[sql] > 0):
+
+                # NOTE: Disabling warnings here.  A warning is generated in the
+                # production environment that is specific to the master/slave
+                # configuration.
+                filterwarnings('ignore', category=MySQLdb.Warning)
 
                 # Disable foreign key checks to improve performance
                 #self.sources[source].dhub.execute(
@@ -1445,6 +1450,8 @@ class PerformanceTestModel(DatazillaModelBase):
                         placeholders=[min_date],
                         debug_show=self.DEBUG,
                         )
+
+                resetwarnings()
 
                 row_count = self.sources[source].dhub.connection['master_host']['cursor'].rowcount
 
