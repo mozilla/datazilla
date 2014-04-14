@@ -1413,9 +1413,9 @@ class PerformanceTestModel(DatazillaModelBase):
             min_date, 'objectstore', objectstore_sql_to_execute, sql_targets
             )
 
-        self._execute_table_deletes(
-            min_date, 'perftest', perftest_sql_to_execute, sql_targets
-            )
+        #self._execute_table_deletes(
+        #    min_date, 'perftest', perftest_sql_to_execute, sql_targets
+        #    )
 
         return sql_targets
 
@@ -1429,10 +1429,10 @@ class PerformanceTestModel(DatazillaModelBase):
             if (sql_targets[sql] == None) or (sql_targets[sql] > 0):
 
                 # Disable foreign key checks to improve performance
-                self.sources[source].dhub.execute(
-                    proc='generic.db_control.disable_foreign_key_checks',
-                    debug_show=self.DEBUG
-                    )
+                #self.sources[source].dhub.execute(
+                #    proc='generic.db_control.disable_foreign_key_checks',
+                #    debug_show=self.DEBUG
+                #    )
 
                 if sql == 'objectstore.deletes.cycle_objectstore_by_id':
                     self.sources[source].dhub.execute(
@@ -1451,10 +1451,10 @@ class PerformanceTestModel(DatazillaModelBase):
                 self.sources[source].dhub.commit('master_host')
 
                 # Re-enable foreign key checks to improve performance
-                self.sources[source].dhub.execute(
-                    proc='generic.db_control.enable_foreign_key_checks',
-                    debug_show=self.DEBUG
-                    )
+                #self.sources[source].dhub.execute(
+                #    proc='generic.db_control.enable_foreign_key_checks',
+                #    debug_show=self.DEBUG
+                #    )
 
                 sql_targets[sql] = row_count
                 sql_targets['total_count'] += row_count
