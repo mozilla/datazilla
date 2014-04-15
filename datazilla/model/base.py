@@ -1384,28 +1384,52 @@ class PerformanceTestModel(DatazillaModelBase):
 
     def cycle_data(self, sql_targets={}):
 
-        objectstore_sql_to_execute = [
-            # This should be switched by to cycle_objectstore
-            # once an index is added to objectstore.date_loaded
-            'objectstore.deletes.cycle_objectstore_by_id'
-            ]
-
-        perftest_sql_to_execute = [
-            'perftest.deletes.cycle_test_aux_data',
-            #'perftest.deletes.cycle_test_option_values',
-            #'perftest.deletes.cycle_test_value',
-            #'perftest.deletes.cycle_test_data_all_dimentions',
-            #'perftest.deletes.cycle_test_run'
-            ]
-
-        sql_targets['total_count'] = 0
-
         # Compute 6 month old timestamp
         min_date = int(time.time() - 15552000)
 
-        # TODO: Remove this switch once we add an index to
-        #   objectstore.date_loaded. Until then hard code the
-        #   id that corresponds to the target delete range.
+        data = self.sources['perftest'].dhub.execute(
+            proc='perftest.selects.get_test_run_rows_to_cycle',
+            placeholders=[min_date],
+            debug_show=self.DEBUG
+            )
+
+        test_run_ids = map(lambda x:x['id'], data)
+
+        where_in_clause = [ ','.join( map( lambda v:'%s', test_run_ids ) ) ]
+
+        if len(test_run_ids) == 0:
+            sql_targets['total_count'] = 0
+            return sql_targets
+
+        objectstore_sql_to_execute = [
+            { 'sql':'objectstore.deletes.cycle_objectstore_by_test_run_ids',
+              'placeholders':test_run_ids,
+              'replace':where_in_clause }
+            ]
+
+        perftest_sql_to_execute = [
+            { 'sql':'perftest.deletes.cycle_test_aux_data',
+              'placeholders':test_run_ids,
+              'replace':where_in_clause },
+
+            { 'sql':'perftest.deletes.cycle_test_option_values',
+              'placeholders':test_run_ids,
+              'replace':where_in_clause },
+
+            { 'sql':'perftest.deletes.cycle_test_value',
+              'placeholders':test_run_ids,
+              'replace':where_in_clause },
+
+            { 'sql':'perftest.deletes.cycle_test_data_all_dimensions',
+              'placeholders':test_run_ids,
+              'replace':where_in_clause },
+
+            { 'sql':'perftest.deletes.cycle_test_run',
+              'placeholders':test_run_ids,
+              'replace':where_in_clause }
+            ]
+
+        sql_targets['total_count'] = 0
 
         # remove data from specified objectstore and perftest tables that is
         # older than 6 months
@@ -1421,47 +1445,27 @@ class PerformanceTestModel(DatazillaModelBase):
 
     def _execute_table_deletes(self, min_date, source, sql_to_execute, sql_targets):
 
-        for sql in sql_to_execute:
+        for sql_obj in sql_to_execute:
+
+            sql = sql_obj['sql']
+            placeholders = sql_obj['placeholders']
+            replace = sql_obj['replace']
 
             if sql not in sql_targets:
                 sql_targets[sql] = None
 
             if (sql_targets[sql] == None) or (sql_targets[sql] > 0):
 
-                # NOTE: Disabling warnings here.  A warning is generated in the
-                # production environment that is specific to the master/slave
-                # configuration.
-                filterwarnings('ignore', category=MySQLdb.Warning)
-
-                # Disable foreign key checks to improve performance
-                #self.sources[source].dhub.execute(
-                #    proc='generic.db_control.disable_foreign_key_checks',
-                #    debug_show=self.DEBUG
-                #    )
-
-                if sql == 'objectstore.deletes.cycle_objectstore_by_id':
-                    self.sources[source].dhub.execute(
-                        proc=sql,
-                        debug_show=self.DEBUG,
-                        )
-                else:
-                    self.sources[source].dhub.execute(
-                        proc=sql,
-                        placeholders=[min_date],
-                        debug_show=self.DEBUG,
-                        )
-
-                resetwarnings()
+                self.sources[source].dhub.execute(
+                    proc=sql,
+                    placeholders=placeholders,
+                    replace=replace,
+                    debug_show=self.DEBUG
+                    )
 
                 row_count = self.sources[source].dhub.connection['master_host']['cursor'].rowcount
 
                 self.sources[source].dhub.commit('master_host')
-
-                # Re-enable foreign key checks to improve performance
-                #self.sources[source].dhub.execute(
-                #    proc='generic.db_control.enable_foreign_key_checks',
-                #    debug_show=self.DEBUG
-                #    )
 
                 sql_targets[sql] = row_count
                 sql_targets['total_count'] += row_count

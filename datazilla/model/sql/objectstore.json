@@ -149,6 +149,12 @@
             "host":"master_host"
         },
 
+        "cycle_objectstore_by_test_run_ids":{
+
+            "sql":"DELETE FROM objectstore WHERE test_run_id IN (REP0)",
+            "host":"master_host"
+        },
+
         "cycle_objectstore_by_id":{
 
             "sql":"DELETE FROM objectstore WHERE id < 3000000 ORDER BY id ASC LIMIT 10000",
