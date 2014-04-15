@@ -45,7 +45,6 @@ var AppsPage = new Class( {
 
         this.excludeList = {
             'ftu':true,
-            'marketplace':true,
             'b2g_gaia_launch_perf': true,
             'gallery_load_end': true,
             'camera_load_end': true,
