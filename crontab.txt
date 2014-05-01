@@ -8,7 +8,7 @@ DATAZILLA_HOME=/usr/local/datazilla
 0 0 * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py ingestion_check > /dev/null 2>&1
 
 # cycle data
-0 0 * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py cycle_data --project talos --iterations 50 > /dev/null 2>&1
+0 0 * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py cycle_data --project talos --iterations 100 > /dev/null 2>&1
 
 # run twice every minute
 * * * * * $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project b2g --loadlimit 25 && $PYTHON_ROOT/python $DATAZILLA_HOME/manage.py process_objects --project b2g --loadlimit 25 > /dev/null 2>&1
