@@ -341,7 +341,7 @@
 
       "get_test_run_rows_to_cycle":{
 
-            "sql":"SELECT id FROM test_run WHERE date_run < ? ORDER BY id ASC LIMIT 250",
+            "sql":"SELECT id FROM test_run WHERE date_run < ? ORDER BY id ASC LIMIT 500",
 
             "host":"master_host"
       },
