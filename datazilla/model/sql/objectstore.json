@@ -157,7 +157,7 @@
 
         "cycle_objectstore_by_id":{
 
-            "sql":"DELETE FROM objectstore WHERE id < 3000000 ORDER BY id ASC LIMIT 10000",
+            "sql":"DELETE FROM objectstore WHERE id < 3000000 ORDER BY id ASC LIMIT 500",
             "host":"master_host"
         }
     }
