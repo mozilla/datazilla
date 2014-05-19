@@ -30,7 +30,7 @@
       "cold_load_time", "fps"
     ],
     "alert_minutes": 720,
-    "alert_recipients": [ "fxos-perf-alerts@mozilla.com" ]
+    "alert_recipients": [ "fxos-perf-alerts@mozilla.org" ]
   },
   {
     "name": "tarako",
