@@ -1,6 +1,6 @@
 from optparse import make_option
 from abc import abstractmethod
-from lockfile import FileLock, AlreadyLocked
+from lockfile import FileLock, AlreadyLocked, LockTimeout
 
 from django.core.management.base import NoArgsCommand, CommandError
 
@@ -127,8 +127,10 @@ class ProjectBatchCommand(ProjectCommand):
             projects = [project]
 
         lock = FileLock(self.LOCK_FILE + '_' + str(project))
+
+        timeout_sec = 10
         try:
-            lock.acquire(timeout=0)
+            lock.acquire(timeout=timeout_sec)
             try:
                 self.stdout.write(
                     "Starting for projects: {0}\n".format(", ".join(projects)))
@@ -144,6 +146,10 @@ class ProjectBatchCommand(ProjectCommand):
         except AlreadyLocked:
             self.stdout.write("This command is already being run elsewhere.  "
             "Please try again later.\n")
+
+        except LockTimeout:
+            self.stdout.write("Lock timeout of {0} seconds exceeded. "
+                "Please try again later.\n".format(str(timeout_sec)) )
 
 
     @abstractmethod
