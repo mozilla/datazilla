@@ -33,39 +33,6 @@
     "alert_recipients": [ "fxos-perf-alerts@mozilla.org" ]
   },
   {
-    "name": "inari",
-    "machine": "inari",
-    "product": {
-      "product": "B2G",
-      "branch": "master",
-      "version": "prerelease"
-    },
-    "tests": [
-        "phone",
-        "contacts",
-        "messages",
-        "settings",
-        "gallery",
-        "video",
-        "music",
-        "camera",
-        "email",
-        "calendar",
-        "clock",
-        "fm_radio",
-        "usage",
-        "template",
-        "browser",
-        "homescreen",
-        "browser"
-    ],
-    "pages": [
-      "cold_load_time", "fps"
-    ],
-    "alert_minutes": 720,
-    "alert_recipients": [ "fxos-perf-alerts@mozilla.org" ]
-  },
-  {
     "name": "tarako",
     "machine": "tarako",
     "product": {
