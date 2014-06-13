@@ -126,6 +126,38 @@
     "alert_minutes": 720,
     "alert_recipients": [ "fxos-perf-alerts@mozilla.org" ]
   }, {
+    "name": "hamachi",
+    "machine": "hamachi",
+    "product": {
+      "product": "B2G",
+      "branch": "v1.4",
+      "version": "prerelease"
+    },
+    "tests": [
+        "phone",
+        "contacts",
+        "messages",
+        "settings",
+        "gallery",
+        "video",
+        "music",
+        "camera",
+        "email",
+        "calendar",
+        "clock",
+        "fm_radio",
+        "usage",
+        "template",
+        "browser",
+        "homescreen",
+        "browser"
+    ],
+    "pages": [
+      "cold_load_time"
+    ],
+    "alert_minutes": 720,
+    "alert_recipients": [ "fxos-perf-alerts@mozilla.org" ]
+  }, {
     "name": "tarako",
     "machine": "tarako",
     "product": {
