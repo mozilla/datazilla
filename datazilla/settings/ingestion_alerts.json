@@ -121,7 +121,7 @@
         "browser"
     ],
     "pages": [
-      "cold_load_time", "fps"
+      "cold_load_time"
     ],
     "alert_minutes": 720,
     "alert_recipients": [ "fxos-perf-alerts@mozilla.org" ]
@@ -185,7 +185,7 @@
         "browser"
     ],
     "pages": [
-        "cold_load_time", "fps"
+        "cold_load_time"
     ],
     "alert_minutes": 720,
     "alert_recipients": [ "fxos-perf-alerts@mozilla.org" ]
