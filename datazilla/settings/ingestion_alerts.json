@@ -27,7 +27,7 @@
         "browser"
     ],
     "pages": [
-      "cold_load_time",
+      "cold_load_time"
     ],
     "alert_minutes": 720,
     "alert_recipients": [ "fxos-perf-alerts@mozilla.org" ]
@@ -40,17 +40,17 @@
         "version": "prerelease"
     },
     "tests": [
-        "calendar_memory"
-        "camera_memory"
-        "clock_memory"
-        "communications/contacts_memory"
-        "communications/dialer_memory"
-        "email_memory"
-        "fm_memory"
-        "gallery_memory"
-        "music_memory"
-        "settings_memory"
-        "sms_memory"
+        "calendar_memory",
+        "camera_memory",
+        "clock_memory",
+        "communications/contacts_memory",
+        "communications/dialer_memory",
+        "email_memory",
+        "fm_memory",
+        "gallery_memory",
+        "music_memory",
+        "settings_memory",
+        "sms_memory",
         "video_memory"
     ],
     "pages": [
@@ -74,18 +74,18 @@
         "version": "prerelease"
     },
     "tests": [
-        "calendar"
-        "camera"
-        "clock"
-        "communications/contacts"
-        "communications/dialer"
-        "email"
-        "fm"
-        "startup_time"
-        "gallery"
-        "music"
-        "settings"
-        "sms"
+        "calendar",
+        "camera",
+        "clock",
+        "communications/contacts",
+        "communications/dialer",
+        "email",
+        "fm",
+        "startup_time",
+        "gallery",
+        "music",
+        "settings",
+        "sms",
         "video"
     ],
     "pages": [
