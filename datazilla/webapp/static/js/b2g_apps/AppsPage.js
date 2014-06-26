@@ -186,15 +186,9 @@ var AppsPage = new Class( {
 
         this.urlBase = urlObj.attr.base + urlObj.attr.directory;
 
-        var deviceDefault = 'hamachi';
-        // Device default is project specific
-        if (this.refData.project == 'b2gtw'){
-            deviceDefault = 'tarako';
-        }
-
         this.defaults = {};
         this.defaults['branch'] = urlObj.param.query.branch;
-        this.defaults['device'] = urlObj.param.query.device || deviceDefault;
+        this.defaults['device'] = urlObj.param.query.device || 'flame';
         this.defaults['range'] = urlObj.param.query.range;
         this.defaults['test'] = urlObj.param.query.test || 'cold_load_time';
         this.defaults['app'] = urlObj.param.query.app;
