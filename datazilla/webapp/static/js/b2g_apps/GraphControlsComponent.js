@@ -339,7 +339,7 @@ var GraphControlsView = new Class({
         this.testColor = '#5CB2CB';
 
         this.defaultBranchOption = 'master';
-        this.defaultDeviceOption = 'hamachi';
+        this.defaultDeviceOption = 'flame';
 
         if(APPS_PAGE.defaults['branch'] != undefined){
             this.defaultBranchOption = APPS_PAGE.defaults['branch'];
