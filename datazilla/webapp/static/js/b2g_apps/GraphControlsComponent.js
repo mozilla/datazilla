@@ -289,13 +289,17 @@ var GraphControlsComponent = new Class({
             }
         }
 
+        var datum = this.testLookup[id];
+
+        this.view.yAxisLabelText = datum.y_axis_label;
+        this.view.setPerfGraphVerticalLabel();
+
         $(APPS_PAGE.appContainerSel).trigger(
             this.testToggleEvent, eventData
             );
 
     },
     selectTest: function(testName){
-
 
         var datum = this.testLookup[testName];
 
@@ -360,9 +364,90 @@ var GraphControlsView = new Class({
         this.appSeriesIdPrefix = 'app_series_';
         this.testSeriesIdPrefix = 'test_series_';
 
+        this.perfChartVerticalTxtSel = '#app_perf_chart_vertical_text';
+        this.replicateChartVerticalTxtSel = '#app_replicate_chart_vertical_text';
+
+        this.yAxisLabelText = "Run Time (Milliseconds)";
+        this.labelDefaultLen = this.yAxisLabelText.length;
+
+        this.perfChartTopDefault = parseInt($(this.perfChartVerticalTxtSel).css('top'));
+        this.perfChartLeftDefault = parseInt($(this.perfChartVerticalTxtSel).css('left'));
+
+        this.replicateChartTopDefault = parseInt(
+            $(this.replicateChartVerticalTxtSel).css('top'));
+        this.replicateChartLeftDefault = parseInt(
+            $(this.replicateChartVerticalTxtSel).css('left'));
+
+        this.verticalPerfTextClsSel = '.app-perf-y-axis-label';
+        this.verticalReplicateTextClsSel = '.app-replicate-y-axis-label';
+
         $(this.selectAllAppsSel).bind(
             'click', _.bind(this.toggleAllApps, this)
             );
+    },
+    setPerfGraphVerticalLabel: function(){
+
+        var perfLabelTop, perfLabelLeft = 0;
+
+        if(this.yAxisLabelText.length < this.labelDefaultLen){
+
+            var lenDiff = this.labelDefaultLen - this.yAxisLabelText.length;
+
+            perfLabelTop = this.perfChartTopDefault - 1.2*lenDiff;
+            perfLabelLeft = this.perfChartLeftDefault + 2*lenDiff;
+
+        }else if(this.yAxisLabelText.length > this.labelDefaultLen){
+
+            var lenDiff = this.labelDefaultLen - this.yAxisLabelText.length;
+
+            perfLabelTop = this.perfChartTopDefault - 1.2*lenDiff;
+            perfLabelLeft = this.perfChartLeftDefault + 3*lenDiff;
+
+        }else {
+
+            perfLabelTop = this.perfChartTopDefault;
+            perfLabelLeft = this.perfChartLeftDefault;
+
+        }
+
+        $(this.perfChartVerticalTxtSel).css('top', perfLabelTop);
+        $(this.perfChartVerticalTxtSel).css('left', perfLabelLeft);
+
+        //Set the label text
+        $(this.verticalPerfTextClsSel).text(this.yAxisLabelText);
+
+    },
+    setReplicateGraphVerticalLabel: function(){
+
+        var replicateLabelTop, replicateLabelLeft = 0;
+
+        if(this.yAxisLabelText.length < this.labelDefaultLen){
+
+            var lenDiff = this.labelDefaultLen - this.yAxisLabelText.length;
+
+            replicateLabelTop = this.replicateChartTopDefault - lenDiff;
+            replicateLabelLeft = this.replicateChartLeftDefault + 2*lenDiff;
+
+        }else if(this.yAxisLabelText.length > this.labelDefaultLen){
+
+            var lenDiff = this.labelDefaultLen - this.yAxisLabelText.length;
+
+            replicateLabelTop = this.replicateChartTopDefault - lenDiff;
+            replicateLabelLeft = this.replicateChartLeftDefault + 3*lenDiff;
+
+        }else {
+
+            replicateLabelTop = this.replicateChartTopDefault;
+            replicateLabelLeft = this.replicateChartLeftDefault;
+
+        }
+
+        $(this.replicateChartVerticalTxtSel).css('top', replicateLabelTop);
+        $(this.replicateChartVerticalTxtSel).css('left', replicateLabelLeft);
+
+        //Set the label text
+        $(this.verticalReplicateTextClsSel).text(this.yAxisLabelText);
+
     },
     toggleAllApps: function(event){
 

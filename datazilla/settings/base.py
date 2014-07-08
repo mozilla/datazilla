@@ -1,5 +1,6 @@
 # Django settings for webapp project.
 import os, posixpath
+import json
 
 # These settings can all be optionally set via env vars, or in local.py:
 
@@ -32,6 +33,13 @@ path = lambda *a: os.path.join(ROOT, *a)
 ADMINS = [
    ("jeads", "jeads@mozilla.com"),
 ]
+
+test_units_file = os.path.join(
+    os.path.dirname(__file__), 'data', 'test_units.json' )
+
+TEST_UNITS = {}
+with open(test_units_file) as f:
+    TEST_UNITS = json.load(f)
 
 MANAGERS = ADMINS
 
