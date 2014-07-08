@@ -15,6 +15,7 @@ import urllib
 import socket
 import zlib
 import MySQLdb
+import re
 
 from collections import defaultdict
 
@@ -802,10 +803,31 @@ class PerformanceTestModel(DatazillaModelBase):
                 pages_dict[ page_data['url'] ]['id'] = page_data['id']
                 pages_dict[ page_data['url'] ]['url'] = page_data['url']
 
+                pages_dict[ page_data['url'] ]['y_axis_label'] = self.get_units(
+                    page_data['url'])
+
             pages_dict[ page_data['url'] ]['test_ids'][ page_data['test_id'] ] = True
 
         return pages_dict
 
+    def get_units(self, name):
+
+        unit_label = ""
+
+        if name in settings.TEST_UNITS:
+            unit_label = settings.TEST_UNITS[name]['label']
+        else:
+            for key in settings.TEST_UNITS:
+                contains = settings.TEST_UNITS[key].get('contains')
+                if contains:
+                    if key in name:
+                        unit_label = settings.TEST_UNITS[key]['label']
+                        break
+
+        if not unit_label:
+            unit_label = settings.TEST_UNITS['default']['label']
+
+        return unit_label
 
     def get_aux_data(self):
 

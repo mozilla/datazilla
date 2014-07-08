@@ -39,7 +39,8 @@ var PerformanceGraphComponent = new Class({
 
         //Set average/median and error-bar from url params
         if(APPS_PAGE.defaults['plot'] != undefined) {
-            $(this.view.plotMedianSel).prop('checked', APPS_PAGE.defaults['plot'] == 'median');
+            $(this.view.plotMedianSel).prop(
+                'checked', APPS_PAGE.defaults['plot'] == 'median');
         }
         if(APPS_PAGE.defaults['err_bars'] != undefined) {
             $(this.view.plotErrorBarsSel).prop('checked', true);
@@ -193,6 +194,8 @@ var PerformanceGraphComponent = new Class({
 
         var controlValues = this.view.getPlotControlVals();
 
+        this.view.setGraphType(controlValues);
+
         for(i = 0; i<dataLength; i++){
 
             testId = data[i]['test_id'];
@@ -289,6 +292,7 @@ var PerformanceGraphComponent = new Class({
         }else{
             this.chartOptions.series.points.errorbars = 'y';
         }
+
 
         this.plot = $.plot(
             $(this.view.chartContainerSel),
@@ -425,6 +429,8 @@ var PerformanceGraphView = new Class({
         this.plotMedianSel = '#app_plot_median';
         this.plotErrorBarsSel = '#app_plot_error_bars';
 
+        this.plotPerformanceTypeClsSel = '.app-y-axis-type';
+
         this.detailIdPrefix = 'app_series_';
         this.idFields = [
             'revision', 'formatted_date_run', 'avg', 'median', 'std', 'min', 'max'
@@ -531,6 +537,13 @@ var PerformanceGraphView = new Class({
             'median': $(this.plotMedianSel).is(':checked'),
             'error_bars': $(this.plotErrorBarsSel).is(':checked')
             }
+    },
+    setGraphType: function(controlVals){
+        if( controlVals.median ){
+            $(this.plotPerformanceTypeClsSel).text('Median');
+        }else {
+            $(this.plotPerformanceTypeClsSel).text('Average');
+        }
     }
 });
 var PerformanceGraphModel = new Class({
