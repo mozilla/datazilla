@@ -15,7 +15,6 @@ import urllib
 import socket
 import zlib
 import MySQLdb
-import re
 
 from collections import defaultdict
 
