@@ -99,6 +99,10 @@ var PerformanceGraphComponent = new Class({
             'plothover', _.bind(this._hoverPlot, this)
             );
 
+        $(this.view.chartContainerSel).bind(
+            'plotselected', _.bind(this._selectPlot, this)
+            );
+
         $(this.view.timeRangeSel).bind(
             'change', _.bind(this.changeTimeRange, this)
             );
@@ -127,6 +131,9 @@ var PerformanceGraphComponent = new Class({
             APPS_PAGE.stateChangeEvent,
             _.bind(this.stateChange, this)
             );
+    },
+    _selectPlot: function(event, ranges){
+console.log([event, ranges]);
     },
     formatLabel: function(label, series){
         return this.tickDisplayDates[label] || "";
