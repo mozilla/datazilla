@@ -1289,6 +1289,11 @@ class MetricsTestModel(DatazillaModelBase):
                     "ids":[]
                     },
 
+                "tp5o_scroll": {
+                    "get_computed_means":self.exclude_first_replicate_from_mean,
+                    "ids":[]
+                    },
+
                 "Talos tp5r": {
                     "get_computed_means":self.exclude_first_replicate_from_mean,
                     "ids":[]
