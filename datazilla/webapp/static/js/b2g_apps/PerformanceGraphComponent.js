@@ -224,7 +224,7 @@ var PerformanceGraphComponent = new Class({
 
         var range = $(this.view.timeRangeSel).val();
         var branch = $(this.view.branchSel).val();
-        var device = $(this.view.deviceSel).val();
+        var device = $(this.view.deviceSel).val() || APPS_PAGE.defaults['device'];
 
         this.view.hideData();
 
