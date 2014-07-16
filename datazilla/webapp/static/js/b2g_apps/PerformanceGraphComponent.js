@@ -27,6 +27,7 @@ var PerformanceGraphComponent = new Class({
         this.chartData = {};
         this.seriesIndexDataMap = {};
         this.tickDisplayDates = {};
+        this.rangeMap = [];
         this.checkedApps = {};
         this.data = {};
 
@@ -83,6 +84,25 @@ var PerformanceGraphComponent = new Class({
             }
         };
 
+        this.dialog = $(this.view.rangeB2GHaystackDialog).dialog({
+
+            autoOpen: false,
+            height: 500,
+            width: 400,
+            modal: true,
+
+            buttons: {
+                "Clear": this.clearDialog,
+                "Generate B2GHaystack": this.generateHaystack,
+            }
+        });
+
+        /*
+        this.form = $(this.view.rangeB2GHaystackDialog).find("form").on("submit", function(ev){
+            ev.preventDefault();
+        });
+        */
+
         $(APPS_PAGE.appContainerSel).bind(
             this.appToggleEvent, _.bind( this.appToggle, this )
             );
@@ -132,8 +152,44 @@ var PerformanceGraphComponent = new Class({
             _.bind(this.stateChange, this)
             );
     },
-    _selectPlot: function(event, ranges){
-console.log([event, ranges]);
+    _selectPlot: function(event, ranges, x){
+
+
+        var from = Math.round(ranges.xaxis.from);
+        var to = Math.round(ranges.xaxis.to);
+
+        var fromData = this.rangeMap[from];
+        var toData = this.rangeMap[to];
+
+        var goodRev = fromData;
+        var badRev = toData;
+        //
+        var plotControls = this.view.getPlotControlVals();
+
+        if(plotControls.avg){
+            if(fromData.avg > toData.avg){
+                goodRev = toData;
+                badRev = fromData;
+            }
+        } else if (plotControls.median){
+            if(fromData.median > toData.median){
+                goodRev = toData;
+                badRev = fromData;
+            }
+        }
+
+        if(!_.isEmpty(fromData) && !_.isEmpty(toData)){
+
+            this.view.setDialogData(goodRev, badRev);
+            //Open Modal Window
+            this.dialog.dialog('open');
+        }
+    },
+    clearDialog: function(){
+
+    },
+    generateHaystack: function(){
+
     },
     formatLabel: function(label, series){
         return this.tickDisplayDates[label] || "";
@@ -262,6 +318,17 @@ console.log([event, ranges]);
             this.chartData[ testId ][ 'full_data' ].push(
                 [ data[i] ]
                 );
+
+            if(_.isEmpty( this.rangeMap[i] )){
+                this.rangeMap[i] = {
+                    build_revision:data[i].build_revision,
+                    gecko_revision:data[i].gecko_revision,
+                    gaia_revision:data[i].revision,
+                    device:data[i].type,
+                    avg:data[i].avg,
+                    mean:data[i].mean
+                }
+            }
         }
 
         var chart = [];
@@ -361,7 +428,7 @@ console.log([event, ranges]);
     _clickPlot: function(event, pos, item){
 
         if(item != null){
-
+console.log(['item', item]);
             var seriesDatum = this.seriesIndexDataMap[ item.seriesIndex ];
             var datapointDatum = this.seriesIndexDataMap[ item.seriesIndex ]['full_data'][ item.dataIndex ];
 
@@ -436,6 +503,7 @@ var PerformanceGraphView = new Class({
         this.plotMedianSel = '#app_plot_median';
         this.plotErrorBarsSel = '#app_plot_error_bars';
 
+
         this.plotPerformanceTypeClsSel = '.app-y-axis-type';
 
         this.detailIdPrefix = 'app_series_';
@@ -445,6 +513,17 @@ var PerformanceGraphView = new Class({
         this.appDetailIdSel = '#' + this.detailIdPrefix + 'application';
 
         this.appSeriesIdPrefix = 'app_series_';
+
+        this.rangeB2GHaystackDialog = '#app_b2ghaystack_dialog';
+
+
+    },
+    setDialogData: function(goodRev, badRev){
+
+        $('[name="device_name"]').val(goodRev.device);
+        //$('[name="device_name"]').val(goodRev.device);
+        $('[name="good_rev"]').val(goodRev.gaia_revision);
+        $('[name="bad_rev"]').val(badRev.gaia_revision);
 
     },
     showData: function(noData){

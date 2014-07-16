@@ -16,6 +16,7 @@
 <body>
 
 <!--Toppanel-->
+
 <div class="ui-widget ui-widget-header ui-corner-top su-toolbar-base app-toppanel">
    <div class="app-title">
         <a href=""><span id="logo"></span></a>
@@ -37,6 +38,26 @@
 </label>
 
 <div id="app_container" class="ui-widget ui-widget-header ui-corner-top app-container">
+    <div id="app_b2ghaystack_dialog" title="B2G Haystack CMD Generator">
+        <form>
+            <fieldset>
+                <legend>Positional Arguments</legend>
+                <label for="device_name">Device Name</label>
+                <input type="text" name="device_name" class="text ui-widget-content ui-corner-all">
+                <br><br>
+                <label for="job_name">Job Name</label>
+                <input type="text" name="job_name" class="text ui-widget-content ui-corner-all">
+                <br><br>
+                <label for="good_rev">Good Revision</label>
+                <input size="50" type="text" name="good_rev" class="text ui-widget-content ui-corner-all">
+                <br><br>
+                <label for="bad_rev">Bad Revision</label>
+                <input size="50" type="text" name="bad_rev" class="text ui-widget-content ui-corner-all">
+                <br><br>
+            </fieldset>
+        </form>
+    </div>
+
    <div id="test_series" class="ui-widget ui-widget-header ui-corner-all app-list-two">
    </div>
    <div class="ui-widget ui-widget-header ui-corner-all app-list-controls-two">
