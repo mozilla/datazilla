@@ -38,7 +38,7 @@
 </label>
 
 <div id="app_container" class="ui-widget ui-widget-header ui-corner-top app-container">
-    <div id="app_b2ghaystack_dialog" title="B2G Haystack CMD Generator">
+    <div id="app_b2ghaystack_dialog" style="display:none;" title="B2G Haystack CMD Generator">
         <form>
             <fieldset>
                 <legend>Positional Arguments</legend>
@@ -100,6 +100,9 @@
             <label style="margin-left:3px; margin-right:3px;" title="Show error bars" class="app-control-element">
                 <input id="app_plot_error_bars" type="checkbox" value="median" />Bars
             </label>
+            <label id="app_control_menu" style="margin-left:3px; margin-right:3px; float:right;" title="Toggle Navigation Controls">
+                <div class="ui-icon ui-icon-arrow-4-diag"></div>
+            </label>
         </div>
     </div>
    <div class="ui-widget ui-widget-header ui-corner-all app-graph-container">
@@ -108,6 +111,23 @@
             <div id="app_perf_chart_vertical_text" style="position:absolute; left:-68px; top:10px;" class="su-vertical-text"><span class="app-y-axis-type">Average</span>&nbsp;<span class="app-perf-y-axis-label"></span></div>
             <div id="app_perf_no_chartdata" class="app-no-data-message" style="display:none;">No Data Found</div>
             <div id="app_perf_chart" style="width:905px; height:370px; margin-top:5px; margin-left:35px;"></div>
+            <div id="app_navigation_menu_body" style="position:absolute; width:100px; left:885px; top:10px; z-index:10000;">
+                <div style="position:relative; margin-left:16px;">
+                    <div id="app_zoom_out" class="ui-icon ui-icon-plus" title="Zoom In"></div>
+                    <div id="app_pan_n" class="ui-icon ui-icon-triangle-1-n" title="Pan Up"></div>
+                </div>
+                <div style="position:relative; width:100%;">
+                    <div id="app_pan_w" style="float:left;" class="ui-icon ui-icon-triangle-1-w" title="Pan Right"></div>
+                    <div id="app_pan_home" style="float:left;" class="ui-icon ui-icon-home" title="Center Graph"></div>
+                    <div id="app_pan_e" style="float:left;" class="ui-icon ui-icon-triangle-1-e" title="Pan Left"></div>
+                    <div style="clear:both;"></div>
+                </div>
+                    <div style="clear:both;"></div>
+                <div style="position:relative; margin-left:16px;">
+                    <div id="app_pan_s" class="ui-icon ui-icon-triangle-1-s" title="Pan Down"></div>
+                    <div id="app_zoom_in" class="ui-icon ui-icon-minus" title="Zoom In"></div>
+                </div>
+            </div>
             <div id="app_perf_detail_container" class="ui-widget ui-widget-header ui-corner-all app-detail-graph-container">
                 <div style="width:120px;" class="app-control-element app-control-small-element">App:<span id="app_series_application" class="app-data"></span></div>
                 <div style="width:160px;" class="app-control-element app-control-small-element">Gaia Rev:&nbsp;<a id="app_series_revision" target="_blank" class="app-data"></a></div>
@@ -132,6 +152,8 @@
         </div>
     </div>
    <div class="ui-widget ui-widget-header ui-corner-all app-graph-container-two">
+
+
         <div id="app_replicate_wait" style="height:380px;" class="app-spinner"></div>
         <div id="app_replicate_data_container" style="display:none;">
             <div id="app_replicate_chart_vertical_text" style="position:absolute; left:-45px; top:50px;" class="su-vertical-text"><span class="app-replicate-y-axis-label"></span></div>
@@ -162,6 +184,7 @@
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.min.js"></script>
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.selection.min.js"></script>
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.errorbars.js"></script>
+<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.navigate.js"></script>
 
 <!--[if lte IE 8]><script language="javascript" type="text/javascript" src="/static/js/plugins/flot-0.7/excanvas.min.js"></script><![endif]-->
 

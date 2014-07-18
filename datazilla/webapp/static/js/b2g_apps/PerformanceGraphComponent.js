@@ -63,7 +63,6 @@ var PerformanceGraphComponent = new Class({
             'yaxis': {
                 'autoscaleMargin':0.3
             },
-
             'series': {
 
                 'points': {
@@ -147,10 +146,81 @@ var PerformanceGraphComponent = new Class({
             'change', _.bind(this.refreshPlot, this)
             );
 
+        $(this.view.plotZoomInSel).bind(
+            'click', _.bind(this.zoomIn, this)
+            );
+
+        $(this.view.plotZoomOutSel).bind(
+            'click', _.bind(this.zoomOut, this)
+            );
+        $(this.view.plotPanNorthSel).bind(
+            'click', _.bind(this.panUp, this)
+            );
+        $(this.view.plotPanSouthSel).bind(
+            'click', _.bind(this.panDown, this)
+            );
+        $(this.view.plotPanEastSel).bind(
+            'click', _.bind(this.panLeft, this)
+            );
+        $(this.view.plotPanWestSel).bind(
+            'click', _.bind(this.panRight, this)
+            );
+        $(this.view.plotResetSel).bind(
+            'click', _.bind(this.refreshPlot, this)
+            );
+        $(this.view.plotNavControlsSel).bind(
+            'click', _.bind(this.displayNavMenu, this)
+            );
+
         $(APPS_PAGE.appContainerSel).bind(
             APPS_PAGE.stateChangeEvent,
             _.bind(this.stateChange, this)
             );
+    },
+    displayNavMenu: function(event){
+
+        var visible = $(this.view.plotControlMenuSel).is(":visible");
+
+        if(visible){
+            $(this.view.plotControlMenuSel).hide();
+        }else {
+            $(this.view.plotControlMenuSel).show();
+        }
+
+    },
+    zoomOut: function(event){
+        var axes = this.plot.getAxes();
+        var xaxis = axes.xaxis;
+        var yaxis = axes.yaxis;
+        var center = this.plot.p2c({ x: (xaxis.min + xaxis.max) / 2, y: (yaxis.min + yaxis.max) / 2 });
+        this.plot.zoom({ amount: 1.5, center: center });
+        this.plot.triggerRedrawOverlay();
+    },
+    zoomIn: function(event){
+
+        var axes = this.plot.getAxes();
+        var xaxis = axes.xaxis;
+        var yaxis = axes.yaxis;
+        var center = this.plot.p2c({ x: (xaxis.min + xaxis.max) / 2, y: (yaxis.min + yaxis.max) / 2 });
+        this.plot.zoomOut({ amount: 1.5, center: center });
+
+        this.plot.triggerRedrawOverlay();
+    },
+    panUp: function(){
+        this.plot.pan({ top: 15 });
+        this.plot.triggerRedrawOverlay();
+    },
+    panRight: function(){
+        this.plot.pan({ left: -15 });
+        this.plot.triggerRedrawOverlay();
+    },
+    panDown: function(){
+        this.plot.pan({ top: -15 });
+        this.plot.triggerRedrawOverlay();
+    },
+    panLeft: function(){
+        this.plot.pan({ left: 15 });
+        this.plot.triggerRedrawOverlay();
     },
     _selectPlot: function(event, ranges, x){
 
@@ -503,6 +573,15 @@ var PerformanceGraphView = new Class({
         this.plotMedianSel = '#app_plot_median';
         this.plotErrorBarsSel = '#app_plot_error_bars';
 
+        this.plotNavControlsSel = '#app_control_menu';
+        this.plotControlMenuSel = '#app_navigation_menu_body';
+        this.plotZoomInSel = '#app_zoom_in';
+        this.plotZoomOutSel = '#app_zoom_out';
+        this.plotPanNorthSel = '#app_pan_n';
+        this.plotPanSouthSel = '#app_pan_s';
+        this.plotPanEastSel = '#app_pan_e';
+        this.plotPanWestSel = '#app_pan_w';
+        this.plotResetSel = '#app_pan_home';
 
         this.plotPerformanceTypeClsSel = '.app-y-axis-type';
 
