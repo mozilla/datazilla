@@ -42,18 +42,42 @@
         <form>
             <fieldset>
                 <legend>Positional Arguments</legend>
-                <label for="device_name">Device Name</label>
+                <label for="device_name" title="name of device">Device Name</label>
                 <input type="text" name="device_name" class="text ui-widget-content ui-corner-all">
                 <br><br>
-                <label for="job_name">Job Name</label>
+                <label for="job_name" title="name of the jenkins job to execute">Job Name</label>
                 <input type="text" name="job_name" class="text ui-widget-content ui-corner-all">
                 <br><br>
-                <label for="good_rev">Good Revision</label>
+                <label for="good_rev" title="last known good revision">Good Revision</label>
                 <input size="50" type="text" name="good_rev" class="text ui-widget-content ui-corner-all">
                 <br><br>
-                <label for="bad_rev">Bad Revision</label>
+                <label for="bad_rev" title="first known bad revision">Bad Revision</label>
                 <input size="50" type="text" name="bad_rev" class="text ui-widget-content ui-corner-all">
                 <br><br>
+
+            </fieldset>
+            <br><br>
+            <fieldset>
+                <legend>Optional Arguments</legend>
+                <label for="applications" title="List of applications to use. Defaults to those displayed on graph.">-a</label>
+                <input type="text" name="applications" size="60" class="text ui-widget-content ui-corner-all">
+                <br><br>
+                <label for="max_builds" title="Maximum number of builds to trigger.">-m</label>
+                <input type="text" size="4" name="max_builds" class="text ui-widget-content ui-corner-all" value=10>
+                <br><br>
+                <label for="branch" title="Branch to use.">-b</label>
+                <input type="text" name="branch" class="Text ui-widget-content ui-corner-all" value="mozilla-central">
+                <br><br>
+
+                <label for="jenkins_url" title="URL of jenkins instance.">-j</label>
+                <input type="text" name="jenkins_url" class="Text ui-widget-content ui-corner-all" value="http://localhost:8080">
+                <br><br>
+            </fieldset>
+            <h3>b2ghaystack command</h3>
+            <textarea id="app_tr" name="b2g_haystack_cmd" cols="65" rows="6">
+            </textarea>
+            <br>
+            <a href="https://github.com/davehunt/b2ghaystack" target="_blank">Click here for cmd usage documentation</a>
             </fieldset>
         </form>
     </div>
