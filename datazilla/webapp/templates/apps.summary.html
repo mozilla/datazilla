@@ -16,6 +16,7 @@
 <body>
 
 <!--Toppanel-->
+
 <div class="ui-widget ui-widget-header ui-corner-top su-toolbar-base app-toppanel">
    <div class="app-title">
         <a href=""><span id="logo"></span></a>
@@ -37,6 +38,50 @@
 </label>
 
 <div id="app_container" class="ui-widget ui-widget-header ui-corner-top app-container">
+    <div id="app_b2ghaystack_dialog" style="display:none;" title="B2G Haystack CMD Generator">
+        <form>
+            <fieldset>
+                <legend>Positional Arguments</legend>
+                <label for="device_name" title="name of device">Device Name</label>
+                <input type="text" name="device_name" class="text ui-widget-content ui-corner-all">
+                <br><br>
+                <label for="job_name" title="name of the jenkins job to execute">Job Name</label>
+                <input type="text" name="job_name" class="text ui-widget-content ui-corner-all">
+                <br><br>
+                <label for="good_rev" title="last known good revision">Good Revision</label>
+                <input size="50" type="text" name="good_rev" class="text ui-widget-content ui-corner-all">
+                <br><br>
+                <label for="bad_rev" title="first known bad revision">Bad Revision</label>
+                <input size="50" type="text" name="bad_rev" class="text ui-widget-content ui-corner-all">
+                <br><br>
+
+            </fieldset>
+            <br><br>
+            <fieldset>
+                <legend>Optional Arguments</legend>
+                <label for="applications" title="List of applications to use. Defaults to those displayed on graph.">-a</label>
+                <input type="text" name="applications" size="60" class="text ui-widget-content ui-corner-all">
+                <br><br>
+                <label for="max_builds" title="Maximum number of builds to trigger.">-m</label>
+                <input type="text" size="4" name="max_builds" class="text ui-widget-content ui-corner-all" value=10>
+                <br><br>
+                <label for="branch" title="Branch to use.">-b</label>
+                <input type="text" name="branch" class="Text ui-widget-content ui-corner-all" value="mozilla-central">
+                <br><br>
+
+                <label for="jenkins_url" title="URL of jenkins instance.">-j</label>
+                <input type="text" name="jenkins_url" class="Text ui-widget-content ui-corner-all" value="http://localhost:8080">
+                <br><br>
+            </fieldset>
+            <h3>b2ghaystack command</h3>
+            <textarea id="app_tr" name="b2g_haystack_cmd" cols="65" rows="6">
+            </textarea>
+            <br>
+            <a href="https://github.com/davehunt/b2ghaystack" target="_blank">Click here for cmd usage documentation</a>
+            </fieldset>
+        </form>
+    </div>
+
    <div id="test_series" class="ui-widget ui-widget-header ui-corner-all app-list-two">
    </div>
    <div class="ui-widget ui-widget-header ui-corner-all app-list-controls-two">
@@ -79,6 +124,9 @@
             <label style="margin-left:3px; margin-right:3px;" title="Show error bars" class="app-control-element">
                 <input id="app_plot_error_bars" type="checkbox" value="median" />Bars
             </label>
+            <label id="app_control_menu" style="margin-left:3px; margin-right:3px; float:right;" title="Toggle Navigation Controls">
+                <div class="ui-icon ui-icon-arrow-4-diag"></div>
+            </label>
         </div>
     </div>
    <div class="ui-widget ui-widget-header ui-corner-all app-graph-container">
@@ -87,6 +135,23 @@
             <div id="app_perf_chart_vertical_text" style="position:absolute; left:-68px; top:10px;" class="su-vertical-text"><span class="app-y-axis-type">Average</span>&nbsp;<span class="app-perf-y-axis-label"></span></div>
             <div id="app_perf_no_chartdata" class="app-no-data-message" style="display:none;">No Data Found</div>
             <div id="app_perf_chart" style="width:905px; height:370px; margin-top:5px; margin-left:35px;"></div>
+            <div id="app_navigation_menu_body" style="position:absolute; width:100px; left:885px; top:10px; z-index:10000;">
+                <div style="position:relative; margin-left:16px;">
+                    <div id="app_zoom_out" class="ui-icon ui-icon-plus" title="Zoom In"></div>
+                    <div id="app_pan_n" class="ui-icon ui-icon-triangle-1-n" title="Pan Up"></div>
+                </div>
+                <div style="position:relative; width:100%;">
+                    <div id="app_pan_w" style="float:left;" class="ui-icon ui-icon-triangle-1-w" title="Pan Right"></div>
+                    <div id="app_pan_home" style="float:left;" class="ui-icon ui-icon-home" title="Center Graph"></div>
+                    <div id="app_pan_e" style="float:left;" class="ui-icon ui-icon-triangle-1-e" title="Pan Left"></div>
+                    <div style="clear:both;"></div>
+                </div>
+                    <div style="clear:both;"></div>
+                <div style="position:relative; margin-left:16px;">
+                    <div id="app_pan_s" class="ui-icon ui-icon-triangle-1-s" title="Pan Down"></div>
+                    <div id="app_zoom_in" class="ui-icon ui-icon-minus" title="Zoom In"></div>
+                </div>
+            </div>
             <div id="app_perf_detail_container" class="ui-widget ui-widget-header ui-corner-all app-detail-graph-container">
                 <div style="width:120px;" class="app-control-element app-control-small-element">App:<span id="app_series_application" class="app-data"></span></div>
                 <div style="width:160px;" class="app-control-element app-control-small-element">Gaia Rev:&nbsp;<a id="app_series_revision" target="_blank" class="app-data"></a></div>
@@ -111,6 +176,8 @@
         </div>
     </div>
    <div class="ui-widget ui-widget-header ui-corner-all app-graph-container-two">
+
+
         <div id="app_replicate_wait" style="height:380px;" class="app-spinner"></div>
         <div id="app_replicate_data_container" style="display:none;">
             <div id="app_replicate_chart_vertical_text" style="position:absolute; left:-45px; top:50px;" class="su-vertical-text"><span class="app-replicate-y-axis-label"></span></div>
@@ -141,6 +208,7 @@
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.min.js"></script>
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.selection.min.js"></script>
 <script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.errorbars.js"></script>
+<script type="text/javascript" src="/static/js/plugins/flot-0.7/jquery.flot.navigate.js"></script>
 
 <!--[if lte IE 8]><script language="javascript" type="text/javascript" src="/static/js/plugins/flot-0.7/excanvas.min.js"></script><![endif]-->
 

@@ -27,8 +27,15 @@ var PerformanceGraphComponent = new Class({
         this.chartData = {};
         this.seriesIndexDataMap = {};
         this.tickDisplayDates = {};
+        this.rangeMap = [];
         this.checkedApps = {};
         this.data = {};
+
+        this.panFactor = 50;
+        this.zoomFactor = 1.5;
+
+        this.goodRev = '';
+        this.badRev = '';
 
         //Caches arguments for _clickPlot for each selected datapoint
         //for handling stateChange
@@ -62,7 +69,6 @@ var PerformanceGraphComponent = new Class({
             'yaxis': {
                 'autoscaleMargin':0.3
             },
-
             'series': {
 
                 'points': {
@@ -83,6 +89,19 @@ var PerformanceGraphComponent = new Class({
             }
         };
 
+        this.dialog = $(this.view.rangeB2GHaystackDialog).dialog({
+
+            autoOpen: false,
+            height: 575,
+            width: 400,
+            modal: true,
+
+            buttons: {
+                "Reset Fields": _.bind(this.resetDialog, this),
+                "Regenerate B2GHaystack": _.bind(this.generateHaystack, this),
+            }
+        });
+
         $(APPS_PAGE.appContainerSel).bind(
             this.appToggleEvent, _.bind( this.appToggle, this )
             );
@@ -97,6 +116,10 @@ var PerformanceGraphComponent = new Class({
 
         $(this.view.chartContainerSel).bind(
             'plothover', _.bind(this._hoverPlot, this)
+            );
+
+        $(this.view.chartContainerSel).bind(
+            'plotselected', _.bind(this._selectPlot, this)
             );
 
         $(this.view.timeRangeSel).bind(
@@ -123,10 +146,126 @@ var PerformanceGraphComponent = new Class({
             'change', _.bind(this.refreshPlot, this)
             );
 
+        $(this.view.plotZoomInSel).bind(
+            'click', _.bind(this.zoomIn, this)
+            );
+
+        $(this.view.plotZoomOutSel).bind(
+            'click', _.bind(this.zoomOut, this)
+            );
+        $(this.view.plotPanNorthSel).bind(
+            'click', _.bind(this.panUp, this)
+            );
+        $(this.view.plotPanSouthSel).bind(
+            'click', _.bind(this.panDown, this)
+            );
+        $(this.view.plotPanEastSel).bind(
+            'click', _.bind(this.panLeft, this)
+            );
+        $(this.view.plotPanWestSel).bind(
+            'click', _.bind(this.panRight, this)
+            );
+        $(this.view.plotResetSel).bind(
+            'click', _.bind(this.refreshPlot, this)
+            );
+        $(this.view.plotNavControlsSel).bind(
+            'click', _.bind(this.displayNavMenu, this)
+            );
+
         $(APPS_PAGE.appContainerSel).bind(
             APPS_PAGE.stateChangeEvent,
             _.bind(this.stateChange, this)
             );
+    },
+    displayNavMenu: function(event){
+
+        var visible = $(this.view.plotControlMenuSel).is(":visible");
+
+        if(visible){
+            $(this.view.plotControlMenuSel).hide();
+        }else {
+            $(this.view.plotControlMenuSel).show();
+        }
+
+    },
+    zoomOut: function(event){
+        var axes = this.plot.getAxes();
+        var xaxis = axes.xaxis;
+        var yaxis = axes.yaxis;
+        var center = this.plot.p2c({ x: (xaxis.min + xaxis.max) / 2, y: (yaxis.min + yaxis.max) / 2 });
+        this.plot.zoom({ amount: this.zoomFactor, center: center });
+        this.plot.triggerRedrawOverlay();
+    },
+    zoomIn: function(event){
+
+        var axes = this.plot.getAxes();
+        var xaxis = axes.xaxis;
+        var yaxis = axes.yaxis;
+        var center = this.plot.p2c({ x: (xaxis.min + xaxis.max) / 2, y: (yaxis.min + yaxis.max) / 2 });
+        this.plot.zoomOut({ amount: this.zoomFactor, center: center });
+
+        this.plot.triggerRedrawOverlay();
+    },
+    panUp: function(){
+        this.plot.pan({ top: this.panFactor });
+        this.plot.triggerRedrawOverlay();
+    },
+    panRight: function(){
+        this.plot.pan({ left: -this.panFactor });
+        this.plot.triggerRedrawOverlay();
+    },
+    panDown: function(){
+        this.plot.pan({ top: -this.panFactor });
+        this.plot.triggerRedrawOverlay();
+    },
+    panLeft: function(){
+        this.plot.pan({ left: this.panFactor });
+        this.plot.triggerRedrawOverlay();
+    },
+    _selectPlot: function(event, ranges, x){
+
+
+        var from = Math.round(ranges.xaxis.from);
+        var to = Math.round(ranges.xaxis.to);
+
+        var fromData = this.rangeMap[from];
+        var toData = this.rangeMap[to];
+
+        this.goodRev = fromData;
+        this.badRev = toData;
+
+        var plotControls = this.view.getPlotControlVals();
+
+        if(plotControls.avg){
+            if(fromData.avg > toData.avg){
+                this.goodRev = toData;
+                this.badRev = fromData;
+            }
+        } else if (plotControls.median){
+            if(fromData.median > toData.median){
+                this.goodRev = toData;
+                this.badRev = fromData;
+            }
+        }
+
+        if(!_.isEmpty(fromData) && !_.isEmpty(toData)){
+
+            this.view.setDialogData(
+                this.goodRev, this.badRev, this.checkedApps);
+            //Open Modal Window
+            this.dialog.dialog('open');
+        }
+    },
+    resetDialog: function(){
+
+        this.view.setDialogData(
+            this.goodRev, this.badRev, this.checkedApps);
+
+    },
+    generateHaystack: function(){
+
+        this.view.generateB2GHaystackCmd();
+
     },
     formatLabel: function(label, series){
         return this.tickDisplayDates[label] || "";
@@ -182,8 +321,6 @@ var PerformanceGraphComponent = new Class({
         this.chartData = {};
         this.tickDisplayDates = {};
 
-        var i = 0;
-
         var testId = 0;
         var appColor = "";
         var appName = "";
@@ -196,7 +333,8 @@ var PerformanceGraphComponent = new Class({
 
         this.view.setGraphType(controlValues);
 
-        for(i = 0; i<dataLength; i++){
+        var i = 0;
+        for(; i<dataLength; i++){
 
             testId = data[i]['test_id'];
 
@@ -255,6 +393,17 @@ var PerformanceGraphComponent = new Class({
             this.chartData[ testId ][ 'full_data' ].push(
                 [ data[i] ]
                 );
+
+            if(_.isEmpty( this.rangeMap[i] )){
+                this.rangeMap[i] = {
+                    build_revision:data[i].build_revision,
+                    gecko_revision:data[i].gecko_revision,
+                    gaia_revision:data[i].revision,
+                    device:data[i].type,
+                    avg:data[i].avg,
+                    mean:data[i].mean
+                }
+            }
         }
 
         var chart = [];
@@ -354,7 +503,6 @@ var PerformanceGraphComponent = new Class({
     _clickPlot: function(event, pos, item){
 
         if(item != null){
-
             var seriesDatum = this.seriesIndexDataMap[ item.seriesIndex ];
             var datapointDatum = this.seriesIndexDataMap[ item.seriesIndex ]['full_data'][ item.dataIndex ];
 
@@ -429,6 +577,16 @@ var PerformanceGraphView = new Class({
         this.plotMedianSel = '#app_plot_median';
         this.plotErrorBarsSel = '#app_plot_error_bars';
 
+        this.plotNavControlsSel = '#app_control_menu';
+        this.plotControlMenuSel = '#app_navigation_menu_body';
+        this.plotZoomInSel = '#app_zoom_in';
+        this.plotZoomOutSel = '#app_zoom_out';
+        this.plotPanNorthSel = '#app_pan_n';
+        this.plotPanSouthSel = '#app_pan_s';
+        this.plotPanEastSel = '#app_pan_e';
+        this.plotPanWestSel = '#app_pan_w';
+        this.plotResetSel = '#app_pan_home';
+
         this.plotPerformanceTypeClsSel = '.app-y-axis-type';
 
         this.detailIdPrefix = 'app_series_';
@@ -438,6 +596,51 @@ var PerformanceGraphView = new Class({
         this.appDetailIdSel = '#' + this.detailIdPrefix + 'application';
 
         this.appSeriesIdPrefix = 'app_series_';
+
+        this.rangeB2GHaystackDialog = '#app_b2ghaystack_dialog';
+
+
+    },
+    setDialogData: function(goodRev, badRev, checkedApps){
+
+        $('[name="device_name"]').val(goodRev.device);
+        $('[name="job_name"]').val(APPS_PAGE.defaults['test']);
+        $('[name="good_rev"]').val(goodRev.gaia_revision);
+        $('[name="bad_rev"]').val(badRev.gaia_revision);
+
+        var selectedAppNames = [];
+        for(var id in checkedApps){
+            if(checkedApps[id] === true){
+                selectedAppNames.push(
+                    APPS_PAGE.graphControlsComponent.appLookup[id].name
+                );
+            }
+        }
+        $('[name="applications"]').val(selectedAppNames.join(' '));
+
+        this.generateB2GHaystackCmd();
+    },
+    generateB2GHaystackCmd: function(){
+
+        var optionalArgs = ['applications', 'max_builds', 'branch', 'jenkins_url'];
+        var positionalArgs = ['device_name', 'job_name', 'good_rev', 'bad_rev'];
+
+        var cmd = "b2ghaystack ";
+
+        for(var i=0; i<optionalArgs.length; i++){
+
+            var optionValue = $('[for="' + optionalArgs[i] + '"]').text();
+            var argValue = $('[name="' + optionalArgs[i] + '"]').val();
+
+            cmd += optionValue + ' ' + argValue + ' ';
+        }
+        for(var i=0; i<positionalArgs.length; i++){
+            var argValue = $('[name="' + positionalArgs[i] + '"]').val();
+            cmd += ' ' + argValue;
+        }
+
+        var textareaEl = $('[name="b2g_haystack_cmd"]');
+        $(textareaEl).val(cmd);
 
     },
     showData: function(noData){
