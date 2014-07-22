@@ -206,7 +206,7 @@ var PerformanceGraphComponent = new Class({
 
         this.plot.triggerRedrawOverlay();
     },
-    panUp: function(){
+    panDown: function(){
         this.plot.pan({ top: this.panFactor });
         this.plot.triggerRedrawOverlay();
     },
@@ -214,7 +214,7 @@ var PerformanceGraphComponent = new Class({
         this.plot.pan({ left: -this.panFactor });
         this.plot.triggerRedrawOverlay();
     },
-    panDown: function(){
+    panUp: function(){
         this.plot.pan({ top: -this.panFactor });
         this.plot.triggerRedrawOverlay();
     },
