@@ -251,9 +251,8 @@ var AppsPage = new Class( {
 
         var key = "";
         var modifiedParams = {};
-        var i  = 0;
-
-        for(i=0; i < this.paramKeys.length; i++){
+        var i = 0;
+        for(; i < this.paramKeys.length; i++){
 
             key = this.paramKeys[i];
 

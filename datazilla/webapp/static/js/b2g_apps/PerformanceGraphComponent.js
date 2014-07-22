@@ -334,7 +334,7 @@ var PerformanceGraphComponent = new Class({
         this.view.setGraphType(controlValues);
 
         var i = 0;
-        for(i = 0; i<dataLength; i++){
+        for(; i<dataLength; i++){
 
             testId = data[i]['test_id'];
 
