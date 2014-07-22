@@ -609,11 +609,14 @@ var PerformanceGraphView = new Class({
         $('[name="bad_rev"]').val(badRev.gaia_revision);
 
         var selectedAppNames = [];
+        var appName = "";
         for(var id in checkedApps){
             if(checkedApps[id] === true){
-                selectedAppNames.push(
-                    APPS_PAGE.graphControlsComponent.appLookup[id].name
-                );
+                appName = APPS_PAGE.graphControlsComponent.appLookup[id].name;
+                if(appName === 'email FTU'){
+                    appName = 'email';
+                }
+                selectedAppNames.push(appName);
             }
         }
         $('[name="applications"]').val(selectedAppNames.join(' '));
