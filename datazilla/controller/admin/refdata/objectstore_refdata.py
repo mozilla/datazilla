@@ -52,7 +52,7 @@ def get_json_blob_by_revisions(
 
     ptrm = PerformanceTestRefDataModel(project)
     blobs = ptrm.get_object_json_blob_for_test_run(test_run_ids)
-    ptm.disconnect()
+    ptrm.disconnect()
 
     return blobs
 
