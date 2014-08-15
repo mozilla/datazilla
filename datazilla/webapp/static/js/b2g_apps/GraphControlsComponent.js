@@ -343,7 +343,7 @@ var GraphControlsView = new Class({
         this.testColor = '#5CB2CB';
 
         this.defaultBranchOption = 'master';
-        this.defaultDeviceOption = 'flame';
+        this.defaultDeviceOption = 'flame-319MB';
 
         if(APPS_PAGE.defaults['branch'] != undefined){
             this.defaultBranchOption = APPS_PAGE.defaults['branch'];

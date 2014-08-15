@@ -5,10 +5,9 @@ from optparse import make_option
 from datazilla.model import PerformanceTestModel
 from base import ProjectBatchCommand
 
-#min_id = 354404
-
-#min_id = 80000
-min_id = 50000
+check_for_idx = """
+SHOW INDEX FROM machine WHERE KEY_NAME = 'unique_machine'
+"""
 
 drop_machine_idx = """
 ALTER TABLE b2g_perftest_1.machine
@@ -17,14 +16,14 @@ DROP INDEX unique_machine
 
 add_machine_idx = """
 ALTER TABLE b2g_perftest_1.machine
-ADD UNIQUE (`name`, `operating_system_id`, `type`)
+ADD CONSTRAINT unique_machine UNIQUE (`name`, `operating_system_id`, `type`)
 """
 
 get_objects = """
 SELECT test_run_id, json_blob
 FROM objectstore
 WHERE id >= {0}
-""".format(str(min_id))
+"""
 
 get_unique_machines = """
 SELECT m.id, m.name AS m_name, m.type AS m_type,
@@ -60,15 +59,37 @@ class Command(ProjectBatchCommand):
 
     LOCK_FILE = "fix_b2g_machines"
 
+    help = "Fix b2g machine to test_run associations"
+
+    option_list = ProjectBatchCommand.option_list + (
+
+        make_option(
+            '--min_id',
+            action='store',
+            dest='min_id',
+            default=1,
+            help='minimum object id to start the reassociation from'),
+        )
+
     def handle_project(self, project, **options):
+
+        min_id = options.get("min_id", 354404)
 
         ptm = PerformanceTestModel(project)
 
-        #ptm.sources["perftest"].dhub.execute(sql=drop_machine_idx)
-        #ptm.sources["perftest"].dhub.execute(sql=add_machine_idx)
+        exists = ptm.sources["perftest"].dhub.execute(sql=check_for_idx)
+        if len(exists) > 0:
+            try:
+                ptm.sources["perftest"].dhub.execute(sql=drop_machine_idx)
+            except:
+                pass
+            finally:
+                ptm.sources["perftest"].dhub.execute(sql=add_machine_idx)
 
         unique_os_set = self.get_unique_operating_systems(ptm)
-        data_objects = ptm.sources["objectstore"].dhub.execute(sql=get_objects)
+        data_objects = ptm.sources["objectstore"].dhub.execute(
+            sql=get_objects.format(str(min_id))
+            )
 
         machine_groups = {}
         for obj in data_objects:
@@ -145,7 +166,7 @@ class Command(ProjectBatchCommand):
                     )
 
                 print "machine_id:{0}".format(str(machine_id))
-                print mg_obj
+                print json.dumps(mg_obj)
 
             else:
                 # We have an entry but we still need to confirm the
@@ -163,7 +184,7 @@ class Command(ProjectBatchCommand):
                     )
 
                 print "machine_id:{0}".format( str(machine_id) )
-                print mg_obj
+                print json.dumps(mg_obj)
 
     def get_key(self, m_name, m_type, os_name, os_version):
 

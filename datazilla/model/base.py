@@ -1971,12 +1971,13 @@ class PerformanceTestModel(DatazillaModelBase):
                 placeholders=[ build_revision, test_run_id ]
                 )
 
-    def _get_or_create_b2g_machine_id(data, os_id):
+    def _get_or_create_b2g_machine_id(self, data, os_id):
 
         machine = data['test_machine']
 
         # Insert the the machine name and timestamp if it doesn't exist
         date_added = utils.get_now_timestamp()
+
         self.sources["perftest"].dhub.execute(
             proc='perftest.inserts.set_b2g_machine_ref_data',
             placeholders=[
@@ -1992,8 +1993,8 @@ class PerformanceTestModel(DatazillaModelBase):
 
         # Get the machine id
         id_iter = self.sources["perftest"].dhub.execute(
-            proc='perftest.selects.get_machine_id',
-            placeholders=[machine['name'], os_id],
+            proc='perftest.selects.get_b2g_machine_id',
+            placeholders=[machine['name'], os_id, machine['type']],
             debug_show=self.DEBUG,
             return_type='iter')
 

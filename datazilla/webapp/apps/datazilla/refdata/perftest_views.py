@@ -1,4 +1,5 @@
 import json
+import urllib2
 
 from django.http import HttpResponse
 
@@ -52,3 +53,23 @@ def get_db_size(request, project):
         item["size_mb"] = str(item["size_mb"])
         result.append(item)
     return HttpResponse(json.dumps(result), content_type=API_CONTENT_TYPE)
+
+def get_b2g_targets(request, project):
+
+    url = 'https://raw.githubusercontent.com/mozilla-b2g/gaia/master/tests/performance/config.json'
+
+    response = {}
+    response['url'] = url
+
+    try:
+        resp = urllib2.urlopen(url, timeout=5)
+    except urllib2.URLError, e:
+        response['msg'] = "Failed to retrieve the url"
+    else:
+        data = json.loads(resp.read())
+        response['data'] = data.get('goals', 'goals key not found in http response data')
+        response['code'] = resp.getcode()
+        response['msg'] = resp.msg
+
+    return HttpResponse(json.dumps(response), content_type=API_CONTENT_TYPE)
+

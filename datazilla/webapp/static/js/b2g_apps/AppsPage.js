@@ -188,9 +188,9 @@ var AppsPage = new Class( {
 
         this.defaults = {};
         this.defaults['branch'] = urlObj.param.query.branch;
-        this.defaults['device'] = urlObj.param.query.device || 'flame';
+        this.defaults['device'] = urlObj.param.query.device || 'flame-319MB';
         this.defaults['range'] = urlObj.param.query.range;
-        this.defaults['test'] = urlObj.param.query.test || 'cold_load_time';
+        this.defaults['test'] = urlObj.param.query.test || 'startup_>_moz-app-visually-complete';
         this.defaults['app'] = urlObj.param.query.app;
 
         if( urlObj.param.query.app_list != undefined ){
