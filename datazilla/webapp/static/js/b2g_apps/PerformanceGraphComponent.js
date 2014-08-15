@@ -18,6 +18,8 @@ var PerformanceGraphComponent = new Class({
         this.view = new PerformanceGraphView();
         this.model = new PerformanceGraphModel();
 
+        this.model.getTestTargets( this, this.loadTargets );
+
         this.appToggleEvent = 'APP_TOGGLE_EV';
         this.testToggleEvent = 'TEST_TOGGLE_EV';
         this.perfPlotClickEvent = 'PERF_PLOT_CLICK_EV';
@@ -30,6 +32,9 @@ var PerformanceGraphComponent = new Class({
         this.rangeMap = [];
         this.checkedApps = {};
         this.data = {};
+
+        //Performance targets for different device/test combinations
+        this.targets = {};
 
         this.panFactor = 50;
         this.zoomFactor = 1.5;
@@ -53,41 +58,6 @@ var PerformanceGraphComponent = new Class({
             $(this.view.plotErrorBarsSel).prop('checked', true);
         }
 
-        this.chartOptions = {
-            'grid': {
-                'clickable': true,
-                'hoverable': true,
-                'autoHighlight': true,
-                'color': '#B6B6B6',
-                'borderWidth': 0.5
-            },
-
-            'xaxis': {
-                'tickFormatter': _.bind(this.formatLabel, this)
-            },
-
-            'yaxis': {
-                'autoscaleMargin':0.3
-            },
-            'series': {
-
-                'points': {
-                    'radius': 2.5,
-                    'errorbars': 'y',
-                    'yerr': {
-                         'show': true,
-                         'upperCap':'-',
-                         'lowerCap':'-',
-                         'color': '#CCCCCC'
-                        }
-                }
-            },
-
-            'selection':{
-                'mode':'x',
-                'color':'#BDBDBD'
-            }
-        };
 
         this.dialog = $(this.view.rangeB2GHaystackDialog).dialog({
 
@@ -176,6 +146,81 @@ var PerformanceGraphComponent = new Class({
             APPS_PAGE.stateChangeEvent,
             _.bind(this.stateChange, this)
             );
+    },
+    getChartOptions: function(){
+
+        var chartOptions = {
+            'grid': {
+                'clickable': true,
+                'hoverable': true,
+                'autoHighlight': true,
+                'color': '#B6B6B6',
+                'borderWidth': 0.5,
+
+            },
+
+            'xaxis': {
+                'tickFormatter': _.bind(this.formatLabel, this)
+            },
+
+            'yaxis': {
+                'autoscaleMargin':0.3
+            },
+            'series': {
+
+                'points': {
+                    'radius': 2.5,
+                    'errorbars': 'y',
+                    'yerr': {
+                         'show': true,
+                         'upperCap':'-',
+                         'lowerCap':'-',
+                         'color': '#CCCCCC'
+                        }
+                }
+            },
+
+            'selection':{
+                'mode':'x',
+                'color':'#BDBDBD'
+            }
+        };
+
+        return chartOptions;
+    },
+    loadTargets: function(data){
+
+        this.targets = data.data;
+    },
+    setMarkings: function(chartOptions){
+
+        var device = $(this.view.deviceSel).val() || APPS_PAGE.defaults['device'];
+        var testName = this.testData.url.replace(/_/g, ' ');
+
+        var targetMarkings = {
+            'markings': [
+                { 'color': '#b0cdcb',
+                  'lineWidth': 4,
+                  'label': 'Performance target',
+                  'yaxis': { 'from': 0, 'to': 0 },
+                },
+            ]
+        };
+
+        if( this.targets[device] != undefined ){
+            var test;
+            for(test in this.targets[device] ){
+                if( test.indexOf( testName ) > -1 ){
+
+                    targetMarkings['markings'][0]['yaxis']['from'] = this.targets[device][test];
+                    targetMarkings['markings'][0]['yaxis']['to'] = this.targets[device][test];
+
+                    _.extend(chartOptions.grid, targetMarkings);
+
+                    break;
+                }
+            }
+        }
     },
     displayNavMenu: function(event){
 
@@ -436,17 +481,20 @@ var PerformanceGraphComponent = new Class({
 
         this.view.showData(_.isEmpty(this.data));
 
+        var chartOptions = this.getChartOptions();
+
         if(controlValues.error_bars === false){
-            this.chartOptions.series.points.errorbars = 'n';
+            chartOptions.series.points.errorbars = 'n';
         }else{
-            this.chartOptions.series.points.errorbars = 'y';
+            chartOptions.series.points.errorbars = 'y';
         }
 
+        this.setMarkings(chartOptions);
 
         this.plot = $.plot(
             $(this.view.chartContainerSel),
             chart,
-            this.chartOptions
+            chartOptions
             );
 
         if(!this.replicatesInitialized && this.seriesIndexDataMap[seriesIndex]){
@@ -685,7 +733,16 @@ var PerformanceGraphView = new Class({
         }
     },
     setGraphTestName: function(name){
-        $(this.appTestName).text(name);
+
+        var max = 20;
+        var displayName = name;
+
+        if(displayName.length > max){
+            displayName = displayName.substr(0, max-1) + '...';
+        }
+
+        $(this.appTestName).text(displayName);
+        $(this.appTestName).attr('title', name);
     },
     setDetailContainer: function(seriesDatum, datapointDatum){
 
@@ -766,6 +823,19 @@ var PerformanceGraphModel = new Class({
 
     },
 
+    getTestTargets: function(context, fnSuccess){
+
+        var url = APPS_PAGE.urlBase + 'refdata/perftest/testtargets';
+        jQuery.ajax( url, {
+            accepts:'application/json',
+            dataType:'json',
+            cache:false,
+            type:'GET',
+            data:data,
+            context:context,
+            success:fnSuccess,
+        });
+    },
     getAppData: function(
         context, fnSuccess, testIds, pageName, range, branch, device){
 

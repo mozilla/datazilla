@@ -1211,7 +1211,12 @@ class PerformanceTestModel(DatazillaModelBase):
         test_id = self._get_or_create_test_id(data)
         os_id = self._get_or_create_os_id(data)
         product_id = self._get_or_create_product_id(data)
-        machine_id = self._get_or_create_machine_id(data, os_id)
+
+        machine_id = 0
+        if self.project == 'b2g' or self.project == 'b2gtw':
+            machine_id = self._get_or_create_b2g_machine_id(data, os_id)
+        else:
+            machine_id = self._get_or_create_machine_id(data, os_id)
 
         # Insert build and test_run data.
         build_id = self._get_or_create_build_id(data, product_id)
@@ -1228,7 +1233,7 @@ class PerformanceTestModel(DatazillaModelBase):
         self._set_test_aux_data(data, test_id, test_run_id)
 
         # Make project specific changes
-        self._adapt_project_specific_data(data, test_run_id, machine_id)
+        self._adapt_project_specific_data(data, test_run_id)
 
         return test_run_id
 
@@ -1525,7 +1530,7 @@ class PerformanceTestModel(DatazillaModelBase):
                     data[new_key] = results_aux
                     del data['results_aux']
 
-    def _adapt_project_specific_data(self, data, test_run_id, machine_id):
+    def _adapt_project_specific_data(self, data, test_run_id):
 
         ###
         #TODO: This should be moved into a derived class
@@ -1536,7 +1541,6 @@ class PerformanceTestModel(DatazillaModelBase):
             #build_revision, they need to be loaded here
             ###
             self._update_b2g_test_run(data, test_run_id)
-            self._update_b2g_machine_type(data, machine_id)
 
 
     def _set_test_aux_data(self, data, test_id, test_run_id):
@@ -1967,16 +1971,34 @@ class PerformanceTestModel(DatazillaModelBase):
                 placeholders=[ build_revision, test_run_id ]
                 )
 
-    def _update_b2g_machine_type(self, data, machine_id):
+    def _get_or_create_b2g_machine_id(self, data, os_id):
 
-        if 'type' in data['test_machine']:
-            machine_type_proc = 'perftest.inserts.set_machine_type'
+        machine = data['test_machine']
 
-            self.sources["perftest"].dhub.execute(
-                proc=machine_type_proc,
-                debug_show=self.DEBUG,
-                placeholders=[ data['test_machine']['type'], machine_id ]
-                )
+        # Insert the the machine name and timestamp if it doesn't exist
+        date_added = utils.get_now_timestamp()
+
+        self.sources["perftest"].dhub.execute(
+            proc='perftest.inserts.set_b2g_machine_ref_data',
+            placeholders=[
+                machine['name'],
+                os_id,
+                machine['type'],
+                date_added,
+                machine['name'],
+                os_id,
+                machine['type'],
+                ],
+            debug_show=self.DEBUG)
+
+        # Get the machine id
+        id_iter = self.sources["perftest"].dhub.execute(
+            proc='perftest.selects.get_b2g_machine_id',
+            placeholders=[machine['name'], os_id, machine['type']],
+            debug_show=self.DEBUG,
+            return_type='iter')
+
+        return id_iter.get_column_data('id')
 
     def _get_median_from_sorted_list(self, sorted_list):
 

@@ -150,6 +150,19 @@
 
          "host":"master_host"
       },
+      "set_b2g_machine_ref_data":{
+
+         "sql":"INSERT INTO `machine` (`name`, `operating_system_id`, `type`, `date_added`)
+                SELECT ?, ?, ?, ?
+                FROM DUAL
+                WHERE NOT EXISTS (
+                    SELECT `name`, `operating_system_id`, `type`
+                    FROM `machine`
+                    WHERE `name` = ? AND `operating_system_id` = ? AND `type` = ?
+                )",
+
+         "host":"master_host"
+      },
       "set_option_ref_data":{
 
          "sql":"INSERT INTO `option` (`name`)
@@ -954,6 +967,14 @@
         "sql":"SELECT `id`
                FROM `machine`
                WHERE `name` = ? AND `operating_system_id` = ?",
+
+        "host":"read_host"
+    },
+    "get_b2g_machine_id":{
+
+        "sql":"SELECT `id`
+               FROM `machine`
+               WHERE `name` = ? AND `operating_system_id` = ? AND `type` = ?",
 
         "host":"read_host"
     },

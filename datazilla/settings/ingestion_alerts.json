@@ -1,5 +1,99 @@
 [
-  {
+   {
+     "name": "flame-319MB",
+     "machine": "flame-319MB",
+     "product": {
+       "product": "B2G",
+       "branch": "master",
+       "version": "prerelease"
+     },
+     "tests": [
+         "phone",
+         "contacts",
+         "messages",
+         "settings",
+         "gallery",
+         "video",
+         "music",
+         "camera",
+         "email",
+         "calendar",
+         "clock",
+         "fm_radio",
+         "usage",
+         "template",
+         "browser",
+         "homescreen",
+         "browser"
+     ],
+     "pages": [
+       "cold_load_time"
+     ],
+     "alert_minutes": 720,
+     "alert_recipients": [ "fxos-perf-alerts@mozilla.org" ]
+   }, {
+     "name": "flame-319MB",
+     "machine": "flame-319MB",
+     "product": {
+         "product": "B2G",
+         "branch": "master",
+         "version": "prerelease"
+     },
+     "tests": [
+         "calendar_memory",
+         "camera_memory",
+         "clock_memory",
+         "communications/contacts_memory",
+         "communications/dialer_memory",
+         "email_memory",
+         "fm_memory",
+         "gallery_memory",
+         "music_memory",
+         "settings_memory",
+         "sms_memory",
+         "video_memory"
+     ],
+     "pages": [
+         "pss",
+         "rss",
+         "system_pss",
+         "system_rss",
+         "system_uss",
+         "system_vsize",
+         "uss",
+         "vsize"
+     ],
+     "alert_minutes": 720,
+     "alert_recipients": [ "fxos-perf-alerts@mozilla.org" ]
+   }, {
+     "name": "flame-319MB",
+     "machine": "flame-319MB",
+     "product": {
+         "product": "B2G",
+         "branch": "master",
+         "version": "prerelease"
+     },
+     "tests": [
+         "calendar",
+         "camera",
+         "clock",
+         "communications/contacts",
+         "communications/dialer",
+         "email",
+         "fm",
+         "startup_time",
+         "gallery",
+         "music",
+         "settings",
+         "sms",
+         "video"
+     ],
+     "pages": [
+         "startup_time"
+     ],
+     "alert_minutes": 720,
+     "alert_recipients": [ "fxos-perf-alerts@mozilla.org" ]
+   }, {
     "name": "flame",
     "machine": "flame",
     "product": {
