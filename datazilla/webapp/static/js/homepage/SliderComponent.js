@@ -633,7 +633,8 @@ var SliderModel = new Class({
             type:'GET',
             context:context,
             success:fnSuccess,
-            error:fnError,
+            timeout:40000,
+            error:fnError
         });
 
     },

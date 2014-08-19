@@ -554,6 +554,7 @@ var NavModel = new Class({
             dataType:'json',
             cache:false,
             type:'GET',
+            timeout: 40000,
             context:options.context,
             success:options.fnSuccess,
             error:options.fnError

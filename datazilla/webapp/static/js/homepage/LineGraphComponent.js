@@ -1303,6 +1303,7 @@ var LineGraphModel = new Class({
             dataType:'json',
             cache:false,
             type:'GET',
+            timeout:40000,
             context:context,
             success:fnSuccess,
             error:fnError
