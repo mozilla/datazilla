@@ -100,6 +100,12 @@ var View = new Class({
     jQuery:'View',
 
     initialize: function(selector, options){
+
+        this.requestErrorSel = '#hp_failed_get_dialogue';
+        this.requestStatusSel = '#hp_text_status';
+        this.requestCodeSel = '#hp_status_code';
+        this.requestErrorThrownSel = '#hp_error_thrown';
+
     },
     getId: function(id, dviewIndex){
         return id.replace(/\#/, '') + '_' + dviewIndex;
@@ -187,5 +193,13 @@ var View = new Class({
             parseInt(result[3], 16) + ',0.1)';
 
         return rgbAlpha;
+    },
+    requestError: function(jqXHR, textStatus, errorThrown){
+
+        $(this.requestStatusSel).text(textStatus);
+        $(this.requestCodeSel).text(errorThrown.status);
+        $(this.requestErrorThrownSel).text(errorThrown.statusText);
+
+        $(this.requestErrorSel).dialog();
     }
 });
