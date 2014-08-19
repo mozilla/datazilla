@@ -395,6 +395,7 @@ var SliderComponent = new Class({
             this.model.getPlatformsAndTests(
                 project, product, repository, this,
                 this.loadPlatformsAndTests,
+                this.view.requestError,
                 parseInt(values.min/1000), parseInt(values.max/1000)
                 );
 
@@ -447,12 +448,14 @@ var SliderComponent = new Class({
 
             //Retrieve the date range to initialize the slider with
             this.model.getDateRange(
-                this, project, _.bind(this.initializeSlider, this)
+                this, project, _.bind(this.initializeSlider, this),
+                _.bind(this.view.requestError, this)
                 );
 
             //Retrieve the product/Repositories associated with the project
             this.model.getProductRepositories(
-                this, project, _.bind(this.loadProductRepositories, this)
+                this, project, _.bind(this.loadProductRepositories, this),
+                _.bind(this.view.requestError, this)
                 );
 
         }
@@ -619,7 +622,7 @@ var SliderModel = new Class({
         this.parent(options);
 
     },
-    getDateRange: function(context, project, fnSuccess){
+    getDateRange: function(context, project, fnSuccess, fnError){
 
         var uri = HOME_PAGE.urlBase +  project + '/testdata/all_data_date_range';
 
@@ -630,6 +633,7 @@ var SliderModel = new Class({
             type:'GET',
             context:context,
             success:fnSuccess,
+            error:fnError,
         });
 
     },
@@ -646,7 +650,8 @@ var SliderModel = new Class({
             success:fnSuccess,
         });
     },
-    getPlatformsAndTests: function(project, product, repository, context, fnSuccess, start, stop){
+    getPlatformsAndTests: function(
+        project, product, repository, context, fnSuccess, fnError, start, stop){
 
         var uri = HOME_PAGE.urlBase +  project + '/testdata/platforms_tests?';
 
@@ -664,6 +669,7 @@ var SliderModel = new Class({
             type:'GET',
             context:context,
             success:fnSuccess,
+            error:fnError
         });
 
     }

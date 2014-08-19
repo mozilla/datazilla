@@ -178,7 +178,8 @@ var LineGraphComponent = new Class({
             uri = this.model.getJsonObj(
                 projectData.project, datum, this,
                 _.bind(this.loadReplicates, this, testRunId,
-                projectData.project, page));
+                projectData.project, page),
+                _.bind(this.view.requestError, this.view));
 
             this.testRunIdCache[projectData.project][testRunId]['uri'] = uri;
 
@@ -329,6 +330,7 @@ var LineGraphView = new Class({
 
         this.inputSel = '#hp_input';
         this.viewJsonObjSel = '#hp_view_json_objects';
+
 
         //Graph container controls
         this.x86Sel = '#hp_x86';
@@ -1286,7 +1288,7 @@ var LineGraphModel = new Class({
         this.parent(options);
 
     },
-    getJsonObj: function(project, datum, context, fnSuccess){
+    getJsonObj: function(project, datum, context, fnSuccess, fnError){
 
         var uri = HOME_PAGE.urlBase +  project +
                 '/testdata/raw/' + datum.b + '/' + datum.r + '?';
@@ -1303,7 +1305,9 @@ var LineGraphModel = new Class({
             type:'GET',
             context:context,
             success:fnSuccess,
-        });
+            error:fnError
+            }
+        );
 
         return uri;
     }

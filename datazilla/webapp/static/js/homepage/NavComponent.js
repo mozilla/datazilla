@@ -172,6 +172,7 @@ var NavComponent = new Class({
             'start':parseInt(data.min/1000),
             'stop':parseInt(data.max/1000),
             'context':this,
+            'fnError':this.view.requestError,
             'fnSuccess':this.processData };
 
         //Determine if there's a compare data series selected
@@ -241,7 +242,8 @@ var NavComponent = new Class({
             'start':prData.start,
             'stop':prData.stop,
             'context':this,
-            'fnSuccess':this.processData };
+            'fnSuccess':this.processData,
+            'fnError':this.view.requestError };
 
         this.model.getAllData(processDataOptions);
 
@@ -355,7 +357,8 @@ var NavComponent = new Class({
                 'start':prData.start,
                 'stop':prData.stop,
                 'context':this,
-                'fnSuccess':this.processCompareDataSeriesAndRenderGraphs
+                'fnSuccess':this.processCompareDataSeriesAndRenderGraphs,
+                'fnError':this.view.requestError
                 };
 
             HOME_PAGE.selectionState.setCompareProduct(
@@ -553,6 +556,7 @@ var NavModel = new Class({
             type:'GET',
             context:options.context,
             success:options.fnSuccess,
+            error:options.fnError
         });
     }
 
