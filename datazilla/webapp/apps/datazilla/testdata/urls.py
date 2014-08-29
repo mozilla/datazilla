@@ -3,7 +3,7 @@ from django.conf.urls.defaults import *
 urlpatterns = patterns(
     "datazilla.webapp.apps.datazilla.testdata",
 
-    (r"^raw/(?P<branch>.+)/(?P<revision>\w+)/?$", "views.get_testdata"),
+    (r"^raw/(?P<branch>.+)/(?P<revision>[a-zA-Z0-9_.-]+)/?$", "views.get_testdata"),
 
     (r"^all_data/?$", "views.get_data_all_dimensions"),
 
