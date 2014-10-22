@@ -8,20 +8,6 @@
       "version": "prerelease"
     },
     "tests": [
-      "calendar_memory",
-      "camera_memory",
-      "clock_memory",
-      "communications/contacts_memory",
-      "communications/dialer_memory",
-      "email_memory",
-      "fm_memory",
-      "gallery_memory",
-      "music_memory",
-      "settings_memory",
-      "sms_memory",
-      "video_memory"
-    ],
-    "pages": [
       "pss",
       "rss",
       "system_pss",
@@ -30,6 +16,21 @@
       "system_vsize",
       "uss",
       "vsize"
+    ],
+    "pages": [
+      "calendar_memory",
+      "camera_memory",
+      "clock_memory",
+      "communications/contacts_memory",
+      "communications/dialer_memory",
+      "costcontrol_memory",
+      "email_memory",
+      "fm_memory",
+      "gallery_memory",
+      "music_memory",
+      "settings_memory",
+      "sms_memory",
+      "video_memory"
     ],
     "alert_minutes": 720,
     "alert_recipients": [ "fxos-perf-alerts@mozilla.org" ]
@@ -47,6 +48,7 @@
       "clock",
       "communications/contacts",
       "communications/dialer",
+      "costcontrol",
       "email",
       "fm",
       "gallery",
